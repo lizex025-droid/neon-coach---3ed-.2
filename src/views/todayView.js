@@ -30,8 +30,8 @@ export function renderTodayView() {
     waterHelperMsg = '💧 ممتاز! أنت في المسار الصحيح للمحافظة على ترطيبك.';
   }
 
-  // حساب محيط الدائرة للـ SVG Ring (r = 52 => circumference = 2 * PI * 52 ≈ 326.7)
-  const radius = 52;
+  // حساب محيط الدائرة للـ SVG Ring (r = 45 => circumference = 2 * PI * 45 ≈ 282.743)
+  const radius = 45;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (calPct / 100) * circumference;
 
@@ -55,94 +55,116 @@ export function renderTodayView() {
       </div>
 
       <!-- بطاقة السعرات والماكروز الرئيسية -->
-      <div id="today-calorie-card" class="neon-card" style="padding: 22px; display: flex; flex-direction: column; gap: 20px; cursor: pointer;" title="اضغط لعرض خطة وسجل التغذية">
+      <div id="today-calorie-card" class="neon-card" style="padding: 20px 18px; display: flex; flex-direction: column; gap: 16px; cursor: pointer;" title="اضغط لعرض خطة وسجل التغذية">
         
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 6px; color: #F59E0B; font-weight: 700; font-size: 0.95rem;">
             <span>🔥</span>
             <span>سعرات اليوم</span>
           </div>
-          <a href="#nutrition" style="color: #55F7A5; font-size: 0.8rem; font-weight: 700; text-decoration: none;">خطة التغذية ❯</a>
+          <a href="#nutrition" style="color: #55F7A5; font-size: 0.82rem; font-weight: 700; text-decoration: none;">خطة التغذية ❯</a>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+        <!-- الجزء العلوي: الحلقة الدائرية وبجانبها أرقام السعرات وشارة الخصم -->
+        <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
           
           <!-- الحلقة الدائرية للسعرات -->
-          <div class="neon-ring-container" style="width: 130px; height: 130px; flex-shrink: 0;">
-            <svg width="130" height="130" viewBox="0 0 130 130">
-              <circle class="neon-ring-track" cx="65" cy="65" r="${radius}" stroke-width="9" />
-              <circle id="today-cal-ring-circle" class="neon-ring-fill" cx="65" cy="65" r="${radius}" stroke-width="9"
+          <div class="neon-ring-container" style="width: 104px; height: 104px; flex-shrink: 0;">
+            <svg width="104" height="104" viewBox="0 0 104 104">
+              <circle class="neon-ring-track" cx="52" cy="52" r="${radius}" stroke-width="8" />
+              <circle id="today-cal-ring-circle" class="neon-ring-fill" cx="52" cy="52" r="${radius}" stroke-width="8"
                 stroke-dasharray="${circumference}" stroke-dashoffset="${strokeDashoffset}" />
             </svg>
             <div class="neon-ring-content">
-              <span id="today-cal-pct-val" style="font-size: 1.7rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${calPct}%</span>
-              <span style="font-size: 0.75rem; color: #B8C0BC;">تقدم اليوم</span>
+              <span id="today-cal-pct-val" style="font-size: 1.55rem; font-weight: 900; color: #FFFFFF; font-family: monospace; line-height: 1;">${calPct}%</span>
+              <span style="font-size: 0.72rem; color: #B8C0BC; margin-top: 2px;">تقدم اليوم</span>
             </div>
           </div>
 
-          <!-- الأرقام والماكروز -->
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+          <!-- الأرقام والماكروز وشارة المتبقي بعد الخصم -->
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
             
-            <div style="display: flex; align-items: baseline; gap: 6px;">
-              <span id="today-consumed-cals-val" style="font-size: 2.2rem; font-weight: 900; color: #55F7A5; font-family: monospace; letter-spacing: -1px;">
+            <div style="display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap;">
+              <span id="today-consumed-cals-val" style="font-size: 1.85rem; font-weight: 900; color: #55F7A5; font-family: monospace; letter-spacing: -0.5px; line-height: 1;">
                 ${today.consumedCalories.toLocaleString('en-US')}
               </span>
-              <span style="font-size: 1.4rem; font-weight: 700; color: #FFFFFF;">/</span>
-              <span style="font-size: 1.4rem; font-weight: 800; color: #FFFFFF; font-family: monospace;">
+              <span style="font-size: 1.2rem; font-weight: 700; color: #FFFFFF;">/</span>
+              <span style="font-size: 1.2rem; font-weight: 800; color: #D1D5DB; font-family: monospace;">
                 ${today.targetCalories.toLocaleString('en-US')}
               </span>
-              <span style="font-size: 0.85rem; color: #B8C0BC; margin-inline-start: 4px;">سعرة</span>
-              <button id="today-edit-target-cals-btn" style="background: rgba(85,247,165,0.12); border: 1px solid rgba(85,247,165,0.3); border-radius: 8px; color: #55F7A5; cursor: pointer; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; margin-inline-start: auto;" title="تعديل هدف السعرات يدوياً">
+              <span style="font-size: 0.8rem; color: #8F9692; margin-inline-start: 2px;">سعرة</span>
+              <button id="today-edit-target-cals-btn" style="background: rgba(85,247,165,0.1); border: 1px solid rgba(85,247,165,0.3); border-radius: 6px; color: #55F7A5; cursor: pointer; font-size: 0.7rem; font-weight: 700; padding: 2px 7px; margin-inline-start: auto;" title="تعديل هدف السعرات يدوياً">
                 ✏️ تعديل
               </button>
             </div>
 
             <!-- تفصيل المتبقي بعد الخصم -->
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; background: ${today.consumedCalories > today.targetCalories ? 'rgba(255,85,85,0.1)' : 'rgba(85,247,165,0.08)'}; border: 1px solid ${today.consumedCalories > today.targetCalories ? 'rgba(255,85,85,0.25)' : 'rgba(85,247,165,0.2)'}; border-radius: 8px; padding: 4px 8px; margin-top: 2px;">
-              <span style="color: #B8C0BC;">المتبقي بعد الخصم:</span>
-              <span style="font-weight: 800; font-family: monospace; color: ${today.consumedCalories > today.targetCalories ? '#FF5555' : '#55F7A5'};">
-                ${today.consumedCalories > today.targetCalories ? `تجاوزت بـ ${(today.consumedCalories - today.targetCalories).toLocaleString('en-US')} سعرة ⚠️` : `${(today.targetCalories - today.consumedCalories).toLocaleString('en-US')} سعرة متبقية ⚡`}
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.76rem; background: ${today.consumedCalories > today.targetCalories ? 'rgba(255,85,85,0.12)' : 'rgba(85,247,165,0.08)'}; border: 1px solid ${today.consumedCalories > today.targetCalories ? 'rgba(255,85,85,0.3)' : 'rgba(85,247,165,0.22)'}; border-radius: 8px; padding: 5px 9px;">
+              <span style="color: #B8C0BC; white-space: nowrap; font-size: 0.72rem;">المتبقي بعد الخصم:</span>
+              <span style="font-weight: 800; font-family: monospace; color: ${today.consumedCalories > today.targetCalories ? '#FF6B6B' : '#55F7A5'}; white-space: nowrap; font-size: 0.75rem;">
+                ${today.consumedCalories > today.targetCalories ? `+${(today.consumedCalories - today.targetCalories).toLocaleString('en-US')} زيادة ⚠️` : `${(today.targetCalories - today.consumedCalories).toLocaleString('en-US')} متبقية ⚡`}
               </span>
             </div>
 
-            <!-- أشرطة الماكروز الثلاثة -->
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              
-              <!-- بروتين -->
-              <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px;">
-                  <span style="color: #FFFFFF; font-weight: 600;">بروتين</span>
-                  <span style="color: #B8C0BC; font-family: monospace;"><b style="color: #55F7A5;">${today.consumedProtein}</b> / ${today.targetProtein} غ</span>
-                </div>
-                <div class="macro-bar-track">
-                  <div class="macro-bar-fill" style="width: ${proteinPct}%;"></div>
-                </div>
-              </div>
+          </div>
 
-              <!-- كارب -->
-              <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px;">
-                  <span style="color: #FFFFFF; font-weight: 600;">كارب</span>
-                  <span style="color: #B8C0BC; font-family: monospace;"><b style="color: #55F7A5;">${today.consumedCarbs}</b> / ${today.targetCarbs} غ</span>
-                </div>
-                <div class="macro-bar-track">
-                  <div class="macro-bar-fill" style="width: ${carbsPct}%;"></div>
-                </div>
-              </div>
+        </div>
 
-              <!-- دهون -->
-              <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px;">
-                  <span style="color: #FFFFFF; font-weight: 600;">دهون</span>
-                  <span style="color: #B8C0BC; font-family: monospace;"><b style="color: #55F7A5;">${today.consumedFats}</b> / ${today.targetFats} غ</span>
-                </div>
-                <div class="macro-bar-track">
-                  <div class="macro-bar-fill" style="width: ${fatsPct}%;"></div>
-                </div>
-              </div>
+        <!-- خط فاصل خفيف نيون -->
+        <div style="height: 1px; background: rgba(85, 247, 165, 0.12); width: 100%;"></div>
 
+        <!-- أشرطة الماكروز الثلاثة بكامل العرض (Full-Width) دون انضغاط أو قص -->
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+          
+          <!-- بروتين -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-bottom: 4px;">
+              <span style="color: #FFFFFF; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #55F7A5; display: inline-block; box-shadow: 0 0 6px rgba(85,247,165,0.6);"></span>
+                بروتين
+              </span>
+              <span style="color: #B8C0BC; font-family: monospace; font-size: 0.82rem;">
+                <b style="color: #55F7A5;">${today.consumedProtein}</b> / ${today.targetProtein} غ
+                <span style="color: #6E7E76; font-size: 0.72rem; margin-inline-start: 4px;">(${proteinPct}%)</span>
+              </span>
             </div>
+            <div class="macro-bar-track" style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+              <div class="macro-bar-fill" style="width: ${proteinPct}%; height: 100%; background: linear-gradient(90deg, #10B981, #55F7A5); border-radius: 999px;"></div>
+            </div>
+          </div>
 
+          <!-- كارب -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-bottom: 4px;">
+              <span style="color: #FFFFFF; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #38BDF8; display: inline-block; box-shadow: 0 0 6px rgba(56,189,248,0.6);"></span>
+                كارب
+              </span>
+              <span style="color: #B8C0BC; font-family: monospace; font-size: 0.82rem;">
+                <b style="color: #38BDF8;">${today.consumedCarbs}</b> / ${today.targetCarbs} غ
+                <span style="color: #6E7E76; font-size: 0.72rem; margin-inline-start: 4px;">(${carbsPct}%)</span>
+              </span>
+            </div>
+            <div class="macro-bar-track" style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+              <div class="macro-bar-fill" style="width: ${carbsPct}%; height: 100%; background: linear-gradient(90deg, #0284C7, #38BDF8); border-radius: 999px;"></div>
+            </div>
+          </div>
+
+          <!-- دهون -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-bottom: 4px;">
+              <span style="color: #FFFFFF; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block; box-shadow: 0 0 6px rgba(245,158,11,0.6);"></span>
+                دهون
+              </span>
+              <span style="color: #B8C0BC; font-family: monospace; font-size: 0.82rem;">
+                <b style="color: #F59E0B;">${today.consumedFats}</b> / ${today.targetFats} غ
+                <span style="color: #6E7E76; font-size: 0.72rem; margin-inline-start: 4px;">(${fatsPct}%)</span>
+              </span>
+            </div>
+            <div class="macro-bar-track" style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+              <div class="macro-bar-fill" style="width: ${fatsPct}%; height: 100%; background: linear-gradient(90deg, #D97706, #F59E0B); border-radius: 999px;"></div>
+            </div>
           </div>
 
         </div>
@@ -347,7 +369,7 @@ export function bindTodayViewEvents() {
 
   // تحريك حلقة السعرات اليومية ورقم التقدم ورقم السعرات المستهلكة من الصفر
   const calPct = calculatePercentage(today.consumedCalories, today.targetCalories);
-  const radius = 57;
+  const radius = 45;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - ((calPct / 100) * circumference);
 
