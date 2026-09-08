@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="حاسبة تقديرية لحد سعرات الوجبة المفتوحة بناءً على بيانات الجسم وخطة التنشيف." />
+    <title>حاسبة حد الوجبة المفتوحة</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;500;700;800;900&family=Sora:wght@300;500;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    />
+
+    <style>
+
+      :root {
+        --bg1: #020806;
+        --bg2: #07150f;
+        --card: rgba(4, 18, 12, 0.34);
+        --field: rgba(0, 0, 0, 0.32);
+        --stroke: rgba(110, 231, 183, 0.18);
+        --accent: #6ee7b7;
+        --accent2: #22c55e;
+        --text: #ecfff7;
+        --muted: rgba(207, 236, 224, 0.68);
+        --deep: #020403;
+        --warning: #f2c063;
+        --danger: #ff6b6b;
+        --radius: 22px;
+        --shadow: 0 24px 58px rgba(0, 0, 0, 0.42);
+      }
+
+      * { box-sizing: border-box; }
+
+      html {
+        min-height: 100%;
+        background: var(--deep);
+      }
+
+      body.pdf-theme {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Cairo", "Sora", system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 16% 8%, rgba(110, 231, 183, 0.11), transparent 28%),
+          radial-gradient(circle at 88% 22%, rgba(34, 197, 94, 0.10), transparent 28%),
+          linear-gradient(135deg, #020806 0%, #03120c 46%, #010403 100%);
+        overflow-x: hidden;
+        line-height: 1.7;
+      }
+
+      body.pdf-theme::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(110, 231, 183, 0.16) 1px, transparent 1px);
+        background-size: 26px 26px;
+        opacity: 0.18;
+        mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.72) 48%, transparent 100%);
+      }
+
+      #vt-backdrop,
+      #vt-grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      #vt-backdrop {
+        z-index: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% -10%, rgba(110, 231, 183, 0.11), transparent 38%),
+          linear-gradient(180deg, rgba(3, 18, 12, 0.88), rgba(1, 4, 3, 0.98));
+      }
+
+      #vt-grain {
+        z-index: 0;
+        opacity: 0.08;
+        mix-blend-mode: screen;
+        background-image:
+          linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 42%),
+          radial-gradient(rgba(255, 255, 255, 0.18) 0.6px, transparent 0.8px);
+        background-size: 190px 190px, 22px 22px;
+      }
+
+      .wb-atmosphere,
+      .wb-mist,
+      .wb-mountains,
+      .wb-particles {
+        position: absolute;
+        inset: 0;
+      }
+
+      .wb-atmosphere {
+        background:
+          radial-gradient(circle at 26% 24%, rgba(110, 231, 183, 0.16), transparent 28%),
+          radial-gradient(circle at 78% 36%, rgba(16, 185, 129, 0.12), transparent 26%),
+          radial-gradient(circle at 50% 100%, rgba(5, 42, 28, 0.78), transparent 48%);
+        filter: blur(2px);
+      }
+
+      .wb-mist {
+        opacity: 0.42;
+        background:
+          radial-gradient(ellipse at 30% 70%, rgba(110, 231, 183, 0.12), transparent 34%),
+          radial-gradient(ellipse at 76% 66%, rgba(20, 184, 166, 0.10), transparent 31%);
+        filter: blur(26px);
+        animation: mistDrift 12s ease-in-out infinite alternate;
+      }
+
+      .wb-mountains {
+        top: auto;
+        bottom: -1px;
+        height: 36vh;
+        opacity: 0.9;
+      }
+
+      .wb-mountains svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .wb-particles span {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: #6ee7b7;
+        opacity: 0.28;
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.72);
+        animation: particleFloat linear infinite;
+      }
+
+      @keyframes particleFloat {
+        from { transform: translate3d(0, 0, 0); opacity: 0; }
+        12% { opacity: 0.34; }
+        85% { opacity: 0.2; }
+        to { transform: translate3d(var(--dx), var(--dy), 0); opacity: 0; }
+      }
+
+      @keyframes mistDrift {
+        from { transform: translate3d(-12px, 8px, 0) scale(1); }
+        to { transform: translate3d(16px, -10px, 0) scale(1.05); }
+      }
+
+      .bg-orb {
+        position: fixed;
+        border-radius: 999px;
+        filter: blur(46px);
+        opacity: 0.34;
+        z-index: 0;
+        pointer-events: none;
+        animation: driftGlow 10s ease-in-out infinite alternate;
+      }
+
+      .orb-1 { width: 320px; height: 320px; background: #0f5f43; top: -90px; right: 180px; }
+      .orb-2 { width: 260px; height: 260px; background: #064e3b; bottom: 42px; right: 42px; animation-duration: 13s; }
+      .orb-3 { width: 240px; height: 240px; background: #6ee7b7; top: 40%; left: 50px; opacity: 0.16; animation-duration: 15s; }
+
+      @keyframes driftGlow {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(18px, -14px, 0) scale(1.06); }
+      }
+
+      .app {
+        width: min(1240px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .top-nav {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 22px;
+      }
+
+      .nav-tabs {
+        display: inline-flex;
+        gap: 10px;
+        background: rgba(1, 8, 5, 0.62);
+        border: 1px solid rgba(110, 231, 183, 0.16);
+        border-radius: 999px;
+        padding: 6px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        flex-wrap: wrap;
+        justify-content: center;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+      }
+
+      .nav-tab {
+        text-decoration: none;
+        color: var(--muted);
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: 0.2s ease;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+
+      .nav-tab.active {
+        color: #dfffee;
+        background: rgba(110, 231, 183, 0.12);
+        border-color: rgba(110, 231, 183, 0.38);
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.10);
+      }
+
+      .nav-tab:hover {
+        color: var(--text);
+        background: rgba(110, 231, 183, 0.09);
+        border-color: rgba(110, 231, 183, 0.24);
+      }
+
+      .hero,
+      .panel,
+      .result-card,
+      .progress,
+      .hero-number {
+        border: 1px solid rgba(110, 231, 183, 0.18);
+        background: rgba(0, 0, 0, 0.56);
+        backdrop-filter: blur(18px) saturate(1.2);
+        -webkit-backdrop-filter: blur(18px) saturate(1.2);
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        overflow: hidden;
+        border-radius: 26px;
+        padding: 28px;
+        position: relative;
+        isolation: isolate;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background:
+          radial-gradient(circle at 14% 20%, rgba(110, 231, 183, 0.14), transparent 26%),
+          linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        width: 210px;
+        height: 210px;
+        left: -46px;
+        bottom: -70px;
+        border-radius: 999px;
+        background: var(--accent);
+        opacity: 0.08;
+        filter: blur(28px);
+        z-index: -1;
+      }
+
+      .hero-content {
+        display: grid;
+        grid-template-columns: 1.35fr 0.65fr;
+        gap: 20px;
+        align-items: stretch;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(30px, 4.4vw, 52px);
+        line-height: 1.08;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        color: var(--text);
+      }
+
+      .subtitle {
+        margin: 0;
+        max-width: 760px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 18px;
+      }
+
+      .tag {
+        display: inline-flex;
+        min-height: 28px;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(110, 231, 183, 0.28);
+        background: rgba(110, 231, 183, 0.08);
+        color: #bdf7dc;
+        font-size: 12px;
+        font-weight: 800;
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.10);
+      }
+
+      .hero-number {
+        padding: 20px;
+        border-radius: 22px;
+        display: grid;
+        align-content: center;
+        gap: 8px;
+        box-shadow: none;
+      }
+
+      .small,
+      .hint {
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+
+      .hero-number strong {
+        display: block;
+        color: var(--accent);
+        font-size: clamp(32px, 4vw, 48px);
+        line-height: 1.1;
+        direction: ltr;
+        text-align: right;
+        font-family: "JetBrains Mono", monospace;
+        text-shadow: 0 0 22px rgba(110, 231, 183, 0.22);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 430px minmax(0, 1fr);
+        gap: 18px;
+        margin-top: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        overflow: hidden;
+        border-radius: var(--radius);
+        box-shadow: 0 20px 42px rgba(0, 0, 0, 0.34);
+      }
+
+      .panel-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(110, 231, 183, 0.14);
+        background: rgba(110, 231, 183, 0.035);
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #ecfff7;
+        font-weight: 900;
+      }
+
+      .panel-header p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .panel-body { padding: 20px; }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 14px;
+        font-weight: 900;
+        color: #ecfff7;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px rgba(110, 231, 183, 0.12), 0 0 18px rgba(110, 231, 183, 0.56);
+        flex: 0 0 auto;
+      }
+
+      .fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .field { margin-bottom: 14px; }
+      .full { grid-column: 1 / -1; }
+
+      label {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 13px;
+        font-weight: 850;
+        color: rgba(236, 255, 247, 0.86);
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 46px;
+        padding: 11px 12px;
+        border: 1px solid rgba(110, 231, 183, 0.18);
+        border-radius: 15px;
+        background: var(--field);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      }
+
+      select option {
+        background: #04120c;
+        color: var(--text);
+      }
+
+      input:focus,
+      select:focus {
+        border-color: rgba(110, 231, 183, 0.62);
+        background: rgba(0, 0, 0, 0.42);
+        box-shadow: 0 0 0 4px rgba(110, 231, 183, 0.12);
+      }
+
+      .divider {
+        height: 1px;
+        margin: 18px 0;
+        background: linear-gradient(90deg, transparent, rgba(110, 231, 183, 0.20), transparent);
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .tab,
+      .btn {
+        cursor: pointer;
+        color: var(--text);
+        font-family: inherit;
+        font-weight: 850;
+      }
+
+      .tab {
+        padding: 11px;
+        border: 1px solid rgba(110, 231, 183, 0.16);
+        border-radius: 15px;
+        background: rgba(0, 0, 0, 0.30);
+        transition: 0.2s ease;
+      }
+
+      .tab:hover {
+        border-color: rgba(110, 231, 183, 0.38);
+        background: rgba(110, 231, 183, 0.07);
+      }
+
+      .tab.active {
+        color: #04120c;
+        border-color: var(--accent);
+        background: var(--accent);
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.18);
+      }
+
+      .hint {
+        margin-top: 10px;
+        padding: 12px;
+        border: 1px solid rgba(110, 231, 183, 0.14);
+        border-radius: 15px;
+        background: rgba(110, 231, 183, 0.04);
+      }
+
+      .btn {
+        width: 100%;
+        min-height: 54px;
+        padding: 14px;
+        border: none;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #042a1c;
+        font-size: 16px;
+        box-shadow: 0 16px 34px rgba(110, 231, 183, 0.18);
+        transition: transform 0.18s ease, filter 0.18s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.06);
+      }
+
+      .result-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .result-card {
+        min-height: 100px;
+        padding: 15px;
+        border-radius: 18px;
+        box-shadow: none;
+      }
+
+      .result-card.big {
+        grid-column: 1 / -1;
+        min-height: 150px;
+        padding: 20px;
+        border-color: rgba(110, 231, 183, 0.34);
+        background:
+          radial-gradient(circle at 18% 0%, rgba(110, 231, 183, 0.18), transparent 34%),
+          rgba(0, 0, 0, 0.58);
+      }
+
+      .num {
+        direction: ltr;
+        text-align: right;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 23px;
+        font-weight: 900;
+        line-height: 1.3;
+        color: var(--text);
+        letter-spacing: -0.04em;
+      }
+
+      .big .num {
+        color: var(--accent);
+        font-size: clamp(36px, 5vw, 58px);
+        text-shadow: 0 0 24px rgba(110, 231, 183, 0.18);
+      }
+
+      .purple,
+      .yellow,
+      .cyan,
+      .green { color: var(--accent); }
+
+      .progress {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 16px;
+        box-shadow: none;
+      }
+
+      .progress-info {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .bar {
+        height: 11px;
+        margin-top: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .bar span {
+        display: block;
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        box-shadow: 0 0 16px rgba(110, 231, 183, 0.35);
+        transition: 0.25s;
+      }
+
+      .notice {
+        margin-top: 14px;
+        padding: 13px 14px;
+        border: 1px solid rgba(110, 231, 183, 0.24);
+        border-right: 5px solid var(--accent);
+        border-radius: 17px;
+        background: rgba(110, 231, 183, 0.10);
+        color: rgba(236, 255, 247, 0.90);
+        font-size: 14px;
+      }
+
+      .notice.warn {
+        border-color: rgba(242, 192, 99, 0.30);
+        border-right-color: var(--warning);
+        background: rgba(242, 192, 99, 0.12);
+      }
+
+      .notice.danger {
+        border-color: rgba(255, 107, 107, 0.30);
+        border-right-color: var(--danger);
+        background: rgba(255, 107, 107, 0.12);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid rgba(110, 231, 183, 0.16);
+        border-radius: 17px;
+        overflow: hidden;
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.26);
+      }
+
+      th,
+      td {
+        padding: 11px;
+        border-bottom: 1px solid rgba(110, 231, 183, 0.12);
+      }
+
+      th {
+        background: rgba(110, 231, 183, 0.10);
+        text-align: right;
+        color: var(--text);
+      }
+
+      tr:last-child td { border-bottom: 0; }
+
+      .footer {
+        margin-top: 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 980px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 860px) {
+        .hero-content { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 600px) {
+        .app {
+          width: min(100% - 24px, 1180px);
+          padding-top: 18px;
+        }
+
+        .hero { padding: 20px; }
+        .panel-body { padding: 16px; }
+        .fields,
+        .result-grid { grid-template-columns: 1fr; }
+
+        .top-nav { margin-bottom: 14px; }
+        .nav-tabs {
+          width: 100%;
+          max-width: 100%;
+          justify-content: center;
+          row-gap: 8px;
+        }
+        .nav-tab {
+          padding: 8px 14px;
+          font-size: 13px;
+        }
+      }
+
+    </style>
+  </head>
+  <body class="pdf-theme meal-calculator-theme">
+
+    <div id="vt-backdrop" aria-hidden="true">
+      <div class="wb-atmosphere"></div>
+      <div class="wb-mist"></div>
+      <div class="wb-mountains">
+        <svg viewBox="0 0 1440 360" preserveAspectRatio="none">
+          <path d="M0 250 L110 280 L260 210 L420 250 L560 190 L720 235 L900 175 L1080 220 L1240 195 L1440 230 L1440 360 L0 360 Z" fill="rgba(5, 22, 16, 0.78)" />
+          <path d="M0 292 L130 305 L300 260 L520 300 L760 258 L950 292 L1140 258 L1320 300 L1440 276 L1440 360 L0 360 Z" fill="rgba(2, 14, 10, 0.92)" />
+        </svg>
+      </div>
+      <div class="wb-particles">
+        <span style="left:9%;top:18%;--dx:18px;--dy:-86vh;animation-duration:20s"></span>
+        <span style="left:24%;top:58%;--dx:-12px;--dy:-90vh;animation-duration:26s"></span>
+        <span style="left:41%;top:32%;--dx:22px;--dy:-80vh;animation-duration:22s"></span>
+        <span style="left:63%;top:74%;--dx:-18px;--dy:-96vh;animation-duration:28s"></span>
+        <span style="left:82%;top:25%;--dx:20px;--dy:-94vh;animation-duration:27s"></span>
+      </div>
+    </div>
+    <div id="vt-grain" aria-hidden="true"></div>
+    <div class="bg-orb orb-1" aria-hidden="true"></div>
+    <div class="bg-orb orb-2" aria-hidden="true"></div>
+    <div class="bg-orb orb-3" aria-hidden="true"></div>
+
+<main class="app">
+    <nav class="top-nav" aria-label="التنقل"><div class="nav-tabs" dir="ltr">
+      <a class="nav-tab" href="public/pdfs.html">تدريب</a><a class="nav-tab" href="gpa.html">حاسبة المعدل</a><a class="nav-tab" href="index.html">الانتاجية</a>
+    </div></nav>
+    <section class="hero"><div class="hero-content"><div><h1>حاسبة حد الوجبة المفتوحة</h1><p class="subtitle">احسب سعرات الثبات من بيانات الجسم، ثم أدخل سعرات التنشيف وأيام التجهيز لمعرفة الحد الأعلى التقديري للوجبة المفتوحة.</p><div class="tags"><span class="tag">سعرات الثبات</span><span class="tag">تقدير وزن الماء</span><span class="tag">مناسب للموبايل</span></div></div><div class="hero-number"><span class="small">الحد المسموح الآن</span><strong id="heroLimit">— kcal</strong><span class="small" id="heroMini">أدخل بياناتك ليظهر الرقم</span></div></div></section>
+    <section class="layout">
+      <div class="panel"><div class="panel-header"><h2>المدخلات</h2><p>تتحدث النتائج تلقائيًا عند تعديل أي قيمة.</p></div><div class="panel-body">
+        <div class="section-title"><span class="dot"></span>1) بيانات الجسم</div>
+        <div class="fields"><div class="field"><label for="age">العمر</label><input id="age" type="number" min="13" max="80" value="19"></div><div class="field"><label for="sex">الجنس</label><select id="sex"><option value="male" selected>ذكر</option><option value="female">أنثى</option></select></div><div class="field"><label for="height">الطول (سم)</label><input id="height" type="number" min="120" max="230" value="194"></div><div class="field"><label for="weight">الوزن (كغ)</label><input id="weight" type="number" min="35" max="250" value="134"></div><div class="field full"><label for="activity">مستوى النشاط</label><select id="activity"><option value="1">BMR فقط / راحة كاملة</option><option value="1.2">قليل الحركة</option><option value="1.375">خفيف: 1–3 مرات أسبوعيًا</option><option value="1.465" selected>متوسط: 4–5 مرات أسبوعيًا</option><option value="1.55">تمرين يومي أو تمرين مكثف 3–4 مرات بالأسبوع</option><option value="1.725">تمرين مكثف 6–7 مرات بالأسبوع</option><option value="1.9">عالٍ جدًا / عمل بدني</option></select></div></div>
+        <div class="divider"></div><div class="section-title"><span class="dot"></span>2) التنشيف والتجهيز</div>
+        <div class="field"><label for="cutCalories">سعرات التنشيف اليومية</label><input id="cutCalories" type="number" min="900" value="1800"></div><div class="fields"><div class="field"><label for="prepDays">أيام التجهيز</label><input id="prepDays" type="number" min="1" max="14" value="6"></div><div class="field"><label for="dailyCut">التنقيص اليومي</label><input id="dailyCut" type="number" min="0" max="1000" value="300"></div></div><div class="field"><label for="beforeMeal">السعرات قبل الوجبة المفتوحة</label><input id="beforeMeal" type="number" min="0" value="800"></div>
+        <div class="field"><label>طريقة الحساب</label><div class="tabs"><button class="tab active" id="tabMaintenance" type="button">حسب الثبات</button><button class="tab" id="tabPreserveCut" type="button">يحافظ على التنشيف</button></div><div class="hint" id="modeHint">يحسب الحد بحيث لا يتجاوز متوسط الفترة سعرات الثبات.</div></div>
+        <div class="divider"></div><div class="section-title"><span class="dot"></span>3) تقدير وزن الماء</div><div class="fields"><div class="field"><label for="carbs">كارب الوجبة (غ)</label><input id="carbs" type="number" min="0" value="250"></div><div class="field"><label for="sodium">الصوديوم (ملغ)</label><input id="sodium" type="number" min="0" value="2500"></div></div><button class="btn" id="calculateButton" type="button">احسب الحد المسموح</button>
+      </div></div>
+      <div class="panel"><div class="panel-header"><h2>النتيجة النهائية</h2><p>الرقم الأخضر هو الحد التقديري للوجبة المفتوحة.</p></div><div class="panel-body">
+        <div class="result-grid"><div class="result-card big"><span class="small">أقصى سعرات تقديرية للوجبة المفتوحة</span><div class="num" id="maxMealOut">— kcal</div><div id="limitText"></div></div><div class="result-card"><span class="small">سعرات الثبات</span><div class="num purple" id="xOut">—</div></div><div class="result-card"><span class="small">BMR</span><div class="num cyan" id="bmrOut">—</div></div><div class="result-card"><span class="small">سعرات التنشيف</span><div class="num yellow" id="cutOut">—</div></div><div class="result-card"><span class="small">سعرات أيام التجهيز</span><div class="num" id="prepOut">—</div></div><div class="result-card"><span class="small">مجموع يوم الوجبة</span><div class="num" id="dayOut">—</div></div><div class="result-card"><span class="small">تقدير زيادة وزن الماء</span><div class="num green" id="waterOut">—</div></div></div>
+        <div class="progress"><div class="progress-info"><span>مقارنة يوم الوجبة مع الثبات</span><span id="progressLabel">—</span></div><div class="bar"><span id="progressBar"></span></div></div><div id="message" class="notice" aria-live="polite"></div>
+        <div class="divider"></div><div class="section-title"><span class="dot"></span>جدول الخطة</div><div id="tableBox"></div><div class="footer">هذه أداة تقديرية وليست نصيحة طبية. تغيّر الوزن بعد الوجبة قد ينتج عن الماء والجلايكوجين والملح وحجم الطعام، وليس دهونًا فقط.</div>
+      </div></div>
+    </section>
+  </main>
+  <script>
+    const byId=id=>document.getElementById(id);let goalMode="maintenance";
+    const value=(id,fallback=0)=>{const number=Number.parseFloat(byId(id).value);return Number.isFinite(number)?number:fallback};
+    const rounded=number=>Math.round(number);const clamp=(number,min,max)=>Math.min(Math.max(number,min),max);
+    const requiredNumericInputs=["age","height","weight","cutCalories","prepDays","dailyCut","beforeMeal","carbs","sodium"];
+    function resetResults(){byId("maxMealOut").textContent="— kcal";byId("heroLimit").textContent="— kcal";byId("heroMini").textContent="أدخل بياناتك ليظهر الرقم";byId("limitText").textContent="";["xOut","bmrOut","cutOut","prepOut","dayOut","waterOut","progressLabel"].forEach(id=>byId(id).textContent="—");byId("progressBar").style.width="0%";byId("message").className="notice";byId("message").textContent="أدخل جميع البيانات لحساب النتيجة.";byId("tableBox").innerHTML="";}
+    function hasCompleteInputs(){const numbersReady=requiredNumericInputs.every(id=>{const raw=byId(id).value.trim();return raw!==""&&Number.isFinite(Number.parseFloat(raw));});return numbersReady&&byId("sex").value!==""&&byId("activity").value!=="";}
+    function waterGain(carbs,sodium){const carbLow=carbs*.35*3/1000,carbHigh=carbs*.65*3/1000;let low=0,high=0;if(sodium>=5000){low=.8;high=2}else if(sodium>=3000){low=.5;high=1.3}else if(sodium>=1500){low=.2;high=.7}return{low:Math.max(0,carbLow+low+.2),high:Math.max(.2,carbHigh+high+.8)}}
+    function setMode(mode){goalMode=mode;byId("tabMaintenance").classList.toggle("active",mode==="maintenance");byId("tabPreserveCut").classList.toggle("active",mode==="preserveCut");byId("modeHint").textContent=mode==="maintenance"?"يحسب الحد بحيث لا يتجاوز متوسط الفترة سعرات الثبات.":"يحسب حدًا أقل للمحافظة على عجز التنشيف خلال الفترة.";calculate()}
+    function calculate(){if(!hasCompleteInputs()){resetResults();return;}const age=clamp(value("age"),13,80),weight=clamp(value("weight"),35,250),height=clamp(value("height"),120,230),activity=value("activity");const bmr=10*weight+6.25*height-5*age+(byId("sex").value==="male"?5:-161),maintenance=bmr*activity;const cut=Math.max(0,value("cutCalories")),days=clamp(rounded(value("prepDays")),1,14),reduction=Math.max(0,value("dailyCut")),before=Math.max(0,value("beforeMeal")),prep=Math.max(0,cut-reduction);const periodTarget=goalMode==="maintenance"?maintenance:cut;const rawLimit=periodTarget*(days+1)-(days*prep+before),limit=Math.max(0,rawLimit),dayTotal=before+limit,water=waterGain(value("carbs"),value("sodium")),ratio=maintenance>0?dayTotal/maintenance*100:0;
+      byId("maxMealOut").textContent=`${rounded(limit)} kcal`;byId("heroLimit").textContent=`${rounded(limit)} kcal`;byId("heroMini").textContent=goalMode==="maintenance"?"حسب سعرات الثبات":"مع المحافظة على التنشيف";byId("limitText").textContent=`لا تجعل الوجبة تتعدى ${rounded(limit)} kcal.`;byId("xOut").textContent=`${rounded(maintenance)} kcal`;byId("bmrOut").textContent=`${rounded(bmr)} kcal`;byId("cutOut").textContent=`${rounded(cut)} kcal`;byId("prepOut").textContent=`${rounded(prep)} kcal`;byId("dayOut").textContent=`${rounded(dayTotal)} kcal`;byId("waterOut").textContent=`${water.low.toFixed(1)}–${water.high.toFixed(1)} kg`;byId("progressLabel").textContent=`${rounded(ratio)}%`;byId("progressBar").style.width=`${clamp(ratio,0,100)}%`;
+      let className="notice",message=`حد الوجبة التقديري وفق المدخلات الحالية هو ${rounded(limit)} kcal.`;if(cut<bmr){className+=" warn";message=`تنبيه: سعرات التنشيف (${rounded(cut)}) أقل من BMR (${rounded(bmr)}). قد تكون الخطة قاسية وغير مناسبة.`}if(prep<bmr*.75){className="notice danger";message=`تنبيه قوي: سعرات أيام التجهيز (${rounded(prep)}) منخفضة جدًا مقارنة بـ BMR (${rounded(bmr)}).`}if(rawLimit<=0){className="notice danger";message="لا توجد مساحة للوجبة المفتوحة وفق هذه المدخلات. عدّل أيام التجهيز أو السعرات قبل الوجبة."}byId("message").className=className;byId("message").textContent=message;
+      let rows="";for(let day=1;day<=days;day++)rows+=`<tr><td>يوم تجهيز ${day}</td><td>${rounded(prep)} kcal</td></tr>`;rows+=`<tr><td>قبل الوجبة المفتوحة</td><td>${rounded(before)} kcal</td></tr><tr><td><strong>حد الوجبة المفتوحة</strong></td><td><strong>${rounded(limit)} kcal</strong></td></tr><tr><td>مجموع يوم الوجبة</td><td>${rounded(dayTotal)} kcal</td></tr>`;byId("tableBox").innerHTML=`<table><thead><tr><th>البند</th><th>القيمة</th></tr></thead><tbody>${rows}</tbody></table>`}
+    byId("tabMaintenance").addEventListener("click",()=>setMode("maintenance"));byId("tabPreserveCut").addEventListener("click",()=>setMode("preserveCut"));byId("calculateButton").addEventListener("click",calculate);document.querySelectorAll("input,select").forEach(element=>element.addEventListener("input",calculate));calculate();
+  </script>
+  </body>
+</html>

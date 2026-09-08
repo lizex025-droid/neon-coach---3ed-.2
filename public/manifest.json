@@ -1,0 +1,27 @@
+{
+  "name": "NEON COACH - مدربك وخطتك وتقدمك",
+  "short_name": "NEON COACH",
+  "description": "تطبيق تدريب وتغذية ذكي باللغة العربية مع خطط مخصصة وتتبع تقدم نيون متطور",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#020605",
+  "theme_color": "#55F7A5",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["fitness", "health", "lifestyle"]
+}

@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>60 Days Challenge</title>
+    <link rel="icon" type="image/svg+xml" href="./60-days-favicon.svg?v=2" />
+    <link rel="shortcut icon" href="./60-days-favicon.svg?v=2" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Sora:wght@700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="./styles/library.css" />
+    <style>
+      :root {
+        --bg: #020806;
+        --card: rgba(0, 0, 0, 0.72);
+        --card-soft: rgba(110, 231, 183, 0.06);
+        --stroke: rgba(110, 231, 183, 0.18);
+        --stroke-strong: rgba(110, 231, 183, 0.42);
+        --accent: #6ee7b7;
+        --accent2: #22c55e;
+        --text: #ecfff7;
+        --muted: rgba(207, 236, 224, 0.68);
+        --danger: #fb7185;
+        --shadow: 0 24px 58px rgba(0, 0, 0, 0.42);
+      }
+
+      * { box-sizing: border-box; }
+      html { min-height: 100%; background: #020403; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Cairo", "Sora", system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 16% 8%, rgba(110, 231, 183, 0.11), transparent 28%),
+          radial-gradient(circle at 88% 22%, rgba(34, 197, 94, 0.1), transparent 28%),
+          linear-gradient(135deg, #020806 0%, #03120c 46%, #010403 100%);
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(110, 231, 183, 0.16) 1px, transparent 1px);
+        background-size: 26px 26px;
+        opacity: 0.18;
+        mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.72) 48%, transparent 100%);
+      }
+
+      #vt-backdrop,
+      #vt-grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      #vt-backdrop {
+        z-index: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% -10%, rgba(110, 231, 183, 0.11), transparent 38%),
+          linear-gradient(180deg, rgba(3, 18, 12, 0.88), rgba(1, 4, 3, 0.98));
+      }
+
+      #vt-grain {
+        z-index: 0;
+        opacity: 0.08;
+        mix-blend-mode: screen;
+        background-image:
+          linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 42%),
+          radial-gradient(rgba(255, 255, 255, 0.18) 0.6px, transparent 0.8px);
+        background-size: 190px 190px, 22px 22px;
+      }
+
+      .wb-atmosphere,
+      .wb-mist,
+      .wb-mountains,
+      .wb-particles { position: absolute; inset: 0; }
+      .wb-atmosphere {
+        background:
+          radial-gradient(circle at 26% 24%, rgba(110, 231, 183, 0.16), transparent 28%),
+          radial-gradient(circle at 78% 36%, rgba(16, 185, 129, 0.12), transparent 26%),
+          radial-gradient(circle at 50% 100%, rgba(5, 42, 28, 0.78), transparent 48%);
+        filter: blur(2px);
+      }
+      .wb-mist {
+        opacity: 0.42;
+        background:
+          radial-gradient(ellipse at 30% 70%, rgba(110, 231, 183, 0.12), transparent 34%),
+          radial-gradient(ellipse at 76% 66%, rgba(20, 184, 166, 0.1), transparent 31%);
+        filter: blur(26px);
+        animation: mistDrift 12s ease-in-out infinite alternate;
+      }
+      .wb-mountains { top: auto; bottom: -1px; height: 36vh; opacity: 0.9; }
+      .wb-mountains svg { width: 100%; height: 100%; display: block; }
+      .wb-particles span {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: var(--accent);
+        opacity: 0.28;
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.72);
+        animation: particleFloat linear infinite;
+      }
+
+      @keyframes particleFloat {
+        from { transform: translate3d(0, 0, 0); opacity: 0; }
+        12% { opacity: 0.34; }
+        85% { opacity: 0.2; }
+        to { transform: translate3d(var(--dx), var(--dy), 0); opacity: 0; }
+      }
+      @keyframes mistDrift {
+        from { transform: translate3d(-12px, 8px, 0) scale(1); }
+        to { transform: translate3d(16px, -10px, 0) scale(1.05); }
+      }
+
+      .bg-orb {
+        position: fixed;
+        border-radius: 999px;
+        filter: blur(46px);
+        opacity: 0.28;
+        z-index: 0;
+        pointer-events: none;
+        animation: driftGlow 10s ease-in-out infinite alternate;
+      }
+      .orb-1 { width: 320px; height: 320px; background: #0f5f43; top: -90px; right: 180px; }
+      .orb-2 { width: 260px; height: 260px; background: #064e3b; bottom: 42px; right: 42px; animation-duration: 13s; }
+      .orb-3 { width: 240px; height: 240px; background: var(--accent); top: 40%; left: 50px; opacity: 0.13; animation-duration: 15s; }
+      @keyframes driftGlow {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(18px, -14px, 0) scale(1.06); }
+      }
+
+      .challenge-app {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .top-nav { display: flex; justify-content: center; margin-bottom: 22px; }
+      .nav-tabs {
+        display: inline-flex;
+        flex-direction: row;
+        gap: 10px;
+        direction: ltr;
+        background: rgba(1, 8, 5, 0.62);
+        border: 1px solid rgba(110, 231, 183, 0.16);
+        border-radius: 999px;
+        padding: 6px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        flex-wrap: wrap;
+        justify-content: center;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+      }
+      .nav-tab {
+        text-decoration: none;
+        direction: rtl;
+        color: var(--muted);
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: 0.2s ease;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+      .nav-tab.active,
+      .nav-tab:hover {
+        color: #dfffee;
+        background: rgba(110, 231, 183, 0.12);
+        border-color: rgba(110, 231, 183, 0.38);
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.1);
+      }
+
+      .hero,
+      .content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.55fr);
+        gap: 16px;
+        align-items: stretch;
+      }
+      .hero { margin-bottom: 16px; }
+
+      .panel {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--stroke);
+        border-radius: 18px;
+        background: var(--card);
+        backdrop-filter: blur(18px) saturate(1.2);
+        -webkit-backdrop-filter: blur(18px) saturate(1.2);
+        box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      }
+      .panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+          radial-gradient(circle at 12% 18%, rgba(110, 231, 183, 0.11), transparent 30%),
+          linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent 54%);
+      }
+
+      .hero-main {
+        padding: clamp(22px, 4vw, 38px);
+        min-height: 330px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 28px;
+      }
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--accent);
+        font: 800 13px/1 "JetBrains Mono", monospace;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(40px, 7vw, 86px);
+        line-height: 0.92;
+        letter-spacing: 0;
+        font-weight: 900;
+      }
+      .hero-copy {
+        margin: 12px 0 0;
+        max-width: 720px;
+        color: var(--muted);
+        font-size: clamp(15px, 2vw, 18px);
+        line-height: 1.75;
+      }
+
+      .hero-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .metric {
+        min-height: 84px;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(110, 231, 183, 0.16);
+        background: var(--card-soft);
+        display: grid;
+        gap: 4px;
+      }
+      .metric span { color: var(--muted); font-size: 12px; font-weight: 700; }
+      .metric strong {
+        direction: ltr;
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        font-size: clamp(18px, 3vw, 28px);
+      }
+
+      .ring-card {
+        padding: 22px;
+        display: grid;
+        align-content: center;
+        gap: 22px;
+      }
+      .progress-ring {
+        --progress: 0deg;
+        width: min(250px, 72vw);
+        aspect-ratio: 1;
+        margin: 0 auto;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at center, #06120d 0 58%, transparent 59%),
+          conic-gradient(var(--accent) var(--progress), rgba(110, 231, 183, 0.12) 0);
+        border: 1px solid rgba(110, 231, 183, 0.24);
+        box-shadow: 0 0 42px rgba(110, 231, 183, 0.12);
+      }
+      .ring-inner { text-align: center; display: grid; gap: 5px; }
+      .ring-inner b { direction: ltr; font: 900 clamp(46px, 8vw, 72px)/1 "Sora", sans-serif; }
+      .ring-inner span { color: var(--muted); font-size: 14px; }
+
+      .daily-score { display: grid; gap: 8px; }
+      .score-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-weight: 700; }
+      .score-row strong { direction: ltr; color: var(--accent); font-family: "JetBrains Mono", monospace; }
+      .bar {
+        height: 12px;
+        overflow: hidden;
+        border-radius: 999px;
+        border: 1px solid rgba(110, 231, 183, 0.18);
+        background: rgba(110, 231, 183, 0.08);
+      }
+      .bar span {
+        display: block;
+        height: 100%;
+        width: 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent2), var(--accent));
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.35);
+        transition: width 0.25s ease;
+      }
+
+      .content-grid { align-items: start; }
+      .section { padding: 18px; }
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .section-head h2 { margin: 0; font-size: clamp(24px, 4vw, 36px); line-height: 1.1; }
+      .section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+
+      .tasks { display: grid; gap: 10px; }
+      .task {
+        display: grid;
+        grid-template-columns: 54px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        min-height: 82px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(110, 231, 183, 0.14);
+        background: rgba(110, 231, 183, 0.045);
+        transition: 0.2s ease;
+      }
+      .task.done {
+        border-color: var(--stroke-strong);
+        background: rgba(110, 231, 183, 0.105);
+      }
+      .check {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: 1px solid rgba(110, 231, 183, 0.32);
+        background: rgba(110, 231, 183, 0.07);
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 22px;
+        font-weight: 900;
+        font-family: inherit;
+        display: grid;
+        place-items: center;
+        transition: 0.2s ease;
+      }
+      .task.done .check {
+        color: #042a1c;
+        background: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 0 20px rgba(110, 231, 183, 0.24);
+      }
+      .task-title {
+        margin: 0;
+        color: var(--text);
+        font-size: clamp(16px, 2.4vw, 20px);
+        font-weight: 900;
+        line-height: 1.35;
+      }
+      .task-note { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .task-tag {
+        direction: ltr;
+        min-width: 58px;
+        text-align: center;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(110, 231, 183, 0.2);
+        color: var(--accent);
+        background: rgba(110, 231, 183, 0.07);
+        font: 800 12px/1 "JetBrains Mono", monospace;
+      }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+      .action-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(110, 231, 183, 0.24);
+        background: rgba(110, 231, 183, 0.07);
+        color: var(--text);
+        font-family: inherit;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .action-btn.primary { background: var(--accent); color: #042a1c; border-color: var(--accent); }
+      .action-btn.danger { color: #fecdd3; border-color: rgba(251, 113, 133, 0.35); background: rgba(251, 113, 133, 0.08); }
+
+      .side-stack { display: grid; gap: 16px; }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .day-cell {
+        direction: ltr;
+        aspect-ratio: 1;
+        border: 1px solid rgba(110, 231, 183, 0.14);
+        border-radius: 12px;
+        background: rgba(110, 231, 183, 0.045);
+        color: var(--muted);
+        font: 800 12px/1 "JetBrains Mono", monospace;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+      }
+      .day-cell.today { color: #042a1c; background: var(--accent); border-color: var(--accent); }
+      .day-cell.complete:not(.today) { color: var(--accent); border-color: var(--stroke-strong); background: rgba(110, 231, 183, 0.13); }
+      .day-cell.selected { outline: 2px solid rgba(255, 255, 255, 0.7); outline-offset: 2px; }
+
+      .stats-list { display: grid; gap: 10px; }
+      .stat-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(110, 231, 183, 0.13);
+        background: rgba(110, 231, 183, 0.045);
+      }
+      .stat-line span { color: var(--muted); font-weight: 700; }
+      .stat-line strong { direction: ltr; color: var(--text); font-family: "JetBrains Mono", monospace; }
+      .viewing-note { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+      @media (max-width: 920px) {
+        .hero,
+        .content-grid { grid-template-columns: 1fr; }
+        .hero-main { min-height: 0; }
+      }
+      @media (max-width: 640px) {
+        .challenge-app {
+          width: min(100% - 20px, 1180px);
+          padding-top: 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        .top-nav {
+          order: 0;
+          margin-bottom: 0;
+        }
+        .nav-tabs {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          width: 100%;
+          gap: 6px;
+          border-radius: 18px;
+          padding: 5px;
+        }
+        .nav-tab {
+          min-width: 0;
+          min-height: 38px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 6px;
+          text-align: center;
+          white-space: normal;
+          font-size: 12px;
+          line-height: 1.25;
+        }
+        .hero,
+        .content-grid {
+          display: contents !important;
+        }
+        .ring-card {
+          order: 1 !important;
+        }
+        .content-grid > .panel.section {
+          order: 2 !important;
+        }
+        .hero-main {
+          order: 3 !important;
+          min-height: 0;
+          padding: 20px 16px;
+        }
+        .side-stack {
+          order: 4 !important;
+        }
+        .hero-meta {
+          grid-template-columns: 1fr;
+          gap: 9px;
+        }
+        .hero-main h1 {
+          font-size: clamp(34px, 13vw, 54px);
+        }
+        .metric {
+          min-height: 72px;
+          padding: 12px 14px;
+        }
+        .metric span,
+        .metric strong {
+          display: block;
+        }
+        .metric strong {
+          margin-top: 2px;
+          font-size: 26px;
+        }
+        .task { grid-template-columns: 48px minmax(0, 1fr); }
+        .task-tag { grid-column: 1 / -1; justify-self: start; }
+        .calendar-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        .section-head { align-items: start; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="vt-backdrop" aria-hidden="true">
+      <div class="wb-atmosphere"></div>
+      <div class="wb-mist"></div>
+      <div class="wb-mountains">
+        <svg viewBox="0 0 1440 360" preserveAspectRatio="none">
+          <path d="M0 250 L110 280 L260 210 L420 250 L560 190 L720 235 L900 175 L1080 220 L1240 195 L1440 230 L1440 360 L0 360 Z" fill="rgba(5, 22, 16, 0.78)" />
+          <path d="M0 292 L130 305 L300 260 L520 300 L760 258 L950 292 L1140 258 L1320 300 L1440 276 L1440 360 L0 360 Z" fill="rgba(2, 14, 10, 0.92)" />
+        </svg>
+      </div>
+      <div class="wb-particles">
+        <span style="left:7%;top:13%;--dx:18px;--dy:-86vh;animation-duration:20s"></span>
+        <span style="left:18%;top:62%;--dx:-12px;--dy:-90vh;animation-duration:26s"></span>
+        <span style="left:29%;top:31%;--dx:22px;--dy:-80vh;animation-duration:22s"></span>
+        <span style="left:43%;top:78%;--dx:-18px;--dy:-96vh;animation-duration:28s"></span>
+        <span style="left:56%;top:22%;--dx:14px;--dy:-82vh;animation-duration:24s"></span>
+        <span style="left:68%;top:48%;--dx:-16px;--dy:-88vh;animation-duration:23s"></span>
+        <span style="left:81%;top:26%;--dx:20px;--dy:-94vh;animation-duration:27s"></span>
+        <span style="left:94%;top:72%;--dx:-10px;--dy:-85vh;animation-duration:21s"></span>
+      </div>
+    </div>
+    <div id="vt-grain" aria-hidden="true"></div>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <main class="challenge-app">
+      <nav class="top-nav" aria-label="Navigation">
+        <div class="nav-tabs" dir="ltr">
+          <a class="nav-tab" href="pdfs.html">تدريب</a>
+          <a class="nav-tab" href="manga-viewer.html?book=workout">التمارين</a>
+          <a class="nav-tab active" href="60%20days%20chalnge.html">60 يوم</a>
+          <a class="nav-tab" href="../index.html">الانتاجية</a>
+        </div>
+      </nav>
+
+      <section class="hero">
+        <div class="panel hero-main">
+          <div>
+            <p class="eyebrow">60 DAYS CHALLENGE</p>
+            <h1>تحدي 60 يوم</h1>
+          </div>
+          <div class="hero-meta">
+            <div class="metric"><span>اليوم الحالي</span><strong id="dayNumber">01 / 60</strong></div>
+            <div class="metric"><span>الأيام المتبقية</span><strong id="daysLeft">59</strong></div>
+            <div class="metric"><span>نهاية التحدي</span><strong id="endDate">--</strong></div>
+          </div>
+        </div>
+
+        <aside class="panel ring-card">
+          <div class="progress-ring" id="progressRing">
+            <div class="ring-inner"><b id="totalPercent">0%</b><span>إنجاز التحدي</span></div>
+          </div>
+          <div class="daily-score">
+            <div class="score-row"><span id="viewingDayLabel">Checklist اليوم</span><strong id="dailyScore">0 / 5</strong></div>
+            <div class="bar"><span id="dailyBar"></span></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel section">
+          <div class="section-head">
+            <div>
+              <h2 id="checklistTitle">مهام اليوم</h2>
+              <p id="dateLabel">--</p>
+            </div>
+            <p id="autoLabel">يتحدث تلقائياً عند دخول يوم جديد</p>
+          </div>
+          <div class="tasks" id="tasks"></div>
+          <div class="actions">
+            <button class="action-btn primary" type="button" id="completeAllBtn">خلصت كل مهام اليوم</button>
+            <button class="action-btn" type="button" id="todayBtn">ارجع لليوم الحالي</button>
+            <button class="action-btn" type="button" id="resetDayBtn">إعادة ضبط هذا اليوم</button>
+            <button class="action-btn danger" type="button" id="resetChallengeBtn">إعادة التحدي من اليوم</button>
+          </div>
+          <p class="viewing-note" id="viewingNote"></p>
+        </div>
+
+        <aside class="side-stack">
+          <section class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>الأيام</h2>
+                <p>اضغط على أي يوم لمراجعة أو تعديل checklist الخاصة فيه.</p>
+              </div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+          </section>
+          <section class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>الملخص</h2>
+                <p>محسوب من الأيام المحفوظة داخل المتصفح.</p>
+              </div>
+            </div>
+            <div class="stats-list">
+              <div class="stat-line"><span>أيام مكتملة 100%</span><strong id="fullDays">0</strong></div>
+              <div class="stat-line"><span>مجموع المهام المنجزة</span><strong id="doneTasks">0 / 300</strong></div>
+              <div class="stat-line"><span>تاريخ البداية</span><strong id="startDate">--</strong></div>
+              <div class="stat-line"><span>تذكير التلغرام</span><strong id="telegramStatus">--</strong></div>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        const STORAGE_KEY = "ahed_60_days_challenge_v1";
+        const TOTAL_DAYS = 60;
+        const MAX_TIMEOUT = 2_147_000_000;
+        const TELEGRAM_BOT_TOKEN = "7938575887:AAHdajmPQMC5QFnaWnFMFyERQUKHH3XiXYU";
+        const TELEGRAM_CHAT_ID = "7706605238";
+        const END_DAY_REMINDERS = [
+          { id: "threeHours", minutesBeforeEnd: 180, label: "باقي 3 ساعات على نهاية اليوم" },
+          { id: "oneHour", minutesBeforeEnd: 60, label: "باقي ساعة على نهاية اليوم" },
+          { id: "twentyMinutes", minutesBeforeEnd: 20, label: "باقي 20 دقيقة على نهاية اليوم" }
+        ];
+        const TASKS = [
+          { id: "meal", tag: "MEAL", title: "50 غم رز + 250 غم صدر دجاج + صحن سلطة", note: "سجلها بعد الوجبة الأساسية حتى يثبت اليوم." },
+          { id: "supplements", tag: "SUPP", title: "5 غم كرياتين قبل التمرين + 5 غم بعد التمرين + حبتين L-Carnitine قبل الكارديو", note: "تأكد من توقيت المكملات حول التمرين والكارديو." },
+          { id: "cardio", tag: "45M", title: "كارديو 45 دقيقة يومياً", note: "أي نوع كارديو مناسب، المهم تكمل 45 دقيقة." },
+          { id: "workout", tag: "2X", title: "أغلب التمارين جولتين", note: "اعتمد جولتين لمعظم التمارين حسب خطتك في صفحة التمرين." },
+          { id: "steps", tag: "7K", title: "7000 خطوة يومياً", note: "حدثها آخر اليوم أو بعد ما توصل الرقم." }
+        ];
+
+        const $ = (id) => document.getElementById(id);
+        const els = {
+          dayNumber: $("dayNumber"),
+          daysLeft: $("daysLeft"),
+          endDate: $("endDate"),
+          totalPercent: $("totalPercent"),
+          progressRing: $("progressRing"),
+          dailyScore: $("dailyScore"),
+          dailyBar: $("dailyBar"),
+          viewingDayLabel: $("viewingDayLabel"),
+          checklistTitle: $("checklistTitle"),
+          dateLabel: $("dateLabel"),
+          autoLabel: $("autoLabel"),
+          tasks: $("tasks"),
+          completeAllBtn: $("completeAllBtn"),
+          todayBtn: $("todayBtn"),
+          resetDayBtn: $("resetDayBtn"),
+          resetChallengeBtn: $("resetChallengeBtn"),
+          viewingNote: $("viewingNote"),
+          calendarGrid: $("calendarGrid"),
+          fullDays: $("fullDays"),
+          doneTasks: $("doneTasks"),
+          startDate: $("startDate"),
+          telegramStatus: $("telegramStatus")
+        };
+
+        function localISO(date = new Date()) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        }
+
+        function parseISO(value) {
+          const date = new Date(`${value}T12:00:00`);
+          return Number.isNaN(date.getTime()) ? new Date() : date;
+        }
+
+        function addDays(value, amount) {
+          const date = parseISO(value);
+          date.setDate(date.getDate() + amount);
+          return localISO(date);
+        }
+
+        function diffDays(fromISO, toISO) {
+          const from = parseISO(fromISO);
+          const to = parseISO(toISO);
+          from.setHours(0, 0, 0, 0);
+          to.setHours(0, 0, 0, 0);
+          return Math.floor((to - from) / 86400000);
+        }
+
+        function formatDate(value) {
+          return parseISO(value).toLocaleDateString("ar-JO", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+        }
+
+        function compactDate(value) {
+          return parseISO(value).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" });
+        }
+
+        function loadState() {
+          try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            if (saved && saved.startDate && saved.days && typeof saved.days === "object") return saved;
+          } catch (error) {}
+          return { startDate: localISO(), days: {} };
+        }
+
+        let state = loadState();
+        let selectedDay = getCurrentDay();
+        let lastTodayISO = localISO();
+        let telegramTimers = [];
+
+        function saveState() {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function endOfToday() {
+          const end = new Date();
+          end.setDate(end.getDate() + 1);
+          end.setHours(0, 0, 0, 0);
+          return end;
+        }
+
+        function getCurrentDay() {
+          const day = diffDays(state.startDate, localISO()) + 1;
+          return Math.max(1, Math.min(TOTAL_DAYS, day));
+        }
+
+        function challengeIsActiveToday() {
+          const dayOffset = diffDays(state.startDate, localISO());
+          return dayOffset >= 0 && dayOffset < TOTAL_DAYS;
+        }
+
+        function getDayDate(day) {
+          return addDays(state.startDate, day - 1);
+        }
+
+        function getDayData(day) {
+          const key = `day_${day}`;
+          if (!state.days[key]) state.days[key] = { date: getDayDate(day), done: {} };
+          return state.days[key];
+        }
+
+        function countDone(day) {
+          const data = getDayData(day);
+          return TASKS.filter((task) => data.done[task.id]).length;
+        }
+
+        function incompleteTasks(day) {
+          const data = getDayData(day);
+          return TASKS.filter((task) => !data.done[task.id]);
+        }
+
+        function reminderBucket(date = localISO()) {
+          state.telegramReminders = state.telegramReminders || {};
+          state.telegramReminders[date] = state.telegramReminders[date] || {};
+          return state.telegramReminders[date];
+        }
+
+        async function sendTelegramMessage(text) {
+          try {
+            const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
+            });
+            return response.ok;
+          } catch (error) {
+            console.error("تعذر إرسال تذكير Telegram:", error);
+            return false;
+          }
+        }
+
+        function telegramStatusText() {
+          const currentDay = getCurrentDay();
+          if (!challengeIsActiveToday()) return "انتهى التحدي";
+          if (currentDay >= TOTAL_DAYS && countDone(TOTAL_DAYS) === TASKS.length) return "مكتمل";
+          if (incompleteTasks(currentDay).length === 0) return "لا يوجد مهام ناقصة";
+
+          const now = Date.now();
+          const end = endOfToday().getTime();
+          const next = END_DAY_REMINDERS
+            .map((item) => ({ ...item, at: end - item.minutesBeforeEnd * 60_000 }))
+            .find((item) => item.at > now);
+
+          if (!next) return "انتهت تذكيرات اليوم";
+          return new Date(next.at).toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" });
+        }
+
+        async function fireTelegramReminder(reminder) {
+          const currentDay = getCurrentDay();
+          if (!challengeIsActiveToday() || currentDay < 1 || currentDay > TOTAL_DAYS) return;
+
+          const today = localISO();
+          const sent = reminderBucket(today);
+          if (sent[reminder.id]) return;
+
+          const missing = incompleteTasks(currentDay);
+          if (missing.length === 0) {
+            sent[reminder.id] = true;
+            saveState();
+            renderSummary();
+            return;
+          }
+
+          const message = [
+            "⏰ تذكير تحدي 60 يوم",
+            `اليوم: ${currentDay} / ${TOTAL_DAYS}`,
+            `التنبيه: ${reminder.label}`,
+            "",
+            "المهام المتبقية:",
+            ...missing.map((task, index) => `${index + 1}. ${task.title}`)
+          ].join("\n");
+
+          const delivered = await sendTelegramMessage(message);
+          if (!delivered) return;
+
+          sent[reminder.id] = true;
+          saveState();
+          renderSummary();
+        }
+
+        function clearTelegramTimers() {
+          telegramTimers.forEach((timer) => clearTimeout(timer));
+          telegramTimers = [];
+        }
+
+        function checkDueTelegramReminders() {
+          const now = Date.now();
+          const end = endOfToday().getTime();
+          END_DAY_REMINDERS.forEach((reminder) => {
+            const fireAt = end - reminder.minutesBeforeEnd * 60_000;
+            if (now >= fireAt && now <= fireAt + 90_000) void fireTelegramReminder(reminder);
+          });
+        }
+
+        function scheduleTelegramReminders() {
+          clearTelegramTimers();
+          if (!challengeIsActiveToday()) return;
+          const now = Date.now();
+          const end = endOfToday().getTime();
+
+          END_DAY_REMINDERS.forEach((reminder) => {
+            const fireAt = end - reminder.minutesBeforeEnd * 60_000;
+            const delay = fireAt - now;
+            if (delay <= 0 || delay > MAX_TIMEOUT) return;
+            telegramTimers.push(setTimeout(() => void fireTelegramReminder(reminder), delay));
+          });
+
+          checkDueTelegramReminders();
+        }
+
+        function totalDoneTasks() {
+          let total = 0;
+          for (let day = 1; day <= TOTAL_DAYS; day += 1) total += countDone(day);
+          return total;
+        }
+
+        function completedDays() {
+          let total = 0;
+          for (let day = 1; day <= TOTAL_DAYS; day += 1) {
+            if (countDone(day) === TASKS.length) total += 1;
+          }
+          return total;
+        }
+
+        function renderTasks() {
+          const data = getDayData(selectedDay);
+          els.tasks.innerHTML = TASKS.map((task) => {
+            const done = !!data.done[task.id];
+            return `
+              <article class="task ${done ? "done" : ""}" data-task-id="${task.id}">
+                <button class="check" type="button" aria-label="toggle ${task.id}">${done ? "✓" : ""}</button>
+                <div>
+                  <h3 class="task-title">${task.title}</h3>
+                  <p class="task-note">${task.note}</p>
+                </div>
+                <span class="task-tag">${task.tag}</span>
+              </article>
+            `;
+          }).join("");
+        }
+
+        function renderCalendar() {
+          const currentDay = getCurrentDay();
+          els.calendarGrid.innerHTML = "";
+          for (let day = 1; day <= TOTAL_DAYS; day += 1) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "day-cell";
+            button.textContent = String(day).padStart(2, "0");
+            button.dataset.day = String(day);
+            if (day === currentDay) button.classList.add("today");
+            if (day === selectedDay) button.classList.add("selected");
+            if (countDone(day) === TASKS.length) button.classList.add("complete");
+            els.calendarGrid.appendChild(button);
+          }
+        }
+
+        function renderSummary() {
+          const currentDay = getCurrentDay();
+          const selectedDate = getDayDate(selectedDay);
+          const endDate = getDayDate(TOTAL_DAYS);
+          const doneToday = countDone(selectedDay);
+          const totalDone = totalDoneTasks();
+          const dailyPercent = Math.round((doneToday / TASKS.length) * 100);
+          const totalPercent = Math.round((totalDone / (TASKS.length * TOTAL_DAYS)) * 100);
+          const isViewingToday = selectedDay === currentDay;
+
+          els.dayNumber.textContent = `${String(currentDay).padStart(2, "0")} / ${TOTAL_DAYS}`;
+          els.daysLeft.textContent = String(Math.max(0, TOTAL_DAYS - currentDay));
+          els.endDate.textContent = compactDate(endDate);
+          els.totalPercent.textContent = `${totalPercent}%`;
+          els.progressRing.style.setProperty("--progress", `${totalPercent * 3.6}deg`);
+          els.dailyScore.textContent = `${doneToday} / ${TASKS.length}`;
+          els.dailyBar.style.width = `${dailyPercent}%`;
+          els.viewingDayLabel.textContent = isViewingToday ? "Checklist اليوم" : `Checklist يوم ${selectedDay}`;
+          els.checklistTitle.textContent = isViewingToday ? "مهام اليوم" : `مهام يوم ${selectedDay}`;
+          els.dateLabel.textContent = formatDate(selectedDate);
+          els.autoLabel.textContent = currentDay >= TOTAL_DAYS ? "وصلت لآخر يوم في التحدي" : "يتحدث تلقائياً عند دخول يوم جديد";
+          els.fullDays.textContent = String(completedDays());
+          els.doneTasks.textContent = `${totalDone} / ${TASKS.length * TOTAL_DAYS}`;
+          els.startDate.textContent = compactDate(state.startDate);
+          els.telegramStatus.textContent = telegramStatusText();
+          els.viewingNote.textContent = isViewingToday
+            ? "أنت الآن على يومك الحالي. عند منتصف الليل ستظهر checklist اليوم التالي تلقائياً."
+            : "أنت تراجع يوم سابق أو يوم قادم. استخدم زر الرجوع لليوم الحالي للمتابعة اليومية.";
+        }
+
+        function render() {
+          selectedDay = Math.max(1, Math.min(TOTAL_DAYS, selectedDay));
+          renderTasks();
+          renderCalendar();
+          renderSummary();
+          saveState();
+        }
+
+        els.tasks.addEventListener("click", (event) => {
+          const button = event.target.closest(".check");
+          if (!button) return;
+          const taskId = button.closest(".task")?.dataset.taskId;
+          if (!taskId) return;
+          const data = getDayData(selectedDay);
+          data.done[taskId] = !data.done[taskId];
+          render();
+        });
+
+        els.calendarGrid.addEventListener("click", (event) => {
+          const button = event.target.closest(".day-cell");
+          if (!button) return;
+          selectedDay = Number(button.dataset.day) || getCurrentDay();
+          render();
+        });
+
+        els.completeAllBtn.addEventListener("click", () => {
+          const data = getDayData(selectedDay);
+          TASKS.forEach((task) => { data.done[task.id] = true; });
+          render();
+        });
+
+        els.todayBtn.addEventListener("click", () => {
+          selectedDay = getCurrentDay();
+          render();
+        });
+
+        els.resetDayBtn.addEventListener("click", () => {
+          getDayData(selectedDay).done = {};
+          render();
+        });
+
+        els.resetChallengeBtn.addEventListener("click", () => {
+          if (!window.confirm("بدك تعيد التحدي من اليوم وتمسح كل الإنجاز السابق؟")) return;
+          state = { startDate: localISO(), days: {} };
+          selectedDay = 1;
+          lastTodayISO = localISO();
+          render();
+        });
+
+        setInterval(() => {
+          const todayISO = localISO();
+          if (todayISO !== lastTodayISO) {
+            lastTodayISO = todayISO;
+            selectedDay = getCurrentDay();
+            render();
+            scheduleTelegramReminders();
+          } else {
+            checkDueTelegramReminders();
+            renderSummary();
+            renderCalendar();
+          }
+        }, 60000);
+
+        render();
+        scheduleTelegramReminders();
+      })();
+    </script>
+  </body>
+</html>

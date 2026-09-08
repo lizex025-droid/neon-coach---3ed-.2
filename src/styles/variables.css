@@ -1,0 +1,70 @@
+/* NEON COACH - Design System Variables */
+:root {
+  /* Color Palette */
+  --bg-main: #020605;
+  --bg-card: #07100D;
+  --bg-card-alt: #08130F;
+  --bg-card-hover: #0c1c16;
+  --bg-input: #050d09;
+  --bg-elevated: #0d1e16;
+
+  /* Neon Brand Accents */
+  --neon-primary: #55F7A5;
+  --neon-secondary: #21D978;
+  --neon-dim: rgba(85, 247, 165, 0.12);
+  --neon-glow: 0 0 20px rgba(85, 247, 165, 0.28);
+  --neon-glow-lg: 0 0 32px rgba(85, 247, 165, 0.45);
+  --neon-glow-btn: 0 4px 20px rgba(85, 247, 165, 0.35);
+
+  /* Border & Strokes */
+  --border-neon: 1px solid rgba(85, 247, 165, 0.22);
+  --border-neon-subtle: 1px solid rgba(85, 247, 165, 0.12);
+  --border-neon-active: 1px solid rgba(85, 247, 165, 0.65);
+  --border-card: 1px solid rgba(85, 247, 165, 0.18);
+
+  /* Text & Typography */
+  --text-main: #FFFFFF;
+  --text-muted: #B8C0BC;
+  --text-dim: rgba(184, 192, 188, 0.6);
+  --text-dark: #020605;
+
+  /* Status Colors */
+  --status-danger: #FF4D4D;
+  --status-danger-bg: rgba(255, 77, 77, 0.12);
+  --status-warning: #F59E0B;
+  --status-warning-bg: rgba(245, 158, 11, 0.12);
+  --status-info: #38BDF8;
+  --status-success: #55F7A5;
+
+  /* Geometry & Radii (18px - 28px as required) */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Safe Areas */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* Heights */
+  --nav-height: 68px;
+  --header-height: 64px;
+
+  /* Shadows */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.85);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}

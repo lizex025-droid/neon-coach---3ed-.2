@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Caffeine</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<link rel="stylesheet" href="vitality-theme.css">
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger: #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) calc(82px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes drift {
+  0% { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-22px, 14px, 0); }
+}
+.page { max-width: 1100px; margin: 0 auto; }
+.site-nav {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.site-nav-tabs {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  direction: ltr;
+  padding: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+}
+.site-nav-tab {
+  flex: 1 1 0;
+  min-width: 90px;
+  direction: rtl;
+  text-align: center;
+  text-decoration: none;
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  border-radius: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.site-nav-tab:hover,
+.site-nav-tab.active {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+}
+.dash-title {
+  margin: 0 0 14px;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.section { margin-top: 16px; }
+.section-title {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+}
+.section-title::before {
+  content: ''; width: 18px; height: 1px;
+  background: var(--text-tertiary); opacity: 0.6;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+}
+.gm-card {
+  position: relative;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+.day-grid {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+.energy-ring {
+  position: relative;
+  width: 204px; height: 204px;
+  margin: 0 auto;
+}
+.energy-ring svg { width: 100%; height: 100%; display: block; }
+.ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 10; }
+.ring-fill {
+  fill: none; stroke-width: 10; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 60px 60px;
+  transition: stroke 0.2s, stroke-dashoffset 0.25s;
+  filter: drop-shadow(0 0 7px currentColor);
+}
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.energy-score {
+  font-size: 46px; font-weight: 800;
+  letter-spacing: -0.05em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.energy-state {
+  margin-top: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.ring-note {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+.curve-top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px;
+}
+.curve-readout {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12px; font-weight: 700;
+  color: var(--text-secondary);
+}
+.seg {
+  display: inline-flex; gap: 3px; padding: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.035);
+}
+.seg-btn {
+  height: 32px; min-width: 58px; padding: 0 12px;
+  border: 0; border-radius: 8px;
+  background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 12px; font-weight: 750;
+  cursor: pointer;
+}
+.seg-btn.active {
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B;
+}
+.chart-wrap {
+  position: relative;
+  min-height: 262px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.20);
+  overflow: hidden;
+}
+#energySvg {
+  display: block;
+  width: 100%;
+  height: 262px;
+  touch-action: none;
+}
+.chart-axis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 8px 14px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 700;
+  color: var(--text-tertiary);
+}
+.chart-axis span:nth-child(2),
+.chart-axis span:nth-child(3),
+.chart-axis span:nth-child(4) { text-align: center; }
+.chart-axis span:last-child { text-align: right; }
+.footer-band {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.band-item,
+.smart-tile,
+.stat,
+.drink-card,
+.log-row {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.035);
+}
+.band-item { padding: 13px; }
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.value {
+  margin-top: 6px;
+  color: var(--text-primary);
+  font-size: 18px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.smart-grid,
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.smart-tile,
+.stat { padding: 15px; min-width: 0; }
+.tile-main {
+  margin-top: 8px;
+  color: var(--text-primary);
+  font-size: 22px; font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.tile-sub {
+  margin-top: 5px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.tips {
+  margin: 14px 0 0; padding: 0; list-style: none;
+  display: grid; gap: 8px;
+}
+.tips li {
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+  color: var(--text-secondary);
+  font-size: 13px; line-height: 1.45;
+}
+.mg-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin: 14px 0;
+}
+.mg-fill {
+  width: 0; height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+  box-shadow: 0 0 14px rgba(107,227,164,0.36);
+  transition: width 0.25s, background 0.25s;
+}
+.today-note {
+  color: var(--text-tertiary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.log-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.search-input,
+.custom-input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.search-input:focus,
+.custom-input:focus {
+  border-color: rgba(255,255,255,0.28);
+  background: rgba(0,0,0,0.36);
+}
+.drink-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(166px, 1fr));
+  gap: 8px;
+  max-height: 342px;
+  overflow: auto;
+  padding-right: 2px;
+}
+.drink-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 11px;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.drink-card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(201,163,107,0.35);
+}
+.drink-emoji { font-size: 20px; filter: drop-shadow(0 0 8px rgba(201,163,107,0.45)); }
+.drink-name { color: var(--text-primary); font-weight: 750; font-size: 13px; }
+.drink-mg { margin-top: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+.custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px auto;
+  gap: 8px;
+}
+.btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B;
+  font-family: inherit; font-size: 13px; font-weight: 800;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.35), 0 8px 22px rgba(0,0,0,0.25);
+}
+.btn-ghost {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: none;
+}
+.log-list {
+  display: grid;
+  gap: 8px;
+}
+.log-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 13px;
+}
+.log-title {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+.log-meta {
+  margin-top: 5px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.delete-btn {
+  width: 36px; height: 36px;
+  border: 0; border-radius: 10px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 20px;
+  cursor: pointer;
+}
+.delete-btn:hover { color: var(--danger); background: rgba(255,255,255,0.04); }
+.empty {
+  text-align: center;
+  padding: 18px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  font-style: italic;
+}
+@media (max-width: 820px) {
+  .day-grid,
+  .footer-band,
+  .smart-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .curve-top { align-items: stretch; flex-direction: column; }
+  .seg { width: 100%; }
+  .seg-btn { flex: 1; }
+}
+@media (max-width: 520px) {
+  body { padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) calc(72px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
+  .dash-title { font-size: 22px; }
+  .gm-card { padding: 16px; }
+  .custom-row { grid-template-columns: 1fr; }
+  .energy-ring { width: 178px; height: 178px; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <nav class="site-nav" aria-label="Navigation">
+    <div class="site-nav-tabs">
+      <a class="site-nav-tab active" href="public/pdfs.html">تدريب</a>
+      <a class="site-nav-tab" href="gpa.html">حاسبة المعدل</a>
+      <a class="site-nav-tab" href="index.html">الانتاجية</a>
+    </div>
+  </nav>
+
+  <h1 class="dash-title">Caffeine</h1>
+
+  <section class="section">
+    <div class="section-title">Your Day</div>
+    <div class="gm-card">
+      <div class="day-grid">
+        <div>
+          <div class="energy-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="ring-center">
+              <div class="energy-score" id="energyScore">--</div>
+              <div class="energy-state" id="energyState">RIGHT NOW</div>
+            </div>
+          </div>
+          <div class="ring-note">
+            <strong id="scrubTime">Right now</strong><br>
+            Hover/drag the curve
+          </div>
+        </div>
+        <div>
+          <div class="curve-top">
+            <div class="curve-readout" id="curveReadout">Loading energy curve...</div>
+            <div class="seg" role="group" aria-label="Curve mode">
+              <button class="seg-btn active" type="button" data-mode="line">Line</button>
+              <button class="seg-btn" type="button" data-mode="bars">Bars</button>
+              <button class="seg-btn" type="button" data-mode="stack">Stack</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="energySvg" viewBox="0 0 720 250" preserveAspectRatio="none" aria-label="Energy curve"></svg>
+            <div class="chart-axis"><span>12A</span><span>6A</span><span>12P</span><span>6P</span><span>12A</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-band">
+        <div class="band-item"><div class="label">Peak focus window</div><div class="value" id="peakWindow">--</div></div>
+        <div class="band-item"><div class="label">Predicted crash</div><div class="value" id="crashWindow">--</div></div>
+        <div class="band-item"><div class="label">Last coffee by</div><div class="value" id="lastCoffeeBy">--</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">Smart Timing</div>
+    <div class="gm-card">
+      <div class="smart-grid">
+        <div class="smart-tile"><div class="label">Most productive</div><div class="tile-main" id="bestTime">--</div><div class="tile-sub" id="bestSub">--</div></div>
+        <div class="smart-tile"><div class="label">You'll crash</div><div class="tile-main" id="crashTime">--</div><div class="tile-sub" id="crashSub">--</div></div>
+        <div class="smart-tile"><div class="label">Coffee cutoff</div><div class="tile-main" id="cutoffTime">--</div><div class="tile-sub">Stay under 30 mg by bedtime.</div></div>
+      </div>
+      <ul class="tips" id="tipsList"></ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">Today</div>
+    <div class="gm-card">
+      <div class="stats-grid">
+        <div class="stat"><div class="label">Logged today</div><div class="value" id="todayMg">0 mg</div></div>
+        <div class="stat"><div class="label">Active now</div><div class="value" id="activeMg">0 mg</div></div>
+        <div class="stat"><div class="label">Personal limit</div><div class="value" id="limitMg">400 mg</div></div>
+      </div>
+      <div class="mg-bar"><div class="mg-fill" id="mgFill"></div></div>
+      <div class="today-note" id="todayNote">Loading personalized limit...</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">Log a Drink</div>
+    <div class="gm-card">
+      <div class="log-tools">
+        <input class="search-input" id="drinkSearch" type="search" placeholder="Search coffee, tea, soda, pre-workout..." autocomplete="off">
+        <div class="drink-grid" id="drinkGrid"></div>
+        <div class="custom-row">
+          <input class="custom-input" id="customName" type="text" placeholder="Custom drink name">
+          <input class="custom-input" id="customMg" type="number" min="0" step="1" placeholder="mg">
+          <button class="btn" id="customAdd" type="button">Add</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">Logged Today</div>
+    <div class="gm-card">
+      <div class="log-list" id="logList"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  const LOG_KEY = 'caf:logs';
+  const CUSTOM_KEY = 'caf:custom';
+  const WATER_KEY = 'po_water_v1';
+  const WHOOP_TOKENS_KEY = 'whoop_tokens_v1';
+  const WHOOP_CACHE_KEY = 'caf:whoop';
+  const HALF_LIFE_H = 5;
+  const FDA_LIMIT = 400;
+  const C = 2 * Math.PI * 52;
+  const WAKE_DEFAULT = 7;
+  const BED_DEFAULT = 23;
+  const $ = (id) => document.getElementById(id);
+
+  const drinks = [
+    ['Brewed coffee 8 oz',95,'&#9749;'],['Brewed coffee 12 oz',140,'&#9749;'],['Brewed coffee 16 oz',190,'&#9749;'],['Cold brew 12 oz',155,'&#129380;'],
+    ['Cold brew 16 oz',205,'&#129380;'],['Nitro cold brew',215,'&#129380;'],['Espresso single',64,'&#9749;'],['Espresso double',128,'&#9749;'],
+    ['Americano',154,'&#9749;'],['Latte',128,'&#9749;'],['Cappuccino',128,'&#9749;'],['Flat white',130,'&#9749;'],
+    ['Mocha',150,'&#9749;'],['Macchiato',85,'&#9749;'],['Instant coffee',63,'&#9749;'],['Decaf coffee',7,'&#9749;'],
+    ['Black tea',47,'&#127861;'],['Black tea strong',70,'&#127861;'],['Green tea',28,'&#127861;'],['Matcha latte',80,'&#127861;'],
+    ['Yerba mate',85,'&#127861;'],['Oolong tea',38,'&#127861;'],['White tea',25,'&#127861;'],['Chai latte',70,'&#127861;'],
+    ['Earl Grey',55,'&#127861;'],['Iced tea bottle',42,'&#127861;'],['Arizona iced tea',30,'&#127861;'],['Kombucha',15,'&#127861;'],
+    ['Red Bull 8.4 oz',80,'&#9889;'],['Red Bull 12 oz',114,'&#9889;'],['Monster 16 oz',160,'&#9889;'],['Monster Ultra',150,'&#9889;'],
+    ['Rockstar 16 oz',160,'&#9889;'],['Celsius',200,'&#9889;'],['Bang',300,'&#9889;'],['Reign',300,'&#9889;'],
+    ['Ghost Energy',200,'&#9889;'],['Alani Nu',200,'&#9889;'],['Prime Energy',200,'&#9889;'],['5-hour Energy',200,'&#9889;'],
+    ['5-hour Extra Strength',230,'&#9889;'],['NOS',160,'&#9889;'],['C4 Energy',200,'&#9889;'],['G Fuel can',300,'&#9889;'],
+    ['Coca-Cola 12 oz',34,'&#129380;'],['Diet Coke 12 oz',46,'&#129380;'],['Coke Zero 12 oz',34,'&#129380;'],['Pepsi 12 oz',38,'&#129380;'],
+    ['Diet Pepsi 12 oz',35,'&#129380;'],['Mountain Dew',54,'&#129380;'],['Dr Pepper',41,'&#129380;'],['Diet Dr Pepper',41,'&#129380;'],
+    ['Root beer',0,'&#129380;'],['Pre-workout scoop',250,'&#127947;'],['Pre-workout half scoop',125,'&#127947;'],['Pre-workout high stim',350,'&#127947;'],
+    ['Caffeine pill',200,'&#128138;'],['Dark chocolate 1 oz',24,'&#127851;'],['Milk chocolate 1 oz',6,'&#127851;'],['Chocolate protein bar',30,'&#127851;'],
+    ['Coffee ice cream',45,'&#127846;'],['Tiramisu',35,'&#127856;'],['Guarana shot',100,'&#127793;'],['Excedrin dose',130,'&#128138;']
+  ].map((d, i) => ({ id: 'base-' + i, name: d[0], mg: d[1], emoji: d[2] }));
+
+  let mode = 'line';
+  let whoop = { wake: WAKE_DEFAULT, bed: BED_DEFAULT, recovery: null, sleep: null };
+  let samples = [];
+  let scrubHour = null;
+
+  function readJson(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function writeJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dateKeyFromMs(ms) {
+    const d = new Date(ms);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function logs() { return readJson(LOG_KEY, []); }
+  function customs() { return readJson(CUSTOM_KEY, []); }
+  function todayLogs() { return logs().filter((x) => dateKeyFromMs(x.ts) === todayKey()); }
+  function fmtTimeFromHour(h) {
+    h = ((h % 24) + 24) % 24;
+    const hh = Math.floor(h);
+    const mm = Math.round((h - hh) * 60) % 60;
+    const ampm = hh >= 12 ? 'PM' : 'AM';
+    const h12 = hh % 12 || 12;
+    return h12 + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
+  }
+  function fmtTime(ms) {
+    const d = new Date(ms);
+    return fmtTimeFromHour(d.getHours() + d.getMinutes() / 60);
+  }
+  function nowHour() {
+    const d = new Date();
+    return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+  }
+  function gaussian(x, mu, sd) {
+    return Math.exp(-0.5 * Math.pow((x - mu) / sd, 2));
+  }
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+  function waterState() {
+    const s = readJson(WATER_KEY, {});
+    s.profile = s.profile || {};
+    return s;
+  }
+  function weightKg() {
+    const s = waterState();
+    const w = Number(s.profile.weightKg || 75);
+    return s.weightUnit === 'lb' ? w / 2.20462 : w;
+  }
+  function activeDose(entry, atMs) {
+    const hours = (atMs - entry.ts) / 36e5;
+    if (hours < 0) return 0;
+    return entry.mg * Math.pow(0.5, hours / HALF_LIFE_H);
+  }
+  function activeMgAtHour(hour) {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    const at = base.getTime() + hour * 36e5;
+    return logs().reduce((sum, entry) => sum + activeDose(entry, at), 0);
+  }
+  function sleepPressureAt(hour, wake) {
+    const awake = hour >= wake ? hour - wake : hour + 24 - wake;
+    return clamp(awake, 0, 24) * 1.7;
+  }
+  function noCafEnergy(hour, wake, bed) {
+    const circadian = 50 + 18 * Math.cos(2 * Math.PI * (hour - 16.5) / 24);
+    if (hour < wake || hour >= bed) return clamp(circadian - 34, 3, 20);
+    const lunchDip = 10 * gaussian(hour, 14, 1.4);
+    const pressure = sleepPressureAt(hour, wake);
+    const morning = 10 * gaussian(hour - wake, 1.2, 0.9);
+    return clamp(circadian - lunchDip - pressure + morning, 0, 100);
+  }
+  function caffeineBoost(activeMg) {
+    return 34 * (1 - Math.exp(-activeMg / 110));
+  }
+  function energyAt(hour, wake, bed) {
+    const baseline = noCafEnergy(hour, wake, bed);
+    const active = activeMgAtHour(hour);
+    const asleep = hour < wake || hour >= bed;
+    const energy = asleep ? baseline : clamp(baseline + caffeineBoost(active), 0, 100);
+    return { hour, energy, baseline, active };
+  }
+  function stateWord(score) {
+    if (score >= 78) return 'Peak';
+    if (score >= 62) return 'High';
+    if (score >= 45) return 'Steady';
+    if (score >= 28) return 'Dip';
+    return 'Low';
+  }
+  function scoreColor(score) {
+    if (score >= 62) return '#6BE3A4';
+    if (score >= 40) return '#F2C063';
+    return '#FF6B6B';
+  }
+  function computeSamples() {
+    samples = [];
+    for (let m = 0; m <= 24 * 60; m += 10) {
+      samples.push(energyAt(m / 60, whoop.wake, whoop.bed));
+    }
+  }
+  function buildPath(points, key) {
+    return points.map((p, i) => {
+      const x = p.hour / 24 * 720;
+      const y = 226 - (p[key] / 100 * 196);
+      return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+    }).join(' ');
+  }
+  function renderChart() {
+    const svg = $('energySvg');
+    const now = nowHour();
+    const night1 = whoop.wake / 24 * 720;
+    const night2 = whoop.bed / 24 * 720;
+    const nowX = now / 24 * 720;
+    let html = '';
+    html += '<rect x="0" y="0" width="' + night1.toFixed(1) + '" height="250" fill="rgba(255,255,255,0.035)"></rect>';
+    html += '<rect x="' + night2.toFixed(1) + '" y="0" width="' + (720 - night2).toFixed(1) + '" height="250" fill="rgba(255,255,255,0.035)"></rect>';
+    for (let i = 0; i <= 4; i++) html += '<line x1="' + (i * 180) + '" y1="18" x2="' + (i * 180) + '" y2="226" stroke="rgba(255,255,255,0.045)"></line>';
+    if (mode === 'bars') {
+      samples.forEach((p) => {
+        const h = p.energy;
+        const x = p.hour / 24 * 720;
+        const y = 226 - h / 100 * 196;
+        html += '<rect x="' + (x - 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="4" height="' + (226 - y).toFixed(1) + '" rx="2" fill="' + scoreColor(h) + '" opacity="0.72"></rect>';
+      });
+    } else if (mode === 'stack') {
+      const base = buildPath(samples, 'baseline');
+      const top = buildPath(samples, 'energy');
+      html += '<path d="' + base + '" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"></path>';
+      html += '<path d="' + top + '" fill="none" stroke="#C9A36B" stroke-width="3" stroke-linecap="round"></path>';
+      samples.forEach((p, i) => {
+        if (i % 2) return;
+        const x = p.hour / 24 * 720;
+        const y1 = 226 - p.energy / 100 * 196;
+        const y2 = 226 - p.baseline / 100 * 196;
+        html += '<line x1="' + x.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="rgba(201,163,107,0.36)" stroke-width="3"></line>';
+      });
+    } else {
+      html += '<path d="' + buildPath(samples, 'energy') + '" fill="none" stroke="#C9A36B" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="drop-shadow(0 0 8px rgba(201,163,107,0.55))"></path>';
+    }
+    const point = energyAt(now, whoop.wake, whoop.bed);
+    const nowY = 226 - point.energy / 100 * 196;
+    html += '<line x1="' + nowX.toFixed(1) + '" y1="18" x2="' + nowX.toFixed(1) + '" y2="226" stroke="rgba(255,255,255,0.42)" stroke-width="1.5"></line>';
+    html += '<circle cx="' + nowX.toFixed(1) + '" cy="' + nowY.toFixed(1) + '" r="5" fill="#FAFAFA"></circle>';
+    svg.innerHTML = html;
+  }
+  function updateRing(hour) {
+    const p = energyAt(hour, whoop.wake, whoop.bed);
+    const color = scoreColor(p.energy);
+    const fill = $('ringFill');
+    fill.setAttribute('stroke-dasharray', C);
+    fill.setAttribute('stroke-dashoffset', C * (1 - p.energy / 100));
+    fill.style.stroke = color;
+    fill.style.color = color;
+    $('energyScore').textContent = Math.round(p.energy);
+    $('energyState').textContent = stateWord(p.energy).toUpperCase();
+    $('scrubTime').textContent = Math.abs(hour - nowHour()) < 0.1 ? 'Right now' : fmtTimeFromHour(hour);
+    $('curveReadout').textContent = fmtTimeFromHour(hour) + ' · ' + Math.round(p.energy) + '/100 · ' + Math.round(p.active) + ' mg active';
+  }
+  function findBestWindow() {
+    let best = samples[0];
+    samples.forEach((p) => { if (p.energy > best.energy && p.hour >= whoop.wake && p.hour < whoop.bed) best = p; });
+    return best;
+  }
+  function findCrash() {
+    const n = nowHour();
+    let best = { drop: 0, hour: null, low: null };
+    samples.forEach((p, i) => {
+      if (p.hour < n || p.hour > n + 8 || !samples[i + 6]) return;
+      const drop = p.energy - samples[i + 6].energy;
+      if (drop > best.drop) best = { drop, hour: p.hour, low: samples[i + 6].energy };
+    });
+    return best;
+  }
+  function coffeeCutoff() {
+    return whoop.bed - HALF_LIFE_H * (Math.log(95 / 30) / Math.log(2));
+  }
+  function personalizedLimit() {
+    const target = Math.round(weightKg() * 3);
+    let limit = Math.min(FDA_LIMIT, Math.max(150, target));
+    if (whoop.recovery != null && whoop.recovery < 34) limit = Math.min(limit, 200);
+    else if (whoop.recovery != null && whoop.recovery < 50) limit = Math.min(limit, 300);
+    return { target, limit };
+  }
+  function renderSmart() {
+    const best = findBestWindow();
+    const crash = findCrash();
+    const cutoff = coffeeCutoff();
+    $('bestTime').textContent = fmtTimeFromHour(best.hour);
+    $('bestSub').textContent = 'About ' + fmtTimeFromHour(best.hour - 0.75) + ' to ' + fmtTimeFromHour(best.hour + 0.75) + ' · ' + Math.round(best.energy) + '/100';
+    $('crashTime').textContent = crash.drop >= 12 ? fmtTimeFromHour(crash.hour + 1) : 'Not likely';
+    $('crashSub').textContent = crash.drop >= 12 ? 'Drops ' + Math.round(crash.drop) + ' pts toward ' + Math.round(crash.low) + '/100.' : 'No significant drop in the next 8h.';
+    $('cutoffTime').textContent = fmtTimeFromHour(cutoff);
+    $('peakWindow').textContent = fmtTimeFromHour(best.hour - 0.75) + ' - ' + fmtTimeFromHour(best.hour + 0.75);
+    $('crashWindow').textContent = crash.drop >= 12 ? fmtTimeFromHour(crash.hour) : 'None';
+    $('lastCoffeeBy').textContent = fmtTimeFromHour(cutoff);
+    const tips = [
+      'Front-load caffeine: earlier doses lift focus without pushing active caffeine into bedtime.',
+      "Use " + fmtTimeFromHour(cutoff) + " as today's cutoff if bedtime stays near " + fmtTimeFromHour(whoop.bed) + ".",
+      'Hydrate with each caffeinated drink; water demand rises with higher stimulant load.',
+      'If a crash is forming, use daylight, a walk, or a short reset before adding more caffeine.',
+      whoop.recovery != null && whoop.recovery < 50 ? 'Low WHOOP recovery detected: keep the ceiling lower today.' : 'Recovery is not forcing a lower ceiling today.'
+    ];
+    $('tipsList').innerHTML = tips.map((t) => '<li>' + t + '</li>').join('');
+  }
+  function renderToday() {
+    const all = todayLogs();
+    const total = all.reduce((s, x) => s + Number(x.mg || 0), 0);
+    const active = activeMgAtHour(nowHour());
+    const lim = personalizedLimit();
+    const pct = lim.limit ? Math.min(140, total / lim.limit * 100) : 0;
+    $('todayMg').textContent = Math.round(total) + ' mg';
+    $('activeMg').textContent = Math.round(active) + ' mg';
+    $('limitMg').textContent = lim.limit + ' mg';
+    $('mgFill').style.width = Math.min(100, pct) + '%';
+    $('mgFill').style.background = pct >= 100 ? 'var(--danger)' : pct >= 75 ? 'var(--warning)' : 'var(--success)';
+    $('todayNote').textContent = "Target is about 3 mg/kg (" + lim.target + " mg from body weight), with the FDA ceiling at 400 mg. Low recovery can drop today's ceiling to 200-300 mg.";
+  }
+  function renderDrinks() {
+    const q = $('drinkSearch').value.trim().toLowerCase();
+    const list = drinks.concat(customs()).filter((d) => !q || d.name.toLowerCase().indexOf(q) !== -1);
+    $('drinkGrid').innerHTML = list.map((d) =>
+      '<button class="drink-card" type="button" data-id="' + d.id + '">' +
+      '<span class="drink-emoji">' + (d.emoji || '&#9749;') + '</span><span><span class="drink-name">' + d.name + '</span><span class="drink-mg">' + d.mg + ' mg</span></span></button>'
+    ).join('');
+    document.querySelectorAll('.drink-card').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const drink = list.find((d) => d.id === btn.dataset.id);
+        if (drink) addLog(drink.name, drink.mg, drink.emoji || '&#9749;');
+      });
+    });
+  }
+  function addLog(name, mg, emoji) {
+    const next = logs();
+    next.push({ id: 'caf-' + Date.now(), ts: Date.now(), name, mg: Number(mg || 0), emoji: emoji || '&#9749;' });
+    writeJson(LOG_KEY, next);
+    rerender();
+  }
+  function addCustom() {
+    const name = $('customName').value.trim();
+    const mg = Number($('customMg').value || 0);
+    if (!name || !mg) return;
+    const next = customs();
+    const item = { id: 'custom-' + Date.now(), name, mg, emoji: '&#9749;' };
+    next.push(item);
+    writeJson(CUSTOM_KEY, next);
+    $('customName').value = '';
+    $('customMg').value = '';
+    addLog(name, mg, item.emoji);
+  }
+  function clearedTime(entry) {
+    if (entry.mg <= 10) return entry.ts;
+    return entry.ts + (HALF_LIFE_H * Math.log(entry.mg / 10) / Math.log(2)) * 36e5;
+  }
+  function renderLogs() {
+    const list = todayLogs().sort((a, b) => b.ts - a.ts);
+    if (!list.length) {
+      $('logList').innerHTML = '<div class="empty">No caffeine logged today.</div>';
+      return;
+    }
+    $('logList').innerHTML = list.map((x) =>
+      '<div class="log-row"><div><div class="log-title">' + (x.emoji || '&#9749;') + ' ' + x.name + ' · ' + x.mg + ' mg</div>' +
+      '<div class="log-meta">Logged ' + fmtTime(x.ts) + ' · Peak ' + fmtTime(x.ts + 45 * 60000) + ' · Half-gone ' + fmtTime(x.ts + 5 * 36e5) + ' · Cleared ' + fmtTime(clearedTime(x)) + '</div></div>' +
+      '<button class="delete-btn" type="button" data-id="' + x.id + '" aria-label="Delete">&times;</button></div>'
+    ).join('');
+    document.querySelectorAll('.delete-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        writeJson(LOG_KEY, logs().filter((x) => x.id !== btn.dataset.id));
+        rerender();
+      });
+    });
+  }
+  function hasWhoopTokens() {
+    const t = readJson(WHOOP_TOKENS_KEY, null);
+    return !!(t && (t.access_token || t.accessToken || t.refresh_token || t.refreshToken));
+  }
+  function pick(obj, paths) {
+    for (const path of paths) {
+      let cur = obj;
+      for (const part of path.split('.')) cur = cur && cur[part];
+      if (cur != null) return cur;
+    }
+    return null;
+  }
+  function hourFromIso(iso, fallback) {
+    if (!iso) return fallback;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return fallback;
+    return d.getHours() + d.getMinutes() / 60;
+  }
+  async function fetchWhoop(endpoint, retried) {
+    let res = await fetch('/api/whoop-data?endpoint=' + encodeURIComponent(endpoint));
+    if (res.status === 401 && !retried) {
+      await fetch('/api/whoop-refresh', { method: 'POST' });
+      res = await fetch('/api/whoop-data?endpoint=' + encodeURIComponent(endpoint));
+    }
+    if (!res.ok) throw new Error('whoop');
+    return res.json();
+  }
+  async function loadWhoop() {
+    const cached = readJson(WHOOP_CACHE_KEY, null);
+    if (cached) whoop = Object.assign(whoop, cached);
+    if (!hasWhoopTokens()) return;
+    try {
+      const recovery = await fetchWhoop('/recovery');
+      const sleep = await fetchWhoop('/activity/sleep');
+      const rec = Number(pick(recovery, ['score.recovery_score', 'records.0.score.recovery_score', 'recovery_score']));
+      const sleepPct = Number(pick(sleep, ['score.sleep_performance_percentage', 'records.0.score.sleep_performance_percentage', 'sleep_performance_percentage']));
+      const start = pick(sleep, ['start', 'records.0.start', 'sleep.start']);
+      const end = pick(sleep, ['end', 'records.0.end', 'sleep.end']);
+      whoop = {
+        wake: hourFromIso(end, WAKE_DEFAULT),
+        bed: hourFromIso(start, BED_DEFAULT),
+        recovery: Number.isFinite(rec) ? rec : null,
+        sleep: Number.isFinite(sleepPct) ? sleepPct : null
+      };
+      writeJson(WHOOP_CACHE_KEY, whoop);
+    } catch (e) {}
+  }
+  function rerender() {
+    computeSamples();
+    renderChart();
+    updateRing(scrubHour == null ? nowHour() : scrubHour);
+    renderSmart();
+    renderToday();
+    renderDrinks();
+    renderLogs();
+  }
+
+  document.querySelectorAll('[data-mode]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      mode = btn.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('active', b === btn));
+      renderChart();
+    });
+  });
+  $('energySvg').addEventListener('pointermove', (e) => {
+    const rect = $('energySvg').getBoundingClientRect();
+    scrubHour = clamp((e.clientX - rect.left) / rect.width * 24, 0, 24);
+    updateRing(scrubHour);
+  });
+  $('energySvg').addEventListener('pointerleave', () => {
+    scrubHour = null;
+    updateRing(nowHour());
+  });
+  $('drinkSearch').addEventListener('input', renderDrinks);
+  $('customAdd').addEventListener('click', addCustom);
+  $('customMg').addEventListener('keydown', (e) => { if (e.key === 'Enter') addCustom(); });
+
+  window.rerender = rerender;
+
+  (async function boot() {
+    const fill = $('ringFill');
+    fill.setAttribute('stroke-dasharray', C);
+    fill.setAttribute('stroke-dashoffset', C);
+    await loadWhoop();
+    rerender();
+    setInterval(rerender, 60000);
+    if (typeof initCloudSync === 'function') {
+      initCloudSync({ appKey: 'caffeine', syncedKeys: [LOG_KEY, CUSTOM_KEY], onApplied: rerender });
+    }
+  })();
+})();
+</script>
+</body>
+</html>

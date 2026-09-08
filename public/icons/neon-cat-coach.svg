@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="neon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#55F7A5" />
+      <stop offset="100%" stop-color="#21D978" />
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#neon-glow)" stroke="#55F7A5" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Cat Ears -->
+    <path d="M150 140 L135 75 L180 105" />
+    <path d="M250 140 L265 75 L220 105" />
+    <!-- Ear Inners -->
+    <path d="M152 125 L144 90 L172 110" stroke-width="2" opacity="0.7"/>
+    <path d="M248 125 L256 90 L228 110" stroke-width="2" opacity="0.7"/>
+
+    <!-- Head Outline -->
+    <path d="M145 150 C125 155, 120 185, 140 205 C155 218, 175 225, 200 225 C225 225, 245 218, 260 205 C280 185, 275 155, 255 150" />
+    <path d="M180 105 C190 102, 210 102, 220 105" />
+
+    <!-- Cheeks Fluff -->
+    <path d="M130 180 L115 185 L132 195" stroke-width="2.5"/>
+    <path d="M270 180 L285 185 L268 195" stroke-width="2.5"/>
+
+    <!-- Eyes (Focused, Confident) -->
+    <path d="M160 165 Q175 155 190 168 Q175 178 160 165 Z" fill="#07100D" />
+    <circle cx="177" cy="167" r="3.5" fill="#55F7A5" />
+    <path d="M240 165 Q225 155 210 168 Q225 178 240 165 Z" fill="#07100D" />
+    <circle cx="223" cy="167" r="3.5" fill="#55F7A5" />
+
+    <!-- Eyebrows -->
+    <path d="M155 152 Q175 148 190 158" stroke-width="2.5" />
+    <path d="M245 152 Q225 148 210 158" stroke-width="2.5" />
+
+    <!-- Nose & Mouth -->
+    <path d="M195 185 L205 185 L200 192 Z" fill="#55F7A5" />
+    <path d="M200 192 Q190 202 182 198" />
+    <path d="M200 192 Q210 202 218 198" />
+
+    <!-- Whiskers -->
+    <path d="M150 190 L110 185" stroke-width="2"/>
+    <path d="M148 196 L112 198" stroke-width="2"/>
+    <path d="M250 190 L290 185" stroke-width="2"/>
+    <path d="M252 196 L288 198" stroke-width="2"/>
+
+    <!-- Muscular Shoulders & Traps -->
+    <path d="M165 220 C140 230, 110 250, 95 285 C80 320, 100 350, 125 350" />
+    <path d="M235 220 C260 230, 290 250, 305 285 C320 320, 300 350, 275 350" />
+
+    <!-- Tank Top Neckline & Barbell Logo on Chest -->
+    <path d="M170 232 Q200 248 230 232" stroke-width="3"/>
+    <path d="M150 255 Q200 275 250 255" opacity="0.6"/>
+    
+    <!-- Mini Dumbbell logo on Chest -->
+    <g transform="translate(185, 245)">
+      <rect x="0" y="3" width="30" height="4" rx="2" fill="#55F7A5"/>
+      <rect x="-3" y="0" width="5" height="10" rx="1.5" fill="#55F7A5"/>
+      <rect x="28" y="0" width="5" height="10" rx="1.5" fill="#55F7A5"/>
+    </g>
+
+    <!-- Crossed Muscular Biceps / Forearms -->
+    <path d="M100 290 C120 300, 160 320, 210 320 C240 320, 280 305, 300 290" stroke-width="3.5" />
+    <path d="M115 325 C145 345, 255 345, 285 325" stroke-width="3" />
+    <path d="M155 295 C175 315, 225 315, 245 295" stroke-width="2" opacity="0.8"/>
+  </g>
+</svg>

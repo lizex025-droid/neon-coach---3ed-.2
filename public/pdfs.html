@@ -1,0 +1,1702 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تدريب Library</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;500;700;800;900&family=Sora:wght@300;500;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="./styles/library.css" />
+
+    <style>
+      :root {
+        --bg1: #020806;
+        --bg2: #07150f;
+        --card: rgba(4, 18, 12, 0.34);
+        --stroke: rgba(110, 231, 183, 0.18);
+        --accent: #6ee7b7;
+        --accent2: #22c55e;
+        --text: #ecfff7;
+        --muted: rgba(207, 236, 224, 0.68);
+        --deep: #020403;
+        --shadow: 0 24px 58px rgba(0, 0, 0, 0.42);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+        background: var(--deep);
+      }
+
+      body.pdf-theme {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Cairo", "Sora", system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 16% 8%, rgba(110, 231, 183, 0.11), transparent 28%),
+          radial-gradient(circle at 88% 22%, rgba(34, 197, 94, 0.10), transparent 28%),
+          linear-gradient(135deg, #020806 0%, #03120c 46%, #010403 100%);
+        overflow-x: hidden;
+      }
+
+      body.pdf-theme::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(110, 231, 183, 0.16) 1px, transparent 1px);
+        background-size: 26px 26px;
+        opacity: 0.18;
+        mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.72) 48%, transparent 100%);
+      }
+
+      #vt-backdrop,
+      #vt-grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      #vt-backdrop {
+        z-index: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% -10%, rgba(110, 231, 183, 0.11), transparent 38%),
+          linear-gradient(180deg, rgba(3, 18, 12, 0.88), rgba(1, 4, 3, 0.98));
+      }
+
+      #vt-grain {
+        z-index: 0;
+        opacity: 0.08;
+        mix-blend-mode: screen;
+        background-image:
+          linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 42%),
+          radial-gradient(rgba(255, 255, 255, 0.18) 0.6px, transparent 0.8px);
+        background-size: 190px 190px, 22px 22px;
+      }
+
+      .wb-atmosphere,
+      .wb-mist,
+      .wb-mountains,
+      .wb-particles {
+        position: absolute;
+        inset: 0;
+      }
+
+      .wb-atmosphere {
+        background:
+          radial-gradient(circle at 26% 24%, rgba(110, 231, 183, 0.16), transparent 28%),
+          radial-gradient(circle at 78% 36%, rgba(16, 185, 129, 0.12), transparent 26%),
+          radial-gradient(circle at 50% 100%, rgba(5, 42, 28, 0.78), transparent 48%);
+        filter: blur(2px);
+      }
+
+      .wb-mist {
+        opacity: 0.42;
+        background:
+          radial-gradient(ellipse at 30% 70%, rgba(110, 231, 183, 0.12), transparent 34%),
+          radial-gradient(ellipse at 76% 66%, rgba(20, 184, 166, 0.10), transparent 31%);
+        filter: blur(26px);
+        animation: mistDrift 12s ease-in-out infinite alternate;
+      }
+
+      .wb-mountains {
+        top: auto;
+        bottom: -1px;
+        height: 36vh;
+        opacity: 0.9;
+      }
+
+      .wb-mountains svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .wb-particles span {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: #6ee7b7;
+        opacity: 0.28;
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.72);
+        animation: particleFloat linear infinite;
+      }
+
+      @keyframes particleFloat {
+        from { transform: translate3d(0, 0, 0); opacity: 0; }
+        12% { opacity: 0.34; }
+        85% { opacity: 0.2; }
+        to { transform: translate3d(var(--dx), var(--dy), 0); opacity: 0; }
+      }
+
+      @keyframes mistDrift {
+        from { transform: translate3d(-12px, 8px, 0) scale(1); }
+        to { transform: translate3d(16px, -10px, 0) scale(1.05); }
+      }
+
+      .bg-orb {
+        position: fixed;
+        border-radius: 999px;
+        filter: blur(46px);
+        opacity: 0.34;
+        z-index: 0;
+        pointer-events: none;
+        animation: driftGlow 10s ease-in-out infinite alternate;
+      }
+
+      .orb-1 {
+        width: 320px;
+        height: 320px;
+        background: #0f5f43;
+        top: -90px;
+        right: 180px;
+      }
+
+      .orb-2 {
+        width: 260px;
+        height: 260px;
+        background: #064e3b;
+        bottom: 42px;
+        right: 42px;
+        animation-duration: 13s;
+      }
+
+      .orb-3 {
+        width: 240px;
+        height: 240px;
+        background: #6ee7b7;
+        top: 40%;
+        left: 50px;
+        opacity: 0.16;
+        animation-duration: 15s;
+      }
+
+      @keyframes driftGlow {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(18px, -14px, 0) scale(1.06); }
+      }
+
+      .library-app {
+        width: min(1240px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+        position: relative;
+        z-index: 1;
+      }
+
+      #nvFab {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 30;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        border: 0;
+        cursor: pointer;
+        padding: 0;
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+        transition: transform 0.12s;
+        background: radial-gradient(circle at 50% 58%, #8A6CFF, #4C2EC9 80%);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.14), 0 6px 22px rgba(124,92,255,0.55), inset 0 -6px 14px rgba(38,10,86,0.65);
+      }
+
+      #nvFab:active { transform: scale(0.93); }
+
+      #nvFab::before {
+        content: "";
+        position: absolute;
+        inset: -28%;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, #6D4AE0, #C9B8FF, #7C5CFF, #B98AFF, #8A6CFF, #6D4AE0);
+        filter: blur(2px);
+        opacity: 0.92;
+        animation: nvspin 7s linear infinite;
+      }
+
+      #nvFab::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        pointer-events: none;
+        background: radial-gradient(circle at 34% 26%, rgba(255,255,255,0.92), rgba(255,255,255,0) 40%), radial-gradient(circle at 72% 82%, rgba(18,7,40,0.5), transparent 55%);
+      }
+
+      @keyframes nvspin { to { transform: rotate(360deg); } }
+
+      #nvFab .nv-online {
+        position: absolute;
+        right: 1px;
+        bottom: 1px;
+        z-index: 2;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #6ee7b7;
+        border: 2px solid #0a0a0b;
+        box-shadow: 0 0 6px rgba(110,231,183,0.7);
+      }
+
+      #nvPanel {
+        position: absolute;
+        top: 72px;
+        right: 16px;
+        z-index: 30;
+        width: min(340px, calc(100vw - 28px));
+        max-height: 66vh;
+        display: none;
+        flex-direction: column;
+        background: #111016;
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 18px;
+        box-shadow: 0 24px 70px rgba(0,0,0,0.65);
+        overflow: hidden;
+        direction: ltr;
+        text-align: left;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      }
+
+      #nvPanel.open { display: flex; }
+
+      .nv-head { display: flex; align-items: center; gap: 9px; padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+      .nv-head .nv-av { position: relative; overflow: hidden; width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; background: radial-gradient(circle at 34% 26%, rgba(255,255,255,0.85), rgba(255,255,255,0) 42%), conic-gradient(from 0deg, #6D4AE0, #C9B8FF, #7C5CFF, #B98AFF, #6D4AE0); }
+      .nv-head .nv-name { font-size: 14px; font-weight: 700; color: #FAFAFA; }
+      .nv-head .nv-sub { font-size: 10.5px; color: #76746E; }
+      .nv-head .nv-x { margin-left: auto; border: 0; background: transparent; color: #76746E; font-size: 20px; cursor: pointer; line-height: 1; }
+      .nv-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+      .nv-msg { font-size: 13px; line-height: 1.5; max-width: 90%; padding: 9px 12px; border-radius: 13px; }
+      .nv-msg.coach { background: rgba(255,255,255,0.05); color: #E9E7E2; align-self: flex-start; border-bottom-left-radius: 4px; }
+      .nv-msg.user { background: rgba(124,92,255,0.22); color: #FAFAFA; align-self: flex-end; border-bottom-right-radius: 4px; }
+      .nv-msg b { color: #FAFAFA; }
+      .nv-msg ul { margin: 4px 0; padding-left: 18px; }
+      .nv-msg li { margin: 2px 0; }
+      .nv-msg code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+      .nv-quick { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 14px 10px; }
+      .nv-chip { border: 1px solid rgba(124,92,255,0.35); background: rgba(124,92,255,0.12); color: #CBBDFF; font-size: 11px; font-weight: 600; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+      .nv-chip:active { transform: scale(0.96); }
+      .nv-foot { display: flex; gap: 7px; padding: 11px 12px; border-top: 1px solid rgba(255,255,255,0.07); }
+      .nv-input { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.10); background: rgba(0,0,0,0.32); color: #FAFAFA; font-family: inherit; font-size: 13px; outline: none; }
+      .nv-input::placeholder { color: #6c6a64; }
+      .nv-send { border: 0; border-radius: 11px; padding: 0 14px; background: linear-gradient(180deg,#C9B8FF,#7C5CFF); color: #14081f; font-weight: 700; font-size: 15px; cursor: pointer; }
+      .nv-dots i { display:inline-block; width:5px; height:5px; margin:0 1px; border-radius:50%; background:#9b8aff; animation: nvb 1s infinite; }
+      .nv-dots i:nth-child(2){animation-delay:.15s} .nv-dots i:nth-child(3){animation-delay:.3s}
+      @keyframes nvb { 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-3px)} }
+
+      .top-nav {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 22px;
+      }
+
+      .nav-tabs {
+        display: inline-flex;
+        flex-direction: row;
+        gap: 10px;
+        direction: ltr;
+        background: rgba(1, 8, 5, 0.62);
+        border: 1px solid rgba(110, 231, 183, 0.16);
+        border-radius: 999px;
+        padding: 6px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        flex-wrap: wrap;
+        justify-content: center;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+      }
+
+      .nav-tab {
+        text-decoration: none;
+        direction: rtl;
+        color: var(--muted);
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: 0.2s ease;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+
+      .nav-tab.active {
+        color: #dfffee;
+        background: rgba(110, 231, 183, 0.12);
+        border-color: rgba(110, 231, 183, 0.38);
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.10);
+      }
+
+      .nav-tab:hover {
+        color: var(--text);
+        background: rgba(110, 231, 183, 0.09);
+        border-color: rgba(110, 231, 183, 0.24);
+      }
+
+      body.vitality-theme .top-nav {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 22px;
+      }
+
+      body.vitality-theme .nav-tabs {
+        display: inline-flex;
+        flex-direction: row;
+        gap: 10px;
+        direction: ltr;
+        background: rgba(1, 8, 5, 0.62);
+        border: 1px solid rgba(110, 231, 183, 0.16);
+        border-radius: 999px;
+        padding: 6px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        flex-wrap: wrap;
+        justify-content: center;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+      }
+
+      body.vitality-theme .nav-tab {
+        text-decoration: none;
+        direction: rtl;
+        color: var(--muted);
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: 0.2s ease;
+        border: 1px solid transparent;
+        white-space: nowrap;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      body.vitality-theme .nav-tab.active {
+        color: #dfffee;
+        background: rgba(110, 231, 183, 0.12);
+        border-color: rgba(110, 231, 183, 0.38);
+        box-shadow: 0 0 18px rgba(110, 231, 183, 0.10);
+      }
+
+      body.vitality-theme .nav-tab:hover {
+        color: var(--text);
+        background: rgba(110, 231, 183, 0.09);
+        border-color: rgba(110, 231, 183, 0.24);
+      }
+
+      .library-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-auto-rows: 190px;
+        grid-auto-flow: dense;
+        gap: 16px;
+        direction: ltr;
+      }
+
+      .library-tile {
+        --accent: #6ee7b7;
+        direction: ltr;
+        text-align: left;
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 22px;
+        border-radius: 20px;
+        border: 1px solid rgba(110, 231, 183, 0.20);
+        background: rgba(0, 0, 0, 0.74);
+        backdrop-filter: blur(18px) saturate(1.2);
+        -webkit-backdrop-filter: blur(18px) saturate(1.2);
+        box-shadow:
+          0 20px 42px rgba(0, 0, 0, 0.48),
+          inset 0 1px 0 rgba(255, 255, 255, 0.035);
+        color: var(--text);
+        text-decoration: none;
+        isolation: isolate;
+        transition:
+          transform 0.22s ease,
+          border-color 0.22s ease,
+          box-shadow 0.22s ease,
+          background 0.22s ease;
+      }
+
+      /* No image/card backgrounds: the cards use the black + green CSS theme only. */
+      .library-tile::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background:
+          radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 30%),
+          linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent 54%);
+        opacity: 0.42;
+        transition: opacity 0.22s ease;
+      }
+
+      .library-tile::after {
+        content: "";
+        position: absolute;
+        inset: auto -32px -42px auto;
+        width: 170px;
+        height: 170px;
+        border-radius: 999px;
+        background: var(--accent);
+        opacity: 0.10;
+        filter: blur(24px);
+        z-index: -1;
+        transition: opacity 0.22s ease, transform 0.22s ease;
+      }
+
+      .library-tile:hover {
+        transform: translateY(-3px);
+        border-color: color-mix(in srgb, var(--accent) 74%, rgba(255, 255, 255, 0.12));
+        background: rgba(0, 0, 0, 0.86);
+        box-shadow:
+          0 24px 56px rgba(0, 0, 0, 0.56),
+          0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent),
+          0 0 30px color-mix(in srgb, var(--accent) 16%, transparent);
+      }
+
+      .library-tile:hover::before {
+        opacity: 0.96;
+      }
+
+      .library-tile:hover::after {
+        opacity: 0.18;
+        transform: translate(-10px, -8px) scale(1.08);
+      }
+
+      .library-tile.big {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+
+      .library-tile.wide {
+        grid-column: span 2;
+      }
+
+      .library-tile.small {
+        grid-column: span 1;
+        grid-row: span 1;
+        min-height: 150px;
+        padding: 18px;
+      }
+
+      .library-tile.small .tile-title {
+        font-size: clamp(19px, 2vw, 24px);
+      }
+
+      .library-tile.small .tile-tags {
+        display: none;
+      }
+
+      .library-tile.small .tile-subtitle {
+        max-width: 90px;
+        font-size: 14px;
+        line-height: 1.15;
+      }
+
+      .tile-icon {
+        margin-inline-start: auto;
+        font-size: 28px;
+        line-height: 1;
+        filter: drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 44%, transparent));
+      }
+
+      .tile-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .tile-number {
+        direction: ltr;
+        font-family: "JetBrains Mono", monospace;
+        color: color-mix(in srgb, var(--accent) 74%, #ffffff 26%);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 34%, transparent);
+      }
+
+
+      .tile-spacer {
+        flex: 1;
+      }
+
+      .tile-title {
+        direction: ltr;
+        text-align: left;
+        unicode-bidi: isolate;
+        margin: 0 0 10px;
+        font-size: clamp(22px, 3.6vw, 36px);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+        font-weight: 900;
+      }
+
+      .library-tile:not(.big) .tile-title {
+        font-size: clamp(21px, 2.45vw, 28px);
+      }
+
+      .tile-tags {
+        direction: ltr;
+        justify-content: flex-start;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-bottom: 16px;
+      }
+
+      .tile-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 6px 12px;
+        border: 1px solid rgba(110, 231, 183, 0.55);
+        border-radius: 999px;
+        background: rgba(110, 231, 183, 0.13);
+        color: #6ee7b7;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.01em;
+        text-shadow: 0 0 10px rgba(110, 231, 183, 0.75);
+        box-shadow:
+          0 0 12px rgba(110, 231, 183, 0.22),
+          inset 0 0 12px rgba(110, 231, 183, 0.08);
+      }
+
+      .library-tile:hover .tile-tag {
+        border-color: rgba(110, 231, 183, 0.78);
+        background: rgba(110, 231, 183, 0.18);
+        box-shadow:
+          0 0 16px rgba(110, 231, 183, 0.34),
+          inset 0 0 14px rgba(110, 231, 183, 0.10);
+      }
+
+      .tile-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 14px;
+        border-top: 1px solid rgba(110, 231, 183, 0.12);
+      }
+
+      .tile-subtitle {
+        direction: ltr;
+        text-align: left;
+        unicode-bidi: isolate;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .tile-arrow {
+        direction: ltr;
+        display: inline-grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 13%, transparent);
+        border: 1px solid color-mix(in srgb, var(--accent) 34%, rgba(255, 255, 255, 0.08));
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 900;
+        transition: transform 0.22s ease;
+      }
+
+      .library-tile:hover .tile-arrow {
+        transform: translateX(5px);
+      }
+
+
+
+      /* Day elapsed counter: isolated section, does not affect library tiles. */
+      .day-counter-section {
+        direction: ltr;
+        text-align: left;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 22px;
+        margin: 0 0 18px;
+        padding: 20px 22px;
+        border-radius: 20px;
+        border: 1px solid rgba(110, 231, 183, 0.18);
+        background: rgba(0, 0, 0, 0.72);
+        backdrop-filter: blur(18px) saturate(1.2);
+        -webkit-backdrop-filter: blur(18px) saturate(1.2);
+        box-shadow:
+          0 22px 48px rgba(0, 0, 0, 0.46),
+          inset 0 1px 0 rgba(255, 255, 255, 0.035);
+        overflow: hidden;
+        position: relative;
+        isolation: isolate;
+      }
+
+      .day-counter-section::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background:
+          radial-gradient(circle at 12% 30%, rgba(110, 231, 183, 0.13), transparent 34%),
+          linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent 54%);
+      }
+
+      .day-counter-section::after {
+        content: "";
+        position: absolute;
+        right: -44px;
+        bottom: -72px;
+        width: 190px;
+        height: 190px;
+        border-radius: 999px;
+        background: #6ee7b7;
+        opacity: 0.10;
+        filter: blur(30px);
+        z-index: -1;
+      }
+
+      .day-counter-ring {
+        position: relative;
+        width: 122px;
+        height: 122px;
+        flex: 0 0 auto;
+      }
+
+      .day-counter-ring svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .day-counter-track,
+      .day-counter-fill {
+        fill: none;
+        stroke-width: 8;
+      }
+
+      .day-counter-track {
+        stroke: rgba(255, 255, 255, 0.065);
+      }
+
+      .day-counter-fill {
+        stroke: #6ee7b7;
+        stroke-linecap: round;
+        transform: rotate(-90deg);
+        transform-origin: 60px 60px;
+        filter: drop-shadow(0 0 8px rgba(110, 231, 183, 0.55));
+        transition: stroke-dashoffset 0.45s ease;
+      }
+
+      .day-counter-center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+      }
+
+      .day-counter-percent {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 24px;
+        line-height: 1;
+        font-weight: 900;
+        color: #ecfff7;
+        letter-spacing: -0.06em;
+      }
+
+      .day-counter-content {
+        min-width: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .day-counter-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(207, 236, 224, 0.54);
+      }
+
+      .day-counter-time {
+        direction: ltr;
+        unicode-bidi: isolate;
+        font-family: "JetBrains Mono", monospace;
+        font-size: clamp(34px, 6vw, 68px);
+        line-height: 0.95;
+        font-weight: 900;
+        letter-spacing: -0.08em;
+        color: #ecfff7;
+        text-shadow: 0 0 22px rgba(110, 231, 183, 0.14);
+      }
+
+      .day-counter-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .day-counter-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(110, 231, 183, 0.44);
+        background: rgba(110, 231, 183, 0.10);
+        color: #6ee7b7;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 900;
+        box-shadow: 0 0 14px rgba(110, 231, 183, 0.16);
+      }
+
+      @media (max-width: 620px) {
+        .day-counter-section {
+          grid-template-columns: 1fr;
+          justify-items: center;
+          text-align: center;
+          padding: 18px;
+        }
+
+        .day-counter-content {
+          justify-items: center;
+        }
+
+        .day-counter-meta {
+          justify-content: center;
+        }
+
+        .day-counter-ring {
+          width: 112px;
+          height: 112px;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .library-app {
+          width: min(100% - 24px, 680px);
+          padding-top: 18px;
+        }
+
+        .library-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-auto-rows: 190px;
+        }
+
+        .library-tile.big {
+          grid-column: span 2;
+          grid-row: span 1;
+        }
+
+        .nav-tabs {
+          width: 100%;
+          max-width: 100%;
+          row-gap: 8px;
+        }
+
+        .nav-tab {
+          padding: 8px 14px;
+          font-size: 13px;
+        }
+      }
+
+      @media (max-width: 440px) {
+        .library-grid {
+          grid-template-columns: 1fr;
+          grid-auto-rows: 198px;
+        }
+
+        .library-tile.big,
+        .library-tile.wide {
+          grid-column: auto;
+          grid-row: auto;
+        }
+
+        .tile-title,
+        .library-tile:not(.big) .tile-title {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="pdf-theme vitality-theme">
+    <div id="vt-backdrop" aria-hidden="true">
+      <div class="wb-atmosphere"></div>
+      <div class="wb-mist"></div>
+      <div class="wb-mountains">
+        <svg viewBox="0 0 1440 360" preserveAspectRatio="none">
+          <path d="M0 250 L110 280 L260 210 L420 250 L560 190 L720 235 L900 175 L1080 220 L1240 195 L1440 230 L1440 360 L0 360 Z" fill="rgba(5, 22, 16, 0.78)" />
+          <path d="M0 292 L130 305 L300 260 L520 300 L760 258 L950 292 L1140 258 L1320 300 L1440 276 L1440 360 L0 360 Z" fill="rgba(2, 14, 10, 0.92)" />
+        </svg>
+      </div>
+      <div class="wb-particles">
+        <span style="left:9%;top:18%;--dx:18px;--dy:-86vh;animation-duration:20s"></span>
+        <span style="left:24%;top:58%;--dx:-12px;--dy:-90vh;animation-duration:26s"></span>
+        <span style="left:41%;top:32%;--dx:22px;--dy:-80vh;animation-duration:22s"></span>
+        <span style="left:63%;top:74%;--dx:-18px;--dy:-96vh;animation-duration:28s"></span>
+        <span style="left:82%;top:25%;--dx:20px;--dy:-94vh;animation-duration:27s"></span>
+      </div>
+    </div>
+    <div id="vt-grain" aria-hidden="true"></div>
+    <div class="bg-orb orb-1" aria-hidden="true"></div>
+    <div class="bg-orb orb-2" aria-hidden="true"></div>
+    <div class="bg-orb orb-3" aria-hidden="true"></div>
+
+    <main class="library-app">
+      <nav class="top-nav" aria-label="Navigation">
+        <div class="nav-tabs" dir="ltr">
+          <a class="nav-tab active" href="pdfs.html">تدريب</a>
+          <a class="nav-tab" href="../gpa.html">حاسبة المعدل</a>
+          <a class="nav-tab" href="../index.html">الانتاجية</a>
+        </div>
+      </nav>
+
+      <button id="nvFab" type="button" aria-label="Open Nova coach"><span class="nv-online"></span></button>
+      <div id="nvPanel" role="dialog" aria-label="Nova gym coach">
+        <div class="nv-head">
+          <div class="nv-av"></div>
+          <div><div class="nv-name">Nova</div><div class="nv-sub">your gym coach</div></div>
+          <button class="nv-x" id="nvClose" type="button" aria-label="Close">×</button>
+        </div>
+        <div class="nv-body" id="nvBody"></div>
+        <div class="nv-quick">
+          <button class="nv-chip" type="button" data-q="What do you know about my creatine? Include dose, timing, taken status, water impact, and where it is linked.">Creatine</button>
+          <button class="nv-chip" type="button" data-q="Summarize all my training and nutrition blocks on this page with their links.">Blocks</button>
+          <button class="nv-chip" type="button" data-q="What should I focus on today based on my gym, supplements, and water data?">Today</button>
+        </div>
+        <div class="nv-foot">
+          <input class="nv-input" id="nvInput" type="text" placeholder="Ask Nova..." autocomplete="off">
+          <button class="nv-send" id="nvSend" type="button">↑</button>
+        </div>
+      </div>
+
+      <section class="day-counter-section" aria-label="Time passed today and time left">
+        <div class="day-counter-ring" aria-hidden="true">
+          <svg viewBox="0 0 120 120">
+            <circle class="day-counter-track" cx="60" cy="60" r="52"></circle>
+            <circle class="day-counter-fill" id="dayCounterFill" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="day-counter-center">
+            <span class="day-counter-percent" id="dayCounterPercent">--%</span>
+          </div>
+        </div>
+        <div class="day-counter-content">
+          <div class="day-counter-label">TIME PASSED TODAY</div>
+          <div class="day-counter-time" id="dayCounterTime">--:--:--</div>
+          <div class="day-counter-meta">
+            <span id="dayCounterText">Calculating time left…</span>
+            <span class="day-counter-pill" id="dayCounterClock">--:--</span>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="library-section" aria-label="Training plans">
+        <div class="library-grid" id="mangaCards"></div>
+      </section>
+    </main>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="../lock.js"></script>
+    <script defer src="../sync.js"></script>
+    <script defer src="../topbar.js"></script>
+
+    <script>
+
+      const dayCounter = (() => {
+        const fill = document.getElementById("dayCounterFill");
+        const percentEl = document.getElementById("dayCounterPercent");
+        const timeEl = document.getElementById("dayCounterTime");
+        const textEl = document.getElementById("dayCounterText");
+        const clockEl = document.getElementById("dayCounterClock");
+        const radius = 52;
+        const circumference = 2 * Math.PI * radius;
+
+        function pad(value) {
+          return String(value).padStart(2, "0");
+        }
+
+        function formatClock(date) {
+          let hours = date.getHours();
+          const minutes = date.getMinutes();
+          const ampm = hours >= 12 ? "PM" : "AM";
+          hours %= 12;
+          if (hours === 0) hours = 12;
+          return `${hours}:${pad(minutes)} ${ampm}`;
+        }
+
+        function update() {
+          if (!fill || !percentEl || !timeEl || !textEl || !clockEl) return;
+
+          const now = new Date();
+          const start = new Date(now);
+          start.setHours(0, 0, 0, 0);
+
+          const end = new Date(now);
+          end.setDate(end.getDate() + 1);
+          end.setHours(0, 0, 0, 0);
+
+          const dayMs = end - start;
+          const elapsedMs = Math.min(dayMs, Math.max(0, now - start));
+          const remainingMs = Math.min(dayMs, Math.max(0, end - now));
+          const elapsedPercent = Math.min(100, Math.max(0, (elapsedMs / dayMs) * 100));
+
+          const remainingSeconds = Math.floor(remainingMs / 1000);
+          const hoursLeft = Math.floor(remainingSeconds / 3600);
+          const minutesLeft = Math.floor((remainingSeconds % 3600) / 60);
+          const secondsLeft = remainingSeconds % 60;
+
+          // Keep the ring/percentage as TIME PASSED TODAY, while the large clock shows time left.
+          fill.setAttribute("stroke-dasharray", String(circumference));
+          fill.setAttribute("stroke-dashoffset", String(circumference * (1 - elapsedPercent / 100)));
+
+          percentEl.textContent = `${Math.floor(elapsedPercent)}%`;
+          timeEl.textContent = `${pad(hoursLeft)}:${pad(minutesLeft)}:${pad(secondsLeft)}`;
+          textEl.textContent = "time left until midnight";
+          clockEl.textContent = `${hoursLeft}h ${pad(minutesLeft)}m left`;
+        }
+
+        update();
+        return window.setInterval(update, 1000);
+      })();
+
+      const BOOKS = {
+        hasm: {
+          id: "hasm",
+          href: "./hasm.html",
+          number: "·01",
+          title: "نظام الحسم — وقت قليل وفعالية عالية 🏋🏽",
+          desc: "نظام تدريبي مختصر بفعالية عالية.",
+          subtitle: "وقت قليل وفعالية عالية",
+          tags: ["Training", "Efficient", "High Impact"],
+          tileClass: "big",
+          accent: "#F59E0B",
+          cover: "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0002.jpg?v=1785709353",
+          pages: [
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0002.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0003.jpg?v=1785709352",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0004.jpg?v=1785709350",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0005.jpg?v=1785709350",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0006.jpg?v=1785709350",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0007.jpg?v=1785709352",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0008.jpg?v=1785709350",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0009.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0010.jpg?v=1785709352",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0011.jpg?v=1785709352",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0012.jpg?v=1785709352",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0013.jpg?v=1785709347",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0014.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0015.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0016.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0017.jpg?v=1785709352",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0018.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0019.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0020.jpg?v=1785709353",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0021.jpg?v=1785709352"
+          ]
+        },
+        hasmDiet: {
+          id: "hasmDiet",
+          href: "./diet-hasm.html",
+          number: "·02",
+          title: "خطة تغذية حسم 🍽️",
+          desc: "خطة التغذية الخاصة بنظام الحسم.",
+          subtitle: "Hasm nutrition plan",
+          tags: ["Nutrition", "Hasm", "Meals"],
+          tileClass: "big",
+          accent: "#34D399",
+          cover: "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0002_6a940768-97b1-4684-9607-dcf24127bdd7.jpg?v=1785709696",
+          pages: [
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0002_6a940768-97b1-4684-9607-dcf24127bdd7.jpg?v=1785709696",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0003_5c8fe209-0569-4e28-a601-d102a0c6021a.jpg?v=1785709694",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0004_f470ed15-3da1-41f1-8680-a312ac5bd14a.jpg?v=1785709695",
+            "https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0005_38fe5e15-5cac-4d4f-9fbc-88d57a88fe64.jpg?v=1785709694"
+          ]
+        },
+        workout: {
+          id: "workout",
+          number: "·03",
+          title: "Workout Plan (عضلة كل يوم) 🏋🏽",
+          desc: "برنامج تمرين عملي بخطوات واضحة.",
+          subtitle: "عضلة كل يوم",
+          tags: ["Training", "Plan", "Steps"],
+          tileClass: "big",
+          accent: "#6BE3A4",
+          cover: "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0001.jpg?v=1769279228",
+          pages: [
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0002.jpg?v=1769279284",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0003.jpg?v=1769279326",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0004.jpg?v=1769279344",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0005.jpg?v=1769279349",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0006.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0007.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0008.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0009.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0010.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0011.jpg?v=1769279346",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0012.jpg?v=1769279349",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0013.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0014.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0015.jpg?v=1769279345",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0016.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0017.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0018.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0019.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0020.jpg?v=1769279345",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0021.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0022.jpg?v=1769279349",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0023.jpg?v=1769279348",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0024.jpg?v=1769279348"
+          ]
+        },
+        nutrition: {
+          id: "nutrition",
+          number: "·04",
+          title: "Nutrition Plan (خطة تغذية) 🍽️",
+          desc: "خطة تغذية منظمة لدعم أهدافك.",
+          subtitle: "Nutrition support",
+          tags: ["Nutrition", "Meals", "Goals"],
+          tileClass: "wide",
+          accent: "#34D399",
+          cover: "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/page-0001.jpg?v=1769278401",
+          pages: [
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/page-0002.jpg?v=1769278401",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/page-0006.jpg?v=1769278400",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/page-0004.jpg?v=1769278400",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/page-0003.jpg?v=1769278399",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/page-0007.jpg?v=1769278399",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/page-0005.jpg?v=1769278399"
+          ]
+        },
+        ppl: {
+          id: "ppl",
+          number: "·05",
+          title: "Push Pull Legs 🏋🏽🏋🏽🏋🏽",
+          desc: "برنامج PPL كامل لزيادة القوة والكتلة.",
+          subtitle: "Strength & mass",
+          tags: ["PPL", "Strength", "Hypertrophy"],
+          tileClass: "wide",
+          accent: "#22C55E",
+          cover: "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0001.jpg?v=1769281469",
+          pages: [
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0002.jpg?v=1769281467",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0003.jpg?v=1769281464",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0004.jpg?v=1769281463",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0005.jpg?v=1769281468",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0006.jpg?v=1769281468",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0007.jpg?v=1769281468",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0008.jpg?v=1769281468",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0009.jpg?v=1769281468",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0010.jpg?v=1769281467",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0011.jpg?v=1769281467",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0012.jpg?v=1769281466",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0013.jpg?v=1769281469",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0014.jpg?v=1769281468",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0015.jpg?v=1769281467",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0016.jpg?v=1769281467",
+            "https://cdn.shopify.com/s/files/1/0701/6736/3720/files/3__page-0017.jpg?v=1769281466"
+          ]
+        },
+        progressPhotos: {
+          id: "progressPhotos",
+          number: "·06",
+          title: "PROGRESS PHOTOS",
+          desc: "Body progress photos and weight timeline.",
+          subtitle: "Progress photos",
+          tags: ["Photos", "Weight", "Progress"],
+          tileClass: "wide",
+          accent: "#7DD3FC",
+          href: "../yt%20ll/gym.html"
+        },
+        cheatmeal: {
+          id: "cheatmeal",
+          number: "·07",
+          title: "🍽️ Cheatmeal Calculator",
+          desc: "حاسبة حد الوجبة المفتوحة والسعرات.",
+          subtitle: "Calories & planning",
+          tags: ["Calculator", "Calories", "Cheatmeal"],
+          tileClass: "wide",
+          accent: "#6EE7B7",
+          href: "../meal-calculator.html"
+        },
+        supplementsWater: {
+          id: "supplementsWater",
+          number: "·08",
+          title: "💊 Supplements + 💧Water",
+          desc: "تتبع المكملات اليومية وشرب الماء بنفس الصفحة.",
+          subtitle: "Daily stack & hydration",
+          tags: ["Supplements", "Water", "Daily"],
+          tileClass: "wide",
+          accent: "#A7F3D0",
+          href: "../supplments.html"
+        },
+        challenge60: {
+          id: "challenge60",
+          number: "·09",
+          title: "60 Days Challenge",
+          desc: "Checklist يومية للتغذية والمكملات والكارديو والتمرين والخطوات.",
+          subtitle: "Daily challenge",
+          tags: ["60 Days", "Checklist", "Daily"],
+          tileClass: "wide",
+          accent: "#6EE7B7",
+          href: "./60%20days%20chalnge.html"
+        },
+        caffeine: {
+          id: "caffeine ☕",
+          number: "·10",
+          title: "Caffeine",
+          desc: "Intake & timing",
+          subtitle: "Intake & timing",
+          tags: [],
+          tileClass: "small",
+          accent: "#C4A484",
+          icon: "☕",
+          href: "../caffeine.html"
+        }
+      };
+
+      BOOKS.anas = {
+        ...BOOKS.hasm,
+        id: "anas",
+        href: "./anas.html",
+        number: "·11",
+        title: "نظام أنس — وقت قليل وفعالية عالية 🏋🏽",
+        desc: "نسخة مستقلة من نظام الحسم مخصصة لأنس.",
+        subtitle: "وقت قليل وفعالية عالية",
+        accent: "#38BDF8"
+      };
+
+      BOOKS.fortyDay = {
+        ...BOOKS.hasm,
+        id: "fortyDay",
+        href: "./40-days-workout.html",
+        number: "·12",
+        title: "تمرين الـ40 يوم 🏋🏽",
+        desc: "Push / Pull / Legs لمدة 6 أيام أسبوعيًا، واليوم السابع راحة.",
+        subtitle: "40 days · PPL × 6",
+        tags: ["40 Days", "PPL", "Training"],
+        tileClass: "big",
+        accent: "#F59E0B",
+        cover: "https://cdn.shopify.com/s/files/1/0739/2205/2198/files/Push_Pull_Legs__page-0001.jpg?v=1788696803"
+      };
+
+      const mangaContainer = document.getElementById("mangaCards");
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      if (mangaContainer) {
+        try {
+          const displayedBooks = [BOOKS.fortyDay, ...Object.values(BOOKS).filter((book) => book.id !== "fortyDay")];
+          mangaContainer.innerHTML = displayedBooks
+            .map((book) => {
+              const tileLink = book.href || `./manga-viewer.html?book=${encodeURIComponent(book.id)}`;
+              const tags = book.tags.map((tag) => `<span class="tile-tag">${escapeHtml(tag)}</span>`).join("");
+              return `
+                <a
+                  class="library-tile ${book.tileClass || ""}"
+                  href="${tileLink}"
+                  aria-label="Open ${escapeHtml(book.title)}"
+                  style="--accent: ${book.accent}"
+                >
+                  <div class="tile-head">
+                    <span class="tile-number">${book.number}</span>
+                    ${book.icon ? `<span class="tile-icon" aria-hidden="true">${escapeHtml(book.icon)}</span>` : ""}
+                  </div>
+                  <div class="tile-spacer"></div>
+                  <h2 class="tile-title">${escapeHtml(book.title)}</h2>
+                  <div class="tile-tags">${tags}</div>
+                  <div class="tile-footer">
+                    <span class="tile-subtitle">${escapeHtml(book.desc)}</span>
+                    <span class="tile-arrow" aria-hidden="true">→</span>
+                  </div>
+                </a>
+              `;
+            })
+            .join("");
+        } catch (error) {
+          mangaContainer.innerHTML = '<div class="tile-subtitle">تعذر تحميل البطاقات.</div>';
+          console.error(error);
+        }
+      }
+
+      (() => {
+        "use strict";
+
+        const $ = (id) => document.getElementById(id);
+        const fab = $("nvFab");
+        const panel = $("nvPanel");
+        const body = $("nvBody");
+        const input = $("nvInput");
+        const KEY_LS = "nova_lite_gemini_api_key";
+        const DEFAULT_GEMINI_API_KEY = "";
+        const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash"];
+        const MEMORY_KEY = "nova_pdf_coach_memory_v1";
+        let busy = false;
+        let greeted = false;
+
+        const COACH_TRAINING = {
+          identity: "Nova is Ahed's permanent bilingual AI personal trainer coach and nutrition analyst.",
+          defaultLanguage: "Arabic first, English second. Reply in Arabic by default, with English terms in parentheses when useful.",
+          tone: [
+            "emotionally intelligent",
+            "direct but respectful",
+            "evidence-aware",
+            "safety-first",
+            "natural, professional Arabic",
+            "no shame-based language"
+          ],
+          duties: [
+            "answer from saved profile, library blocks, supplement stack, water data, and gym logs before asking repeat questions",
+            "calculate or estimate calories, protein, carbs, fats, hydration, and training volume when the needed data exists",
+            "parse meal, supplement, water, and workout logs from user messages",
+            "track daily, weekly, and monthly progress from available logs",
+            "distinguish known data, inferred data, and missing data",
+            "ask exactly one concise clarifying question when critical quantity/unit/context is missing",
+            "give one practical next action at the end"
+          ],
+          safetyRules: [
+            "do not diagnose medical conditions",
+            "do not prescribe medication",
+            "do not give steroid advice",
+            "do not recommend starvation, purging, or dangerous restriction",
+            "if the user reports severe fatigue, dizziness, chest pain, fainting, self-harm, purging, or dangerous restriction, tell them to stop and seek qualified help"
+          ],
+          creatineRules: [
+            "for creatine questions, use saved supplement stack first",
+            "mention dose, timing, taken-today status, running-low status, linked Supplements + Water block, and water impact when available",
+            "if creatine is not saved, clearly say it is not in the saved stack and give the default 5g/day reference as a general estimate"
+          ],
+          outputStyle: [
+            "short bullets for quick questions",
+            "more detail for planning and reviews",
+            "show totals when nutrition is discussed",
+            "label confidence when estimating"
+          ]
+        };
+
+        function todayStackKey() {
+          const now = new Date();
+          if (now.getHours() < 6) now.setDate(now.getDate() - 1);
+          return "daily_stack_taken_v2:" + now.toISOString().slice(0, 10);
+        }
+
+        function readLS(key, fallback) {
+          try {
+            const value = JSON.parse(localStorage.getItem(key));
+            return value == null ? fallback : value;
+          } catch (e) {
+            return fallback;
+          }
+        }
+
+        function savedKey() {
+          try { return localStorage.getItem(KEY_LS) || DEFAULT_GEMINI_API_KEY; } catch (e) { return DEFAULT_GEMINI_API_KEY; }
+        }
+
+        function askForKey() {
+          const key = window.prompt("Enter Gemini API key for Nova:");
+          if (!key) return "";
+          try { localStorage.setItem(KEY_LS, key.trim()); } catch (e) {}
+          return key.trim();
+        }
+
+        function coachMemory() {
+          return readLS(MEMORY_KEY, { recentUserMessages: [], notes: [] });
+        }
+
+        function saveCoachMemory(userMessage) {
+          const memory = coachMemory();
+          const recent = Array.isArray(memory.recentUserMessages) ? memory.recentUserMessages : [];
+          recent.push({ at: new Date().toISOString(), text: String(userMessage).slice(0, 500) });
+          memory.recentUserMessages = recent.slice(-20);
+          memory.notes = Array.isArray(memory.notes) ? memory.notes.slice(-20) : [];
+          try { localStorage.setItem(MEMORY_KEY, JSON.stringify(memory)); } catch (e) {}
+        }
+
+        function detectLanguage(text) {
+          return /[\u0600-\u06FF]/.test(text) ? "ar" : "en";
+        }
+
+        function detectAffect(text) {
+          const t = String(text || "").toLowerCase();
+          if (/تعب|محبط|زهقان|يائس|خايف|قلقان|stressed|tired|discouraged|anxious|sad/.test(t)) return "discouraged_or_stressed";
+          if (/ألم|دوخة|دوار|صدر|اغماء|إغماء|قيء|تقيؤ|pain|dizzy|chest|faint|purge|vomit|starv/.test(t)) return "safety_sensitive";
+          return "neutral";
+        }
+
+        function localNutritionAnswer(text) {
+          const raw = String(text || "").toLowerCase();
+          const normalized = raw
+            .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+            .replace(/صدر\s*دجاج|دجاج|chicken breast|chicken/g, " chicken ")
+            .replace(/رز|أرز|rice/g, " rice ");
+          if (!/chicken/.test(normalized) || !/rice/.test(normalized)) return "";
+          const matches = Array.from(normalized.matchAll(/(\d+(?:\.\d+)?)\s*(?:غم|جرام|g|gram|grams)?\s*(chicken|rice)|(chicken|rice)\s*(\d+(?:\.\d+)?)/g));
+          let chicken = null;
+          let rice = null;
+          matches.forEach((match) => {
+            const amount = Number(match[1] || match[4]);
+            const food = match[2] || match[3];
+            if (!Number.isFinite(amount)) return;
+            if (food === "chicken") chicken = amount;
+            if (food === "rice") rice = amount;
+          });
+          if (chicken == null || rice == null) return "";
+          const cooked = /مطبوخ|مستوي|cooked/.test(raw);
+          if (!cooked && !/نيء|raw/.test(raw)) {
+            return "- أحتاج توضيح واحد: هل الدجاج والرز **مطبوخين** أم **نيئين**؟";
+          }
+
+          const chickenPer100 = { cal: 165, protein: 31, carbs: 0, fat: 3.6 };
+          const ricePer100 = { cal: 130, protein: 2.7, carbs: 28, fat: 0.3 };
+          const total = {
+            cal: (chicken * chickenPer100.cal + rice * ricePer100.cal) / 100,
+            protein: (chicken * chickenPer100.protein + rice * ricePer100.protein) / 100,
+            carbs: (chicken * chickenPer100.carbs + rice * ricePer100.carbs) / 100,
+            fat: (chicken * chickenPer100.fat + rice * ricePer100.fat) / 100
+          };
+          return [
+            "- **السعرات:** " + Math.round(total.cal) + " kcal",
+            "- **البروتين:** " + Math.round(total.protein) + " غ",
+            "- **الكارب:** " + Math.round(total.carbs) + " غ",
+            "- **الدهون:** " + Math.round(total.fat) + " غ",
+            "- محسوبة على أساس **صدر دجاج مطبوخ** و**رز أبيض مطبوخ**.",
+            "- **اليوم اعمل:** سجّل الوجبة إذا هذه كانت وجبتك الفعلية."
+          ].join("\n");
+        }
+
+        function cleanValue(value, depth) {
+          if (depth > 5) return null;
+          if (typeof value === "string") return value.length > 120 ? value.slice(0, 120) + "..." : value;
+          if (Array.isArray(value)) return value.slice(-20).map((item) => cleanValue(item, depth + 1));
+          if (value && typeof value === "object") {
+            const out = {};
+            Object.keys(value).forEach((key) => {
+              if (/image|photo|base64|thumb|cover|pages/i.test(key)) return;
+              out[key] = cleanValue(value[key], depth + 1);
+            });
+            return out;
+          }
+          return value;
+        }
+
+        function linkForBook(book) {
+          return book.href || `./manga-viewer.html?book=${encodeURIComponent(book.id)}`;
+        }
+
+        function libraryBlocks() {
+          return Object.values(BOOKS).map((book) => ({
+            id: book.id,
+            title: book.title,
+            description: book.desc,
+            tags: book.tags || [],
+            link: linkForBook(book),
+            pageCount: Array.isArray(book.pages) ? book.pages.length : 0
+          }));
+        }
+
+        function findCreatine(stackItems, lowList, takenMap) {
+          const items = Array.isArray(stackItems) ? stackItems : [];
+          const item = items.find((entry) => /creatine/i.test(String(entry.name || "")));
+          if (!item) {
+            return {
+              saved: false,
+              default: {
+                name: "Creatine monohydrate",
+                dose: "5g",
+                timing: "anytime",
+                note: "Daily consistency matters more than timing",
+                waterImpact: "The water calculator adds extra water for creatine when it is in po_water_v1 substances."
+              },
+              linkedBlock: "../supplments.html"
+            };
+          }
+          return {
+            saved: true,
+            id: item.id,
+            name: item.name,
+            dose: item.dose,
+            timing: item.window || "anytime",
+            note: item.note || "",
+            takenToday: !!takenMap[item.id],
+            runningLow: lowList.includes(item.id),
+            linkedBlock: "../supplments.html"
+          };
+        }
+
+        function novaData() {
+          const stackItems = readLS("daily_stack_items_v2", []);
+          const lowList = readLS("daily_stack_low_v2", []);
+          const takenMap = readLS(todayStackKey(), {});
+          const water = readLS("po_water_v1", {});
+          const blocks = libraryBlocks();
+          const ctx = {
+            page: "pdfs.html training library",
+            today: new Date().toDateString(),
+            coachTraining: COACH_TRAINING,
+            memory: cleanValue(coachMemory(), 0),
+            instructions: "Use coachTraining as Nova's behavior contract. Use the page blocks and links when answering. If asked about creatine, use supplementStack, creatine, and waterCoach first.",
+            blocks,
+            linkedBlocks: {
+              supplementsAndWater: "../supplments.html",
+              caffeine: "../caffeine.html",
+              cheatMealCalculator: "../meal-calculator.html",
+              progressPhotos: "../yt%20ll/gym.html",
+              workoutPlan: "./manga-viewer.html?book=workout",
+              nutritionPlan: "./manga-viewer.html?book=nutrition",
+              pushPullLegs: "./manga-viewer.html?book=ppl",
+              fortyDayWorkout: "./40-days-workout.html"
+            },
+            supplementStack: {
+              items: cleanValue(stackItems, 0),
+              takenToday: cleanValue(takenMap, 0),
+              runningLowIds: cleanValue(lowList, 0)
+            },
+            creatine: findCreatine(stackItems, lowList, takenMap),
+            waterCoach: cleanValue(water, 0),
+            gym: {
+              profile: cleanValue((readLS("po_water_v1", {}) || {}).profile || {}, 0),
+              recentWeights: cleanValue(readLS("po_coach_weights", []).slice(-14), 0),
+              workoutSummaryAvailable: !!readLS("po_coach_v1", null),
+              workoutsDone: cleanValue(readLS("po_coach_workout_done", null), 0)
+            }
+          };
+          let text = JSON.stringify(ctx);
+          if (text.length > 85000) {
+            ctx.gym.workouts = "[too large]";
+            ctx.gym.weights = "[too large]";
+            text = JSON.stringify(ctx);
+          }
+          return ctx;
+        }
+
+        function esc(text) {
+          return String(text).replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
+        }
+
+        function md(text) {
+          const html = esc(text)
+            .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+            .replace(/`(.+?)`/g, "<code>$1</code>");
+          const lines = html.split("\n");
+          let out = "";
+          let inList = false;
+          lines.forEach((line) => {
+            if (/^\s*[-*]\s+/.test(line)) {
+              if (!inList) { out += "<ul>"; inList = true; }
+              out += "<li>" + line.replace(/^\s*[-*]\s+/, "") + "</li>";
+            } else {
+              if (inList) { out += "</ul>"; inList = false; }
+              if (line.trim()) out += "<div>" + line + "</div>";
+            }
+          });
+          if (inList) out += "</ul>";
+          return out;
+        }
+
+        function addMsg(who, html) {
+          const msg = document.createElement("div");
+          msg.className = "nv-msg " + who;
+          msg.innerHTML = html;
+          body.appendChild(msg);
+          body.scrollTop = body.scrollHeight;
+          return msg;
+        }
+
+        const SYS = "You are Nova, Ahed's permanent bilingual AI personal trainer coach and nutrition analyst inside pdfs.html. " +
+          "Arabic is the default language; use English terms in parentheses only when helpful. " +
+          "You can read page blocks, links, saved supplement stack data, creatine status, water data, body profile, gym logs, and local coach memory from the JSON. " +
+          "Always separate known data, inferred data, and missing data. Do not invent numbers. " +
+          "If critical food quantity, unit, cooked/raw state, dose, timing, or workout context is missing, ask exactly one concise clarifying question. " +
+          "For creatine, mention saved dose, timing, taken-today status, running-low status, water impact if present, and the Supplements + Water link. " +
+          "Be emotionally intelligent, direct, respectful, evidence-aware, and safety-first. " +
+          "No medical diagnosis, medication prescribing, steroid advice, starvation advice, purging advice, or shame-based language. " +
+          "If the user reports severe fatigue, dizziness, chest pain, fainting, self-harm, purging, or dangerous restriction, tell them to stop and seek qualified help. " +
+          "For nutrition calculations, answer with totals first only: calories, protein, carbs, fats, then one short note. Do not include known/inferred/missing sections unless explicitly asked. Do not start with filler phrases like بالتأكيد or تمام. " +
+          "Use short practical bullets and end with one 'اليوم اعمل:' bullet. Keep replies under 180 words.";
+
+        async function askServer(text) {
+          if (window.location.protocol === "file:") {
+            return "";
+          }
+          const res = await fetch("/api/gemini", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ message: text, dashboardData: novaData() })
+          });
+          if (res.status === 404 || res.status === 405) return "";
+          const raw = await res.text();
+          let json = {};
+          try { json = raw ? JSON.parse(raw) : {}; } catch (e) { json = {}; }
+          if (!res.ok) {
+            const message = json && json.error ? String(json.error) : (raw ? raw.slice(0, 180) : "Gemini server request failed.");
+            if (/server not configured/i.test(message)) return "";
+            throw new Error(message);
+          }
+          return json && json.reply ? String(json.reply) : "";
+        }
+
+        function extractGeminiText(json) {
+          if (!json || typeof json !== "object") return "";
+          if (Array.isArray(json.candidates)) {
+            return json.candidates
+              .map((candidate) => (((candidate || {}).content || {}).parts || [])
+                .map((part) => part && part.text ? part.text : "")
+                .join(""))
+              .filter(Boolean)
+              .join("\n");
+          }
+          return "";
+        }
+
+        function explainEmptyGeminiResponse(json) {
+          const candidate = json && Array.isArray(json.candidates) && json.candidates[0];
+          const reason = candidate && candidate.finishReason;
+          if (reason === "SAFETY") return "- Gemini blocked this reply for **safety**. Try asking it in a simpler way.";
+          if (reason === "MAX_TOKENS") return "- Gemini ran out of output space. Ask a **shorter question**.";
+          return "- Gemini answered, but Nova could not read the text. Try again in a few seconds.";
+        }
+
+        async function askBrowserGeminiWithModel(text, key, model) {
+          const prompt = "PDF library, supplement, water, and gym data as JSON:\n" +
+            JSON.stringify(novaData()) + "\n\nUser message:\n" + text;
+          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-goog-api-key": key
+            },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: SYS }] },
+              contents: [{ role: "user", parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: 1200, temperature: 0.3 }
+            })
+          });
+          const json = await res.json();
+          if (json.error) throw new Error(json.error.message || "Something went wrong. Check your Gemini key.");
+          return extractGeminiText(json) || explainEmptyGeminiResponse(json);
+        }
+
+        async function askBrowserGemini(text, key) {
+          let lastError = null;
+          for (const model of GEMINI_MODELS) {
+            try {
+              return await askBrowserGeminiWithModel(text, key, model);
+            } catch (error) {
+              lastError = error;
+              const message = error && error.message ? error.message : String(error);
+              if (!/high demand|overloaded|temporarily unavailable|try again later|503|unavailable/i.test(message)) throw error;
+            }
+          }
+          throw lastError || new Error("Gemini is temporarily unavailable. Try again later.");
+        }
+
+        async function ask(text) {
+          const message = (text || "").trim();
+          if (!message || busy) return;
+          if (!greeted) greeted = true;
+          saveCoachMemory(message);
+          addMsg("user", md(message));
+          busy = true;
+          const loading = addMsg("coach", '<span class="nv-dots"><i></i><i></i><i></i></span>');
+          try {
+            const localAnswer = localNutritionAnswer(message);
+            if (localAnswer) {
+              loading.innerHTML = md(localAnswer);
+              busy = false;
+              body.scrollTop = body.scrollHeight;
+              return;
+            }
+            const enrichedMessage = JSON.stringify({
+              text: message,
+              detectedLanguage: detectLanguage(message),
+              detectedAffect: detectAffect(message)
+            });
+            let reply = "";
+            if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+              reply = await askServer(enrichedMessage);
+            }
+            if (!reply) {
+              const key = savedKey() || askForKey();
+              if (!key) throw new Error("Gemini API key is required for Nova when opening pdfs.html without a server.");
+              reply = await askBrowserGemini(enrichedMessage, key);
+            }
+            loading.innerHTML = md(reply);
+          } catch (error) {
+            loading.innerHTML = md("- " + (error && error.message ? error.message : "Could not reach Gemini."));
+          }
+          busy = false;
+          body.scrollTop = body.scrollHeight;
+        }
+
+        function openPanel() {
+          panel.classList.add("open");
+          if (!greeted) {
+            greeted = true;
+            addMsg("coach", md("Hey - I'm **Nova**, your coach. I can see this PDF library, your supplement stack, creatine, water data, and gym logs. Tap **Creatine**, **Blocks**, or ask me anything."));
+          }
+          setTimeout(() => input.focus(), 50);
+        }
+
+        function closePanel() {
+          panel.classList.remove("open");
+        }
+
+        if (fab && panel && body && input && $("nvSend") && $("nvClose")) {
+          fab.addEventListener("click", () => panel.classList.contains("open") ? closePanel() : openPanel());
+          $("nvClose").addEventListener("click", closePanel);
+          $("nvSend").addEventListener("click", () => {
+            const text = input.value;
+            input.value = "";
+            ask(text);
+          });
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+              const text = input.value;
+              input.value = "";
+              ask(text);
+            }
+          });
+          document.querySelectorAll(".nv-chip").forEach((chip) => {
+            chip.addEventListener("click", () => {
+              openPanel();
+              ask(chip.getAttribute("data-q") || "");
+            });
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

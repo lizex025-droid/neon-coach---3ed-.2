@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <link
+      rel="shortcut icon"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <meta name="theme-color" content="#120f24" />
+    <title>حاسبات المعدل الجامعي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --card: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --accent: #7c4dff;
+        --text: #f5f4ff;
+        --muted: #b8b5d6;
+        --danger: #f3a4a4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Tajawal", sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top right, #2f2657, #120f24 50%, #0b0a17 100%);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .bg-orb {
+        position: fixed;
+        border-radius: 999px;
+        filter: blur(40px);
+        opacity: 0.5;
+        z-index: 0;
+      }
+
+      .orb-1 {
+        width: 320px;
+        height: 320px;
+        background: #5a3dc8;
+        top: -80px;
+        right: 180px;
+      }
+
+      .orb-2 {
+        width: 260px;
+        height: 260px;
+        background: #4b2b90;
+        bottom: 40px;
+        right: 40px;
+      }
+
+      .orb-3 {
+        width: 240px;
+        height: 240px;
+        background: #2f9bd6;
+        top: 40%;
+        left: 50px;
+        opacity: 0.25;
+      }
+
+      .app {
+        position: relative;
+        z-index: 1;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 28px 16px 48px;
+        display: grid;
+        gap: 20px;
+      }
+
+      .top-nav {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 22px;
+      }
+
+      .nav-tabs {
+        display: inline-flex;
+        gap: 10px;
+        background: rgba(8, 7, 20, 0.6);
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        padding: 6px;
+        backdrop-filter: blur(12px);
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .nav-tab {
+        text-decoration: none;
+        color: var(--muted);
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        transition: 0.2s ease;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+
+      .nav-tab.active {
+        color: var(--text);
+        background: rgba(124, 77, 255, 0.28);
+        border-color: rgba(124, 77, 255, 0.5);
+      }
+
+      .nav-tab:hover {
+        color: var(--text);
+        background: rgba(124, 77, 255, 0.2);
+      }
+
+      .calculator-nav {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding: 8px;
+        border: 1px solid var(--stroke);
+        border-radius: 18px;
+        background: rgba(8, 7, 20, 0.6);
+        backdrop-filter: blur(12px);
+      }
+
+      .calculator-tab {
+        min-height: 48px;
+        padding: 9px 12px;
+        border: 1px solid transparent;
+        border-radius: 13px;
+        background: transparent;
+        color: var(--muted);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .calculator-tab:hover {
+        color: var(--text);
+        background: rgba(124, 77, 255, 0.15);
+      }
+
+      .calculator-tab.active {
+        color: var(--text);
+        border-color: rgba(124, 77, 255, 0.5);
+        background: rgba(124, 77, 255, 0.28);
+        box-shadow: 0 8px 20px rgba(124, 77, 255, 0.16);
+      }
+
+      .calculator-panel[hidden] {
+        display: none !important;
+      }
+
+      #calculatorGpa,
+      #calculatorMaxGpa {
+        width: min(980px, 100%);
+        justify-self: center;
+      }
+
+      @media (max-width: 600px) {
+        .top-nav {
+          margin-bottom: 14px;
+        }
+
+        .nav-tabs {
+          width: 100%;
+          max-width: 100%;
+          justify-content: center;
+          row-gap: 8px;
+        }
+
+        .nav-tab {
+          padding: 8px 14px;
+          font-size: 13px;
+        }
+
+        .calculator-nav {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--stroke);
+        border-radius: 24px;
+        padding: 20px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 24px 50px rgba(4, 4, 20, 0.4);
+        display: grid;
+        gap: 16px;
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 22px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .inputs {
+        display: grid;
+        gap: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      label {
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      input:focus,
+      select:focus {
+        outline: 2px solid rgba(124, 77, 255, 0.35);
+        border-color: rgba(124, 77, 255, 0.6);
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      .error {
+        color: var(--danger);
+        font-size: 12px;
+        min-height: 16px;
+      }
+
+      .section-title {
+        margin: 8px 0 0;
+        font-size: 18px;
+      }
+
+      .courses {
+        display: grid;
+        gap: 12px;
+      }
+
+      .course-card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 14px;
+        background: rgba(12, 12, 24, 0.6);
+        display: grid;
+        gap: 12px;
+      }
+
+      .course-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .course-title {
+        font-weight: 600;
+      }
+
+      .course-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        border: none;
+        background: var(--accent);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        font-family: inherit;
+      }
+
+      .btn.secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text);
+      }
+
+      .btn.danger {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--danger);
+        border: 1px solid rgba(243, 164, 164, 0.4);
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .course-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .radio-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .radio-group input {
+        width: auto;
+      }
+
+      .old-grade {
+        display: none;
+      }
+
+      .old-grade.visible {
+        display: grid;
+      }
+
+      .result {
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(12, 12, 24, 0.7);
+        border: 1px solid rgba(124, 77, 255, 0.35);
+        display: none;
+        gap: 10px;
+      }
+
+      .result h3 {
+        margin: 0 0 10px;
+      }
+
+      .result-grid {
+        display: grid;
+        gap: 8px;
+      }
+
+      .badge {
+        display: inline-block;
+        background: rgba(124, 77, 255, 0.2);
+        color: #e7dcff;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+      }
+
+      .graduation-embed-section {
+        width: 100%;
+        overflow: hidden;
+        border-radius: 26px;
+      }
+
+      .graduation-calculator-frame {
+        display: block;
+        width: 100%;
+        height: 1050px;
+        border: 0;
+        background: transparent;
+      }
+
+      @media (min-width: 720px) {
+        header h1 {
+          font-size: 32px;
+        }
+
+        .inputs {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .course-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <div class="app">
+      <nav class="top-nav" aria-label="التنقل">
+        <div class="nav-tabs" dir="ltr">
+          <a class="nav-tab" href="public/pdfs.html">تدريب</a>
+          <a class="nav-tab active" href="gpa.html">حاسبة المعدل</a>
+          <a class="nav-tab" href="index.html">الانتاجية</a>
+        </div>
+      </nav>
+
+      <nav class="calculator-nav" aria-label="اختيار الحاسبة" role="tablist">
+        <button
+          class="calculator-tab active"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="calculatorGpa"
+          data-calculator="calculatorGpa"
+        >حاسبة المعدل الجامعي</button>
+        <button
+          class="calculator-tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="calculatorMaxGpa"
+          data-calculator="calculatorMaxGpa"
+        >حاسبة أعلى معدل ممكن عند التخرج</button>
+        <button
+          class="calculator-tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="calculatorGraduationHours"
+          data-calculator="calculatorGraduationHours"
+        >حاسبة ساعات التخرج الذكية</button>
+      </nav>
+
+      <section class="card calculator-panel" id="calculatorGpa" role="tabpanel">
+        <h2>حاسبة المعدل التراكمي</h2>
+        <p>أضف المواد واحسب معدلك الفصلي والتراكمي بدقة.</p>
+
+        <div class="inputs">
+          <div class="field">
+            <label for="cumulativeHours">الساعات التراكمية السابقة</label>
+            <input id="cumulativeHours" type="number" min="0" step="1" placeholder="مثال: 45" />
+          </div>
+          <div class="field">
+            <label for="cumulativeGpa">المعدل التراكمي السابق</label>
+            <input id="cumulativeGpa" type="number" min="0" max="4" step="0.01" placeholder="0.00 إلى 4.00" />
+            <div class="error" id="cumulativeError"></div>
+          </div>
+        </div>
+
+        <h3 class="section-title">المواد الدراسية</h3>
+        <div class="courses" id="courses"></div>
+
+        <div class="actions">
+          <button class="btn secondary" id="addCourseBtn" type="button">إضافة مادة جديدة</button>
+          <button class="btn" id="calculateBtn" type="button">احسب معدلك</button>
+        </div>
+
+        <div class="result" id="resultBox">
+          <h3>النتيجة</h3>
+          <div class="result-grid">
+            <div>المعدل الفصلي: <strong id="semesterGpa">0.00</strong></div>
+            <div>المعدل التراكمي: <strong id="cumulativeResult">0.00</strong></div>
+            <div>التقدير: <span class="badge" id="gradeLabel">-</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card calculator-panel" id="calculatorMaxGpa" role="tabpanel" hidden>
+        <h2>حاسبة أعلى معدل ممكن عند التخرج</h2>
+        <p>أدخل ساعاتك المقطوعة ومعدلك الحالي وساعات الخطة والتقدير المتوقع لباقي المواد.</p>
+
+        <div class="inputs">
+          <div class="field">
+            <label for="maxDoneHours">الساعات المقطوعة</label>
+            <input id="maxDoneHours" type="number" min="0" step="1" placeholder="مثال: 60" />
+            <div class="error" id="maxDoneHoursErr"></div>
+          </div>
+
+          <div class="field">
+            <label for="maxCurrentGpa">المعدل الحالي على هذه الساعات</label>
+            <input id="maxCurrentGpa" type="number" min="0" max="4" step="0.01" placeholder="0.00 إلى 4.00" />
+            <div class="error" id="maxCurrentGpaErr"></div>
+          </div>
+
+          <div class="field">
+            <label for="maxProgramTotalHours">ساعات التخصص الكلية</label>
+            <input id="maxProgramTotalHours" type="number" min="1" step="1" placeholder="مثال: 160" />
+            <div class="error" id="maxProgramTotalErr"></div>
+          </div>
+
+          <div class="field">
+            <label for="maxExpectedGrade">التقدير المتوقع لباقي المواد</label>
+            <select id="maxExpectedGrade">
+              <option value="A" selected>A (4.00)</option>
+              <option value="A-">A- (3.75)</option>
+              <option value="B+">B+ (3.50)</option>
+              <option value="B">B (3.00)</option>
+              <option value="B-">B- (2.75)</option>
+              <option value="C+">C+ (2.50)</option>
+              <option value="C">C (2.00)</option>
+            </select>
+            <div class="error" id="maxExpectedGradeErr"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="maxCalcBtn" type="button">احسب أعلى معدل ممكن</button>
+        </div>
+
+        <div class="result" id="maxResultBox">
+          <h3>النتيجة</h3>
+          <div class="result-grid">
+            <div>الساعات المتبقية: <strong id="maxRemaining">0</strong></div>
+            <div>أعلى معدل ممكن عند التخرج: <strong id="maxGpa">0.00</strong></div>
+            <div>التقدير المتوقع: <span class="badge" id="maxLabel">-</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="graduation-embed-section calculator-panel"
+        id="calculatorGraduationHours"
+        role="tabpanel"
+        aria-label="حاسبة ساعات التخرج الذكية"
+        hidden
+      >
+        <iframe
+          class="graduation-calculator-frame"
+          id="graduationCalculatorFrame"
+          src="graduation-hours.html?embed=1"
+          title="حاسبة ساعات التخرج الذكية"
+          scrolling="no"
+        ></iframe>
+      </section>
+    </div>
+
+    <script>
+      (() => {
+        const gradePoints = {
+          A: 4.0,
+          "A-": 3.75,
+          "B+": 3.5,
+          B: 3.0,
+          "B-": 2.75,
+          "C+": 2.5,
+          C: 2.0,
+          "C-": 1.75,
+          "D+": 1.5,
+          D: 1.25,
+          "D-": 1.0,
+          F: 0.5
+        };
+
+        const oldGradeOptions = ["C+", "C", "C-", "D+", "D", "D-", "F"];
+        const coursesContainer = document.getElementById("courses");
+        const addCourseBtn = document.getElementById("addCourseBtn");
+        const calculateBtn = document.getElementById("calculateBtn");
+        const cumulativeHours = document.getElementById("cumulativeHours");
+        const cumulativeGpa = document.getElementById("cumulativeGpa");
+        const cumulativeError = document.getElementById("cumulativeError");
+        const resultBox = document.getElementById("resultBox");
+        const semesterGpa = document.getElementById("semesterGpa");
+        const cumulativeResult = document.getElementById("cumulativeResult");
+        const gradeLabel = document.getElementById("gradeLabel");
+
+        let courseCounter = 0;
+
+        function createGradeOptions(selected) {
+          const options = Object.keys(gradePoints)
+            .map((grade) => `<option value="${grade}" ${selected === grade ? "selected" : ""}>${grade}</option>`)
+            .join("");
+          return `<option value="">اختر التقدير</option>${options}`;
+        }
+
+        function createHoursOptions(selected) {
+          let options = "";
+          for (let i = 1; i <= 6; i += 1) {
+            options += `<option value="${i}" ${selected === i ? "selected" : ""}>${i} ساعات</option>`;
+          }
+          return options;
+        }
+
+        function createOldGradeOptions(selected) {
+          const options = oldGradeOptions
+            .map((grade) => `<option value="${grade}" ${selected === grade ? "selected" : ""}>${grade}</option>`)
+            .join("");
+          return `<option value="">اختر العلامة السابقة</option>${options}`;
+        }
+
+        function addCourseCard(values = {}) {
+          courseCounter += 1;
+          const id = `course-${courseCounter}`;
+          const gradeValue = values.grade || "";
+          const hoursValue = Number.isFinite(values.hours) ? values.hours : 3;
+          const repeatedValue = values.repeated ? "yes" : "no";
+          const oldGradeValue = values.oldGrade || "";
+
+          const card = document.createElement("div");
+          card.className = "course-card";
+          card.dataset.courseId = id;
+          card.innerHTML = `
+            <div class="course-header">
+              <div class="course-title">المادة</div>
+              <div class="course-actions">
+                <button class="btn secondary duplicate-btn" type="button">نسخ المادة</button>
+                <button class="btn danger remove-btn" type="button">حذف</button>
+              </div>
+            </div>
+            <div class="course-grid">
+              <div class="field">
+                <label>التقدير</label>
+                <select class="grade-select" required>${createGradeOptions(gradeValue)}</select>
+              </div>
+              <div class="field">
+                <label>الساعات</label>
+                <select class="hours-select">${createHoursOptions(hoursValue)}</select>
+              </div>
+              <div class="field">
+                <label>هل المادة معادة؟</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="${id}-repeat" value="no" ${repeatedValue === "no" ? "checked" : ""} /> لا</label>
+                  <label><input type="radio" name="${id}-repeat" value="yes" ${repeatedValue === "yes" ? "checked" : ""} /> نعم</label>
+                </div>
+              </div>
+              <div class="field old-grade ${repeatedValue === "yes" ? "visible" : ""}">
+                <label>علامة المادة السابقة</label>
+                <select class="old-grade-select">${createOldGradeOptions(oldGradeValue)}</select>
+              </div>
+            </div>
+          `;
+
+          coursesContainer.appendChild(card);
+          updateCourseTitles();
+          updateRemoveButtons();
+        }
+
+        function updateCourseTitles() {
+          Array.from(coursesContainer.children).forEach((card, index) => {
+            card.querySelector(".course-title").textContent = `المادة ${index + 1}`;
+          });
+        }
+
+        function updateRemoveButtons() {
+          const cards = Array.from(coursesContainer.children);
+          const disable = cards.length === 1;
+          cards.forEach((card) => {
+            const btn = card.querySelector(".remove-btn");
+            btn.disabled = disable;
+            btn.style.opacity = disable ? "0.6" : "1";
+            btn.style.cursor = disable ? "not-allowed" : "pointer";
+          });
+        }
+
+        function getCourseData(card) {
+          const grade = card.querySelector(".grade-select").value;
+          const hours = Number(card.querySelector(".hours-select").value || 0);
+          const repeatValue = card.querySelector("input[type=radio]:checked").value;
+          const repeated = repeatValue === "yes";
+          const oldGrade = repeated ? card.querySelector(".old-grade-select").value : "";
+          return { grade, hours, repeated, oldGrade };
+        }
+
+        function validateCumulative() {
+          const hoursValue = cumulativeHours.value.trim();
+          const gpaValue = cumulativeGpa.value.trim();
+          cumulativeError.textContent = "";
+
+          if ((hoursValue && !gpaValue) || (!hoursValue && gpaValue)) {
+            cumulativeError.textContent = "يرجى إدخال الساعات والمعدل السابقين معًا أو تركهما فارغين.";
+            return false;
+          }
+
+          if (gpaValue) {
+            const gpaNumber = Number(gpaValue);
+            if (Number.isNaN(gpaNumber) || gpaNumber < 0 || gpaNumber > 4) {
+              cumulativeError.textContent = "المعدل التراكمي السابق يجب أن يكون بين 0 و 4.";
+              return false;
+            }
+          }
+
+          return true;
+        }
+
+        function getGradeLabel(value) {
+          if (value >= 3.65) return "ممتاز";
+          if (value >= 3.0) return "جيد جدا";
+          if (value >= 2.5) return "جيد";
+          if (value >= 2.0) return "مقبول";
+          return "ضعيف";
+        }
+
+        function calculateGpa() {
+          if (!validateCumulative()) {
+            resultBox.style.display = "none";
+            return;
+          }
+
+          const cards = Array.from(coursesContainer.children);
+          let semesterPoints = 0;
+          let semesterHours = 0;
+          let totalPoints = 0;
+          let totalHours = 0;
+
+          const hoursValue = cumulativeHours.value.trim();
+          const gpaValue = cumulativeGpa.value.trim();
+          if (hoursValue && gpaValue) {
+            totalHours = Number(hoursValue);
+            totalPoints = Number(gpaValue) * totalHours;
+          }
+
+          for (const card of cards) {
+            const data = getCourseData(card);
+            if (!data.grade) {
+              alert("يرجى اختيار التقدير لكل مادة.");
+              return;
+            }
+            if (data.repeated && !data.oldGrade) {
+              alert("يرجى اختيار العلامة السابقة للمادة المعادة.");
+              return;
+            }
+
+            const gradePoint = gradePoints[data.grade];
+            semesterPoints += gradePoint * data.hours;
+            semesterHours += data.hours;
+
+            if (!data.repeated) {
+              totalPoints += gradePoint * data.hours;
+              totalHours += data.hours;
+            } else {
+              const oldPoint = gradePoints[data.oldGrade];
+              totalPoints -= oldPoint * data.hours;
+              totalPoints += gradePoint * data.hours;
+            }
+          }
+
+          if (semesterHours === 0 || totalHours === 0) {
+            alert("يرجى إدخال بيانات المواد بشكل صحيح.");
+            return;
+          }
+
+          const semesterResult = semesterPoints / semesterHours;
+          const cumulativeResultValue = totalPoints / totalHours;
+          semesterGpa.textContent = semesterResult.toFixed(2);
+          cumulativeResult.textContent = cumulativeResultValue.toFixed(2);
+          gradeLabel.textContent = getGradeLabel(cumulativeResultValue);
+          resultBox.style.display = "block";
+        }
+
+        coursesContainer.addEventListener("click", (event) => {
+          const target = event.target;
+          const card = target.closest(".course-card");
+          if (!card) return;
+
+          if (target.classList.contains("remove-btn")) {
+            if (coursesContainer.children.length === 1) return;
+            card.remove();
+            updateCourseTitles();
+            updateRemoveButtons();
+          }
+
+          if (target.classList.contains("duplicate-btn")) {
+            const data = getCourseData(card);
+            addCourseCard(data);
+            const addedCard = coursesContainer.lastElementChild;
+            card.after(addedCard);
+            updateCourseTitles();
+            updateRemoveButtons();
+          }
+        });
+
+        coursesContainer.addEventListener("change", (event) => {
+          const target = event.target;
+          if (target.type !== "radio") return;
+          const card = target.closest(".course-card");
+          const oldGrade = card.querySelector(".old-grade");
+          if (target.value === "yes") {
+            oldGrade.classList.add("visible");
+          } else {
+            oldGrade.classList.remove("visible");
+            oldGrade.querySelector("select").value = "";
+          }
+        });
+
+        addCourseBtn.addEventListener("click", () => addCourseCard());
+        calculateBtn.addEventListener("click", calculateGpa);
+        cumulativeHours.addEventListener("input", validateCumulative);
+        cumulativeGpa.addEventListener("input", validateCumulative);
+        addCourseCard();
+      })();
+    </script>
+
+    <script>
+      (() => {
+        const gradePoints = {
+          A: 4.0,
+          "A-": 3.75,
+          "B+": 3.5,
+          B: 3.0,
+          "B-": 2.75,
+          "C+": 2.5,
+          C: 2.0,
+          "C-": 1.75,
+          "D+": 1.5,
+          D: 1.25,
+          "D-": 1.0,
+          F: 0.5
+        };
+
+        const doneHours = document.getElementById("maxDoneHours");
+        const currentGpa = document.getElementById("maxCurrentGpa");
+        const programTotalHours = document.getElementById("maxProgramTotalHours");
+        const expectedGrade = document.getElementById("maxExpectedGrade");
+        const doneHoursErr = document.getElementById("maxDoneHoursErr");
+        const currentGpaErr = document.getElementById("maxCurrentGpaErr");
+        const programTotalErr = document.getElementById("maxProgramTotalErr");
+        const expectedGradeErr = document.getElementById("maxExpectedGradeErr");
+        const calcBtn = document.getElementById("maxCalcBtn");
+        const resultBox = document.getElementById("maxResultBox");
+        const remainingEl = document.getElementById("maxRemaining");
+        const maxGpaEl = document.getElementById("maxGpa");
+        const labelEl = document.getElementById("maxLabel");
+
+        function getGradeLabel(value) {
+          if (value >= 3.65) return "ممتاز";
+          if (value >= 3.0) return "جيد جدا";
+          if (value >= 2.5) return "جيد";
+          if (value >= 2.0) return "مقبول";
+          return "ضعيف";
+        }
+
+        function resetErrors() {
+          doneHoursErr.textContent = "";
+          currentGpaErr.textContent = "";
+          programTotalErr.textContent = "";
+          expectedGradeErr.textContent = "";
+        }
+
+        function validate() {
+          resetErrors();
+          let ok = true;
+
+          const h = Number(doneHours.value);
+          const g = Number(currentGpa.value);
+          const total = Number(programTotalHours.value);
+          const eg = expectedGrade.value;
+
+          if (!Number.isFinite(h) || h < 0) {
+            doneHoursErr.textContent = "أدخل ساعات مقطوعة صحيحة (0 أو أكثر).";
+            ok = false;
+          }
+          if (!Number.isFinite(g) || g < 0 || g > 4) {
+            currentGpaErr.textContent = "المعدل الحالي يجب أن يكون بين 0 و 4.";
+            ok = false;
+          }
+          if (!Number.isFinite(total) || total <= 0) {
+            programTotalErr.textContent = "أدخل ساعات تخصص كلية صحيحة (أكبر من 0).";
+            ok = false;
+          }
+          if (Number.isFinite(h) && Number.isFinite(total) && h > total) {
+            programTotalErr.textContent = "الساعات المقطوعة لا يمكن أن تكون أكبر من ساعات الخطة.";
+            ok = false;
+          }
+          if (!eg || !(eg in gradePoints)) {
+            expectedGradeErr.textContent = "اختر تقديرًا متوقعًا صحيحًا.";
+            ok = false;
+          }
+
+          return ok;
+        }
+
+        function calculateMaxPossible() {
+          if (!validate()) {
+            resultBox.style.display = "none";
+            return;
+          }
+
+          const h = Number(doneHours.value);
+          const g = Number(currentGpa.value);
+          const total = Number(programTotalHours.value);
+          const remaining = Math.max(0, total - h);
+          const currentPoints = g * h;
+          const futurePoints = gradePoints[expectedGrade.value] * remaining;
+          const finalGpa = (currentPoints + futurePoints) / total;
+
+          remainingEl.textContent = String(remaining);
+          maxGpaEl.textContent = Math.min(4.0, finalGpa).toFixed(2);
+          labelEl.textContent = getGradeLabel(finalGpa);
+          resultBox.style.display = "grid";
+        }
+
+        calcBtn.addEventListener("click", calculateMaxPossible);
+      })();
+    </script>
+    <script>
+      (() => {
+        const frame = document.getElementById("graduationCalculatorFrame");
+        window.addEventListener("message", (event) => {
+          if (
+            event.origin !== window.location.origin ||
+            event.source !== frame.contentWindow ||
+            event.data?.type !== "graduation-calculator-height"
+          ) {
+            return;
+          }
+
+          const height = Number(event.data.height);
+          if (Number.isFinite(height) && height > 500) {
+            frame.style.height = `${Math.ceil(height)}px`;
+          }
+        });
+      })();
+    </script>
+    <script>
+      (() => {
+        const tabs = Array.from(document.querySelectorAll("[data-calculator]"));
+        const panels = Array.from(document.querySelectorAll(".calculator-panel"));
+        const frame = document.getElementById("graduationCalculatorFrame");
+
+        function showCalculator(id, updateHash = true) {
+          if (!panels.some((panel) => panel.id === id)) return;
+
+          panels.forEach((panel) => {
+            panel.hidden = panel.id !== id;
+          });
+
+          tabs.forEach((tab) => {
+            const active = tab.dataset.calculator === id;
+            tab.classList.toggle("active", active);
+            tab.setAttribute("aria-selected", String(active));
+          });
+
+          if (updateHash) {
+            const hash = id === "calculatorGpa" ? "gpa" : id === "calculatorMaxGpa" ? "max-gpa" : "graduation-hours";
+            history.replaceState(null, "", `#${hash}`);
+          }
+
+          if (id === "calculatorGraduationHours" && frame?.contentWindow) {
+            frame.contentWindow.postMessage({ type: "graduation-calculator-resize" }, "*");
+          }
+        }
+
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => showCalculator(tab.dataset.calculator));
+        });
+
+        const initialByHash = {
+          "#gpa": "calculatorGpa",
+          "#max-gpa": "calculatorMaxGpa",
+          "#graduation-hours": "calculatorGraduationHours"
+        };
+        showCalculator(initialByHash[window.location.hash] || "calculatorGpa", false);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Viewer</title>
+  <style>
+    body{ margin:0; background:#121619; color:#fff; font-family:Arial; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.08);
+      position: sticky; top:0; background:#121619; z-index:10;
+    }
+    a{ color:#ff66c4; text-decoration:none; font-weight:700; }
+    iframe{ width:100%; height: calc(100vh - 58px); border:0; background:#0f1214; }
+    .err{ padding:24px; color:#ccc; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="#" onclick="history.back(); return false;">← Back</a>
+    <div style="opacity:.85;">PDF Viewer</div>
+    <a id="dl" href="#" target="_blank" rel="noopener">Download</a>
+  </div>
+
+  <iframe id="pdfFrame"></iframe>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const file = params.get("file");
+
+    if(!file){
+      document.body.innerHTML += `<div class="err">No PDF selected.</div>`;
+    } else {
+      document.getElementById("pdfFrame").src = file;
+      document.getElementById("dl").href = file;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+/**
+ * NEON COACH - نقطة انطلاق التطبيق الرئيسية
+ */
+
+import './styles/variables.css';
+import './styles/reset.css';
+import './styles/base.css';
+import './styles/components.css';
+
+import { Router } from './router/router.js';
+import { setupTrainingLoadingInterceptors } from './utils/splash.js';
+import { initNeonParticles } from './utils/particles.js';
+
+// تشغيل خلفية الجسيمات والنقاط الخضراء النيونية الطائرة
+initNeonParticles();
+
+// تفعيل رصد أزرار التدريب لعرض شاشة التحميل فوراً
+setupTrainingLoadingInterceptors();
+
+// تهيئة وتشغيل موجه الصفحات
+document.addEventListener('DOMContentLoaded', () => {
+  const appElement = document.getElementById('app');
+  if (appElement) {
+    const router = new Router(appElement);
+    router.init();
+
+    // إخفاء شاشة التحميل الأولية الذكية بسلاسة فور تحميل الواجهة
+    if (typeof window.dismissNeonSplash === 'function') {
+      window.dismissNeonSplash();
+    }
+  }
+
+  // تسجيل Service Worker للعمل كـ PWA Offline-First
+  if ('serviceWorker' in navigator && !window.location.hostname.includes('localhost123')) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('NEON COACH PWA ServiceWorker مسجل بنجاح:', reg.scope);
+      })
+      .catch(err => {
+        console.warn('تعذر تسجيل ServiceWorker:', err);
+      });
+  }
+
+  // التقاط حدث تثبيت PWA على الجهاز
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    console.log('التطبيق جاهز للتثبيت كـ PWA.');
+  });
+});

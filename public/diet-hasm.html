@@ -1,0 +1,351 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>خطة تغذية حسم — NEON COACH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <style id="neon-splash-styles">
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #000;
+        color: #FFFFFF;
+        font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+      }
+
+      #neon-app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: #FFFFFF;
+        overflow: hidden;
+        transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+      }
+
+      #neon-app-splash.splash-hide {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(1.04);
+        filter: blur(5px);
+      }
+
+      #neon-app-splash .wb-atmosphere {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(60% 50% at 50% 38%, rgba(110, 231, 183, 0.22) 0%, rgba(110, 231, 183, 0.08) 32%, rgba(110, 231, 183, 0) 66%),
+          radial-gradient(34% 26% at 50% 44%, rgba(255, 226, 181, 0.08) 0%, rgba(255, 226, 181, 0) 72%),
+          radial-gradient(130% 90% at 50% 120%, rgba(14, 38, 30, 0.88) 0%, #000000 72%);
+        pointer-events: none;
+      }
+
+      #neon-app-splash .wb-mountains {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 40vh;
+        min-height: 220px;
+        pointer-events: none;
+        opacity: 0.85;
+      }
+
+      #neon-app-splash .wb-mountains svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      #neon-app-splash .wb-mist {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 26vh;
+        height: 24vh;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(110, 231, 183, 0.08), rgba(0, 0, 0, 0));
+        filter: blur(10px);
+        pointer-events: none;
+      }
+
+      #neon-app-splash .wb-particles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      #neon-app-splash .wb-particles span {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background: rgba(233, 239, 233, 0.6);
+        box-shadow: 0 0 5px rgba(85, 247, 165, 0.6);
+        animation: splashParticleDrift linear infinite;
+      }
+
+      @keyframes splashParticleDrift {
+        0% { transform: translate3d(0, 0, 0); opacity: 0; }
+        10% { opacity: 0.85; }
+        90% { opacity: 0.5; }
+        100% { transform: translate3d(var(--dx, 12px), var(--dy, -100vh), 0); opacity: 0; }
+      }
+
+      #neon-app-splash .wb-grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.04;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='vtn'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23vtn)'/></svg>");
+        background-size: 200px 200px;
+      }
+
+      .splash-content {
+        position: relative;
+        max-width: 460px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        z-index: 2;
+      }
+
+      .splash-cat-wrap {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+      }
+
+      .splash-logo-pulse-ring {
+        position: absolute;
+        inset: -16px;
+        border-radius: 44px;
+        border: 1.5px solid rgba(85, 247, 165, 0.35);
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .splash-logo-pulse-ring.ring-1 {
+        animation: logoPulseRing 2.4s cubic-bezier(0.1, 0.8, 0.2, 1) infinite;
+      }
+      .splash-logo-pulse-ring.ring-2 {
+        animation: logoPulseRing 2.4s cubic-bezier(0.1, 0.8, 0.2, 1) infinite 1.2s;
+      }
+
+      .splash-logo-orbit-ring {
+        position: absolute;
+        inset: -8px;
+        border-radius: 38px;
+        border: 1.5px dashed rgba(85, 247, 165, 0.45);
+        box-shadow: 0 0 20px rgba(85, 247, 165, 0.25);
+        animation: spinClockwise 12s linear infinite;
+        pointer-events: none;
+        will-change: transform;
+      }
+
+      .splash-cat-halo {
+        position: absolute;
+        inset: -5px;
+        border-radius: 36px;
+        background: radial-gradient(circle, rgba(85, 247, 165, 0.38) 0%, rgba(56, 189, 248, 0.18) 50%, transparent 75%);
+        animation: catGlowPulse 2.4s infinite ease-in-out;
+        pointer-events: none;
+      }
+
+      .splash-cat-box {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, rgba(6, 28, 18, 0.96), rgba(2, 11, 7, 0.98));
+        border: 2px solid rgba(85, 247, 165, 0.55);
+        border-radius: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 36px rgba(85, 247, 165, 0.4), inset 0 0 24px rgba(85, 247, 165, 0.18);
+        overflow: hidden;
+        will-change: transform, box-shadow;
+        animation: catBreath 2.6s ease-in-out infinite alternate;
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s ease, border-color 0.45s ease;
+      }
+
+      .splash-cat-box.is-loaded {
+        animation: logoSupernova 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .splash-cat-scanner {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, rgba(85, 247, 165, 0.8), #FFFFFF, rgba(85, 247, 165, 0.8), transparent);
+        box-shadow: 0 0 14px #55F7A5, 0 0 24px rgba(85, 247, 165, 0.7);
+        pointer-events: none;
+        z-index: 2;
+        animation: catScanSweep 2s ease-in-out infinite alternate;
+      }
+
+      .splash-cat-shimmer {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, transparent 25%, rgba(255, 255, 255, 0.22) 50%, transparent 75%);
+        transform: translateX(-100%);
+        pointer-events: none;
+        z-index: 3;
+        animation: shimmerSweep 2.8s infinite;
+      }
+
+      .splash-cat-img {
+        width: 94px;
+        height: 94px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 16px rgba(85, 247, 165, 0.88));
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+        z-index: 1;
+      }
+
+      .splash-brand-title {
+        font-size: 2.1rem;
+        font-weight: 900;
+        letter-spacing: 3px;
+        margin-top: 4px;
+        background: linear-gradient(135deg, #FFFFFF 20%, #55F7A5 70%, #21D978 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 16px rgba(85, 247, 165, 0.55));
+      }
+
+      #splash-status-text {
+        margin-top: 10px;
+        font-size: 0.95rem;
+        color: #55F7A5;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      @keyframes catBreath {
+        0% { transform: translateY(0px) scale(1); box-shadow: 0 0 28px rgba(85, 247, 165, 0.3); }
+        100% { transform: translateY(-4px) scale(1.02); box-shadow: 0 0 40px rgba(85, 247, 165, 0.52); }
+      }
+
+      @keyframes catGlowPulse {
+        0%, 100% { transform: scale(0.94); opacity: 0.35; }
+        50% { transform: scale(1.1); opacity: 0.75; }
+      }
+
+      @keyframes logoPulseRing {
+        0% { transform: scale(0.85); opacity: 0.85; }
+        60% { opacity: 0.3; }
+        100% { transform: scale(1.36); opacity: 0; }
+      }
+
+      @keyframes catScanSweep {
+        0% { top: 0%; opacity: 0.25; }
+        50% { opacity: 1; }
+        100% { top: 96%; opacity: 0.35; }
+      }
+
+      @keyframes shimmerSweep {
+        0%, 20% { transform: translateX(-100%); }
+        60%, 100% { transform: translateX(100%); }
+      }
+
+      @keyframes logoSupernova {
+        0% { transform: scale(1); }
+        45% {
+          transform: scale(1.12);
+          box-shadow: 0 0 65px rgba(85, 247, 165, 0.98), 0 0 100px rgba(56, 189, 248, 0.8), inset 0 0 32px rgba(85, 247, 165, 0.55);
+          border-color: #FFFFFF;
+        }
+        100% {
+          transform: scale(1.04);
+          box-shadow: 0 0 45px rgba(85, 247, 165, 0.75);
+          border-color: #55F7A5;
+        }
+      }
+
+      @keyframes spinClockwise {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- شاشة التحميل الأولية الذكية بثيم الـ 40 يوم واللوجو السيبراني -->
+    <div id="neon-app-splash" role="status" aria-live="polite">
+      <div class="wb-atmosphere" aria-hidden="true"></div>
+      <div class="wb-mist" aria-hidden="true"></div>
+      <div class="wb-mountains" aria-hidden="true">
+        <svg viewBox="0 0 1440 360" preserveAspectRatio="none">
+          <path d="M0 250 L110 280 L260 210 L420 250 L560 190 L720 235 L900 175 L1080 220 L1240 195 L1440 230 L1440 360 Z" fill="rgba(5, 22, 16, 0.78)" />
+          <path d="M0 292 L130 305 L300 260 L520 300 L760 258 L950 292 L1140 258 L1320 300 L1440 276 L1440 360 Z" fill="rgba(2, 14, 10, 0.92)" />
+        </svg>
+      </div>
+      <div class="wb-particles" aria-hidden="true">
+        <span style="left:8%;top:18%;--dx:16px;--dy:-86vh;animation-duration:20s"></span>
+        <span style="left:22%;top:64%;--dx:-14px;--dy:-92vh;animation-duration:25s"></span>
+        <span style="left:35%;top:36%;--dx:20px;--dy:-80vh;animation-duration:22s"></span>
+        <span style="left:48%;top:74%;--dx:-18px;--dy:-95vh;animation-duration:28s"></span>
+        <span style="left:62%;top:25%;--dx:15px;--dy:-84vh;animation-duration:24s"></span>
+        <span style="left:76%;top:52%;--dx:-15px;--dy:-88vh;animation-duration:23s"></span>
+        <span style="left:88%;top:30%;--dx:18px;--dy:-94vh;animation-duration:26s"></span>
+      </div>
+      <div class="wb-grain" aria-hidden="true"></div>
+
+      <div class="splash-content">
+        <div class="splash-cat-wrap">
+          <div class="splash-logo-pulse-ring ring-1"></div>
+          <div class="splash-logo-pulse-ring ring-2"></div>
+          <div class="splash-logo-orbit-ring"></div>
+          <div class="splash-cat-halo"></div>
+          <div id="splash-cat-box" class="splash-cat-box">
+            <div class="splash-cat-scanner"></div>
+            <div class="splash-cat-shimmer"></div>
+            <img src="./icons/neon-cat-coach.svg" id="splash-cat-img" class="splash-cat-img" alt="NEON COACH CAT" onerror="this.src='./icons/icon-192.svg'" />
+          </div>
+        </div>
+
+        <div class="splash-brand-title">NEON COACH</div>
+        <div id="splash-status-text">جاري تجهيز خطة تغذية حسم...</div>
+      </div>
+    </div>
+
+    <script>
+      (async () => {
+        const pageUrl = new URL(location.href);
+        pageUrl.searchParams.set("book", "hasmDiet");
+        history.replaceState(null, "", pageUrl);
+
+        try {
+          const response = await fetch("./manga-viewer.html");
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const viewerHtml = await response.text();
+          document.open();
+          document.write(viewerHtml);
+          document.close();
+        } catch (error) {
+          const statusText = document.getElementById("splash-status-text");
+          if (statusText) {
+            statusText.innerHTML = 'تعذر تحميل الصفحة تلقائياً. <a href="./manga-viewer.html?book=hasmDiet" style="color: #55F7A5; text-decoration: underline; margin-right: 6px;">اضغط هنا لفتح التمرين مباشرة</a>';
+          }
+          console.error(error);
+        }
+      })();
+    </script>
+  </body>
+</html>

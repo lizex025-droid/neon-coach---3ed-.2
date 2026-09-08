@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>حاسبة ساعات التخرج الذكية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0a17;
+      --bg2: #120f24;
+      --card: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.12);
+      --accent: #7c4dff;
+      --accent2: #2f9bd6;
+      --green: #30d158;
+      --yellow: #ffd166;
+      --red: #ff6b6b;
+      --text: #f5f4ff;
+      --muted: #b8b5d6;
+      --shadow: 0 24px 50px rgba(4,4,20,.4);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Tajawal", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(124,77,255,.33), transparent 30%),
+        radial-gradient(circle at 10% 42%, rgba(47,155,214,.18), transparent 30%),
+        linear-gradient(135deg, var(--bg2), var(--bg));
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 14px 46px;
+    }
+
+    body.embed {
+      min-height: 0;
+      background: transparent;
+    }
+
+    body.embed .container {
+      max-width: none;
+      padding: 0;
+    }
+
+    body.embed .top-nav {
+      display: none;
+    }
+
+    .top-nav {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+
+    .nav-tabs {
+      display: inline-flex;
+      gap: 10px;
+      background: rgba(8,7,20,.62);
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 6px;
+      backdrop-filter: blur(14px);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav-tab {
+      text-decoration: none;
+      color: var(--muted);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .nav-tab.active,
+    .nav-tab:hover {
+      color: var(--text);
+      background: rgba(124,77,255,.25);
+      border-color: rgba(124,77,255,.45);
+    }
+
+    .hero, .card {
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 44px);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap: 18px;
+      align-items: start;
+      direction: ltr;
+    }
+
+    .student-data-card {
+      grid-column: 2;
+      direction: rtl;
+    }
+
+    .results-card {
+      grid-column: 1;
+      grid-row: 1;
+      direction: rtl;
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.2);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    select option {
+      background: #161226;
+      color: #fff;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(124,77,255,.15);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      padding: 12px;
+      border: 1px dashed var(--stroke);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .btn {
+      border: none;
+      background: var(--accent);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.055);
+      border-radius: 20px;
+      padding: 14px;
+      min-height: 98px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 27px;
+      color: #fff;
+    }
+
+    .green strong { color: var(--green); }
+    .yellow strong { color: var(--yellow); }
+    .red strong { color: var(--red); }
+
+    .progress-wrap {
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.09);
+      border: 1px solid var(--stroke);
+      margin: 8px 0 14px;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--accent2));
+      border-radius: 999px;
+    }
+
+    .result-box {
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.052);
+      border-radius: 20px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .result-title {
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .message {
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .message.ok { color: #c8ffd7; }
+    .message.warn { color: #ffe1a3; }
+    .message.bad { color: #ffb4b4; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+    }
+
+    th, td {
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--stroke);
+      text-align: center;
+    }
+
+    th {
+      background: rgba(124,77,255,.18);
+      color: white;
+      font-size: 14px;
+    }
+
+    td {
+      background: rgba(255,255,255,.035);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.07);
+    }
+
+    .summer {
+      color: #d7f7ff;
+      border-color: rgba(47,155,214,.35);
+      background: rgba(47,155,214,.13);
+    }
+
+    .regular {
+      color: #efe9ff;
+      border-color: rgba(124,77,255,.35);
+      background: rgba(124,77,255,.13);
+    }
+
+    .section-label {
+      display: inline-flex;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(48,209,88,.12);
+      border: 1px solid rgba(48,209,88,.25);
+      color: #d7ffe1;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .danger-label {
+      background: rgba(255,107,107,.12);
+      border-color: rgba(255,107,107,.25);
+      color: #ffd3d3;
+    }
+
+    @media (max-width: 900px) {
+      .grid, .summary { grid-template-columns: 1fr; }
+      .student-data-card,
+      .results-card {
+        grid-column: 1;
+        grid-row: auto;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .two { grid-template-columns: 1fr; }
+      .hero, .card { border-radius: 22px; padding: 16px; }
+      th, td { padding: 10px 5px; font-size: 13px; }
+      .nav-tab { padding: 8px 12px; font-size: 13px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <nav class="top-nav" aria-label="التنقل">
+      <div class="nav-tabs" dir="ltr">
+        <a class="nav-tab" href="public/pdfs.html">تدريب</a>
+        <a class="nav-tab active" href="graduation-hours.html">حاسبة التخرج</a>
+        <a class="nav-tab" href="gpa.html">حاسبة المعدل</a>
+        <a class="nav-tab" href="index.html">الانتاجية</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <h1>حاسبة ساعات التخرج الذكية 🎓</h1>
+    </section>
+
+    <section class="grid">
+      <div class="card student-data-card">
+        <h2>بيانات الطالب</h2>
+
+        <div class="form-grid">
+          <div class="two">
+            <label>
+              ساعات الخطة كاملة
+              <input id="totalHours" type="number" min="1" />
+            </label>
+
+            <label>
+              الساعات المقطوعة
+              <input id="completedHours" type="number" min="0" />
+            </label>
+          </div>
+
+          <div class="two">
+            <label>
+              مدة الخطة بالسنوات
+              <input id="programYears" type="number" min="1" max="8" value="4" />
+            </label>
+
+            <label>
+              الطالب أي سنة؟
+              <select id="currentYear">
+                <option value="" selected disabled>اختر السنة</option>
+                <option value="1">سنة أولى</option>
+                <option value="2">سنة ثانية</option>
+                <option value="3">سنة ثالثة</option>
+                <option value="4">سنة رابعة</option>
+                <option value="5">سنة خامسة</option>
+                <option value="6">سنة سادسة</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two">
+            <label>
+              الفصل القادم
+              <select id="nextTerm">
+                <option value="" selected disabled>اختر الفصل</option>
+                <option value="fall">الأول / Fall</option>
+                <option value="spring">الثاني / Spring</option>
+                <option value="summer">الصيفي / Summer</option>
+              </select>
+            </label>
+
+            <label>
+              رح ينزل صيفي؟
+              <select id="takeSummer">
+                <option value="" disabled>اختر</option>
+                <option value="yes" selected>نعم</option>
+                <option value="no">لا</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two">
+            <label>
+              هل الطالب خريج؟
+              <select id="isGraduate">
+                <option value="" disabled>اختر</option>
+                <option value="no" selected>لا</option>
+                <option value="yes">نعم، طالب خريج</option>
+              </select>
+            </label>
+
+            <label>
+              استثناء الخريج
+              <select id="graduateExceptionChoice">
+                <option value="" disabled>اختر الاستثناء</option>
+                <option value="auto">تلقائيًا اختار الأفضل</option>
+                <option value="regular">استخدم فصل عادي 21 ساعة</option>
+                <option value="summer">استخدم صيفي 13 ساعة</option>
+                <option value="none" selected>بدون استثناء</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two">
+            <label>
+              أقصى ساعات بالفصل العادي
+              <input id="regularMax" type="number" min="1" />
+            </label>
+
+            <label>
+              أقصى ساعات بالصيفي
+              <input id="summerMax" type="number" min="1" />
+            </label>
+          </div>
+
+          <div class="hint">
+            الحاسبة تعتبر السنة فيها فصل أول وفصل ثاني، والصيفي اختياري بين السنوات.
+            إذا الطالب خريج، يقدر يستخدم استثناء واحد فقط: فصل عادي 21 ساعة أو صيفي 13 ساعة، وليس الاثنين معًا.
+          </div>
+
+          <button class="btn" id="calculateBtn">احسب الخطة</button>
+        </div>
+      </div>
+
+      <div class="card results-card">
+        <h2>النتيجة</h2>
+
+        <div class="summary">
+          <div class="stat">
+            <span>الساعات المتبقية</span>
+            <strong id="remainingStat">—</strong>
+          </div>
+
+          <div class="stat green">
+            <span>الفصول المتاحة طبيعيًا</span>
+            <strong id="availableTermsStat">—</strong>
+          </div>
+
+          <div class="stat yellow">
+            <span>الحد الأدنى لكل فصل</span>
+            <strong id="minimumStat">—</strong>
+          </div>
+
+          <div class="stat red">
+            <span>أسرع عدد فصول</span>
+            <strong id="fastestStat">—</strong>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress" id="progressBar"></div>
+        </div>
+
+        <div class="result-box">
+          <div class="result-title">الخلاصة</div>
+          <div class="message" id="summaryMessage">أدخل البيانات واضغط احسب.</div>
+        </div>
+
+        <div class="result-box">
+          <span class="section-label">المقترح حسب سنة الطالب بدون تأخير</span>
+          <div id="recommendedPlan"></div>
+        </div>
+
+        <div class="result-box">
+          <span class="section-label danger-label">تحذير التأخير</span>
+          <div class="message" id="delayWarning"></div>
+        </div>
+
+        <div class="result-box">
+          <div class="result-title">الخطة الأسرع لو حمل أقصى ساعات</div>
+          <div id="fastestPlan"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const embeddedMode = new URLSearchParams(window.location.search).get("embed") === "1";
+    if (embeddedMode) document.body.classList.add("embed");
+
+    const totalHours = document.getElementById("totalHours");
+    const completedHours = document.getElementById("completedHours");
+    const programYears = document.getElementById("programYears");
+    const currentYear = document.getElementById("currentYear");
+    const nextTerm = document.getElementById("nextTerm");
+    const takeSummer = document.getElementById("takeSummer");
+    const isGraduate = document.getElementById("isGraduate");
+    const graduateExceptionChoice = document.getElementById("graduateExceptionChoice");
+    const regularMax = document.getElementById("regularMax");
+    const summerMax = document.getElementById("summerMax");
+
+    const remainingStat = document.getElementById("remainingStat");
+    const availableTermsStat = document.getElementById("availableTermsStat");
+    const minimumStat = document.getElementById("minimumStat");
+    const fastestStat = document.getElementById("fastestStat");
+    const progressBar = document.getElementById("progressBar");
+    const summaryMessage = document.getElementById("summaryMessage");
+    const recommendedPlan = document.getElementById("recommendedPlan");
+    const delayWarning = document.getElementById("delayWarning");
+    const fastestPlan = document.getElementById("fastestPlan");
+    const calculateBtn = document.getElementById("calculateBtn");
+
+    const termLabels = {
+      fall: "الفصل الأول",
+      spring: "الفصل الثاني",
+      summer: "الصيفي"
+    };
+
+    function num(input, fallback = 0) {
+      const value = Number.parseFloat(input.value);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function getNextTerm(term) {
+      if (term === "fall") return "spring";
+      if (term === "spring") return "summer";
+      return "fall";
+    }
+
+    function canUseTerm(term) {
+      return !(term === "summer" && takeSummer.value === "no");
+    }
+
+    function baseCap(term) {
+      return term === "summer" ? num(summerMax) : num(regularMax);
+    }
+
+    function graduateCap(term) {
+      if (isGraduate.value !== "yes") return baseCap(term);
+      return term === "summer" ? 13 : 21;
+    }
+
+    function canUseGraduateException(term, usedException, choice) {
+      if (isGraduate.value !== "yes") return false;
+      if (usedException) return false;
+      if (choice === "none") return false;
+      if (choice === "regular" && term === "summer") return false;
+      if (choice === "summer" && term !== "summer") return false;
+      return true;
+    }
+
+    function bestCapForTerm(term, usedException, choice) {
+      const normal = baseCap(term);
+
+      if (!canUseGraduateException(term, usedException, choice)) {
+        return { max: normal, usedGraduate: false };
+      }
+
+      const special = graduateCap(term);
+      if (special > normal) {
+        return { max: special, usedGraduate: true };
+      }
+
+      return { max: normal, usedGraduate: false };
+    }
+
+    function getTermsUntilNaturalGraduation(choice = graduateExceptionChoice.value) {
+      const years = Math.max(num(programYears), 1);
+      const year = Math.min(Math.max(num(currentYear), 1), years);
+      const startTerm = nextTerm.value;
+      const terms = [];
+      let usedException = false;
+
+      function pushTerm(term, label) {
+        const picked = bestCapForTerm(term, usedException, choice);
+        if (picked.usedGraduate) usedException = true;
+
+        terms.push({
+          term,
+          label,
+          max: picked.max,
+          baseMax: baseCap(term),
+          usedGraduate: picked.usedGraduate
+        });
+      }
+
+      for (let y = year; y <= years; y++) {
+        if (y === year) {
+          if (startTerm === "fall") {
+            pushTerm("fall", `سنة ${y} - الفصل الأول`);
+            pushTerm("spring", `سنة ${y} - الفصل الثاني`);
+            if (takeSummer.value === "yes" && y < years) {
+              pushTerm("summer", `سنة ${y} - الصيفي`);
+            }
+          }
+
+          if (startTerm === "spring") {
+            pushTerm("spring", `سنة ${y} - الفصل الثاني`);
+            if (takeSummer.value === "yes" && y < years) {
+              pushTerm("summer", `سنة ${y} - الصيفي`);
+            }
+          }
+
+          if (startTerm === "summer") {
+            if (takeSummer.value === "yes" && y < years) {
+              pushTerm("summer", `سنة ${y} - الصيفي`);
+            }
+          }
+        } else {
+          pushTerm("fall", `سنة ${y} - الفصل الأول`);
+          pushTerm("spring", `سنة ${y} - الفصل الثاني`);
+          if (takeSummer.value === "yes" && y < years) {
+            pushTerm("summer", `سنة ${y} - الصيفي`);
+          }
+        }
+      }
+
+      return terms;
+    }
+
+    function getFastestTermsUntilEnough(remaining, choice = graduateExceptionChoice.value) {
+      let current = nextTerm.value;
+      let year = num(currentYear, 1);
+      const years = num(programYears, 4);
+      const terms = [];
+      let capacity = 0;
+      let safety = 0;
+      let usedException = false;
+
+      while (capacity < remaining && safety < 90) {
+        safety++;
+
+        if (canUseTerm(current)) {
+          const picked = bestCapForTerm(current, usedException, choice);
+          if (picked.usedGraduate) usedException = true;
+
+          const item = {
+            term: current,
+            label: `فصل ${terms.length + 1} - ${termLabels[current]}`,
+            max: picked.max,
+            baseMax: baseCap(current),
+            usedGraduate: picked.usedGraduate
+          };
+
+          terms.push(item);
+          capacity += item.max;
+        }
+
+        current = getNextTerm(current);
+        if (current === "fall") year++;
+        if (year > years + 4) break;
+      }
+
+      return terms;
+    }
+
+    function distributeBalanced(remaining, terms) {
+      let left = remaining;
+      const plan = [];
+
+      for (let i = 0; i < terms.length; i++) {
+        const current = terms[i];
+        const future = terms.slice(i + 1);
+        const futureCapacity = future.reduce((sum, item) => sum + item.max, 0);
+        const termsLeft = terms.length - i;
+
+        const minimumNeededNow = Math.max(0, left - futureCapacity);
+        const balancedTarget = Math.ceil(left / termsLeft);
+
+        let hours = Math.max(minimumNeededNow, balancedTarget);
+        hours = Math.min(hours, current.max, left);
+
+        plan.push({ ...current, hours });
+        left -= hours;
+      }
+
+      return plan.filter((item) => item.hours > 0);
+    }
+
+    function distributeFast(remaining, terms) {
+      let left = remaining;
+
+      return terms.map((item) => {
+        const hours = Math.min(left, item.max);
+        left -= hours;
+        return { ...item, hours };
+      }).filter((item) => item.hours > 0);
+    }
+
+    function renderTable(plan, emptyText) {
+      if (!plan.length) {
+        return `<div class="message ok">${emptyText}</div>`;
+      }
+
+      const rows = plan.map((item, index) => {
+        const isSummer = item.term === "summer";
+        const graduateText = item.usedGraduate ? ` <span class="badge summer">استثناء خريج</span>` : "";
+
+        return `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${item.label}${graduateText}</td>
+            <td><span class="badge ${isSummer ? "summer" : "regular"}">${isSummer ? "صيفي" : "عادي"}</span></td>
+            <td>${item.hours}</td>
+            <td>${item.max}</td>
+          </tr>
+        `;
+      }).join("");
+
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الفصل</th>
+              <th>النوع</th>
+              <th>الساعات المقترحة</th>
+              <th>الحد الأعلى</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function chooseBestGraduateOption(remaining) {
+      if (isGraduate.value !== "yes") return graduateExceptionChoice.value;
+      if (graduateExceptionChoice.value !== "auto") return graduateExceptionChoice.value;
+
+      const choices = ["none", "regular", "summer"];
+      let best = "none";
+      let bestScore = Infinity;
+
+      choices.forEach((choice) => {
+        const naturalTerms = getTermsUntilNaturalGraduation(choice);
+        const naturalCapacity = naturalTerms.reduce((sum, item) => sum + item.max, 0);
+        const fastestTerms = getFastestTermsUntilEnough(remaining, choice);
+
+        const possible = naturalCapacity >= remaining ? 0 : 10000;
+        const fastestCount = fastestTerms.length || 999;
+        const usedBonus = naturalTerms.some((item) => item.usedGraduate) ? -0.25 : 0;
+
+        const score = possible + fastestCount + usedBonus;
+
+        if (score < bestScore) {
+          bestScore = score;
+          best = choice;
+        }
+      });
+
+      return best;
+    }
+
+    function clearResults(message = "أدخل البيانات واضغط احسب.", isError = false) {
+      remainingStat.textContent = "—";
+      availableTermsStat.textContent = "—";
+      minimumStat.textContent = "—";
+      fastestStat.textContent = "—";
+      progressBar.style.width = "0%";
+      summaryMessage.className = isError ? "message bad" : "message";
+      summaryMessage.textContent = message;
+      recommendedPlan.innerHTML = "";
+      fastestPlan.innerHTML = "";
+      delayWarning.className = "message";
+      delayWarning.textContent = "";
+    }
+
+    function calculate() {
+      const requiredInputs = [totalHours, completedHours, programYears, regularMax, summerMax];
+      const requiredSelects = [currentYear, nextTerm, takeSummer, isGraduate, graduateExceptionChoice];
+      const hasMissingValue =
+        requiredInputs.some((input) => input.value.trim() === "") ||
+        requiredSelects.some((select) => select.value === "");
+
+      if (hasMissingValue) {
+        clearResults("أدخل جميع البيانات أولًا ثم اضغط احسب الخطة.", true);
+        return;
+      }
+
+      const total = num(totalHours);
+      const completed = num(completedHours);
+      const remaining = Math.max(total - completed, 0);
+
+      if (
+        total <= 0 ||
+        completed < 0 ||
+        completed > total ||
+        num(programYears) <= 0 ||
+        num(regularMax) <= 0 ||
+        num(summerMax) <= 0
+      ) {
+        clearResults("تأكد من صحة الساعات والسنوات المدخلة.", true);
+        return;
+      }
+
+      const progress = Math.min(Math.max((completed / total) * 100, 0), 100);
+      const chosenException = chooseBestGraduateOption(remaining);
+      const naturalTerms = getTermsUntilNaturalGraduation(chosenException);
+      const naturalCapacity = naturalTerms.reduce((sum, item) => sum + item.max, 0);
+      const fastestTerms = getFastestTermsUntilEnough(remaining, chosenException);
+
+      const recommended = distributeBalanced(remaining, naturalTerms);
+      const fast = distributeFast(remaining, fastestTerms);
+
+      const minPerNaturalTerm = naturalTerms.length ? Math.ceil(remaining / naturalTerms.length) : 0;
+      const requiredFirstTerm = recommended.length ? recommended[0].hours : 0;
+
+      remainingStat.textContent = remaining;
+      availableTermsStat.textContent = naturalTerms.length;
+      minimumStat.textContent = remaining > 0 ? minPerNaturalTerm : 0;
+      fastestStat.textContent = fast.length;
+      progressBar.style.width = `${progress}%`;
+
+      recommendedPlan.innerHTML = renderTable(recommended, "لا يوجد ساعات متبقية.");
+      fastestPlan.innerHTML = renderTable(fast, "لا يوجد ساعات متبقية.");
+
+      if (remaining === 0) {
+        summaryMessage.className = "message ok";
+        summaryMessage.textContent = "مبروك، الطالب مخلص كل ساعات الخطة.";
+        delayWarning.className = "message ok";
+        delayWarning.textContent = "لا يوجد خطر تأخير لأن الساعات مكتملة.";
+        return;
+      }
+
+      const exceptionLabel =
+        isGraduate.value === "yes" && chosenException === "regular"
+          ? " تم استخدام استثناء الخريج: فصل عادي 21 ساعة."
+          : isGraduate.value === "yes" && chosenException === "summer"
+            ? " تم استخدام استثناء الخريج: صيفي 13 ساعة."
+            : isGraduate.value === "yes"
+              ? " لم يتم استخدام استثناء الخريج لأن الخطة لا تحتاجه أو لأنه غير مناسب."
+              : "";
+
+      if (naturalCapacity < remaining) {
+        summaryMessage.className = "message bad";
+        summaryMessage.textContent =
+          `حسب سنة الطالب والفصول المتاحة لحد التخرج الطبيعي، الحد الأعلى المتاح ${naturalCapacity} ساعة فقط، والمتبقي ${remaining} ساعة. يعني حتى لو نزل الحد الأعلى كل فصل، راح يحتاج تمديد.${exceptionLabel}`;
+
+        delayWarning.className = "message bad";
+        delayWarning.textContent =
+          `حتى لا يتأخر أكثر، لازم يستخدم الخطة الأسرع ويقرب من الحد الأعلى. ناقصه ${remaining - naturalCapacity} ساعة فوق المتاح الطبيعي.`;
+        return;
+      }
+
+      summaryMessage.className = "message ok";
+      summaryMessage.textContent =
+        `الطالب عنده ${naturalTerms.length} فصل/صيفي متاح لحد التخرج الطبيعي. المتبقي ${remaining} ساعة. ` +
+        `حتى ما يتأخر، يحتاج تقريبًا ${minPerNaturalTerm} ساعة كمعدل لكل فصل/صيفي.${exceptionLabel}`;
+
+      delayWarning.className = "message warn";
+      delayWarning.textContent =
+        `في الفصل القادم تحديدًا، إذا نزل أقل من ${requiredFirstTerm} ساعة تقريبًا، غالبًا راح يضطر يعوّض بساعات أعلى لاحقًا، ` +
+        `وإذا ما قدر يعوّض ضمن الحدود القصوى، راح يتأخر عن التخرج الطبيعي.`;
+    }
+
+    calculateBtn.addEventListener("click", calculate);
+
+    document.addEventListener("input", (event) => {
+      if ([totalHours, completedHours, programYears, regularMax, summerMax].includes(event.target)) {
+        clearResults();
+      }
+    });
+
+    document.addEventListener("change", (event) => {
+      if ([currentYear, nextTerm, takeSummer, isGraduate, graduateExceptionChoice].includes(event.target)) {
+        clearResults();
+      }
+    });
+
+    clearResults();
+
+    function reportEmbeddedHeight() {
+      if (!embeddedMode || window.parent === window) return;
+      window.parent.postMessage(
+        {
+          type: "graduation-calculator-height",
+          height: document.documentElement.scrollHeight
+        },
+        "*"
+      );
+    }
+
+    window.addEventListener("load", reportEmbeddedHeight);
+    window.addEventListener("resize", reportEmbeddedHeight);
+    window.addEventListener("message", (event) => {
+      if (event.source === window.parent && event.data?.type === "graduation-calculator-resize") {
+        reportEmbeddedHeight();
+      }
+    });
+    if ("ResizeObserver" in window) {
+      new ResizeObserver(reportEmbeddedHeight).observe(document.body);
+    }
+    reportEmbeddedHeight();
+  </script>
+</body>
+</html>
