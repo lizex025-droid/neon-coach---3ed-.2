@@ -61,11 +61,17 @@ export class Router {
   }
 
   checkInitialAccess() {
+    const hash = window.location.hash || '';
+    // استثناء: عند العودة من تسجيل دخول خارجي عبر OAuth (Google/Facebook/Apple)
+    if (hash.includes('access_token=') || hash.includes('refresh_token=') || hash.includes('error=')) {
+      return; // انتظر حتى تقوم مكتبة Supabase بقراءة التوكن وحفظ الجلسة
+    }
+
     const isAuth = authService.isAuthenticated() || store.getState()?.auth?.isAuthenticated;
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
 
-    const rawHash = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0];
+    const rawHash = hash.replace(/^#\/?/, '').split('?')[0];
 
     if (!isAuth) {
       // إجباري: لا يمكن استخدام أي ميزة بالتطبيق بدون تسجيل حساب
@@ -91,7 +97,12 @@ export class Router {
   }
 
   handleRoute() {
-    const rawHash = (window.location.hash || '').replace(/^#\/?/, '') || 'today';
+    const hash = window.location.hash || '';
+    if (hash.includes('access_token=') || hash.includes('refresh_token=') || hash.includes('error=')) {
+      return;
+    }
+
+    const rawHash = hash.replace(/^#\/?/, '') || 'today';
     const routeKey = rawHash.split('?')[0];
 
     const isAuth = authService.isAuthenticated() || store.getState()?.auth?.isAuthenticated;

@@ -117,14 +117,9 @@ class AuthService {
     }
 
     if (typeof window !== 'undefined') {
-      if (!onboardingCompleted) {
-        if (window.location.hash !== '#questionnaire') {
-          window.location.hash = '#questionnaire';
-        }
-      } else {
-        if (window.location.hash === '#auth' || !window.location.hash) {
-          window.location.hash = '#today';
-        }
+      const targetHash = !onboardingCompleted ? '#questionnaire' : '#today';
+      if (window.location.hash !== targetHash) {
+        window.location.hash = targetHash;
       }
     }
 
