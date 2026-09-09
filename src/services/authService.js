@@ -248,9 +248,23 @@ class AuthService {
           this.saveSession(session);
           store.loginUser(userObj, 'email', session.token);
           return { success: true, user: userObj, token: session.token, onboardingCompleted };
+        } else if (error) {
+          if (error.message && error.message.includes('Email not confirmed')) {
+            return {
+              success: false,
+              error: 'يرجى تأكيد بريدك الإلكتروني عبر الرابط، أو إيقاف (Confirm email) من لوحة Supabase للدخول المباشر.'
+            };
+          }
+          if (error.message && error.message.includes('Invalid login credentials')) {
+            const registeredUsers = this.getRegisteredUsers();
+            const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === trimmedEmail);
+            if (!matchedUser) {
+              return { success: false, error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' };
+            }
+          }
         }
       } catch (err) {
-        console.warn('Supabase signInWithPassword fallback:', err);
+        console.warn('Supabase signInWithPassword error:', err);
       }
     }
 
@@ -344,6 +358,13 @@ class AuthService {
           if (error.message && (error.message.includes('already registered') || error.message.includes('User already exists'))) {
             return { success: false, error: 'هذا البريد الإلكتروني مسجل مسبقاً، يمكنك تسجيل الدخول مباشرة' };
           }
+          if (error.code === 'over_email_send_rate_limit') {
+            return {
+              success: false,
+              error: 'تم تجاوز حد إرسال الإيميلات. يرجى إيقاف تفعيل (Confirm email) من لوحة Supabase > Auth > Providers > Email ليعمل التسجيل فورياً.'
+            };
+          }
+          return { success: false, error: error.message || 'تعذر إنشاء الحساب' };
         } else if (data && data.user) {
           const newUser = {
             id: data.user.id,
