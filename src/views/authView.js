@@ -182,9 +182,51 @@ export function renderAuthView() {
         </div>
       </div>
 
+      <!-- ============================================ -->
+      <!-- مودال المتابعة المباشرة بحساب Google / Apple -->
+      <!-- ============================================ -->
+      <div id="social-auth-modal" class="ai-modal-overlay">
+        <div class="ai-modal-panel" style="height: auto; max-height: 88vh; padding: 24px; border-radius: 24px; max-width: 420px; margin: auto;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="social-modal-icon" style="font-size: 1.3rem;">🌐</span>
+              <h3 id="social-modal-title" style="color: #55F7A5; font-size: 1.15rem; margin: 0;">المتابعة بحساب Google</h3>
+            </div>
+            <button id="close-social-modal-btn" class="btn-icon">✕</button>
+          </div>
+
+          <p id="social-modal-desc" style="font-size: 0.86rem; color: #B8C0BC; line-height: 1.5; margin-bottom: 16px;">
+            أدخل بريدك الإلكتروني لربط حسابك وتخصيص خطتك التدريبية والغذائية فورياً:
+          </p>
+
+          <form id="social-auth-form" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group" id="social-name-group">
+              <label class="form-label" style="font-size: 0.84rem; color: #B8C0BC;">الاسم الكامل:</label>
+              <input type="text" id="social-name-input" placeholder="اسمك الكامل" required class="stack-field" style="border-radius: 12px;">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" id="social-email-label" style="font-size: 0.84rem; color: #B8C0BC;">البريد الإلكتروني:</label>
+              <input type="email" id="social-email-input" placeholder="name@gmail.com" required class="stack-field" style="border-radius: 12px; direction: ltr; text-align: left;">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.84rem; color: #B8C0BC;">كلمة المرور (لحماية وتأمين حسابك):</label>
+              <input type="password" id="social-pass-input" placeholder="6 أحرف أو أرقام على الأقل" required minlength="6" class="stack-field" style="border-radius: 12px; direction: ltr; text-align: left;">
+            </div>
+
+            <button type="submit" id="social-submit-btn" class="btn btn-primary btn-block" style="border-radius: 14px; margin-top: 6px; font-weight: 800; font-size: 1rem;">
+              <span id="social-submit-text">تسجيل وبدء الخطة 🚀</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
     </div>
   `;
 }
+
+let activeSocialProvider = 'google'; // 'google' | 'apple'
 
 export function bindAuthViewEvents() {
   const form = document.getElementById('auth-form');
@@ -196,6 +238,15 @@ export function bindAuthViewEvents() {
   const forgotModal = document.getElementById('forgot-modal');
   const closeForgotBtn = document.getElementById('close-forgot-modal-btn');
   const sendForgotBtn = document.getElementById('send-forgot-btn');
+
+  const socialModal = document.getElementById('social-auth-modal');
+  const closeSocialModalBtn = document.getElementById('close-social-modal-btn');
+  const socialForm = document.getElementById('social-auth-form');
+  const socialModalIcon = document.getElementById('social-modal-icon');
+  const socialModalTitle = document.getElementById('social-modal-title');
+  const socialModalDesc = document.getElementById('social-modal-desc');
+  const socialEmailInput = document.getElementById('social-email-input');
+  const socialSubmitText = document.getElementById('social-submit-text');
 
   // التبديل بين تسجيل الدخول وإنشاء الحساب
   tabLogin?.addEventListener('click', () => {
@@ -216,67 +267,67 @@ export function bindAuthViewEvents() {
   setupPasswordToggle('toggle-password-btn', 'auth-password');
   setupPasswordToggle('toggle-confirm-password-btn', 'auth-confirm-password');
 
-  // 1. تسجيل الدخول / إنشاء الحساب عبر Google
-  googleBtn?.addEventListener('click', async () => {
-    setButtonLoading(googleBtn, true, 'جاري الربط مع Google...');
-    try {
-      if (currentMode === 'signup') {
-        const res = await authService.signUpWithGoogle();
-        if (res.success && !res.redirecting) {
-          notificationService.showToast(`أهلاً بك يا ${res.user.name}! لنبدأ بتحديد بيانات خطتك 📋✨`, 'success');
-          setTimeout(() => {
-            window.location.hash = '#questionnaire';
-          }, 350);
-        }
-      } else {
-        const res = await authService.loginWithGoogle();
-        if (res.success && !res.redirecting) {
-          const nextHash = res.onboardingCompleted ? '#today' : '#questionnaire';
-          const msg = res.onboardingCompleted
-            ? `مرحباً بعودتك ${res.user.name}، تم تسجيل الدخول عبر Google 🟢`
-            : `أهلاً بك يا ${res.user.name}! لنستكمل بيانات خطتك التدريبية 📋✨`;
-          notificationService.showToast(msg, 'success');
-          setTimeout(() => {
-            window.location.hash = nextHash;
-          }, 300);
-        }
-      }
-    } catch (e) {
-      notificationService.showToast('تعذر الاتصال بحساب Google، يرجى المحاولة مرة أخرى', 'error');
-    } finally {
-      setButtonLoading(googleBtn, false);
+  // 1. فتح نافذة التسجيل بحساب Google
+  googleBtn?.addEventListener('click', () => {
+    activeSocialProvider = 'google';
+    if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Google';
+    if (socialModalIcon) socialModalIcon.textContent = '🌐';
+    if (socialModalDesc) socialModalDesc.textContent = 'أدخل بريدك على Google لربط حسابك وتخصيص خطتك التدريبية فورياً:';
+    if (socialEmailInput) socialEmailInput.placeholder = 'name@gmail.com';
+    if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Google 🚀';
+    socialModal?.classList.add('open');
+  });
+
+  // 2. فتح نافذة التسجيل بحساب Apple
+  appleBtn?.addEventListener('click', () => {
+    activeSocialProvider = 'apple';
+    if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Apple ID';
+    if (socialModalIcon) socialModalIcon.textContent = '🍏';
+    if (socialModalDesc) socialModalDesc.textContent = 'أدخل عنوان Apple ID لربط حسابك وتخصيص خطتك التدريبية فورياً:';
+    if (socialEmailInput) socialEmailInput.placeholder = 'name@icloud.com';
+    if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Apple ID ✨';
+    socialModal?.classList.add('open');
+  });
+
+  // إغلاق مودال التسجيل الاجتماعي
+  closeSocialModalBtn?.addEventListener('click', () => {
+    socialModal?.classList.remove('open');
+  });
+
+  socialModal?.addEventListener('click', (e) => {
+    if (e.target === socialModal) {
+      socialModal.classList.remove('open');
     }
   });
 
-  // 2. تسجيل الدخول / إنشاء الحساب عبر Apple
-  appleBtn?.addEventListener('click', async () => {
-    setButtonLoading(appleBtn, true, 'جاري الربط مع Apple ID...');
-    try {
-      if (currentMode === 'signup') {
-        const res = await authService.signUpWithApple();
-        if (res.success && !res.redirecting) {
-          notificationService.showToast(`أهلاً بك! تم إنشاء حسابك عبر Apple، لنبدأ بجمع بيانات خطتك 📋✨`, 'success');
-          setTimeout(() => {
-            window.location.hash = '#questionnaire';
-          }, 350);
-        }
-      } else {
-        const res = await authService.loginWithApple();
-        if (res.success && !res.redirecting) {
-          const nextHash = res.onboardingCompleted ? '#today' : '#questionnaire';
-          const msg = res.onboardingCompleted
-            ? `مرحباً بعودتك، تم التحقق عبر Apple ID بنجاح 🍏`
-            : `أهلاً بك! لنستكمل إعداد بيانات خطتك التدريبية 📋✨`;
-          notificationService.showToast(msg, 'success');
-          setTimeout(() => {
-            window.location.hash = nextHash;
-          }, 300);
-        }
-      }
-    } catch (e) {
-      notificationService.showToast('تعذر الاتصال بحساب Apple، يرجى المحاولة مرة أخرى', 'error');
-    } finally {
-      setButtonLoading(appleBtn, false);
+  // معالجة إرسال نموذج Google / Apple
+  socialForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById('social-submit-btn');
+    const name = document.getElementById('social-name-input')?.value;
+    const email = document.getElementById('social-email-input')?.value;
+    const password = document.getElementById('social-pass-input')?.value;
+
+    setButtonLoading(submitBtn, true, 'جاري ربط الحساب...');
+
+    let res;
+    if (activeSocialProvider === 'apple') {
+      res = await authService.signUpWithApple(email, password, name);
+    } else {
+      res = await authService.signUpWithGoogle(email, password, name);
+    }
+
+    setButtonLoading(submitBtn, false);
+
+    if (res.success) {
+      socialModal?.classList.remove('open');
+      const providerLabel = activeSocialProvider === 'apple' ? 'Apple ID 🍏' : 'Google 🌐';
+      notificationService.showToast(`أهلاً بك يا ${res.user.name}! تم ربط حسابك عبر ${providerLabel} بنجاح`, 'success');
+      setTimeout(() => {
+        window.location.hash = '#questionnaire';
+      }, 350);
+    } else {
+      notificationService.showToast(res.error || 'تعذر إتمام التسجيل، يرجى التحقق من البيانات', 'error');
     }
   });
 

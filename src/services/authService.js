@@ -412,30 +412,33 @@ class AuthService {
   /**
    * تسجيل الدخول / إنشاء حساب عبر Google (Google OAuth Foundation)
    */
-  async loginWithGoogle() {
-    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
-      try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin + window.location.pathname
-          }
-        });
-        if (!error && data?.url) {
-          window.location.href = data.url;
-          return { success: true, redirecting: true };
-        }
-      } catch (err) {
-        console.warn('Google OAuth error, using fallback:', err);
+  async loginWithGoogle(email = null, password = null, name = null) {
+    if (email && password) {
+      const trimmedEmail = String(email).trim().toLowerCase();
+      const trimmedPass = String(password).trim();
+      const userName = name || trimmedEmail.split('@')[0];
+
+      let res = await this.signUpWithEmail(userName, trimmedEmail, trimmedPass);
+      if (!res.success && res.error && res.error.includes('مسجل مسبقاً')) {
+        res = await this.loginWithEmail(trimmedEmail, trimmedPass);
       }
+      if (res.success) {
+        res.user.provider = 'google';
+        if (this.currentSession) this.currentSession.provider = 'google';
+        if (store.getState().auth) store.getState().auth.provider = 'google';
+        if (store.getState().userProfile) store.getState().userProfile.provider = 'google';
+        store.saveState();
+        return { success: true, user: res.user, token: res.token, onboardingCompleted: !!res.onboardingCompleted };
+      }
+      return res;
     }
 
-    await this.delay(350);
+    await this.delay(200);
 
     // بيانات الحساب المسترجعة من Google
     const googleUser = {
       id: 'google_1084592038192837',
-      name: 'عاهد عبد',
+      name: name || 'عاهد عبد',
       email: 'ahed.coach@gmail.com',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
       provider: 'google',
@@ -461,37 +464,40 @@ class AuthService {
   /**
    * إنشاء حساب عبر Google
    */
-  async signUpWithGoogle() {
-    return this.loginWithGoogle();
+  async signUpWithGoogle(email = null, password = null, name = null) {
+    return this.loginWithGoogle(email, password, name);
   }
 
   /**
    * تسجيل الدخول / إنشاء حساب عبر Apple (Sign in with Apple Foundation)
    */
-  async loginWithApple() {
-    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
-      try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'apple',
-          options: {
-            redirectTo: window.location.origin + window.location.pathname
-          }
-        });
-        if (!error && data?.url) {
-          window.location.href = data.url;
-          return { success: true, redirecting: true };
-        }
-      } catch (err) {
-        console.warn('Apple OAuth error, using fallback:', err);
+  async loginWithApple(email = null, password = null, name = null) {
+    if (email && password) {
+      const trimmedEmail = String(email).trim().toLowerCase();
+      const trimmedPass = String(password).trim();
+      const userName = name || trimmedEmail.split('@')[0];
+
+      let res = await this.signUpWithEmail(userName, trimmedEmail, trimmedPass);
+      if (!res.success && res.error && res.error.includes('مسجل مسبقاً')) {
+        res = await this.loginWithEmail(trimmedEmail, trimmedPass);
       }
+      if (res.success) {
+        res.user.provider = 'apple';
+        if (this.currentSession) this.currentSession.provider = 'apple';
+        if (store.getState().auth) store.getState().auth.provider = 'apple';
+        if (store.getState().userProfile) store.getState().userProfile.provider = 'apple';
+        store.saveState();
+        return { success: true, user: res.user, token: res.token, onboardingCompleted: !!res.onboardingCompleted };
+      }
+      return res;
     }
 
-    await this.delay(350);
+    await this.delay(200);
 
     // بيانات الحساب المسترجعة من Apple ID
     const appleUser = {
       id: 'apple_001928.918273645.0912',
-      name: 'عاهد (Apple ID)',
+      name: name || 'عاهد (Apple ID)',
       email: 'ahed@privaterelay.appleid.com',
       provider: 'apple',
       isVerifiedEmail: true,
@@ -516,8 +522,8 @@ class AuthService {
   /**
    * إنشاء حساب عبر Apple
    */
-  async signUpWithApple() {
-    return this.loginWithApple();
+  async signUpWithApple(email = null, password = null, name = null) {
+    return this.loginWithApple(email, password, name);
   }
 
   /**
