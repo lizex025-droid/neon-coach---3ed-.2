@@ -62,20 +62,19 @@ export class Router {
 
   checkInitialAccess() {
     const isAuth = authService.isAuthenticated() || store.getState()?.auth?.isAuthenticated;
-    const isDemo = store.getState()?.isDemoMode;
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
 
     const rawHash = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0];
 
-    if (!isAuth && !isDemo) {
-      // مستخدم جديد أول مرة يفتح الموقع -> توجيهه فوراً لصفحة المصادقة
+    if (!isAuth) {
+      // إجباري: لا يمكن استخدام أي ميزة بالتطبيق بدون تسجيل حساب
       if (rawHash !== 'auth') {
         window.location.hash = '#auth';
         return;
       }
-    } else if (!hasCompletedOnboarding && !isDemo) {
-      // مسجل دخول لكن لم يكمل الاستبيان -> التوجيه للأسئلة
+    } else if (!hasCompletedOnboarding) {
+      // إجباري: بعد إنشاء الحساب يجب إكمال أسئلة الاستبيان
       if (rawHash !== 'questionnaire') {
         window.location.hash = '#questionnaire';
         return;
@@ -96,29 +95,28 @@ export class Router {
     const routeKey = rawHash.split('?')[0];
 
     const isAuth = authService.isAuthenticated() || store.getState()?.auth?.isAuthenticated;
-    const isDemo = store.getState()?.isDemoMode;
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
 
-    // 1. حماية المسارات لغير المسجلين: إجبار الانتقال إلى #auth
-    if (!isAuth && !isDemo && routeKey !== 'auth') {
+    // 1. حماية صارمة: منع استخدام أي شاشة بالتطبيق إطلاقاً بدون تسجيل حساب
+    if (!isAuth && routeKey !== 'auth') {
       window.location.hash = '#auth';
       return;
     }
 
-    // 2. إذا كان مسجلاً ولكنه جديد لم يكمل الاستبيان بعد
-    if (isAuth && !hasCompletedOnboarding && !isDemo && routeKey !== 'questionnaire' && routeKey !== 'auth') {
+    // 2. إجبار إكمال الاستبيان للمستخدم الجديد قبل فتح اليوم أو أي صفحة
+    if (isAuth && !hasCompletedOnboarding && routeKey !== 'questionnaire' && routeKey !== 'auth') {
       window.location.hash = '#questionnaire';
       return;
     }
 
     // 3. إذا كان مسجلاً ومكتمل الاستبيان وحاول الذهاب إلى #auth
-    if ((isAuth || isDemo) && (hasCompletedOnboarding || isDemo) && routeKey === 'auth') {
+    if (isAuth && hasCompletedOnboarding && routeKey === 'auth') {
       window.location.hash = '#today';
       return;
     }
 
-    const route = ROUTES[routeKey] || (isAuth || isDemo ? ROUTES['today'] : ROUTES['auth']);
+    const route = ROUTES[routeKey] || (isAuth ? ROUTES['today'] : ROUTES['auth']);
     this.currentRoute = routeKey;
 
     this.renderRoute(route, routeKey);

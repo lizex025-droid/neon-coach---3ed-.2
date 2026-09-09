@@ -12,7 +12,7 @@
 import { authService } from '../services/authService.js';
 import { notificationService } from '../services/notificationService.js';
 
-let currentMode = 'login'; // 'login' | 'signup'
+let currentMode = 'signup'; // 'signup' | 'login' - إنشاء حساب إجباري للبدء
 
 export function renderAuthView() {
   const isLogin = currentMode === 'login';
@@ -29,21 +29,21 @@ export function renderAuthView() {
         NEON COACH
       </h1>
       <p style="font-size: 0.95rem; color: #B8C0BC; margin-bottom: 24px; font-weight: 600;">
-        لياقتك، خطتك، تقدمك ⚡
+        أنشئ حسابك لبدء خطتك الشخصية ⚡
       </p>
 
       <!-- بطاقة المصادقة الرئيسية -->
       <div class="auth-card">
         
-        <!-- تبويبات التبديل بين تسجيل الدخول وإنشاء حساب -->
+        <!-- تبويبات التبديل بين إنشاء حساب وتسجيل الدخول -->
         <div class="auth-tabs" role="tablist">
-          <button type="button" id="tab-login" class="auth-tab-btn ${isLogin ? 'active' : ''}" role="tab" aria-selected="${isLogin}">
-            <span>🔑</span>
-            <span>تسجيل الدخول</span>
-          </button>
           <button type="button" id="tab-signup" class="auth-tab-btn ${!isLogin ? 'active' : ''}" role="tab" aria-selected="${!isLogin}">
             <span>✨</span>
             <span>إنشاء حساب</span>
+          </button>
+          <button type="button" id="tab-login" class="auth-tab-btn ${isLogin ? 'active' : ''}" role="tab" aria-selected="${isLogin}">
+            <span>🔑</span>
+            <span>تسجيل الدخول</span>
           </button>
         </div>
 
@@ -91,7 +91,7 @@ export function renderAuthView() {
 
           <!-- حقل البريد الإلكتروني -->
           <div class="input-with-icon">
-            <input type="email" id="auth-email" placeholder="البريد الإلكتروني" value="${isLogin ? 'ahmed@neoncoach.app' : ''}" required style="padding-inline-start: 46px; border-radius: 16px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.95rem; font-family: monospace;">
+            <input type="email" id="auth-email" placeholder="البريد الإلكتروني" required style="padding-inline-start: 46px; border-radius: 16px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.95rem; font-family: monospace;">
             <span class="input-icon" style="color: #55F7A5;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </span>
@@ -99,7 +99,7 @@ export function renderAuthView() {
 
           <!-- حقل كلمة المرور -->
           <div class="input-with-icon">
-            <input type="password" id="auth-password" placeholder="كلمة المرور (6 خانات على الأقل)" value="${isLogin ? '123456' : ''}" required style="padding-inline-start: 46px; padding-inline-end: 44px; border-radius: 16px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.95rem;">
+            <input type="password" id="auth-password" placeholder="كلمة المرور (6 خانات على الأقل)" required style="padding-inline-start: 46px; padding-inline-end: 44px; border-radius: 16px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.95rem;">
             <span class="input-icon" style="color: #55F7A5;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </span>
@@ -144,10 +144,10 @@ export function renderAuthView() {
             <span>${isLogin ? 'تسجيل الدخول 🚀' : 'إنشاء الحساب والبدء ✨'}</span>
           </button>
 
-          <!-- زر الدخول التجريبي كضيف -->
-          <button type="button" id="demo-direct-btn" class="btn btn-secondary btn-block" style="border-radius: 18px; border: 1px dashed rgba(85, 247, 165, 0.45); background: rgba(85, 247, 165, 0.06); font-size: 0.9rem; font-weight: 700; color: #55F7A5; margin-top: 4px;">
-            ⚡ تجربة التطبيق كضيف (وضع Demo)
-          </button>
+          <!-- إشعار إلزامية الحساب -->
+          <div style="margin-top: 6px; text-align: center; font-size: 0.82rem; color: #8C9992;">
+            <span>🔒 يلزم إنشاء حساب شخصي لحفظ خطتك وتتبع تقدمك بأمان</span>
+          </div>
 
         </form>
 
@@ -192,7 +192,6 @@ export function bindAuthViewEvents() {
   const tabSignup = document.getElementById('tab-signup');
   const googleBtn = document.getElementById('google-auth-btn');
   const appleBtn = document.getElementById('apple-auth-btn');
-  const demoDirectBtn = document.getElementById('demo-direct-btn');
   const forgotPassLink = document.getElementById('forgot-password-link');
   const forgotModal = document.getElementById('forgot-modal');
   const closeForgotBtn = document.getElementById('close-forgot-modal-btn');
@@ -331,17 +330,7 @@ export function bindAuthViewEvents() {
     }
   });
 
-  // 4. الدخول المباشر كضيف (وضع Demo)
-  demoDirectBtn?.addEventListener('click', async () => {
-    setButtonLoading(demoDirectBtn, true, 'تجهيز الوضع التجريبي...');
-    await authService.loginAsDemo();
-    notificationService.showToast('تم تفعيل وضع التجربة المباشر ⚡', 'info');
-    setTimeout(() => {
-      window.location.hash = '#today';
-    }, 200);
-  });
-
-  // 5. استعادة كلمة المرور
+  // 4. استعادة كلمة المرور
   forgotPassLink?.addEventListener('click', () => {
     const currentEmail = document.getElementById('auth-email')?.value || '';
     const forgotEmailInput = document.getElementById('forgot-email-input');
