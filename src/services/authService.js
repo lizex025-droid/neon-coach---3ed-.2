@@ -9,6 +9,7 @@
  */
 
 import { store } from '../state/store.js';
+import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 
 const SESSION_STORAGE_KEY = 'neon_auth_session_v1';
 const USERS_STORAGE_KEY = 'neon_registered_users_v1';
@@ -18,6 +19,116 @@ class AuthService {
     this.listeners = new Set();
     this.inMemoryUsers = [];
     this.currentSession = this.loadStoredSession();
+    this.initSupabaseAuthListener();
+  }
+
+  /**
+   * تهيئة مراقب جلسات Supabase وتلقي نتائج OAuth (Google / Apple)
+   */
+  async initSupabaseAuthListener() {
+    if (typeof window === 'undefined' || !isSupabaseConfigured()) return;
+    try {
+      // 1. فحص الجلسة المخزنة في Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await this.syncSessionFromSupabase(session);
+      }
+
+      // 2. الاستماع لتغيرات المصادقة (بما فيها تسجيل الدخول عبر Google/Apple)
+      supabase.auth.onAuthStateChange(async (event, newSession) => {
+        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && newSession?.user) {
+          await this.syncSessionFromSupabase(newSession);
+        } else if (event === 'SIGNED_OUT') {
+          this.saveSession(null);
+          store.logoutUser();
+        }
+      });
+    } catch (err) {
+      console.warn('Supabase Auth listener error:', err);
+    }
+  }
+
+  async syncSessionFromSupabase(session) {
+    const user = session.user;
+    const provider = user.app_metadata?.provider || 'email';
+
+    // فحص هل أكمل المستخدم استبيان الخطة في جدول profiles
+    let onboardingCompleted = false;
+    let profileData = null;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (data) {
+        profileData = data;
+        onboardingCompleted = !!data.onboarding_completed;
+      }
+    } catch (e) {}
+
+    const userObj = {
+      id: user.id,
+      name: profileData?.name || user.user_metadata?.name || (user.email ? user.email.split('@')[0] : 'متدرب نيون'),
+      email: user.email || '',
+      provider: provider,
+      avatarUrl: user.user_metadata?.avatar_url || null,
+      onboardingCompleted: onboardingCompleted,
+      createdAt: user.created_at || new Date().toISOString()
+    };
+
+    const sessionObj = {
+      token: session.access_token,
+      provider: provider,
+      user: userObj,
+      loggedInAt: new Date().toISOString(),
+      onboardingCompleted: onboardingCompleted
+    };
+
+    this.saveSession(sessionObj);
+    store.loginUser(userObj, provider, session.access_token);
+
+    if (profileData) {
+      store.setUserProfile({
+        name: profileData.name || userObj.name,
+        email: profileData.email || userObj.email,
+        age: profileData.age,
+        gender: profileData.gender,
+        height: profileData.height,
+        currentWeight: profileData.current_weight,
+        targetWeight: profileData.target_weight,
+        goal: profileData.fitness_goal,
+        activityLevel: profileData.activity_level,
+        workoutDaysCount: profileData.training_days_per_week,
+        equipment: profileData.equipment,
+        injuries: profileData.injuries,
+        allergens: profileData.allergies,
+        likedFoods: profileData.liked_foods,
+        dislikedFoods: profileData.disliked_foods,
+        targetCalories: profileData.target_calories,
+        targetProtein: profileData.target_protein,
+        targetCarbs: profileData.target_carbs,
+        targetFats: profileData.target_fats,
+        targetWaterLiters: profileData.target_water_liters,
+        targetGlasses: profileData.target_glasses,
+        onboardingCompleted: onboardingCompleted,
+        onboarding_completed: onboardingCompleted
+      });
+    }
+
+    if (typeof window !== 'undefined') {
+      if (!onboardingCompleted) {
+        if (window.location.hash !== '#questionnaire') {
+          window.location.hash = '#questionnaire';
+        }
+      } else {
+        if (window.location.hash === '#auth' || !window.location.hash) {
+          window.location.hash = '#today';
+        }
+      }
+    }
+
+    return userObj;
   }
 
   /**
@@ -100,10 +211,58 @@ class AuthService {
       return { success: false, error: 'كلمة المرور يجب أن لا تقل عن 6 أحرف أو أرقام' };
     }
 
+    // 1. محاولة تسجيل الدخول عبر Supabase إذا كانت مهيأة
+    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password: trimmedPass
+        });
+        if (!error && data && data.user) {
+          let onboardingCompleted = false;
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .maybeSingle();
+            if (profile && profile.onboarding_completed) {
+              onboardingCompleted = true;
+            }
+          } catch (e) {}
+
+          const userObj = {
+            id: data.user.id,
+            name: data.user.user_metadata?.name || trimmedEmail.split('@')[0],
+            email: trimmedEmail,
+            provider: 'email',
+            onboardingCompleted,
+            createdAt: data.user.created_at || new Date().toISOString()
+          };
+          this.saveRegisteredUser({ ...userObj, password: trimmedPass });
+
+          const session = {
+            token: data.session?.access_token || ('jwt_neon_' + Date.now()),
+            provider: 'email',
+            user: userObj,
+            loggedInAt: new Date().toISOString(),
+            rememberMe: !!rememberMe,
+            onboardingCompleted
+          };
+
+          this.saveSession(session);
+          store.loginUser(userObj, 'email', session.token);
+          return { success: true, user: userObj, token: session.token, onboardingCompleted };
+        }
+      } catch (err) {
+        console.warn('Supabase signInWithPassword fallback:', err);
+      }
+    }
+
     // محاكاة استجابة الشبكة (Latency simulation)
     await this.delay(350);
 
-    // التحقق من وجود المستخدم المسجل أو الحساب التجريبي الافتراضي
+    // 2. التحقق من وجود المستخدم المسجل محلياً أو وضع الاختبار
     const registeredUsers = this.getRegisteredUsers();
     const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === trimmedEmail);
 
@@ -122,6 +281,7 @@ class AuthService {
         name: nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1),
         email: trimmedEmail,
         provider: 'email',
+        onboardingCompleted: false,
         createdAt: new Date().toISOString()
       };
       this.saveRegisteredUser({ ...userObj, password: trimmedPass });
@@ -132,13 +292,14 @@ class AuthService {
       provider: 'email',
       user: userObj,
       loggedInAt: new Date().toISOString(),
-      rememberMe: !!rememberMe
+      rememberMe: !!rememberMe,
+      onboardingCompleted: !!userObj.onboardingCompleted
     };
 
     this.saveSession(session);
     store.loginUser(userObj, 'email', session.token);
 
-    return { success: true, user: userObj, token: session.token };
+    return { success: true, user: userObj, token: session.token, onboardingCompleted: !!userObj.onboardingCompleted };
   }
 
   /**
@@ -165,19 +326,69 @@ class AuthService {
       return { success: false, error: 'كلمة المرور يجب أن لا تقل عن 6 أحرف أو أرقام' };
     }
 
-    await this.delay(400);
-
     const registeredUsers = this.getRegisteredUsers();
     const exists = registeredUsers.some(u => u.email.toLowerCase() === trimmedEmail);
     if (exists) {
       return { success: false, error: 'هذا البريد الإلكتروني مسجل مسبقاً، يمكنك تسجيل الدخول مباشرة' };
     }
 
+    // 1. محاولة إنشاء الحساب عبر Supabase
+    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: trimmedEmail,
+          password: trimmedPass,
+          options: {
+            data: {
+              name: trimmedName
+            }
+          }
+        });
+
+        if (error) {
+          if (error.message && (error.message.includes('already registered') || error.message.includes('User already exists'))) {
+            return { success: false, error: 'هذا البريد الإلكتروني مسجل مسبقاً، يمكنك تسجيل الدخول مباشرة' };
+          }
+        } else if (data && data.user) {
+          const newUser = {
+            id: data.user.id,
+            name: trimmedName,
+            email: trimmedEmail,
+            provider: 'email',
+            onboardingCompleted: false,
+            createdAt: new Date().toISOString()
+          };
+
+          this.saveRegisteredUser({ ...newUser, password: trimmedPass });
+
+          const token = data.session?.access_token || ('jwt_neon_' + Math.random().toString(36).slice(2, 12) + '_' + Date.now());
+          const session = {
+            token,
+            provider: 'email',
+            user: newUser,
+            loggedInAt: new Date().toISOString(),
+            isNewUser: true,
+            onboardingCompleted: false
+          };
+
+          this.saveSession(session);
+          store.registerUser(newUser, 'email');
+
+          return { success: true, user: newUser, token, isNewUser: true, onboardingCompleted: false };
+        }
+      } catch (err) {
+        console.warn('Supabase signUp fallback:', err);
+      }
+    }
+
+    await this.delay(400);
+
     const newUser = {
       id: 'usr_' + Math.random().toString(36).slice(2, 9),
       name: trimmedName,
       email: trimmedEmail,
       provider: 'email',
+      onboardingCompleted: false,
       createdAt: new Date().toISOString()
     };
 
@@ -188,21 +399,38 @@ class AuthService {
       provider: 'email',
       user: newUser,
       loggedInAt: new Date().toISOString(),
-      isNewUser: true
+      isNewUser: true,
+      onboardingCompleted: false
     };
 
     this.saveSession(session);
     store.registerUser(newUser, 'email');
 
-    return { success: true, user: newUser, token: session.token, isNewUser: true };
+    return { success: true, user: newUser, token: session.token, isNewUser: true, onboardingCompleted: false };
   }
 
   /**
    * تسجيل الدخول / إنشاء حساب عبر Google (Google OAuth Foundation)
-   * تم بناء الهيكل بحيث يمكن استبدال دالة المحاكاة بـ Google Identity Services (GIS SDK)
    */
   async loginWithGoogle() {
-    await this.delay(500);
+    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin + window.location.pathname
+          }
+        });
+        if (!error && data?.url) {
+          window.location.href = data.url;
+          return { success: true, redirecting: true };
+        }
+      } catch (err) {
+        console.warn('Google OAuth error, using fallback:', err);
+      }
+    }
+
+    await this.delay(350);
 
     // بيانات الحساب المسترجعة من Google
     const googleUser = {
@@ -212,6 +440,7 @@ class AuthService {
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
       provider: 'google',
       isVerifiedEmail: true,
+      onboardingCompleted: false,
       lastLogin: new Date().toISOString()
     };
 
@@ -219,17 +448,18 @@ class AuthService {
       token: 'oauth_google_' + Math.random().toString(36).slice(2, 14) + '_' + Date.now(),
       provider: 'google',
       user: googleUser,
-      loggedInAt: new Date().toISOString()
+      loggedInAt: new Date().toISOString(),
+      onboardingCompleted: false
     };
 
     this.saveSession(session);
     store.loginUser(googleUser, 'google', session.token);
 
-    return { success: true, user: googleUser, token: session.token };
+    return { success: true, user: googleUser, token: session.token, onboardingCompleted: false };
   }
 
   /**
-   * إنشاء حساب عبر Google (تطابق عملية تسجيل الدخول في بروتوكول OAuth)
+   * إنشاء حساب عبر Google
    */
   async signUpWithGoogle() {
     return this.loginWithGoogle();
@@ -239,7 +469,24 @@ class AuthService {
    * تسجيل الدخول / إنشاء حساب عبر Apple (Sign in with Apple Foundation)
    */
   async loginWithApple() {
-    await this.delay(500);
+    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: window.location.origin + window.location.pathname
+          }
+        });
+        if (!error && data?.url) {
+          window.location.href = data.url;
+          return { success: true, redirecting: true };
+        }
+      } catch (err) {
+        console.warn('Apple OAuth error, using fallback:', err);
+      }
+    }
+
+    await this.delay(350);
 
     // بيانات الحساب المسترجعة من Apple ID
     const appleUser = {
@@ -248,6 +495,7 @@ class AuthService {
       email: 'ahed@privaterelay.appleid.com',
       provider: 'apple',
       isVerifiedEmail: true,
+      onboardingCompleted: false,
       lastLogin: new Date().toISOString()
     };
 
@@ -255,13 +503,14 @@ class AuthService {
       token: 'apple_id_token_' + Math.random().toString(36).slice(2, 14) + '_' + Date.now(),
       provider: 'apple',
       user: appleUser,
-      loggedInAt: new Date().toISOString()
+      loggedInAt: new Date().toISOString(),
+      onboardingCompleted: false
     };
 
     this.saveSession(session);
     store.loginUser(appleUser, 'apple', session.token);
 
-    return { success: true, user: appleUser, token: session.token };
+    return { success: true, user: appleUser, token: session.token, onboardingCompleted: false };
   }
 
   /**
@@ -275,7 +524,7 @@ class AuthService {
    * تسجيل الدخول المباشر كضيف (Demo Mode)
    */
   async loginAsDemo() {
-    await this.delay(250);
+    await this.delay(200);
 
     const demoUser = {
       id: 'demo_user_01',
@@ -283,6 +532,7 @@ class AuthService {
       email: 'demo@neoncoach.app',
       provider: 'demo',
       isDemo: true,
+      onboardingCompleted: true,
       loggedInAt: new Date().toISOString()
     };
 
@@ -290,13 +540,15 @@ class AuthService {
       token: 'demo_token_' + Date.now(),
       provider: 'demo',
       user: demoUser,
-      loggedInAt: new Date().toISOString()
+      loggedInAt: new Date().toISOString(),
+      onboardingCompleted: true
     };
 
     this.saveSession(session);
+    store.getState().isDemoMode = true;
     store.loginUser(demoUser, 'demo', session.token);
 
-    return { success: true, user: demoUser, token: session.token };
+    return { success: true, user: demoUser, token: session.token, onboardingCompleted: true };
   }
 
   /**
@@ -308,7 +560,17 @@ class AuthService {
       return { success: false, error: 'يرجى إدخال بريد إلكتروني صحيح' };
     }
 
-    await this.delay(400);
+    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
+      try {
+        await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+          redirectTo: window.location.origin + window.location.pathname
+        });
+      } catch (err) {
+        console.warn('Supabase resetPassword warning:', err);
+      }
+    }
+
+    await this.delay(350);
     return {
       success: true,
       message: `تم إرسال رابط إعادة تعيين كلمة المرور إلى ${trimmedEmail}. يرجى مراجعة صندوق الوارد لديك.`
@@ -319,6 +581,11 @@ class AuthService {
    * تسجيل الخروج
    */
   logout() {
+    if (typeof window !== 'undefined' && isSupabaseConfigured()) {
+      try {
+        supabase.auth.signOut().catch(() => {});
+      } catch (e) {}
+    }
     this.saveSession(null);
     store.logoutUser();
     return { success: true };

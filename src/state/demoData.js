@@ -6,7 +6,7 @@
 import { DEFAULT_MEALS } from '../data/foods.js';
 
 export const INITIAL_DEMO_DATA = {
-  isDemoMode: true,
+  isDemoMode: false,
   currentRole: 'client', // 'client' or 'coach'
 
   // ملف المستخدم الشخصي
@@ -14,6 +14,7 @@ export const INITIAL_DEMO_DATA = {
     id: 'user-ahmed-01',
     name: 'أحمد',
     email: 'ahmed@neoncoach.app',
+    onboardingCompleted: false,
     gender: 'male',
     birthDate: '2001-08-24', // كما في الصورة 2
     age: 25,

@@ -24,6 +24,7 @@ import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
 import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
+import { authService } from '../services/authService.js';
 
 export const ROUTES = {
   auth: { render: renderAuthView, bind: bindAuthViewEvents, showNav: false, showHeader: false },
@@ -56,18 +57,68 @@ export class Router {
   }
 
   init() {
-    if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
-      window.location.hash = '#today';
+    this.checkInitialAccess();
+  }
+
+  checkInitialAccess() {
+    const isAuth = authService.isAuthenticated() || store.getState()?.auth?.isAuthenticated;
+    const isDemo = store.getState()?.isDemoMode;
+    const profile = store.getState()?.userProfile;
+    const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
+
+    const rawHash = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0];
+
+    if (!isAuth && !isDemo) {
+      // مستخدم جديد أول مرة يفتح الموقع -> توجيهه فوراً لصفحة المصادقة
+      if (rawHash !== 'auth') {
+        window.location.hash = '#auth';
+        return;
+      }
+    } else if (!hasCompletedOnboarding && !isDemo) {
+      // مسجل دخول لكن لم يكمل الاستبيان -> التوجيه للأسئلة
+      if (rawHash !== 'questionnaire') {
+        window.location.hash = '#questionnaire';
+        return;
+      }
     } else {
-      this.handleRoute();
+      // مسجل دخول ومكتمل الاستبيان
+      if (!rawHash || rawHash === 'auth') {
+        window.location.hash = '#today';
+        return;
+      }
     }
+
+    this.handleRoute();
   }
 
   handleRoute() {
-    const rawHash = window.location.hash.replace(/^#\/?/, '') || 'today';
+    const rawHash = (window.location.hash || '').replace(/^#\/?/, '') || 'today';
     const routeKey = rawHash.split('?')[0];
 
-    const route = ROUTES[routeKey] || ROUTES['today'];
+    const isAuth = authService.isAuthenticated() || store.getState()?.auth?.isAuthenticated;
+    const isDemo = store.getState()?.isDemoMode;
+    const profile = store.getState()?.userProfile;
+    const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
+
+    // 1. حماية المسارات لغير المسجلين: إجبار الانتقال إلى #auth
+    if (!isAuth && !isDemo && routeKey !== 'auth') {
+      window.location.hash = '#auth';
+      return;
+    }
+
+    // 2. إذا كان مسجلاً ولكنه جديد لم يكمل الاستبيان بعد
+    if (isAuth && !hasCompletedOnboarding && !isDemo && routeKey !== 'questionnaire' && routeKey !== 'auth') {
+      window.location.hash = '#questionnaire';
+      return;
+    }
+
+    // 3. إذا كان مسجلاً ومكتمل الاستبيان وحاول الذهاب إلى #auth
+    if ((isAuth || isDemo) && (hasCompletedOnboarding || isDemo) && routeKey === 'auth') {
+      window.location.hash = '#today';
+      return;
+    }
+
+    const route = ROUTES[routeKey] || (isAuth || isDemo ? ROUTES['today'] : ROUTES['auth']);
     this.currentRoute = routeKey;
 
     this.renderRoute(route, routeKey);

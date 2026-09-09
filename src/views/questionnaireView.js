@@ -6,6 +6,8 @@
 import { store } from '../state/store.js';
 import { calculateAge, calculateNutritionTargets, kgToLbs, lbsToKg } from '../domain/calculations.js';
 import { generateTrainingPlan } from '../domain/planner.js';
+import { syncService } from '../services/syncService.js';
+import { notificationService } from '../services/notificationService.js';
 
 let currentStep = 1;
 const TOTAL_STEPS = 7;
@@ -438,26 +440,56 @@ export function bindQuestionnaireEvents() {
     const targets = calculateNutritionTargets(formData);
     const trainingPlan = generateTrainingPlan(formData);
 
-    store.setUserProfile({
+    const fullProfile = {
       ...formData,
       currentWeight: formData.weight,
-      startWeight: formData.weight
-    });
+      startWeight: formData.weight,
+      targetCalories: targets.targetCalories,
+      targetProtein: targets.protein,
+      targetCarbs: targets.carbs,
+      targetFats: targets.fats,
+      targetWaterLiters: Number((targets.waterMl / 1000).toFixed(1)),
+      targetGlasses: targets.waterGlasses,
+      onboardingCompleted: true,
+      onboarding_completed: true
+    };
 
-    // تحديث أهداف اليوم
+    store.setUserProfile(fullProfile);
+
+    // تحديث أهداف اليوم وإعادة تعيين المستهلك للعميل الجديد
     store.getState().today.targetCalories = targets.targetCalories;
     store.getState().today.targetProtein = targets.protein;
     store.getState().today.targetCarbs = targets.carbs;
     store.getState().today.targetFats = targets.fats;
     store.getState().today.targetWaterLiters = Number((targets.waterMl / 1000).toFixed(1));
     store.getState().today.targetGlasses = targets.waterGlasses;
+    store.getState().today.consumedCalories = 0;
+    store.getState().today.consumedProtein = 0;
+    store.getState().today.consumedCarbs = 0;
+    store.getState().today.consumedFats = 0;
+    store.getState().today.consumedGlasses = 0;
+    store.getState().today.consumedWaterLiters = 0;
+    store.getState().loggedMeals = [];
     store.saveState();
 
-    // محاكاة سريعة للانتقال المباشر للوحة اليوم
+    // المزامنة السحابية الفورية في جدول profiles وجدول water_logs بـ Supabase
+    const userId = store.getState().auth?.user?.id;
+    if (userId) {
+      try {
+        await syncService.syncProfile(userId, fullProfile);
+        await syncService.syncWaterLog(userId, 0, 0, targets.waterGlasses);
+      } catch (syncErr) {
+        console.warn('Sync warning upon plan creation:', syncErr);
+      }
+    }
+
+    notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}! 🚀`, 'success');
+
+    // الانتقال للوحة اليوم
     setTimeout(() => {
       currentStep = 1;
       window.location.hash = '#today';
-    }, 800);
+    }, 600);
   });
 
   // تفاعل فوري لتحديث العمر عند تغيير تاريخ الميلاد

@@ -223,7 +223,7 @@ export function bindAuthViewEvents() {
     try {
       if (currentMode === 'signup') {
         const res = await authService.signUpWithGoogle();
-        if (res.success) {
+        if (res.success && !res.redirecting) {
           notificationService.showToast(`أهلاً بك يا ${res.user.name}! لنبدأ بتحديد بيانات خطتك 📋✨`, 'success');
           setTimeout(() => {
             window.location.hash = '#questionnaire';
@@ -231,10 +231,14 @@ export function bindAuthViewEvents() {
         }
       } else {
         const res = await authService.loginWithGoogle();
-        if (res.success) {
-          notificationService.showToast(`مرحباً بك ${res.user.name}، تم تسجيل الدخول عبر Google بنجاح 🟢`, 'success');
+        if (res.success && !res.redirecting) {
+          const nextHash = res.onboardingCompleted ? '#today' : '#questionnaire';
+          const msg = res.onboardingCompleted
+            ? `مرحباً بعودتك ${res.user.name}، تم تسجيل الدخول عبر Google 🟢`
+            : `أهلاً بك يا ${res.user.name}! لنستكمل بيانات خطتك التدريبية 📋✨`;
+          notificationService.showToast(msg, 'success');
           setTimeout(() => {
-            window.location.hash = '#today';
+            window.location.hash = nextHash;
           }, 300);
         }
       }
@@ -251,7 +255,7 @@ export function bindAuthViewEvents() {
     try {
       if (currentMode === 'signup') {
         const res = await authService.signUpWithApple();
-        if (res.success) {
+        if (res.success && !res.redirecting) {
           notificationService.showToast(`أهلاً بك! تم إنشاء حسابك عبر Apple، لنبدأ بجمع بيانات خطتك 📋✨`, 'success');
           setTimeout(() => {
             window.location.hash = '#questionnaire';
@@ -259,10 +263,14 @@ export function bindAuthViewEvents() {
         }
       } else {
         const res = await authService.loginWithApple();
-        if (res.success) {
-          notificationService.showToast(`مرحباً بك، تم التحقق عبر Apple ID بنجاح 🍏`, 'success');
+        if (res.success && !res.redirecting) {
+          const nextHash = res.onboardingCompleted ? '#today' : '#questionnaire';
+          const msg = res.onboardingCompleted
+            ? `مرحباً بعودتك، تم التحقق عبر Apple ID بنجاح 🍏`
+            : `أهلاً بك! لنستكمل إعداد بيانات خطتك التدريبية 📋✨`;
+          notificationService.showToast(msg, 'success');
           setTimeout(() => {
-            window.location.hash = '#today';
+            window.location.hash = nextHash;
           }, 300);
         }
       }
@@ -309,9 +317,13 @@ export function bindAuthViewEvents() {
       setButtonLoading(submitBtn, false);
 
       if (res.success) {
-        notificationService.showToast(`مرحباً بعودتك ${res.user.name} 💚`, 'success');
+        const nextHash = res.onboardingCompleted ? '#today' : '#questionnaire';
+        const msg = res.onboardingCompleted
+          ? `مرحباً بعودتك ${res.user.name} 💚`
+          : `أهلاً بك ${res.user.name}! لنستكمل بيانات خطتك التدريبية والغذائية 📋✨`;
+        notificationService.showToast(msg, 'success');
         setTimeout(() => {
-          window.location.hash = '#today';
+          window.location.hash = nextHash;
         }, 300);
       } else {
         notificationService.showToast(res.error || 'بيانات الدخول غير صحيحة', 'error');
