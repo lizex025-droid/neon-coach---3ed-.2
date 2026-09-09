@@ -1561,6 +1561,19 @@
   transform: translateY(-1px);
 }
 
+.btn-facebook {
+  background: #0a192f;
+  color: #FFFFFF;
+  border: 1px solid rgba(24, 119, 242, 0.35);
+}
+
+.btn-facebook:hover, .btn-facebook:focus {
+  background: #11284a;
+  border-color: #1877F2;
+  box-shadow: 0 0 16px rgba(24, 119, 242, 0.3);
+  transform: translateY(-1px);
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
