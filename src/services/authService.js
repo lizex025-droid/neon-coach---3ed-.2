@@ -433,6 +433,26 @@ class AuthService {
       return res;
     }
 
+    // إذا تم استدعاؤها في المتصفح وكانت Supabase مهيأة
+    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin
+          }
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.location.href = data.url;
+          return { success: true, redirecting: true };
+        }
+      } catch (err) {
+        console.warn('Google OAuth direct redirect error:', err);
+        return { success: false, error: err.message || 'تعذر الاتصال بـ Google' };
+      }
+    }
+
     await this.delay(200);
 
     // بيانات الحساب المسترجعة من Google

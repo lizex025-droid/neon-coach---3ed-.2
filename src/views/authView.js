@@ -267,15 +267,29 @@ export function bindAuthViewEvents() {
   setupPasswordToggle('toggle-password-btn', 'auth-password');
   setupPasswordToggle('toggle-confirm-password-btn', 'auth-confirm-password');
 
-  // 1. فتح نافذة التسجيل بحساب Google
-  googleBtn?.addEventListener('click', () => {
-    activeSocialProvider = 'google';
-    if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Google';
-    if (socialModalIcon) socialModalIcon.textContent = '🌐';
-    if (socialModalDesc) socialModalDesc.textContent = 'أدخل بريدك على Google لربط حسابك وتخصيص خطتك التدريبية فورياً:';
-    if (socialEmailInput) socialEmailInput.placeholder = 'name@gmail.com';
-    if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Google 🚀';
-    socialModal?.classList.add('open');
+  // 1. تسجيل الدخول بحساب Google الرسمي (المباشر) مع بديل ذكي
+  googleBtn?.addEventListener('click', async () => {
+    setButtonLoading(googleBtn, true, 'جاري الاتصال بـ Google...');
+    try {
+      const res = await authService.loginWithGoogle();
+      if (res && res.redirecting) {
+        return; // جاري الانتقال لصفحة جوجل الرسمية
+      }
+      if (res && !res.success) {
+        activeSocialProvider = 'google';
+        if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Google';
+        if (socialModalIcon) socialModalIcon.textContent = '🌐';
+        if (socialModalDesc) socialModalDesc.textContent = 'أدخل بريدك على Google لربط حسابك وتخصيص خطتك التدريبية فورياً:';
+        if (socialEmailInput) socialEmailInput.placeholder = 'name@gmail.com';
+        if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Google 🚀';
+        socialModal?.classList.add('open');
+      }
+    } catch (e) {
+      activeSocialProvider = 'google';
+      socialModal?.classList.add('open');
+    } finally {
+      setButtonLoading(googleBtn, false);
+    }
   });
 
   // 2. فتح نافذة التسجيل بحساب Apple
