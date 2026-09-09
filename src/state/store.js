@@ -5,6 +5,7 @@
 
 import { INITIAL_DEMO_DATA } from './demoData.js';
 import { calculateAge, calculateNutritionTargets } from '../domain/calculations.js';
+import { syncService } from '../services/syncService.js';
 
 const STORAGE_KEY = 'neon_coach_app_state_v1';
 
@@ -12,6 +13,7 @@ class Store {
   constructor() {
     this.state = this.loadState();
     this.listeners = new Set();
+    syncService.setStore(this);
     this.initDailyStackSync();
   }
 
@@ -92,6 +94,11 @@ class Store {
       this.state.userProfile.age = calculateAge(profile.birthDate);
     }
     this.saveState();
+
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      syncService.syncProfile(userId, this.state.userProfile);
+    }
   }
 
   loginUser(userObj, provider = 'email', token = null) {
@@ -115,6 +122,10 @@ class Store {
 
     this.saveState();
     this.notify();
+
+    if (userObj?.id) {
+      syncService.loadUserData(userObj.id);
+    }
   }
 
   registerUser(userObj, provider = 'email') {
@@ -160,6 +171,11 @@ class Store {
     const glassDelta = amountMl >= 400 ? 2 : 1;
     this.state.today.consumedGlasses = (this.state.today.consumedGlasses || 0) + glassDelta;
     this.saveState();
+
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      syncService.syncWaterLog(userId, Math.round(newLiters * 1000), this.state.today.consumedGlasses, this.state.today.targetGlasses || 10);
+    }
   }
 
   undoWaterCup(amountMl = 250) {
@@ -673,6 +689,19 @@ class Store {
     this.state.loggedMeals.push(newLog);
     this.recalculateDailyNutrition();
     this.saveState();
+
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      syncService.syncMealLog(userId, {
+        name: newLog.titleAr,
+        calories: newLog.calories,
+        protein: newLog.protein,
+        carbs: newLog.carbs,
+        fats: newLog.fats,
+        items: newLog.items,
+      });
+    }
+
     return newLog;
   }
 
