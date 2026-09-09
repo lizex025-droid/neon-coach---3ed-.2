@@ -1,3 +1,5 @@
+import { cleanSnapshot } from '../state/initialState.js';
+import { syncService } from '../services/syncService.js';
 /**
  * NEON COACH - شاشة الملف الشخصي والإعدادات (Profile & Settings)
  */
@@ -6,6 +8,7 @@ import { store } from '../state/store.js';
 import { authService } from '../services/authService.js';
 import { notificationService } from '../services/notificationService.js';
 import { calculateAge, calculateBMI, calculateNutritionTargets } from '../domain/calculations.js';
+import { renderMeasurementPicker, bindMeasurementPickers } from '../components/measurementPicker.js';
 
 export function renderProfileView() {
   const state = store.getState();
@@ -15,8 +18,7 @@ export function renderProfileView() {
   const currentWeight = Number(profile.currentWeight) || 75;
   const targetWeight = Number(profile.targetWeight) || currentWeight;
   const height = Number(profile.height) || 175;
-  const birthDate = profile.birthDate || '2001-08-24';
-  const age = calculateAge(birthDate) || 25;
+  const age = profile.age || calculateAge(profile.birthDate) || 25;
   const gender = profile.gender || 'male';
   const goal = profile.goal || 'fat_loss';
   const workoutDaysCount = profile.workoutDaysCount || 4;
@@ -78,13 +80,7 @@ export function renderProfileView() {
             </select>
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <label class="form-label" style="font-size: 0.82rem;">تاريخ الميلاد</label>
-              <span id="label-age" style="font-size: 0.72rem; color: #55F7A5; font-weight: 700;">${age} سنة</span>
-            </div>
-            <input type="date" id="setting-birthdate" value="${birthDate}" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem; text-align: center;">
-          </div>
+${renderMeasurementPicker('setting-age', 'العمر', 'سنة', age, 18, 100)}
         </div>
       </div>
 
@@ -95,16 +91,10 @@ export function renderProfileView() {
           <span id="quick-bmi-badge" class="badge badge-neon" style="font-size: 0.72rem; padding: 2px 8px;">BMI: ${bmiInfo.bmi} (${bmiInfo.category})</span>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 0.8rem;">الطول (سم)</label>
-            <input type="number" id="setting-height" value="${height}" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-weight: 700;">
-          </div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr); gap: 10px;">
+${renderMeasurementPicker('setting-height', 'الطول', 'سم', height, 100, 250)}
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 0.8rem;">الوزن الحالي (كغ)</label>
-            <input type="number" id="setting-current-weight" value="${currentWeight}" step="0.1" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.35); color: #55F7A5; font-weight: 800;">
-          </div>
+${renderMeasurementPicker('setting-current-weight', 'الوزن', 'كغ', currentWeight, 30, 400, 0.5)}
 
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.8rem;">الوزن المطلوب (كغ)</label>
@@ -226,18 +216,11 @@ export function renderProfileView() {
 }
 
 export function bindProfileEvents() {
+  bindMeasurementPickers();
   // تحديث العمر ومؤشر كتلة الجسم فوراً عند تغيير الأرقام
   function updateLiveMetrics() {
     const weight = Number(document.getElementById('setting-current-weight')?.value) || 75;
     const height = Number(document.getElementById('setting-height')?.value) || 175;
-    const birthDate = document.getElementById('setting-birthdate')?.value;
-
-    if (birthDate) {
-      const age = calculateAge(birthDate);
-      const ageLabel = document.getElementById('label-age');
-      if (ageLabel) ageLabel.textContent = `${age} سنة`;
-    }
-
     const bmiInfo = calculateBMI(weight, height);
     const bmiBadge = document.getElementById('quick-bmi-badge');
     if (bmiBadge) {
@@ -245,7 +228,7 @@ export function bindProfileEvents() {
     }
   }
 
-  ['setting-current-weight', 'setting-height', 'setting-birthdate'].forEach(id => {
+  ['setting-current-weight', 'setting-height', 'setting-age'].forEach(id => {
     const el = document.getElementById(id);
     el?.addEventListener('input', updateLiveMetrics);
     el?.addEventListener('change', updateLiveMetrics);
@@ -255,14 +238,15 @@ export function bindProfileEvents() {
   document.getElementById('btn-recalculate-simple')?.addEventListener('click', () => {
     const weight = Number(document.getElementById('setting-current-weight')?.value) || 75;
     const height = Number(document.getElementById('setting-height')?.value) || 175;
-    const birthDate = document.getElementById('setting-birthdate')?.value || '2001-08-24';
+    const age = Number(document.getElementById('setting-age')?.value);
     const gender = document.getElementById('setting-gender')?.value || 'male';
     const goal = document.getElementById('setting-goal')?.value || 'fat_loss';
 
     const targets = calculateNutritionTargets({
       weight,
       height,
-      birthDate,
+      age,
+      birthDate: null,
       gender,
       activityLevel: 'light',
       goal
@@ -272,7 +256,7 @@ export function bindProfileEvents() {
     const waterInput = document.getElementById('setting-target-water');
 
     if (calsInput) calsInput.value = targets.targetCalories;
-    if (waterInput) waterInput.value = (Math.round((targets.targetWaterMl / 1000) * 10) / 10).toFixed(1);
+    if (waterInput) waterInput.value = (Math.round((targets.waterMl / 1000) * 10) / 10).toFixed(1);
 
     notificationService.showToast('تم احتساب السعرات والماء بنجاح ⚡', 'success');
   });
@@ -282,7 +266,7 @@ export function bindProfileEvents() {
     const name = document.getElementById('setting-name')?.value.trim() || 'أحمد';
     const email = document.getElementById('setting-email')?.value.trim() || 'ahmed@neoncoach.app';
     const gender = document.getElementById('setting-gender')?.value || 'male';
-    const birthDate = document.getElementById('setting-birthdate')?.value || '2001-08-24';
+    const age = Number(document.getElementById('setting-age')?.value);
     const currentWeight = Number(document.getElementById('setting-current-weight')?.value) || 75;
     const targetWeight = Number(document.getElementById('setting-target-weight')?.value) || currentWeight;
     const height = Number(document.getElementById('setting-height')?.value) || 175;
@@ -294,13 +278,18 @@ export function bindProfileEvents() {
 
     const targetCalories = Number(document.getElementById('setting-target-calories')?.value) || 2100;
     const targetWaterLiters = Number(document.getElementById('setting-target-water')?.value) || 2.4;
+    if (!Number.isInteger(age) || age < 18 || age > 100 || currentWeight < 30 || currentWeight > 400 || height < 100 || height > 250 || targetWeight < 30 || targetWeight > 400) {
+      notificationService.showToast('راجع العمر والطول والوزن قبل الحفظ.', 'error');
+      return;
+    }
 
     // حفظ في مخزن الحالة
     store.setUserProfile({
       name,
       email,
       gender,
-      birthDate,
+      age,
+      birthDate: null,
       currentWeight,
       targetWeight,
       height,
@@ -327,7 +316,7 @@ export function bindProfileEvents() {
 
   // تصدير نسخة احتياطية
   document.getElementById('export-data-json-btn')?.addEventListener('click', () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store.getState(), null, 2));
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleanSnapshot(store.getState()), null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", `neon_coach_backup_${new Date().toISOString().split('T')[0]}.json`);
@@ -358,7 +347,7 @@ export function bindProfileEvents() {
         }
         store.restoreState(parsed);
         notificationService.showToast('تمت استعادة البيانات بنجاح 🚀', 'success');
-        setTimeout(() => window.location.reload(), 500);
+        syncService.flush().then(result => { if (result.success) window.location.reload(); });
       } catch (err) {
         alert('فشل استيراد الملف: ' + (err.message || 'الملف غير صالح'));
       }
@@ -368,10 +357,11 @@ export function bindProfileEvents() {
   });
 
   // تسجيل الخروج من الحساب
-  document.getElementById('logout-app-btn')?.addEventListener('click', () => {
+  document.getElementById('logout-app-btn')?.addEventListener('click', async () => {
     const confirmed = confirm('هل أنت متأكد من رغبتك في تسجيل الخروج من الحساب؟');
     if (confirmed) {
-      authService.logout();
+      const result = await authService.logout();
+      if (!result.success) { notificationService.showToast(result.error, 'error'); return; }
       notificationService.showToast('تم تسجيل الخروج بنجاح 👋', 'info');
       setTimeout(() => {
         window.location.hash = '#auth';
@@ -380,10 +370,11 @@ export function bindProfileEvents() {
   });
 
   // إعادة ضبط التطبيق ومسح البيانات
-  document.getElementById('reset-app-data-btn')?.addEventListener('click', () => {
+  document.getElementById('reset-app-data-btn')?.addEventListener('click', async () => {
     const confirmed = confirm('هل أنت متأكد من رغبتك في مسح كافة البيانات والبدء من جديد؟');
     if (confirmed) {
       store.resetState();
+      if (!(await syncService.flush()).success) return;
       alert('تم مسح البيانات بنجاح.');
       window.location.hash = '#auth';
       window.location.reload();

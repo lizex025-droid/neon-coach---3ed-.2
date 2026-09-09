@@ -10,6 +10,7 @@ import { macrosFor } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
 
 export function renderNutritionView() {
+  removeDetachedModals();
   const state = store.getState();
   const { today, mealPlan } = state;
   const loggedMeals = state.loggedMeals || [];
@@ -298,14 +299,14 @@ export function renderNutritionView() {
                 هدف السعرات الجديد
               </label>
               <div style="position: relative;">
-                <input type="number" id="manual-target-calories-input" class="stack-field" style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px;" value="${today.targetCalories}" min="800" max="8000" step="50" />
+                <input type="number" id="manual-target-calories-input" class="stack-field" style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px;" value="${today.targetCalories}" min="500" max="8000" step="1" inputmode="numeric" />
                 <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8C9992; font-size: 0.85rem; font-weight: 700;">سعرة</span>
               </div>
             </div>
 
             <!-- خيار توزيع الماكروز -->
             <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(85, 247, 165, 0.15); border-radius: 14px; padding: 14px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div class="macro-options-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                 <span style="font-size: 0.85rem; font-weight: 800; color: #FFFFFF;">توزيع الماكروز</span>
                 <label style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #55F7A5; cursor: pointer;">
                   <input type="checkbox" id="auto-recalc-macros-checkbox" checked style="accent-color: #55F7A5;" />
@@ -443,6 +444,8 @@ export function bindNutritionEvents() {
   // نقل النوافذ المنبثقة إلى document.body مباشرة لضمان ظهورها أمام المستخدم بدقة 100% فوق كل العناصر ودون تأثر بالتمرير
   [editModal, calModal, swapModal].forEach(modal => {
     if (modal && modal.parentElement !== document.body) {
+      modal.dataset.routeModal = 'nutrition';
+      modal.setAttribute('role', 'dialog');
       document.body.appendChild(modal);
     }
   });
@@ -826,8 +829,9 @@ export function bindNutritionEvents() {
 
   saveCalBtn?.addEventListener('click', () => {
     const newTarget = Number(calInput?.value);
-    if (!newTarget || newTarget < 500) {
-      notificationService.showToast('يرجى إدخال رقم سعرات صحيح (500 على الأقل)', 'error');
+    if (!Number.isFinite(newTarget) || newTarget < 500 || newTarget > 8000) {
+      notificationService.showToast('أدخل هدفاً بين 500 و8000 سعرة. لم يتم تغيير هدفك.', 'error');
+      calInput?.focus();
       return;
     }
 

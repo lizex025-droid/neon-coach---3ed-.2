@@ -21,7 +21,7 @@ export function renderProgressReportView() {
   const state = store.getState();
   const report = state.progressReport || {};
   const user = state.userProfile || {};
-  const workoutHistory = store.getWorkoutHistory() || [];
+
 
   const currentWeight = user.currentWeight || report.currentDay?.weight || 118;
   const currentWaist = report.currentDay?.waistCm || 108;
@@ -314,61 +314,6 @@ export function renderProgressReportView() {
         </p>
       </div>
 
-      <!-- بطاقة سجل تاريخ التمارين والتدريب (Workout History) -->
-      <div class="neon-card workout-history-card" style="padding: 20px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px;">
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: #FFFFFF; font-size: 1.05rem;">
-            <span>📋</span>
-            <span>سجل تاريخ التمارين (Workout History)</span>
-          </div>
-          <span style="font-size: 0.78rem; color: #55F7A5; font-family: monospace; font-weight: 700;">
-            ${workoutHistory.length} جلسات تدريبية
-          </span>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-          ${workoutHistory.length === 0 ? `
-            <div style="text-align: center; color: #8C9992; padding: 18px; font-size: 0.9rem;">
-              لا توجد جلسات تدريب مسجلة حالياً. أكمل تمارينك في صفحة التدريب ليتم تسجيلها هنا تلقائياً!
-            </div>
-          ` : workoutHistory.map(session => `
-            <div class="workout-history-item" style="background: rgba(85,247,165,0.04); border: 1px solid rgba(85,247,165,0.18); border-radius: 14px; padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
-                <div>
-                  <div style="font-weight: 800; color: #FFFFFF; font-size: 0.98rem; display: flex; align-items: center; gap: 6px;">
-                    <span>⚡</span>
-                    <span>${escapeHtml(session.title || 'جلسة تدريب')}</span>
-                  </div>
-                  <div style="font-size: 0.78rem; color: #8C9992; margin-top: 3px;">
-                    📅 ${escapeHtml(session.dateLabel || '')}
-                  </div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.76rem; font-family: monospace;">
-                  ${session.durationMinutes ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;">⏱️ ${session.durationMinutes} دقيقة</span>` : ''}
-                  ${session.totalVolumeKg ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;">⚖️ ${Number(session.totalVolumeKg).toLocaleString('ar-EG')} كغ حجم</span>` : ''}
-                  ${session.totalSets ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;">🔢 ${session.totalSets} جولات</span>` : ''}
-                </div>
-              </div>
-
-              <!-- تفاصيل التمارين وجولاتها في هذه الجلسة -->
-              ${session.exercises && session.exercises.length > 0 ? `
-                <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed rgba(85,247,165,0.15); padding-top: 10px;">
-                  ${session.exercises.map(ex => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.84rem; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                      <span style="color: #F1F5F9; font-weight: 600;">• ${escapeHtml(ex.nameAr || ex.name || 'تمرين')}</span>
-                      <span style="color: #55F7A5; font-family: monospace; font-size: 0.8rem; background: rgba(85,247,165,0.08); padding: 2px 8px; border-radius: 6px;">
-                        ${escapeHtml(ex.bestSet || (ex.setsCount ? `${ex.setsCount} جولات` : ''))}
-                      </span>
-                    </div>
-                  `).join('')}
-                </div>
-              ` : ''}
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- زري الإجراءات السفليين (مشاركة وحفظ PDF) - مخفيان في الطباعة والـ PDF -->
       <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px;">
         
         <!-- زر مشاركة التقرير -->

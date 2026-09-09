@@ -3,7 +3,8 @@
  * يدير التخزين المحلي الآمن عبر localStorage مع استدعاء المشتركين وحفظ البيانات تلقائياً
  */
 
-import { INITIAL_DEMO_DATA } from './demoData.js';
+import { createInitialState, cleanSnapshot, localDate } from './initialState.js';
+import { accountStorage as localStorage, selectStorageAccount, onAccountStorageChange } from '../services/accountStorage.js';
 import { calculateAge, calculateNutritionTargets } from '../domain/calculations.js';
 import { syncService } from '../services/syncService.js';
 
@@ -14,7 +15,7 @@ class Store {
     this.state = this.loadState();
     this.listeners = new Set();
     syncService.setStore(this);
-    this.initDailyStackSync();
+    onAccountStorageChange(() => syncService.schedule());
   }
 
   initDailyStackSync() {
@@ -26,37 +27,42 @@ class Store {
     } catch (e) {}
   }
 
-  loadState() {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          return JSON.parse(stored);
-        }
-      }
-    } catch (e) {
-      console.warn('تعذر قراءة الحالة من التخزين المحلي، سيتم اعتماد البيانات التجريبية:', e);
-    }
-    return JSON.parse(JSON.stringify(INITIAL_DEMO_DATA));
-  }
+  loadState() { return createInitialState(); }
 
   saveState() {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
-      }
-      this.notify();
-    } catch (e) {
-      console.error('تعذر حفظ الحالة في التخزين المحلي:', e);
-    }
+    this.rolloverDay();
+    syncService.schedule();
+    this.notify();
+  }
+
+  rolloverDay() {
+    const date = localDate();
+    if (this.state.today.date === date) return;
+    this.state.dailyHistory ||= {};
+    this.state.dailyHistory[this.state.today.date] = { ...this.state.today, meals: this.state.loggedMeals };
+    this.state.today.date = date;
+    for (const key of Object.keys(this.state.today)) if (key.startsWith('consumed')) this.state.today[key] = 0;
+    this.state.today.energyLevel = null;
+    this.state.today.isWorkoutCompleted = false;
+    this.state.today.workoutStatus = 'not_started';
+    this.state.loggedMeals = [];
   }
 
   resetState() {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    this.state = JSON.parse(JSON.stringify(INITIAL_DEMO_DATA));
+    const auth = this.state.auth;
+    this.state = createInitialState();
+    this.state.auth = auth;
     this.saveState();
+  }
+
+  applySnapshot(snapshot) {
+    const auth = this.state.auth;
+    const clean = cleanSnapshot(snapshot);
+    const initial = createInitialState();
+    this.state = { ...initial, ...clean, auth, currentRole: 'client' };
+    this.state.userProfile = { ...initial.userProfile, ...clean.userProfile, id: auth.user?.id, email: auth.user?.email };
+    this.rolloverDay();
+    this.notify();
   }
 
   subscribe(listener) {
@@ -76,70 +82,36 @@ class Store {
 
   // --- دوال تبديل النمط والحساب ---
   setRole(role) {
-    this.state.currentRole = role; // 'client' or 'coach'
-    this.saveState();
+    if (role === 'coach' && this.state.auth.user?.role !== 'coach') return;
+    this.state.currentRole = role;
+    this.notify();
   }
 
   restoreState(newState) {
-    if (!newState || typeof newState !== 'object') {
-      throw new Error('بيانات النسخة الاحتياطية غير صالحة');
-    }
-    this.state = newState;
+    if (!newState?.userProfile || !newState?.today || !Array.isArray(newState.loggedMeals)) throw new Error('بيانات النسخة الاحتياطية غير صالحة');
+    if (newState.userProfile.id !== this.state.auth.user?.id) throw new Error('هذه النسخة تخص حساباً آخر');
+    this.applySnapshot(newState);
     this.saveState();
   }
 
   setUserProfile(profile) {
     this.state.userProfile = { ...this.state.userProfile, ...profile };
-    if (profile.birthDate) {
-      this.state.userProfile.age = calculateAge(profile.birthDate);
-    }
+    if (profile.birthDate && !profile.age) this.state.userProfile.age = calculateAge(profile.birthDate);
     this.saveState();
-
-    const userId = this.state.auth?.user?.id;
-    if (userId) {
-      syncService.syncProfile(userId, this.state.userProfile);
-    }
   }
 
-  loginUser(userObj, provider = 'email', token = null) {
-    if (!this.state.auth) {
-      this.state.auth = {};
-    }
-    this.state.auth = {
-      isAuthenticated: true,
-      user: userObj,
-      provider: provider,
-      token: token,
-      lastLoginAt: new Date().toISOString()
-    };
-
-    if (userObj) {
-      if (userObj.name) this.state.userProfile.name = userObj.name;
-      if (userObj.email) this.state.userProfile.email = userObj.email;
-      this.state.userProfile.provider = provider;
-      if (userObj.avatarUrl) this.state.userProfile.avatarUrl = userObj.avatarUrl;
-    }
-
-    this.saveState();
-    this.notify();
-
-    if (userObj?.id) {
-      syncService.loadUserData(userObj.id);
-    }
+  loginUser(userObj, provider = 'email') {
+    this.state = createInitialState();
+    selectStorageAccount(userObj.id);
+    this.state.auth = { isAuthenticated: true, user: userObj, provider };
+    Object.assign(this.state.userProfile, { id: userObj.id, name: userObj.name, email: userObj.email, provider });
   }
 
-  registerUser(userObj, provider = 'email') {
-    this.loginUser(userObj, provider);
-  }
+  registerUser(userObj, provider = 'email') { this.loginUser(userObj, provider); }
 
   logoutUser() {
-    this.state.auth = {
-      isAuthenticated: false,
-      user: null,
-      provider: null,
-      token: null
-    };
-    this.saveState();
+    selectStorageAccount(null);
+    this.state = createInitialState();
     this.notify();
   }
 
@@ -149,16 +121,17 @@ class Store {
       weight: p.currentWeight || 75,
       height: p.height || 175,
       birthDate: p.birthDate,
+      age: p.age,
       gender: p.gender || 'male',
       activityLevel: p.activityLevel || 'light',
       goal: p.goal || 'fat_loss'
     });
 
     this.state.today.targetCalories = targets.targetCalories;
-    this.state.today.targetProtein = targets.proteinGrams;
-    this.state.today.targetCarbs = targets.carbGrams;
-    this.state.today.targetFats = targets.fatGrams;
-    this.state.today.targetWaterLiters = Math.round((targets.targetWaterMl / 1000) * 10) / 10;
+    this.state.today.targetProtein = targets.protein;
+    this.state.today.targetCarbs = targets.carbs;
+    this.state.today.targetFats = targets.fats;
+    this.state.today.targetWaterLiters = Math.round((targets.waterMl / 1000) * 10) / 10;
     this.saveState();
     return targets;
   }
@@ -166,22 +139,18 @@ class Store {
   // --- تتبع شرب الماء ---
   addWaterCup(amountMl = 250) {
     const currentLiters = this.state.today.consumedWaterLiters || 0;
-    const newLiters = Math.round((currentLiters + (amountMl / 1000)) * 10) / 10;
+    const newLiters = Math.round((currentLiters + (amountMl / 1000)) * 1000) / 1000;
     this.state.today.consumedWaterLiters = newLiters;
     const glassDelta = amountMl >= 400 ? 2 : 1;
     this.state.today.consumedGlasses = (this.state.today.consumedGlasses || 0) + glassDelta;
     this.saveState();
 
-    const userId = this.state.auth?.user?.id;
-    if (userId) {
-      syncService.syncWaterLog(userId, Math.round(newLiters * 1000), this.state.today.consumedGlasses, this.state.today.targetGlasses || 10);
-    }
   }
 
   undoWaterCup(amountMl = 250) {
     const currentLiters = this.state.today.consumedWaterLiters || 0;
     if (currentLiters <= 0 && (!this.state.today.consumedGlasses || this.state.today.consumedGlasses <= 0)) return;
-    const newLiters = Math.max(0, Math.round((currentLiters - (amountMl / 1000)) * 10) / 10);
+    const newLiters = Math.max(0, Math.round((currentLiters - (amountMl / 1000)) * 1000) / 1000);
     this.state.today.consumedWaterLiters = newLiters;
     const glassDelta = amountMl >= 400 ? 2 : 1;
     this.state.today.consumedGlasses = Math.max(0, (this.state.today.consumedGlasses || glassDelta) - glassDelta);
@@ -446,183 +415,47 @@ class Store {
   }
 
   finishWorkoutSession(customData = null) {
-    if (this.state.today.workoutStatus === 'completed' && !customData) return; // منع إنهاء الجلسة مرتين
+    if (this.state.today.workoutStatus === 'completed' && !customData) return;
+    const active = this.state.activeWorkoutSession;
+    const completed = (active.currentExercise?.sets || []).filter(set => set.completed);
+    if (!customData && completed.length === 0) return false;
+    const elapsed = active.startedAtTimestamp ? Math.max(0, (Date.now() - active.startedAtTimestamp) / 1000) : active.elapsedSeconds;
+    const record = {
+      id: crypto.randomUUID(), date: localDate(), title: active.sessionNameAr,
+      dateLabel: new Date().toLocaleDateString('ar'),
+      durationMinutes: Math.round(elapsed / 60),
+      totalVolumeKg: completed.reduce((sum, set) => sum + Number(set.weight) * Number(set.reps), 0),
+      totalSets: completed.length,
+      totalReps: completed.reduce((sum, set) => sum + Number(set.reps), 0),
+      exercises: completed.length ? [{ nameAr: active.currentExercise.nameAr, setsCount: completed.length, bestSet: '', sets: completed }] : [],
+      ...customData,
+    };
+    this.state.workoutHistory ||= [];
+    this.state.workoutHistory.unshift(record);
     this.state.today.workoutStatus = 'completed';
     this.state.today.isWorkoutCompleted = true;
-
-    const now = new Date();
-    const dateLabel = new Intl.DateTimeFormat('ar-EG', { weekday: 'long', day: 'numeric', month: 'short' }).format(now);
-    const active = this.state.activeWorkoutSession;
-    const currentEx = active?.currentExercise;
-    const completedSets = (currentEx?.sets || []).filter(s => s.completed);
-    const bestSetObj = completedSets.length > 0 
-      ? completedSets.reduce((max, s) => (Number(s.weight) > Number(max.weight) ? s : max), completedSets[0])
-      : { weight: 70, reps: 10 };
-
-    const newSessionRecord = {
-      id: 'hist_' + Date.now(),
-      title: customData?.title || active?.sessionNameAr || 'صدر وترايسبس',
-      dateLabel: customData?.dateLabel || dateLabel,
-      durationMinutes: customData?.durationMinutes || Math.max(1, Math.round((active?.elapsedSeconds || 1800) / 60)),
-      totalVolumeKg: customData?.totalVolumeKg || 8450,
-      totalSets: customData?.totalSets || Math.max(currentEx?.sets?.length || 3, 16),
-      totalReps: customData?.totalReps || 160,
-      exercises: customData?.exercises || [
-        {
-          nameAr: currentEx?.nameAr || 'ضغط بار مستوي (Bench Press)',
-          bestSet: `${bestSetObj.weight || 72.5} كغ × ${bestSetObj.reps || 9} تكرارات`,
-          setsCount: currentEx?.sets?.length || 3
-        },
-        {
-          nameAr: 'ضغط دمبلز مائل (Incline DB Press)',
-          bestSet: '32 كغ × 10 تكرارات',
-          setsCount: 3
-        },
-        {
-          nameAr: 'ضغط ترايسبس بالكيبل (Triceps Pushdown)',
-          bestSet: '35 كغ × 12 تكرار',
-          setsCount: 4
-        }
-      ]
-    };
-
-    if (!Array.isArray(this.state.workoutHistory)) {
-      this.state.workoutHistory = [];
-    }
-    this.state.workoutHistory.unshift(newSessionRecord);
-
-    // حفظ الجلسة في سجل تاريخ التمارين
-    try {
-      if (typeof localStorage !== 'undefined') {
-        const existing = JSON.parse(localStorage.getItem('neon_workout_history_v1') || '[]');
-        existing.unshift(newSessionRecord);
-        localStorage.setItem('neon_workout_history_v1', JSON.stringify(existing.slice(0, 50)));
-      }
-    } catch (e) {}
-
+    active.startedAtTimestamp = null;
     this.saveState();
+    return true;
   }
 
   getWorkoutHistory() {
-    // 1. التحقق من السجلات في state أولاً
-    if (Array.isArray(this.state.workoutHistory) && this.state.workoutHistory.length > 0) {
-      return this.state.workoutHistory;
+    const history = [...(this.state.workoutHistory || [])];
+    for (const key of ['neon_workout_history_v1', 'fortyDay_workout_history_v1', 'hasm_workout_history_v1']) {
+      try {
+        const entries = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(entries)) history.push(...entries.map(item => ({
+          ...item, title: item.title || item.sessionNameAr || 'Workout',
+          durationMinutes: item.durationMinutes ?? Math.round((item.durationSeconds || 0) / 60),
+          totalVolumeKg: item.totalVolumeKg ?? item.totalVolume ?? 0,
+          totalSets: item.totalSets ?? 0, totalReps: item.totalReps ?? 0,
+          exercises: (item.exercises || []).map(ex => ({ ...ex, nameAr: ex.nameAr || ex.title || '', setsCount: ex.setsCount ?? (Array.isArray(ex.sets) ? ex.sets.length : ex.sets) ?? 0 })),
+        })));
+      } catch {}
     }
-
-    try {
-      if (typeof localStorage !== 'undefined') {
-        // 2. التحقق من السجلات المحلية المسجلة عبر التطبيق أو 40-days-workout
-        const keys = ['neon_workout_history_v1', 'fortyDay_workout_history_v1', 'hasm_workout_history_v1'];
-        for (const key of keys) {
-          const raw = localStorage.getItem(key);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              return parsed.map(item => ({
-                id: item.id || 'hist_' + Math.random().toString(36).slice(2, 7),
-                title: item.title || item.sessionNameAr || 'جلسة تدريبية',
-                dateLabel: item.dateLabel || 'مؤخراً',
-                durationMinutes: item.durationMinutes || (item.durationSeconds ? Math.round(item.durationSeconds / 60) : 48),
-                totalVolumeKg: item.totalVolumeKg || item.totalVolume || 8420,
-                totalSets: item.totalSets || (item.exercises ? item.exercises.reduce((sum, e) => sum + (e.sets || 3), 0) : 18),
-                totalReps: item.totalReps || 160,
-                exercises: (item.exercises || []).map(ex => ({
-                  nameAr: ex.nameAr || ex.title || 'تمرين',
-                  bestSet: ex.bestSet || (ex.bestKg ? `${ex.bestKg} كغ × ${ex.bestReps || '-'} تكرار` : (ex.sets ? `${ex.sets} جولات` : '')),
-                  setsCount: ex.setsCount || ex.sets || 3
-                }))
-              }));
-            }
-          }
-        }
-      }
-    } catch (e) {}
-
-    // 2. سجل الجلسات المكتملة الأساسي والافتراضي
-    return [
-      {
-        id: 'hist-5',
-        title: 'صدر وترايسبس (Chest & Triceps)',
-        dateLabel: 'الأحد، 6 سبتمبر 2026',
-        durationMinutes: 52,
-        totalVolumeKg: 8450,
-        totalSets: 18,
-        totalReps: 164,
-        exercises: [
-          { nameAr: 'ضغط بار مستوي (Bench Press)', bestSet: '82.5 كغ × 8 تكرارات', setsCount: 4 },
-          { nameAr: 'ضغط دمبلز مائل (Incline DB Press)', bestSet: '32 كغ × 10 تكرارات', setsCount: 3 },
-          { nameAr: 'تفتيح كيبل للصدر (Cable Flyes)', bestSet: '17.5 كغ × 12 تكرار', setsCount: 3 },
-          { nameAr: 'ضغط ترايسبس بالكيبل (Triceps Pushdown)', bestSet: '35 كغ × 12 تكرار', setsCount: 4 },
-          { nameAr: 'غطس متوازي (Dips)', bestSet: 'وزن الجسم + 10 كغ × 10', setsCount: 4 }
-        ]
-      },
-      {
-        id: 'hist-4',
-        title: 'ظهر وبايسبس (Back & Biceps)',
-        dateLabel: 'الخميس، 3 سبتمبر 2026',
-        durationMinutes: 58,
-        totalVolumeKg: 9800,
-        totalSets: 19,
-        totalReps: 172,
-        exercises: [
-          { nameAr: 'ديدلفت تقليدي (Deadlift)', bestSet: '140 كغ × 6 تكرارات', setsCount: 4 },
-          { nameAr: 'سحب بار منحني (Barbell Row)', bestSet: '75 كغ × 8 تكرارات', setsCount: 4 },
-          { nameAr: 'سحب عالي قبضة واسعة (Lat Pulldown)', bestSet: '65 كغ × 10 تكرارات', setsCount: 4 },
-          { nameAr: 'تبادل دمبلز للبايسبس (Incline Biceps Curl)', bestSet: '18 كغ × 10 تكرارات', setsCount: 4 },
-          { nameAr: 'سحب هامر بالكيبل (Hammer Rope Curl)', bestSet: '30 كغ × 12 تكرار', setsCount: 3 }
-        ]
-      },
-      {
-        id: 'hist-3',
-        title: 'أرجل وبطن (Legs & Core)',
-        dateLabel: 'الثلاثاء، 1 سبتمبر 2026',
-        durationMinutes: 61,
-        totalVolumeKg: 12400,
-        totalSets: 17,
-        totalReps: 155,
-        exercises: [
-          { nameAr: 'سكوات بار حر (Barbell Squat)', bestSet: '115 كغ × 8 تكرارات', setsCount: 4 },
-          { nameAr: 'ضغط أرجل جهاز (Leg Press)', bestSet: '210 كغ × 10 تكرارات', setsCount: 4 },
-          { nameAr: 'رفرفة فخذ خلفي (Lying Leg Curls)', bestSet: '50 كغ × 12 تكرار', setsCount: 3 },
-          { nameAr: 'مد أرجل أمامي (Leg Extension)', bestSet: '60 كغ × 12 تكرار', setsCount: 3 },
-          { nameAr: 'بطن معلق (Hanging Leg Raises)', bestSet: '15 تكرار × 3 جولات', setsCount: 3 }
-        ]
-      },
-      {
-        id: 'hist-2',
-        title: 'أكتاف وترابيس (Shoulders & Traps)',
-        dateLabel: 'السبت، 29 أغسطس 2026',
-        durationMinutes: 49,
-        totalVolumeKg: 7150,
-        totalSets: 16,
-        totalReps: 150,
-        exercises: [
-          { nameAr: 'ضغط أكتاف بالبار (Overhead Press)', bestSet: '55 كغ × 8 تكرارات', setsCount: 4 },
-          { nameAr: 'رفرفة أكتاف جانبي (DB Lateral Raises)', bestSet: '14 كغ × 12 تكرار', setsCount: 4 },
-          { nameAr: 'سحب وجه بالكيبل (Face Pulls)', bestSet: '27.5 كغ × 15 تكرار', setsCount: 4 },
-          { nameAr: 'هز أكتاف بالدمبلز (DB Shrugs)', bestSet: '36 كغ × 12 تكرار', setsCount: 4 }
-        ]
-      },
-      {
-        id: 'hist-1',
-        title: 'صدر وترايسبس (Chest & Triceps)',
-        dateLabel: 'الأربعاء، 26 أغسطس 2026',
-        durationMinutes: 50,
-        totalVolumeKg: 7900,
-        totalSets: 17,
-        totalReps: 158,
-        exercises: [
-          { nameAr: 'ضغط بار مستوي (Bench Press)', bestSet: '80 كغ × 8 تكرارات', setsCount: 4 },
-          { nameAr: 'ضغط دمبلز مائل (Incline DB Press)', bestSet: '30 كغ × 10 تكرارات', setsCount: 3 },
-          { nameAr: 'تفتيح كيبل للصدر (Cable Flyes)', bestSet: '15 كغ × 12 تكرار', setsCount: 3 },
-          { nameAr: 'ضغط ترايسبس بالكيبل (Triceps Pushdown)', bestSet: '32.5 كغ × 12 تكرار', setsCount: 4 },
-          { nameAr: 'كسارة جمجمة بالدمبل (Skull Crushers)', bestSet: '24 كغ × 10 تكرارات', setsCount: 3 }
-        ]
-      }
-    ];
+    return [...new Map(history.map(item => [item.id, item])).values()];
   }
 
-  // --- إدارة أسماء وتصنيفات الوجبات المخصصة ---
   getCustomMealNames() {
     if (!Array.isArray(this._customMealNames)) {
       this._customMealNames = [];
@@ -690,17 +523,6 @@ class Store {
     this.recalculateDailyNutrition();
     this.saveState();
 
-    const userId = this.state.auth?.user?.id;
-    if (userId) {
-      syncService.syncMealLog(userId, {
-        name: newLog.titleAr,
-        calories: newLog.calories,
-        protein: newLog.protein,
-        carbs: newLog.carbs,
-        fats: newLog.fats,
-        items: newLog.items,
-      });
-    }
 
     return newLog;
   }
@@ -807,6 +629,7 @@ class Store {
 
   // --- اعتماد خطة من المدرب ---
   approveClientPlan(clientId, notes = '') {
+    if (this.state.auth.user?.role !== 'coach') return;
     this.state.mealPlan.status = 'approved_by_coach';
     this.state.mealPlan.approvedAt = new Date().toISOString();
     this.state.progressReport.coachNotes = notes || 'تمت مراجعة واعتماد الخطة بنجاح.';

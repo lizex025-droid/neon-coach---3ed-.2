@@ -4,13 +4,6 @@
  */
 
 export function renderWorkoutListView() {
-  // توجيه تلقائي فوري لجدول الـ 40 يوم
-  if (typeof window !== 'undefined') {
-    setTimeout(() => {
-      window.location.replace('./40-days-workout.html?book=fortyDay');
-    }, 40);
-  }
-
   return `
     <div class="workout-list-container" style="padding: 24px 16px 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; text-align: center; gap: 18px;">
       
@@ -35,8 +28,5 @@ export function renderWorkoutListView() {
 }
 
 export function bindWorkoutListEvents() {
-  if (typeof window !== 'undefined') {
-    window.location.replace('./40-days-workout.html?book=fortyDay');
-  }
+  // Only the explicit link leaves the SPA; rendering never schedules navigation.
 }
-

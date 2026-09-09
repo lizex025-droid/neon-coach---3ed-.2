@@ -43,7 +43,7 @@ export function bindHeaderEvents() {
   const calendarBtn = document.getElementById('header-calendar-btn');
   if (calendarBtn) {
     calendarBtn.addEventListener('click', () => {
-      window.location.hash = '#forty-day';
+      window.location.hash = '#workout';
     });
   }
 

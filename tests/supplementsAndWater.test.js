@@ -89,17 +89,17 @@ test('تتبع شرب الماء والترطيب وإضافة الأكواب و
 
   // إضافة كوب 250 مل
   store.addWaterCup(250);
-  assert.equal(store.getState().today.consumedWaterLiters, 0.3); // 0.25 rounds to 0.3
+  assert.equal(store.getState().today.consumedWaterLiters, 0.25); // Preserve the measured 250 ml
   assert.equal(store.getState().today.consumedGlasses, 1);
 
   // إضافة زجاجة 500 مل
   store.addWaterCup(500);
-  assert.equal(store.getState().today.consumedWaterLiters, 0.8);
+  assert.equal(store.getState().today.consumedWaterLiters, 0.75);
   assert.equal(store.getState().today.consumedGlasses, 3);
 
   // تراجع عن كوب 250 مل (0.8 - 0.25 = 0.55 => 0.6)
   store.undoWaterCup(250);
-  assert.equal(store.getState().today.consumedWaterLiters, 0.6);
+  assert.equal(store.getState().today.consumedWaterLiters, 0.5);
   assert.equal(store.getState().today.consumedGlasses, 2);
 });
 
@@ -128,11 +128,7 @@ test('استرجاع وتحديث سجل تاريخ التمارين والتد�
   
   const history = store.getWorkoutHistory();
   assert.ok(Array.isArray(history));
-  assert.ok(history.length >= 1);
-  assert.ok(history[0].title);
-  assert.ok(Array.isArray(history[0].exercises));
-  assert.ok(history[0].exercises.length > 0);
-  assert.ok(history[0].exercises[0].nameAr);
+  assert.equal(history.length, 0, 'A new account must not receive fabricated workout history');
 
   // إضافة جلسة تمرين جديدة وحفظها
   store.finishWorkoutSession({

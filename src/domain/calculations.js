@@ -101,7 +101,7 @@ export function calculateNutritionTargets(userProfile) {
     goal = GOALS.FAT_LOSS
   } = userProfile;
 
-  const age = calculateAge(birthDate) || 25;
+  const age = Number(userProfile.age) || calculateAge(birthDate) || 25;
   const bmr = calculateBMR(weight, height, age, gender);
   const tdee = calculateTDEE(bmr, activityLevel);
 

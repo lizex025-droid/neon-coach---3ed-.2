@@ -6,8 +6,10 @@
 import { store } from '../state/store.js';
 import { calculatePercentage } from '../domain/calculations.js';
 import { animateCountUp, animateRingOffset } from '../utils/animUtils.js';
+import { notificationService } from '../services/notificationService.js';
 
 export function renderTodayView() {
+  document.querySelector('body > #today-calorie-target-modal')?.remove();
   const state = store.getState();
   const { today, userProfile } = state;
 
@@ -331,7 +333,7 @@ export function renderTodayView() {
                 هدف السعرات الجديد
               </label>
               <div style="position: relative;">
-                <input type="number" id="today-manual-target-cals-input" class="stack-field" style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px;" value="${today.targetCalories}" min="800" max="8000" step="50" />
+                <input type="number" id="today-manual-target-cals-input" class="stack-field" style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px;" value="${today.targetCalories}" min="500" max="8000" step="1" inputmode="numeric" />
                 <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8C9992; font-size: 0.85rem; font-weight: 700;">سعرة</span>
               </div>
             </div>
@@ -404,6 +406,13 @@ export function bindTodayViewEvents() {
   const cancelTodayCalBtn = document.getElementById('cancel-today-cal-modal-btn');
   const saveTodayCalBtn = document.getElementById('save-today-cal-target-btn');
   const todayCalInput = document.getElementById('today-manual-target-cals-input');
+  if (todayCalModal) {
+    todayCalModal.dataset.routeModal = 'today';
+    todayCalModal.setAttribute('role', 'dialog');
+    todayCalModal.setAttribute('aria-label', 'تعديل هدف السعرات اليومي');
+    document.body.appendChild(todayCalModal);
+    todayCalModal.addEventListener('click', e => { if (e.target === todayCalModal) todayCalModal.classList.remove('open'); });
+  }
 
   todayEditCalBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -434,11 +443,13 @@ export function bindTodayViewEvents() {
 
   saveTodayCalBtn?.addEventListener('click', () => {
     const newTarget = Number(todayCalInput?.value);
-    if (!newTarget || newTarget < 500) {
+    if (!Number.isFinite(newTarget) || newTarget < 500 || newTarget > 8000) {
+      notificationService.showToast('أدخل هدفاً بين 500 و8000 سعرة. لم يتم تغيير هدفك.', 'error');
+      todayCalInput?.focus();
       return;
     }
-    store.setTargetCalories(newTarget);
     todayCalModal?.classList.remove('open');
+    store.setTargetCalories(newTarget);
     const container = document.getElementById('view-container');
     if (container) {
       container.innerHTML = renderTodayView();

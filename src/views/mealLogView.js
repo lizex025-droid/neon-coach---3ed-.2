@@ -524,6 +524,7 @@ export function bindMealLogEvents() {
       notificationService.showToast(photoResult.warningAr, 'warning');
       refreshMealLogView(0);
     }
+    if (!photoResult.success) notificationService.showToast(photoResult.warningAr, 'warning');
   });
 
   // تأكيد وحفظ الوجبة في السجل اليومي المركزي

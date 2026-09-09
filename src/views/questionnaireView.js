@@ -8,37 +8,27 @@ import { calculateAge, calculateNutritionTargets, kgToLbs, lbsToKg } from '../do
 import { generateTrainingPlan } from '../domain/planner.js';
 import { syncService } from '../services/syncService.js';
 import { notificationService } from '../services/notificationService.js';
+import { renderMeasurementPicker, bindMeasurementPickers } from '../components/measurementPicker.js';
 
 let currentStep = 1;
 const TOTAL_STEPS = 7;
 
 // بيانات الاستبيان الجاري تعبئتها
-let formData = {
-  name: 'أحمد',
-  birthDate: '2001-08-24',
-  gender: 'male',
-  height: 187,
-  weight: 103,
-  unitSystem: 'metric', // metric or imperial
-  goal: 'fat_loss',
-  targetWeight: 90,
-  activityLevel: 'light',
-  likedFoods: ['دجاج', 'أرز', 'بيض'],
-  dislikedFoods: ['سمك', 'بروكلي'],
-  allergens: [],
-  injuries: [],
-  workoutDaysCount: 4,
-  equipment: 'gym',
-  sessionDurationMin: 50,
-  sleepHours: 7,
-  benchPressRecord: '70 كغ × 10',
-  squatRecord: '',
-  deadliftRecord: '',
-  supplementsBudget: 'medium'
-};
+let formOwner = null;
+let formData = {};
 
 export function renderQuestionnaireView() {
-  const profile = store.getState()?.userProfile;
+  const state = store.getState();
+  const profile = state.userProfile;
+  if (formOwner !== state.auth.user?.id) {
+    formOwner = state.auth.user?.id;
+    currentStep = state.questionnaireDraft?.step || 1;
+    formData = { ...profile, weight: profile.currentWeight || 75, height: profile.height || 175,
+      age: profile.age || calculateAge(profile.birthDate) || 25, birthDate: null, targetWeight: profile.targetWeight || profile.currentWeight || 75,
+      likedFoods: [...(profile.likedFoods || [])], dislikedFoods: [...(profile.dislikedFoods || [])],
+      benchPressRecord: '', squatRecord: '', deadliftRecord: '', sleepHours: 7,
+      ...state.questionnaireDraft?.data };
+  }
   if (profile && profile.name) {
     formData.name = profile.name;
   }
@@ -94,13 +84,7 @@ function renderStepContent(step) {
             <input type="text" id="q-name" value="${formData.name}" style="width: 140px; text-align: left; padding: 6px 10px; border-radius: 10px;">
           </div>
 
-          <div class="neon-card" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
-            <span style="color: #B8C0BC; font-weight: 600;">تاريخ الميلاد</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="date" id="q-birthdate" value="${formData.birthDate}" style="width: 150px; text-align: center; padding: 6px 10px; border-radius: 10px;">
-              <span id="calculated-age-badge" class="badge badge-neon">${calculateAge(formData.birthDate)} سنة</span>
-            </div>
-          </div>
+          ${renderMeasurementPicker('q-age', 'العمر', 'سنة', formData.age, 18, 100)}
 
           <div class="neon-card" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
             <span style="color: #B8C0BC; font-weight: 600;">الجنس (لحساب BMR)</span>
@@ -110,21 +94,9 @@ function renderStepContent(step) {
             </select>
           </div>
 
-          <div class="neon-card" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
-            <span style="color: #B8C0BC; font-weight: 600;">الطول</span>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <input type="number" id="q-height" value="${formData.height}" style="width: 80px; text-align: center; padding: 6px 10px; border-radius: 10px;">
-              <span style="color: #55F7A5; font-weight: 700;">سم</span>
-            </div>
-          </div>
+          ${renderMeasurementPicker('q-height', 'الطول', 'سم', formData.height, 100, 250)}
 
-          <div class="neon-card" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
-            <span style="color: #B8C0BC; font-weight: 600;">الوزن الحالي</span>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <input type="number" id="q-weight" value="${formData.weight}" style="width: 80px; text-align: center; padding: 6px 10px; border-radius: 10px;">
-              <span style="color: #55F7A5; font-weight: 700;">كغ</span>
-            </div>
-          </div>
+          ${renderMeasurementPicker('q-weight', 'الوزن الحالي', 'كغ', formData.weight, 30, 400, 0.5)}
         </div>
 
         <button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 24px; border-radius: 22px;">
@@ -211,10 +183,10 @@ function renderStepContent(step) {
         <div class="form-group">
           <label class="form-label">حساسيات غذائية مؤكدة (يتم استبعادها تماماً):</label>
           <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
-            ${['لاكتوز / ألبان', 'جلوتين / قمح', 'مكسرات', 'بيض', 'مأكولات بحرية'].map(all => `
+            ${[['dairy','لاكتوز / ألبان'], ['gluten','جلوتين / قمح'], ['nuts','مكسرات'], ['eggs','بيض'], ['fish','مأكولات بحرية']].map(([all, label]) => `
               <label class="badge badge-neon" style="cursor: pointer; padding: 8px 14px; font-size: 0.85rem;">
-                <input type="checkbox" name="q-allergens" value="${all}" style="width: auto; margin-inline-end: 6px;">
-                ${all}
+                <input type="checkbox" name="q-allergens" value="${all}" ${formData.allergens.includes(all) ? 'checked' : ''} style="width: auto; margin-inline-end: 6px;">
+                ${label}
               </label>
             `).join('')}
           </div>
@@ -244,10 +216,10 @@ function renderStepContent(step) {
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px;">
           <div style="font-weight: 700; color: #FFFFFF; margin-bottom: 8px;">إصابات سابقة أو آلام مفاصل:</div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            ${['لا يوجد', 'الكتف', 'الركبة', 'أسفل الظهر'].map(inj => `
+            ${[['shoulder','الكتف'], ['knee','الركبة'], ['lower_back','أسفل الظهر']].map(([inj, label]) => `
               <label class="badge badge-neon" style="cursor: pointer; padding: 8px 14px;">
-                <input type="checkbox" name="q-injuries" value="${inj}" style="width: auto; margin-inline-end: 6px;">
-                ${inj}
+                <input type="checkbox" name="q-injuries" value="${inj}" ${formData.injuries.includes(inj) ? 'checked' : ''} style="width: auto; margin-inline-end: 6px;">
+                ${label}
               </label>
             `).join('')}
           </div>
@@ -349,7 +321,7 @@ function renderStepContent(step) {
         <div class="neon-card" style="padding: 20px; margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
             <span style="color: #B8C0BC;">المتدرب</span>
-            <span style="font-weight: 800; color: #FFFFFF;">${formData.name} (${calculateAge(formData.birthDate)} سنة)</span>
+            <span style="font-weight: 800; color: #FFFFFF;">${formData.name} (${formData.age} سنة)</span>
           </div>
 
           <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
@@ -394,6 +366,7 @@ function renderStepContent(step) {
 }
 
 export function bindQuestionnaireEvents() {
+  bindMeasurementPickers();
   const nextBtn = document.getElementById('q-next-step-btn');
   const backBtn = document.getElementById('q-back-step-btn');
   const createPlanBtn = document.getElementById('create-my-plan-btn');
@@ -401,14 +374,23 @@ export function bindQuestionnaireEvents() {
   // التقدم للخطوة التالية
   nextBtn?.addEventListener('click', () => {
     saveCurrentStepInputs();
+    if (currentStep === 1 && (!formData.name || !Number.isInteger(formData.age) || formData.age < 18 || formData.age > 100 || formData.height < 100 || formData.height > 250 || formData.weight < 30 || formData.weight > 400)) {
+      notificationService.showToast('أدخل الاسم والعمر بين 18 و100 سنة، والطول والوزن ضمن الحدود المسموحة.', 'error'); return;
+    }
+    if (currentStep === 2 && (formData.targetWeight < 30 || formData.targetWeight > 400)) {
+      notificationService.showToast('أدخل وزناً مستهدفاً بين 30 و400 كغ.', 'error'); return;
+    }
     if (currentStep < TOTAL_STEPS) {
       currentStep++;
+      store.state.questionnaireDraft = { step: currentStep, data: { ...formData } };
+      store.saveState();
       render();
     }
   });
 
   // الرجوع للخطوة السابقة
   backBtn?.addEventListener('click', () => {
+    saveCurrentStepInputs();
     if (currentStep > 1) {
       currentStep--;
       render();
@@ -443,7 +425,7 @@ export function bindQuestionnaireEvents() {
     const fullProfile = {
       ...formData,
       currentWeight: formData.weight,
-      startWeight: formData.weight,
+      startWeight: store.state.userProfile.startWeight || formData.weight,
       targetCalories: targets.targetCalories,
       targetProtein: targets.protein,
       targetCarbs: targets.carbs,
@@ -454,7 +436,11 @@ export function bindQuestionnaireEvents() {
       onboarding_completed: true
     };
 
+    delete store.state.questionnaireDraft;
     store.setUserProfile(fullProfile);
+    if (!store.state.progressReport.firstDay.weight) store.state.progressReport.firstDay.weight = formData.weight;
+    store.state.progressReport.currentDay.weight = formData.weight;
+    store.state.weeklyCheckin.currentWeight = formData.weight;
 
     // تحديث أهداف اليوم وإعادة تعيين المستهلك للعميل الجديد
     store.getState().today.targetCalories = targets.targetCalories;
@@ -463,66 +449,51 @@ export function bindQuestionnaireEvents() {
     store.getState().today.targetFats = targets.fats;
     store.getState().today.targetWaterLiters = Number((targets.waterMl / 1000).toFixed(1));
     store.getState().today.targetGlasses = targets.waterGlasses;
-    store.getState().today.consumedCalories = 0;
-    store.getState().today.consumedProtein = 0;
-    store.getState().today.consumedCarbs = 0;
-    store.getState().today.consumedFats = 0;
-    store.getState().today.consumedGlasses = 0;
-    store.getState().today.consumedWaterLiters = 0;
-    store.getState().loggedMeals = [];
     store.saveState();
 
     // المزامنة السحابية الفورية في جدول profiles وجدول water_logs بـ Supabase
-    const userId = store.getState().auth?.user?.id;
-    if (userId) {
-      try {
-        await syncService.syncProfile(userId, fullProfile);
-        await syncService.syncWaterLog(userId, 0, 0, targets.waterGlasses);
-      } catch (syncErr) {
-        console.warn('Sync warning upon plan creation:', syncErr);
-      }
+    const saved = await syncService.flush();
+    if (!saved.success) {
+      createPlanBtn.style.display = '';
+      if (statusDiv) statusDiv.style.display = 'none';
+      notificationService.showToast('تعذر حفظ خطتك سحابياً. تحقق من الاتصال وأعد المحاولة.', 'error');
+      return;
     }
 
     notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}! 🚀`, 'success');
 
     // الانتقال للوحة اليوم
-    setTimeout(() => {
-      currentStep = 1;
-      window.location.hash = '#today';
-    }, 600);
+    currentStep = 1;
+    if (location.hash === '#questionnaire') window.location.hash = '#today';
   });
 
   // تفاعل فوري لتحديث العمر عند تغيير تاريخ الميلاد
-  const bdateInput = document.getElementById('q-birthdate');
-  const updateAgeBadge = () => {
-    if (bdateInput?.value) {
-      formData.birthDate = bdateInput.value;
-      const ageBadge = document.getElementById('calculated-age-badge');
-      if (ageBadge) {
-        ageBadge.textContent = `${calculateAge(bdateInput.value)} سنة`;
-      }
-    }
-  };
-  bdateInput?.addEventListener('input', updateAgeBadge);
-  bdateInput?.addEventListener('change', updateAgeBadge);
-
   function saveCurrentStepInputs() {
     if (currentStep === 1) {
       const name = document.getElementById('q-name')?.value;
-      const bdate = document.getElementById('q-birthdate')?.value;
+      const age = Number(document.getElementById('q-age')?.value);
       const gender = document.getElementById('q-gender')?.value;
       const height = Number(document.getElementById('q-height')?.value);
       const weight = Number(document.getElementById('q-weight')?.value);
-      if (name) formData.name = name;
-      if (bdate) formData.birthDate = bdate;
+      formData.name = (name || '').trim();
+      formData.age = age;
+      formData.birthDate = null;
       if (gender) formData.gender = gender;
-      if (height) formData.height = height;
-      if (weight) formData.weight = weight;
+      formData.height = height;
+      formData.weight = weight;
     } else if (currentStep === 2) {
       const targetWeight = Number(document.getElementById('q-target-weight')?.value);
       const activity = document.getElementById('q-activity')?.value;
       if (targetWeight) formData.targetWeight = targetWeight;
       if (activity) formData.activityLevel = activity;
+    } else if (currentStep === 3) {
+      const splitFoods = value => String(value || '').split(/[,\u060c]/).map(s => s.trim()).filter(Boolean);
+      formData.likedFoods = splitFoods(document.getElementById('q-liked-foods')?.value);
+      formData.dislikedFoods = splitFoods(document.getElementById('q-disliked-foods')?.value);
+      formData.allergens = [...document.querySelectorAll('[name="q-allergens"]:checked')].map(input => input.value);
+    } else if (currentStep === 4) {
+      formData.sleepHours = Number(document.getElementById('q-sleep')?.value) || 7;
+      formData.injuries = [...document.querySelectorAll('[name="q-injuries"]:checked')].map(input => input.value);
     } else if (currentStep === 5) {
       const days = Number(document.getElementById('q-workout-days')?.value);
       const eq = document.getElementById('q-equipment')?.value;
