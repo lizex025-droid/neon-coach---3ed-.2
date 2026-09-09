@@ -1,11 +1,11 @@
 // One generated image atlas shared by all app screens and standalone tools.
 const groups = [
-  ['🔥⚡🌡️☀️', 'طاقة'], ['🏋️💪🏃🚴🤸🦵🏆🥇', 'تدريب'], ['📅📆🗓️📋🗒️📚📖📄📑📝', 'سجل'], ['🔔📣📢', 'تنبيه'],
-  ['✏️🖊️🖋️🔧⚙️🛠️', 'تعديل'], ['✅✔️☑️💚👍🎉🎊🙌', 'تم'], ['💧💦🌊🚰🥤', 'ماء'], ['🍽️🍴🍗🍖🥩🥚🍳🐟🍣🍤🥦🥬🥕🥗🍎🍏🍌🍓🍞🥖🥐🧀🥛☕🍵🥜🌰🥑🫒🍚🍝🍕🍔🛒🧂🍯', 'تغذية'],
-  ['📊📈📉⚖️📏🔢🔬🧬', 'قياسات'], ['🎯🚀🏁', 'هدف'], ['⏱️⏰⌚🕒⏳⌛🛌😴🌙', 'وقت'], ['💡✨⭐🌟🤖🧠💬🗨️💭🔍🔎🌐', 'معلومة'],
-  ['🛡️🔒🔐🔑💊🩺❤️🫀🦴🩹💉🏥', 'صحة وحماية'], ['📸📷🖼️🎥📹👁️', 'صورة'], ['👤👥🧑👨👩👦👧👋🙂😊😎🐈🐱🏠🏡', 'حساب'], ['⚠️❌❗‼️🚫🛑❓❔', 'تنبيه']
+  ['🔥⚡🌡️☀️🌅💥', 'طاقة'], ['🏋️🏋️‍♂️🏋🏽💪🏃🏃‍♂️🚴🤸🦵🏆🥇', 'تدريب'], ['📅📆🗓️📋🗒️📚📖📄📑📝🏷️📥💾📤', 'سجل'], ['🔔📣📢🔊', 'تنبيه'],
+  ['✏️🖊️🖋️🔧⚙️🛠️➕🗑️🧹🔁', 'تعديل'], ['✅✔️☑️💚👍🎉🎊🙌🟢', 'تم'], ['💧💦🌊🚰🥤🍾', 'ماء'], ['🍽️🍴🍗🍖🥩🥚🍳🐟🍣🍤🥦🥬🥕🥗🍎🍏🍊🍇🍌🍓🍞🥖🥐🧀🥛☕🍵🥜🌰🥥🥑🫒🍚🍝🍕🍔🍲🛒🧂🍯🌱🌿🍄🦠', 'تغذية'],
+  ['📊📈📉⚖️📏🔢🔬🧬', 'قياسات'], ['🎯🚀🏁▶️⏭️', 'هدف'], ['⏱️⏰⌚🕒⏳⌛🛌😴🌙⏹️', 'وقت'], ['💡✨⭐🌟🤖🧠💬🗨️💭🔍🔎🌐ℹ️🎓↗️', 'معلومة'],
+  ['🛡️🔒🔐🔑💊🩺❤️🫀🦴🩹💉🏥', 'صحة وحماية'], ['📸📷🖼️🎥📹🎙️👁️👁', 'صورة'], ['👤👥🧑👨👩👦👧👋🙂😊😄😐🙁😫😎👨‍💼👩‍💻👔🐈🐱🏠🏡', 'حساب'], ['⚠️❌❗‼️🚫🛑❓❔🚪', 'تنبيه']
 ];
-const emojiPattern = /(?:\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu;
+const emojiPattern = /(?:\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3|\p{Emoji_Presentation}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*|\p{Extended_Pictographic}\uFE0F(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu;
 const clean = text => text.replace(emojiPattern, '').trim();
 function replaceNode(node) {
   const parent = node.parentElement;
@@ -17,7 +17,8 @@ function replaceNode(node) {
   let offset = 0;
   for (const match of matches) {
     fragment.append(document.createTextNode(node.textContent.slice(offset, match.index)));
-    const index = Math.max(0, groups.findIndex(([symbols]) => symbols.includes([...match[0]][0])));
+    const matchedIndex = groups.findIndex(([symbols]) => symbols.includes(match[0]) || symbols.includes([...match[0]][0]));
+    const index = matchedIndex < 0 ? 11 : matchedIndex;
     const icon = document.createElement('span');
     icon.className = 'neon-image-icon';
     icon.style.backgroundPosition = `${(index % 4) * 100 / 3}% ${Math.floor(index / 4) * 100 / 3}%`;
