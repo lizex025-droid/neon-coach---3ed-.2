@@ -540,6 +540,31 @@ class AuthService {
   }
 
   /**
+   * تسجيل الدخول / إنشاء حساب عبر Facebook (Facebook OAuth)
+   */
+  async loginWithFacebook() {
+    if (typeof window !== 'undefined' && isSupabaseConfigured() && window.location.protocol.startsWith('http')) {
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'facebook',
+          options: {
+            redirectTo: window.location.origin
+          }
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.location.href = data.url;
+          return { success: true, redirecting: true };
+        }
+      } catch (err) {
+        console.warn('Facebook OAuth error:', err);
+        return { success: false, error: err.message || 'تعذر الاتصال بـ Facebook' };
+      }
+    }
+    return { success: false, error: 'تسجيل الدخول بفيسبوك متاح عبر المتصفح' };
+  }
+
+  /**
    * إنشاء حساب عبر Apple
    */
   async signUpWithApple(email = null, password = null, name = null) {

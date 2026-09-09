@@ -69,6 +69,15 @@ export function renderAuthView() {
             </svg>
             <span>${isLogin ? 'متابعة باستخدام Apple' : 'إنشاء حساب باستخدام Apple'}</span>
           </button>
+
+          <!-- زر Facebook -->
+          <button type="button" id="facebook-auth-btn" class="btn-social btn-facebook" title="${isLogin ? 'تسجيل الدخول بحساب Facebook' : 'إنشاء حساب عبر Facebook'}" style="border-color: rgba(24,119,242,0.3);">
+            <!-- أيقونة Facebook الرسمية -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2" style="flex-shrink: 0;">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span>${isLogin ? 'متابعة باستخدام Facebook' : 'إنشاء حساب باستخدام Facebook'}</span>
+          </button>
         </div>
 
         <!-- فاصل البريد الإلكتروني -->
@@ -301,6 +310,23 @@ export function bindAuthViewEvents() {
     if (socialEmailInput) socialEmailInput.placeholder = 'name@icloud.com';
     if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Apple ID ✨';
     socialModal?.classList.add('open');
+  });
+
+  // 3. تسجيل الدخول بحساب Facebook الرسمي
+  const facebookBtn = document.getElementById('facebook-auth-btn');
+  facebookBtn?.addEventListener('click', async () => {
+    setButtonLoading(facebookBtn, true, 'جاري الاتصال بـ Facebook...');
+    try {
+      const res = await authService.loginWithFacebook();
+      if (res && res.redirecting) return;
+      if (res && !res.success) {
+        notificationService.showToast(res.error || 'تعذر الاتصال بـ Facebook، تأكد من تفعيل المزوّد في Supabase', 'error');
+      }
+    } catch (e) {
+      notificationService.showToast('تعذر الاتصال بـ Facebook حالياً', 'error');
+    } finally {
+      setButtonLoading(facebookBtn, false);
+    }
   });
 
   // إغلاق مودال التسجيل الاجتماعي
