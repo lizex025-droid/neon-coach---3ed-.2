@@ -327,9 +327,32 @@ class SyncService {
           metadata: metadata,
         });
       if (error) throw error;
+  /**
+   * مزامنة صنف غذائي مخصص لقاعدة بيانات Supabase
+   */
+  async saveCustomFood(food) {
+    if (!isSupabaseConfigured() || !food) return null;
+    const user = this.getStore()?.state?.auth?.user;
+    if (!user?.id) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('custom_foods')
+        .insert({
+          user_id: user.id,
+          name: food.nameAr || food.name,
+          category: food.category || 'عام',
+          calories: food.per100?.kcal || food.caloriesPer100g || 0,
+          protein: food.per100?.p || food.proteinPer100g || 0,
+          carbs: food.per100?.c || food.carbsPer100g || 0,
+          fats: food.per100?.f || food.fatsPer100g || 0,
+          serving_size: food.baseWeight || 100,
+          serving_unit: 'g'
+        });
+      if (error) throw error;
       return data;
     } catch (err) {
-      console.warn('فشل حفظ رسالة AI سحابياً:', err);
+      console.warn('فشل حفظ الصنف المخصص سحابياً في Supabase:', err);
       return null;
     }
   }

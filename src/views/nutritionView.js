@@ -9,6 +9,7 @@ import { findMealSwaps } from '../domain/nutritionEngine.js';
 import { macrosFor } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
+import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
 
 export function renderNutritionView() {
   const state = store.getState();
@@ -156,14 +157,19 @@ export function renderNutritionView() {
 
       <!-- قسم الأكلات المسجلة اليوم -->
       <div style="display: flex; flex-direction: column; gap: 12px;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
           <div>
             <h2 style="font-size: 1.25rem; font-weight: 900; color: #FFFFFF; margin: 0;">الأكلات المسجلة اليوم</h2>
             <small style="color: #8C9992; font-size: 0.8rem;">الوجبات التي أكلتها بالفعل اليوم (${loggedMeals.length})</small>
           </div>
-          <a href="#meal-log" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 12px;">
-            <span>➕ إضافة وجبة</span>
-          </a>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="open-custom-food-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(85,247,165,0.35);" title="إضافة أكلة يدوياً لقاعدة البيانات">
+              <span>➕ أكلة يدوية</span>
+            </button>
+            <a href="#meal-log" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 12px;">
+              <span>➕ إضافة وجبة</span>
+            </a>
+          </div>
         </div>
 
         ${loggedMeals.length ? loggedMeals.map(meal => `
@@ -379,12 +385,15 @@ export function renderNutritionView() {
         </div>
       </div>
 
+      <!-- نافذة إضافة أكلة يدوياً لقاعدة البيانات -->
+      ${renderCustomFoodModal('nutrition-custom-food-modal')}
+
     </div>
   `;
 }
 
 function removeDetachedModals() {
-  ['edit-logged-meal-modal', 'edit-calorie-target-modal', 'swap-modal'].forEach(id => {
+  ['edit-logged-meal-modal', 'edit-calorie-target-modal', 'swap-modal', 'nutrition-custom-food-modal'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.parentElement === document.body) {
       el.remove();
@@ -913,5 +922,16 @@ export function bindNutritionEvents() {
     closeCalModal();
     notificationService.showToast(`تم تعديل هدف السعرات اليومي إلى ${newTarget.toLocaleString('en-US')} سعرة بنجاح 🔥`, 'success');
     refreshNutritionView();
+  });
+
+  // تفعيل نافذة إضافة أكلة يدوياً لقاعدة البيانات
+  const openCustomFoodBtn = document.getElementById('open-custom-food-btn');
+  bindCustomFoodModal({
+    modalId: 'nutrition-custom-food-modal',
+    triggerBtn: openCustomFoodBtn,
+    onSaved: (newFood) => {
+      // إشعار نجاح وتحديث خفيف
+      console.log('Custom food added from nutrition view:', newFood.name);
+    }
   });
 }

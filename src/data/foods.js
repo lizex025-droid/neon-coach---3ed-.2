@@ -347,12 +347,137 @@ const ADAPTED_FOOD_ITEMS = FOOD_ITEMS.map(f => ({
   available: true
 }));
 
-// قاعدة الأطعمة الموحدة
-export const FOODS = [...IMPORTED_FOODS, ...ADAPTED_FOOD_ITEMS];
+// استرجاع الأطعمة المخصصة المحفوظة محلياً بواسطة المستخدم
+let _inMemoryCustomFoods = [];
+
+export function getCustomFoods() {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem('neon_custom_foods_v1');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse custom foods:', e);
+  }
+  return _inMemoryCustomFoods;
+}
+
+// قاعدة الأطعمة الموحدة (تبدأ بالأطعمة المخصصة للمستخدم لمنحها أولوية الظهور)
+export const FOODS = [...getCustomFoods(), ...IMPORTED_FOODS, ...ADAPTED_FOOD_ITEMS];
 const FOOD_INDEX = new Map(FOODS.map(f => [f.id, f]));
 
 export function foodById(id) {
   return FOOD_INDEX.get(id) || FOOD_ITEMS.find(f => f.id === id);
+}
+
+/**
+ * إضافة أكلة جديدة يدوياً إلى قاعدة البيانات وتثبيتها محلياً وسحابياً
+ * @param {Object} foodData
+ * @param {string} foodData.name اسم الأكلة
+ * @param {number} foodData.calories السعرات لكل 100غ
+ * @param {number} foodData.protein البروتين (غ)
+ * @param {number} foodData.carbs الكربوهيدرات (غ)
+ * @param {number} foodData.fats الدهون (غ)
+ * @param {number} [foodData.servingSize=100] حجم الحصة الافتراضي بالغرام
+ * @returns {Object} الصنف المضاف
+ */
+export function addCustomFood({ name, calories, protein, carbs, fats, servingSize = 100 }) {
+  const trimmedName = (name || '').trim();
+  if (!trimmedName) {
+    throw new Error('يرجى كتابة اسم الأكلة');
+  }
+
+  // معالجة الأرقام وتحويل الأرقام العربية إلى غربية إن وجدت
+  const cleanNum = (v) => {
+    if (typeof v === 'string') {
+      v = v.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    }
+    return Math.max(0, Number(v) || 0);
+  };
+
+  const kcal = Math.round(cleanNum(calories));
+  const p = Math.round(cleanNum(protein) * 10) / 10;
+  const c = Math.round(cleanNum(carbs) * 10) / 10;
+  const f = Math.round(cleanNum(fats) * 10) / 10;
+  const baseWeight = Math.max(1, Math.round(cleanNum(servingSize) || 100));
+
+  const id = `cust_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  const newFood = {
+    id,
+    name: trimmedName,
+    nameAr: trimmedName,
+    nameEn: '',
+    baseWeight,
+    per100: {
+      kcal,
+      p,
+      c,
+      f,
+      fiber: 0
+    },
+    caloriesPer100g: kcal,
+    proteinPer100g: p,
+    carbsPer100g: c,
+    fatsPer100g: f,
+    source: 'custom',
+    isCustom: true,
+    available: true,
+    createdAt: new Date().toISOString()
+  };
+
+  // إضافتها في بداية قاعدة الأطعمة المفتوحة في الذاكرة لتكون أول ما يظهر بالبحث
+  FOODS.unshift(newFood);
+  FOOD_INDEX.set(id, newFood);
+  _inMemoryCustomFoods = _inMemoryCustomFoods.filter(item => item.id !== id);
+  _inMemoryCustomFoods.unshift(newFood);
+
+  // حفظها محلياً في localStorage
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const existing = getCustomFoods();
+      // منع التكرار بنفس المعرف
+      const filtered = existing.filter(item => item.id !== id);
+      filtered.unshift(newFood);
+      localStorage.setItem('neon_custom_foods_v1', JSON.stringify(filtered));
+    }
+  } catch (e) {
+    console.warn('Failed to save custom food to localStorage:', e);
+  }
+
+  // مزامنتها مع Supabase في الخلفية إن توفرت الجلسة
+  try {
+    import('../services/syncService.js').then(({ syncService }) => {
+      syncService?.saveCustomFood?.(newFood);
+    }).catch(() => {});
+  } catch (e) {}
+
+  return newFood;
+}
+
+/**
+ * حذف أكلة مخصصة من قاعدة البيانات
+ */
+export function deleteCustomFood(id) {
+  if (!id) return false;
+  const idx = FOODS.findIndex(f => f.id === id);
+  if (idx !== -1) {
+    FOODS.splice(idx, 1);
+  }
+  FOOD_INDEX.delete(id);
+  _inMemoryCustomFoods = _inMemoryCustomFoods.filter(item => item.id !== id);
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const existing = getCustomFoods().filter(f => f.id !== id);
+      localStorage.setItem('neon_custom_foods_v1', JSON.stringify(existing));
+    }
+  } catch (e) {}
+
+  return true;
 }
 
 /**
@@ -372,7 +497,7 @@ export function macrosFor(food, grams) {
 }
 
 /**
- * محرك البحث في قاعدة الأطعمة العربية
+ * محرك البحث في قاعدة الأطعمة العربية (مع أولوية للأطعمة المخصصة المضافة يدوياً)
  */
 export function searchFoods(query, limit = 18) {
   if (!query) return [];
@@ -389,6 +514,8 @@ export function searchFoods(query, limit = 18) {
     else if (ar.startsWith(q) || en.startsWith(q)) score = 75;
     else if (ar.includes(q) || en.includes(q)) score = 55;
     if (terms.every(term => haystack.includes(term))) score += 25;
+    // منح الأطعمة المخصصة التي أضافها المتدرب أولوية بالبحث
+    if (food.isCustom && score > 0) score += 15;
     return { food, score };
   }).filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score || a.food.id.localeCompare(b.food.id))
