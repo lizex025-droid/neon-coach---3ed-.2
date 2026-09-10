@@ -8,6 +8,7 @@ import {
   hasFoodSearchInput
 } from '../src/domain/nutritionCalculations.js';
 import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, addCustomFood, updateCustomFood, getCustomFoods, deleteCustomFood } from '../src/data/foods.js';
+import { POPULAR_ARAB_RECOMMENDED_FOODS, COMMON_DISLIKED_SUGGESTIONS } from '../src/views/questionnaireView.js';
 
 test('حساب الماكروز بدقة لوزن 150غ من قيم 100غ', () => {
   const result = scalePer100({ kcal: 200, p: 20, c: 10, f: 5, fiber: 2 }, 150);
@@ -168,4 +169,34 @@ test('تعديل صنف مخصص في قاعدة البيانات وتحديث �
   const customList = getCustomFoods();
   assert.ok(!customList.some(f => f.id === created.id));
 });
+
+test('قائمة الأطعمة المقترحة والشائعة في الوطن العربي تضم الأصناف الأساسية وتصنيفاتها', () => {
+  assert.ok(POPULAR_ARAB_RECOMMENDED_FOODS.length >= 20, 'يجب أن تحتوي القائمة على ما لا يقل عن 20 صنفاً شائعاً');
+  
+  const foodNames = POPULAR_ARAB_RECOMMENDED_FOODS.map(f => f.name);
+  
+  // التحقق من الأصناف الأساسية المطلوبة من قبل المستخدم
+  assert.ok(foodNames.includes('صدر دجاج'), 'يجب توفير صدر دجاج');
+  assert.ok(foodNames.includes('لحم عجل قليل الدهن'), 'يجب توفير اللحم');
+  assert.ok(foodNames.includes('سمك مشوي'), 'يجب توفير السمك');
+  assert.ok(foodNames.includes('أرز أبيض'), 'يجب توفير الأرز');
+  assert.ok(foodNames.includes('بطاطا مشوية'), 'يجب توفير البطاطا');
+  assert.ok(foodNames.includes('خس'), 'يجب توفير الخس');
+  assert.ok(foodNames.includes('خيار'), 'يجب توفير الخيار');
+  assert.ok(foodNames.includes('تمر'), 'يجب توفير التمر');
+  assert.ok(foodNames.includes('بيض مسلوق'), 'يجب توفير البيض');
+
+  // التحقق من تصنيفات الأطعمة
+  const categories = new Set(POPULAR_ARAB_RECOMMENDED_FOODS.map(f => f.category));
+  assert.ok(categories.has('protein'));
+  assert.ok(categories.has('carbs'));
+  assert.ok(categories.has('veggies'));
+  assert.ok(categories.has('fruits'));
+
+  // التحقق من قائمة استبعاد الأطعمة الشائعة
+  assert.ok(COMMON_DISLIKED_SUGGESTIONS.length >= 6);
+  const dislikedNames = COMMON_DISLIKED_SUGGESTIONS.map(f => f.name);
+  assert.ok(dislikedNames.includes('سمك ومأكولات بحرية'));
+});
+
 

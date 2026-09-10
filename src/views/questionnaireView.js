@@ -106,6 +106,65 @@ let formData = {
   supplementsBudget: 'medium'
 };
 
+/**
+ * قائمة الأطعمة المقترحة والمحبوبة في العالم العربي (بروتينات، نشويات، خضار، فواكه، وسناكات صحية)
+ */
+export const POPULAR_ARAB_RECOMMENDED_FOODS = [
+  // بروتينات ولحوم (Proteins)
+  { name: 'صدر دجاج', icon: '🍗', category: 'protein', popular: true },
+  { name: 'لحم عجل قليل الدهن', icon: '🥩', category: 'protein', popular: true },
+  { name: 'سمك مشوي', icon: '🐟', category: 'protein', popular: true },
+  { name: 'بيض مسلوق', icon: '🍳', category: 'protein', popular: true },
+  { name: 'تونة بالماء', icon: '🥫', category: 'protein', popular: true },
+  { name: 'سلمون', icon: '🍣', category: 'protein', popular: false },
+  { name: 'جبنة قريش', icon: '🧀', category: 'protein', popular: false },
+  { name: 'جبنة حلوم لايت', icon: '🧀', category: 'protein', popular: false },
+
+  // نشويات وطاقة (Carbs)
+  { name: 'أرز أبيض', icon: '🍚', category: 'carbs', popular: true },
+  { name: 'أرز بسمتي', icon: '🍚', category: 'carbs', popular: false },
+  { name: 'بطاطا مشوية', icon: '🥔', category: 'carbs', popular: true },
+  { name: 'بطاطا مسلوقة', icon: '🥔', category: 'carbs', popular: false },
+  { name: 'بطاطا حلوة', icon: '🍠', category: 'carbs', popular: true },
+  { name: 'شوفان', icon: '🥣', category: 'carbs', popular: true },
+  { name: 'خبز قمح كامل', icon: '🍞', category: 'carbs', popular: false },
+  { name: 'معكرونة مسلوقة', icon: '🍝', category: 'carbs', popular: false },
+  { name: 'برغل وفريكة', icon: '🌾', category: 'carbs', popular: false },
+
+  // خضروات وسلطات (Veggies)
+  { name: 'خس', icon: '🥬', category: 'veggies', popular: true },
+  { name: 'خيار', icon: '🥒', category: 'veggies', popular: true },
+  { name: 'طماطم', icon: '🍅', category: 'veggies', popular: true },
+  { name: 'بروكلي', icon: '🥦', category: 'veggies', popular: true },
+  { name: 'جرجير', icon: '🌿', category: 'veggies', popular: true },
+  { name: 'سبانخ', icon: '🍃', category: 'veggies', popular: false },
+  { name: 'خضار مشكلة', icon: '🥕', category: 'veggies', popular: false },
+  { name: 'كوسا وفاصوليا', icon: '🫛', category: 'veggies', popular: false },
+
+  // فواكه وسناكات وصحي (Fruits & Healthy Snacks)
+  { name: 'تمر', icon: '🌴', category: 'fruits', popular: true },
+  { name: 'موز', icon: '🍌', category: 'fruits', popular: true },
+  { name: 'تفاح', icon: '🍎', category: 'fruits', popular: false },
+  { name: 'فراولة', icon: '🍓', category: 'fruits', popular: false },
+  { name: 'زيت زيتون', icon: '🫒', category: 'fruits', popular: true },
+  { name: 'زبادي يوناني', icon: '🥛', category: 'fruits', popular: true },
+  { name: 'زبدة فول سوداني', icon: '🥜', category: 'fruits', popular: false },
+  { name: 'مكسرات نية', icon: '🌰', category: 'fruits', popular: false },
+  { name: 'حمص حب', icon: '🫘', category: 'fruits', popular: false }
+];
+
+export const COMMON_DISLIKED_SUGGESTIONS = [
+  { name: 'سمك ومأكولات بحرية', icon: '🐟' },
+  { name: 'تونة', icon: '🥫' },
+  { name: 'كبدة', icon: '🥩' },
+  { name: 'باذنجان', icon: '🍆' },
+  { name: 'بامية', icon: '🫛' },
+  { name: 'بروكلي', icon: '🥦' },
+  { name: 'شوفان', icon: '🥣' },
+  { name: 'بيض مسلوق', icon: '🍳' },
+  { name: 'حليب وألبان', icon: '🥛' }
+];
+
 let activeMeasurementDrawer = 'age'; // الدرج المفتوح أولاً هو العمر مش الوزن كما طلب المستخدم
 let weightUnit = 'kg'; // 'kg' or 'lb'
 
@@ -638,10 +697,17 @@ function renderStepContent(step) {
           <p style="font-size: 0.95rem; color: #B8C0BC;">نستبعد الحساسيات ونوفر وجباتك المفضلة</p>
         </div>
 
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label class="form-label" style="font-weight: 700; color: #55F7A5; margin-bottom: 8px; display: block; font-size: 0.95rem;">
-            أطعمة تحبها (اكتب للبحث من قاعدة البيانات):
-          </label>
+        <div class="form-group" style="margin-bottom: 22px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="form-label" style="font-weight: 700; color: #55F7A5; margin: 0; display: flex; align-items: center; gap: 6px; font-size: 0.95rem;">
+              <span>🥗</span>
+              <span>أطعمة تحبها (اختر من المقترحات أو ابحث):</span>
+            </label>
+            <span class="liked-foods-count-badge" style="font-size: 0.74rem; color: #55F7A5; font-weight: 700;">
+              ${formData.likedFoods.length ? `${formData.likedFoods.length} صنف مختار` : ''}
+            </span>
+          </div>
+
           <div class="food-tags-box" id="box-liked-foods">
             <div class="food-tags-wrapper" id="pills-liked-foods" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
               ${formData.likedFoods.map(food => `
@@ -654,12 +720,53 @@ function renderStepContent(step) {
             <input type="text" id="q-liked-foods-input" class="food-tag-input" placeholder="${formData.likedFoods.length ? '+ أضف أكلة أخرى...' : 'اكتب أول حرف للبحث وإضافة الأكلة...'}" autocomplete="off">
             <div id="dropdown-liked-foods" class="food-autocomplete-dropdown" style="display: none;"></div>
           </div>
+
+          <!-- اقتراحات سريعة موصى بها (الأكثر شعبية في الوطن العربي) -->
+          <div class="food-recommendations-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 0.78rem; color: #55F7A5; font-weight: 800; display: flex; align-items: center; gap: 5px;">
+                <span>✨</span>
+                <span>أطعمة شائعة ومحبوبة (اضغط للإضافة الفورية):</span>
+              </span>
+            </div>
+
+            <!-- تصنيفات الأطعمة المقترحة -->
+            <div class="food-rec-category-tabs" data-type="liked">
+              <button type="button" class="rec-cat-tab active" data-cat="all">🔥 الأكثر شعبية</button>
+              <button type="button" class="rec-cat-tab" data-cat="protein">🍗 بروتينات ولحوم</button>
+              <button type="button" class="rec-cat-tab" data-cat="carbs">🍚 نشويات وطاقة</button>
+              <button type="button" class="rec-cat-tab" data-cat="veggies">🥗 خضار وسلطات</button>
+              <button type="button" class="rec-cat-tab" data-cat="fruits">🍎 فواكه وسناك</button>
+            </div>
+
+            <!-- شبكة الأزرار المقترحة -->
+            <div class="food-rec-chips-grid" id="liked-food-rec-chips">
+              ${POPULAR_ARAB_RECOMMENDED_FOODS.map(f => {
+                const isSelected = formData.likedFoods.includes(f.name);
+                const isPopular = f.popular ? 'true' : 'false';
+                return `
+                  <button type="button" class="food-rec-chip ${isSelected ? 'selected' : ''}" data-food="${f.name}" data-category="${f.category}" data-popular="${isPopular}">
+                    <span>${f.icon}</span>
+                    <span>${f.name}</span>
+                    <span class="chip-status">${isSelected ? '✓' : '+'}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label class="form-label" style="font-weight: 700; color: #F87171; margin-bottom: 8px; display: block; font-size: 0.95rem;">
-            أطعمة لا تحبها (يتم استبعادها من خطتك):
-          </label>
+        <div class="form-group" style="margin-bottom: 22px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="form-label" style="font-weight: 700; color: #F87171; margin: 0; display: flex; align-items: center; gap: 6px; font-size: 0.95rem;">
+              <span>🚫</span>
+              <span>أطعمة لا تحبها (يتم استبعادها من خطتك):</span>
+            </label>
+            <span class="disliked-foods-count-badge" style="font-size: 0.74rem; color: #F87171; font-weight: 700;">
+              ${formData.dislikedFoods.length ? `${formData.dislikedFoods.length} مستبعد` : ''}
+            </span>
+          </div>
+
           <div class="food-tags-box" id="box-disliked-foods">
             <div class="food-tags-wrapper" id="pills-disliked-foods" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
               ${formData.dislikedFoods.map(food => `
@@ -671,6 +778,26 @@ function renderStepContent(step) {
             </div>
             <input type="text" id="q-disliked-foods-input" class="food-tag-input" placeholder="${formData.dislikedFoods.length ? '+ أضف أكلة أخرى...' : 'اكتب أول حرف للبحث وإضافة الأكلة...'}" autocomplete="off">
             <div id="dropdown-disliked-foods" class="food-autocomplete-dropdown" style="display: none;"></div>
+          </div>
+
+          <!-- اقتراحات استبعاد سريعة -->
+          <div class="food-recommendations-wrapper" style="border-color: rgba(248,113,113,0.18);">
+            <div style="font-size: 0.78rem; color: #F87171; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
+              <span>⚡</span>
+              <span>استبعاد سريع لأصناف لا يفضلها البعض:</span>
+            </div>
+            <div class="food-rec-chips-grid" id="disliked-food-rec-chips" style="max-height: 120px;">
+              ${COMMON_DISLIKED_SUGGESTIONS.map(f => {
+                const isSelected = formData.dislikedFoods.includes(f.name);
+                return `
+                  <button type="button" class="food-rec-chip disliked ${isSelected ? 'selected' : ''}" data-food="${f.name}">
+                    <span>${f.icon}</span>
+                    <span>${f.name}</span>
+                    <span class="chip-status">${isSelected ? '✓' : '+'}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
           </div>
         </div>
 
@@ -1553,6 +1680,29 @@ export function bindQuestionnaireEvents() {
 
       let highlightedIndex = -1;
 
+      const updateChipStates = () => {
+        const chipsContainer = document.getElementById(`${type}-food-rec-chips`);
+        if (chipsContainer) {
+          chipsContainer.querySelectorAll('.food-rec-chip').forEach(chip => {
+            const food = chip.dataset.food;
+            const isSelected = formData[listKey].includes(food);
+            chip.classList.toggle('selected', isSelected);
+            const statusSpan = chip.querySelector('.chip-status');
+            if (statusSpan) {
+              statusSpan.textContent = isSelected ? '✓' : '+';
+            }
+          });
+        }
+        const badge = document.querySelector(`.${type}-foods-count-badge`);
+        if (badge) {
+          if (formData[listKey].length) {
+            badge.textContent = `${formData[listKey].length} ${isLiked ? 'صنف مختار' : 'مستبعد'}`;
+          } else {
+            badge.textContent = '';
+          }
+        }
+      };
+
       const renderPills = () => {
         pillsContainer.innerHTML = formData[listKey].map(food => `
           <span class="food-tag-pill ${isLiked ? '' : 'disliked-pill'}" data-food="${food}">
@@ -1564,6 +1714,8 @@ export function bindQuestionnaireEvents() {
         input.placeholder = formData[listKey].length 
           ? '+ أضف أكلة أخرى...' 
           : 'اكتب أول حرف للبحث وإضافة الأكلة...';
+
+        updateChipStates();
       };
 
       const addFood = (foodName) => {
@@ -1710,6 +1862,48 @@ export function bindQuestionnaireEvents() {
           removeFood(foodName);
         }
       });
+
+      // التفاعل مع رقاقات الأطعمة المقترحة
+      const chipsContainer = document.getElementById(`${type}-food-rec-chips`);
+      chipsContainer?.addEventListener('click', (e) => {
+        const chip = e.target.closest('.food-rec-chip');
+        if (!chip) return;
+        const food = chip.dataset.food;
+        if (!food) return;
+        if (formData[listKey].includes(food)) {
+          removeFood(food);
+        } else {
+          addFood(food);
+        }
+      });
+
+      // تبويبات التصنيفات في قسم الأطعمة المفضلة
+      if (isLiked) {
+        const catTabsContainer = document.querySelector('.food-rec-category-tabs[data-type="liked"]');
+        catTabsContainer?.querySelectorAll('.rec-cat-tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            catTabsContainer.querySelectorAll('.rec-cat-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const cat = tab.dataset.cat;
+            const chips = chipsContainer?.querySelectorAll('.food-rec-chip');
+            chips?.forEach(chip => {
+              if (cat === 'all') {
+                chip.style.display = chip.dataset.popular === 'true' ? 'inline-flex' : 'none';
+              } else {
+                chip.style.display = chip.dataset.category === cat ? 'inline-flex' : 'none';
+              }
+            });
+          });
+        });
+
+        // ضبط الفلتر الافتراضي عند التحميل
+        const chips = chipsContainer?.querySelectorAll('.food-rec-chip');
+        chips?.forEach(chip => {
+          chip.style.display = chip.dataset.popular === 'true' ? 'inline-flex' : 'none';
+        });
+      }
+
+      updateChipStates();
 
       // النقر داخل الصندوق يوجه التركيز لحقل الكتابة
       box.addEventListener('click', (e) => {
