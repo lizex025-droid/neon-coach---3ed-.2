@@ -86,3 +86,26 @@ test('إضافة أكلة يدوياً بالاسم والسعرات والما�
   // تنظيف الاختبار
   deleteCustomFood(testFood.id);
 });
+
+test('قاعدة البيانات تضم الأصناف الـ 121 المعتمدة وتبحث عنها وتحسب ماكروزها بدقة', () => {
+  const f006 = foodById('F006');
+  assert.ok(f006, 'يجب العثور على دجاج مفروم F006');
+  assert.equal(f006.nameAr, 'دجاج مفروم');
+  assert.equal(f006.per100.kcal, 143);
+  assert.equal(f006.per100.p, 17.4);
+
+  // احتساب الماكروز لـ 150غ
+  const m150 = macrosFor('F006', 150);
+  assert.equal(m150.kcal, 214.5);
+  assert.equal(m150.p, 26.1);
+
+  // البحث بالعربي
+  const searchHalloumi = searchFoods('جبنة حلوم', 3);
+  assert.ok(searchHalloumi.length > 0);
+  assert.equal(searchHalloumi[0].id, 'F031');
+
+  // البحث بالإنجليزي
+  const searchEnglish = searchFoods('Chia seeds', 3);
+  assert.ok(searchEnglish.length > 0);
+  assert.equal(searchEnglish[0].id, 'F068');
+});

@@ -5,9 +5,11 @@
  */
 
 import foodSource from './foods.json' with { type: 'json' };
+import { CURATED_121_FOODS } from './curatedFoods121.js';
 import { scalePer100, normalizeFoodSearchText, hasFoodSearchInput } from '../domain/nutritionCalculations.js';
 
 export const FOOD_ITEMS = [
+  ...CURATED_121_FOODS,
   {
     id: 'chicken-breast-cooked',
     nameAr: 'صدر دجاج مشوي',
@@ -327,14 +329,16 @@ export const IMPORTED_FOODS = (foodSource?.foods || []).map(row => {
   };
 });
 
-export const IMPORTED_FOOD_COUNT = IMPORTED_FOODS.length;
+export const IMPORTED_FOOD_COUNT = IMPORTED_FOODS.length + CURATED_121_FOODS.length;
 
-// تكييف الأطعمة المحلية الافتراضية
+// تكييف الأطعمة المعتمدة والمحلية
 const ADAPTED_FOOD_ITEMS = FOOD_ITEMS.map(f => ({
   id: f.id,
   name: f.nameAr,
   nameAr: f.nameAr,
   nameEn: f.nameEn || '',
+  category: f.category || '',
+  state: f.state || '',
   baseWeight: 100,
   per100: {
     kcal: f.caloriesPer100g,
@@ -365,8 +369,8 @@ export function getCustomFoods() {
   return _inMemoryCustomFoods;
 }
 
-// قاعدة الأطعمة الموحدة (تبدأ بالأطعمة المخصصة للمستخدم لمنحها أولوية الظهور)
-export const FOODS = [...getCustomFoods(), ...IMPORTED_FOODS, ...ADAPTED_FOOD_ITEMS];
+// قاعدة الأطعمة الموحدة (تبدأ بالأطعمة المخصصة ثم الأصناف الـ 121 المعتمدة ثم المستوردة)
+export const FOODS = [...getCustomFoods(), ...ADAPTED_FOOD_ITEMS, ...IMPORTED_FOODS];
 const FOOD_INDEX = new Map(FOODS.map(f => [f.id, f]));
 
 export function foodById(id) {
