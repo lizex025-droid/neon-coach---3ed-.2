@@ -989,15 +989,65 @@ function renderStepContent(step) {
           </div>
         </div>
 
-        <div id="plan-generation-status" style="display: none; margin-bottom: 16px; text-align: center;">
-          <div class="loading-spinner" style="margin: 0 auto 10px;"></div>
-          <div style="color: #55F7A5; font-weight: 700;">جاري هندسة وتوليد برنامجك التدريبي والغذائي...</div>
-        </div>
-
         <button id="create-my-plan-btn" class="btn btn-primary btn-lg btn-block" style="border-radius: 22px; font-size: 1.15rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
           ${neonIcon('dumbbell', 22)}
           <span>إنشاء خطتي الآن</span>
         </button>
+
+        <!-- تجربة وهندسة توليد الخطة التفاعلية الفورية (Plan Generation Overlay) -->
+        <div id="plan-gen-overlay" class="plan-gen-overlay" style="display: none;">
+          <div class="plan-gen-panel">
+            
+            <div class="plan-gen-avatar">
+              <div class="plan-gen-ring-pulse"></div>
+              <div class="plan-gen-ring-spin"></div>
+              <div class="plan-gen-core">
+                <span id="plan-gen-core-icon">⚡</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 style="color: #FFFFFF; font-size: 1.3rem; font-weight: 900; margin: 0 0 6px;">
+                جاري هندسة خطتك الشخصية 🚀
+              </h3>
+              <p style="color: #8C9992; font-size: 0.82rem; margin: 0; line-height: 1.4;">
+                محرك الذكاء الاصطناعي يقوم بحساب السعرات والتمارين المناسبة لجسمك
+              </p>
+            </div>
+
+            <!-- شريط التقدم والنسبة المئوية -->
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800;">
+                <span id="plan-gen-action-label" style="color: #55F7A5;">تحليل المقاييس الحيوية...</span>
+                <span id="plan-gen-percent-label" style="color: #FFFFFF; font-family: monospace; font-size: 0.95rem;">0%</span>
+              </div>
+              <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; border: 1px solid rgba(85,247,165,0.2);">
+                <div id="plan-gen-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #38BDF8, #55F7A5); border-radius: 999px; transition: width 0.35s ease; box-shadow: 0 0 10px #55F7A5;"></div>
+              </div>
+            </div>
+
+            <!-- قائمة خطوات هندسة الخطة الحية -->
+            <div class="plan-gen-checklist">
+              <div class="plan-step-item" id="plan-step-1">
+                <span class="step-icon">1</span>
+                <span class="step-text">حساب معدل الحرق اليومي (BMR & TDEE) وهندسة عجز السعرات</span>
+              </div>
+              <div class="plan-step-item" id="plan-step-2">
+                <span class="step-icon">2</span>
+                <span class="step-text">توزيع الماكروز والبروتين واستبعاد الحساسيات وتضمين وجباتك المفضلة</span>
+              </div>
+              <div class="plan-step-item" id="plan-step-3">
+                <span class="step-icon">3</span>
+                <span class="step-text">تصميم جدول التمارين لـ ${formData.workoutDaysCount || 4} أيام وتفصيل العضلات المستهدفة</span>
+              </div>
+              <div class="plan-step-item" id="plan-step-4">
+                <span class="step-icon">4</span>
+                <span class="step-text">تجهيز أهداف الترطيب اليومي ومزامنة الخطة سحابياً</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
       `;
 
     default:
@@ -1069,9 +1119,73 @@ export function bindQuestionnaireEvents() {
 
   // زر إنشاء الخطة النهائي
   createPlanBtn?.addEventListener('click', async () => {
-    const statusDiv = document.getElementById('plan-generation-status');
-    createPlanBtn.style.display = 'none';
-    if (statusDiv) statusDiv.style.display = 'block';
+    const overlay = document.getElementById('plan-gen-overlay');
+    const coreIcon = document.getElementById('plan-gen-core-icon');
+    const actionLabel = document.getElementById('plan-gen-action-label');
+    const percentLabel = document.getElementById('plan-gen-percent-label');
+    const progressBar = document.getElementById('plan-gen-progress-bar');
+    const step1 = document.getElementById('plan-step-1');
+    const step2 = document.getElementById('plan-step-2');
+    const step3 = document.getElementById('plan-step-3');
+    const step4 = document.getElementById('plan-step-4');
+
+    if (overlay) {
+      overlay.style.display = 'flex';
+    }
+
+    const setStepState = (stepEl, state) => {
+      if (!stepEl) return;
+      stepEl.classList.remove('active', 'completed');
+      if (state === 'active') {
+        stepEl.classList.add('active');
+        const icon = stepEl.querySelector('.step-icon');
+        if (icon) icon.innerHTML = `<span style="animation: spin 1.2s infinite linear; display: inline-block;">⚙️</span>`;
+      } else if (state === 'completed') {
+        stepEl.classList.add('completed');
+        const icon = stepEl.querySelector('.step-icon');
+        if (icon) icon.textContent = '✓';
+      }
+    };
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // المرحلة 1: حساب السعرات والأيض
+    if (coreIcon) coreIcon.textContent = '⚡';
+    if (actionLabel) actionLabel.textContent = 'حساب معدل الحرق اليومي (BMR) وضبط العجز...';
+    if (percentLabel) percentLabel.textContent = '25%';
+    if (progressBar) progressBar.style.width = '25%';
+    setStepState(step1, 'active');
+    try { navigator.vibrate?.(30); } catch (_) {}
+    await sleep(650);
+    setStepState(step1, 'completed');
+
+    // المرحلة 2: الماكروز واستبعاد الحساسيات وتضمين الأطعمة المفضلة
+    if (coreIcon) coreIcon.textContent = '🥗';
+    if (actionLabel) actionLabel.textContent = 'توزيع الماكروز والبروتين واستبعاد الحساسيات...';
+    if (percentLabel) percentLabel.textContent = '55%';
+    if (progressBar) progressBar.style.width = '55%';
+    setStepState(step2, 'active');
+    try { navigator.vibrate?.(30); } catch (_) {}
+    await sleep(700);
+    setStepState(step2, 'completed');
+
+    // المرحلة 3: جدول التمارين لعدد الأيام المحددة
+    if (coreIcon) coreIcon.textContent = '🏋️';
+    if (actionLabel) actionLabel.textContent = `هندسة جدول التمارين لـ ${formData.workoutDaysCount || 4} أيام وتفصيل العضلات...`;
+    if (percentLabel) percentLabel.textContent = '80%';
+    if (progressBar) progressBar.style.width = '80%';
+    setStepState(step3, 'active');
+    try { navigator.vibrate?.(30); } catch (_) {}
+    await sleep(750);
+    setStepState(step3, 'completed');
+
+    // المرحلة 4: أهداف الترطيب والمزامنة السحابية
+    if (coreIcon) coreIcon.textContent = '💧';
+    if (actionLabel) actionLabel.textContent = 'تجهيز أهداف الترطيب اليومي ومزامنة الخطة...';
+    if (percentLabel) percentLabel.textContent = '100%';
+    if (progressBar) progressBar.style.width = '100%';
+    setStepState(step4, 'active');
+    try { navigator.vibrate?.(40); } catch (_) {}
 
     // توليد الخطة وحفظها في التخزين المركزي
     const targets = calculateNutritionTargets(formData);
@@ -1136,13 +1250,18 @@ export function bindQuestionnaireEvents() {
       }
     }
 
+    await sleep(400);
+    setStepState(step4, 'completed');
+    if (coreIcon) coreIcon.textContent = '🚀';
+    if (actionLabel) actionLabel.textContent = 'اكتملت خطتك بنجاح! جاري الدخول للبرنامج...';
+
     notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}! 🚀`, 'success');
 
-    // الانتقال للوحة اليوم
+    // الانتقال للوحة اليوم بسلاسة
     setTimeout(() => {
       currentStep = 1;
       window.location.hash = '#today';
-    }, 600);
+    }, 650);
   });
 
   function initStep1HorizontalPickers() {
