@@ -3,12 +3,21 @@
  * تم اعتماد جدول تمرين الـ 40 يوم (40-days-workout) كجدول رسمي وحصري للتطبيق
  */
 
+import { neonIcon } from '../utils/neonIcons.js';
+
 export function renderWorkoutListView() {
+  // توجيه تلقائي فوري لجدول الـ 40 يوم
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      window.location.replace('./40-days-workout.html?book=fortyDay');
+    }, 40);
+  }
+
   return `
     <div class="workout-list-container" style="padding: 24px 16px 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; text-align: center; gap: 18px;">
       
       <div class="neon-card glow" style="padding: 32px 24px; border-color: #55F7A5; max-width: 480px; width: 100%; background: linear-gradient(135deg, rgba(8,24,16,0.95), rgba(4,12,8,0.98));">
-        <div style="font-size: 2.4rem; margin-bottom: 8px;">🏋️</div>
+        <div style="margin-bottom: 8px; display: flex; justify-content: center;">${neonIcon('dumbbell', 48)}</div>
         <h1 style="font-size: 1.5rem; font-weight: 900; color: #FFFFFF; margin-bottom: 8px;">
           جدول تمارين الـ 40 يوماً
         </h1>
@@ -28,5 +37,8 @@ export function renderWorkoutListView() {
 }
 
 export function bindWorkoutListEvents() {
-  // Only the explicit link leaves the SPA; rendering never schedules navigation.
+  if (typeof window !== 'undefined') {
+    window.location.replace('./40-days-workout.html?book=fortyDay');
+  }
 }
+

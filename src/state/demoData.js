@@ -1,279 +1,185 @@
 /**
- * NEON COACH - البيانات التجريبية المتكاملة (Demo Data)
- * متطابقة تماماً مع قيم الصور المرجعية العشر وشخصية المتدرب "أحمد"
+ * NEON COACH - الحالة الأولية الفارغة (Empty Initial State)
+ * حالة نظيفة تماماً بدون بيانات وهمية أو مستخدم تجريبي.
+ * تُستخدم فقط عند عدم وجود بيانات محفوظة في localStorage.
+ * بعد تسجيل الدخول، يتم تحميل البيانات الحقيقية من Supabase.
  */
 
 import { DEFAULT_MEALS } from '../data/foods.js';
 
-export const INITIAL_DEMO_DATA = {
-  isDemoMode: false,
+export const EMPTY_INITIAL_STATE = {
   currentRole: 'client', // 'client' or 'coach'
 
-  // ملف المستخدم الشخصي
+  // حالة المصادقة المحلية — بدون الحاجة لتسجيل دخول
+  auth: {
+    isAuthenticated: true,
+    user: {
+      id: 'local_user',
+      name: 'متدرب نيون',
+      email: ''
+    },
+    provider: 'local',
+    token: null
+  },
+
+  // ملف المستخدم — يبدأ بقيم افتراضية متوافقة مع شاشة الأسئلة
   userProfile: {
-    id: 'user-ahmed-01',
-    name: 'أحمد',
-    email: 'ahmed@neoncoach.app',
+    id: 'local_user',
+    name: '',
+    email: '',
     onboardingCompleted: false,
     gender: 'male',
-    birthDate: '2001-08-24', // كما في الصورة 2
-    age: 25,
-    height: 187, // سم
-    startWeight: 129, // كغ (كما في صورة التقرير)
-    currentWeight: 101.4, // كغ (كما في صورة المتابعة الأسبوعية)
-    targetWeight: 90, // كغ (كما في صورة الهدف)
-    unitSystem: 'metric', // 'metric' or 'imperial'
-    goal: 'fat_loss', // خسارة الدهون
-    activityLevel: 'light', // نشاط قليل (1-3 أيام)
+    age: 18,
+    height: 175,
+    startWeight: 70,
+    currentWeight: 70,
+    targetWeight: 65,
+    bmr: 1674,
+    maintenanceCalories: 2452,
+    selectedWeeklyLossRate: 0.0075,
+    selectedWeeklyLossPercent: 0.0075,
+    weeklyLossPercent: 0.0075,
+    selectedWeeklyLossKg: 0.53,
+    weeklyLossKg: 0.53,
+    weeklyCalorieDeficit: 4083,
+    dailyCalorieDeficit: 583,
+    requestedTargetCalories: 1869,
+    requestedCalories: 1869,
+    estimatedGoalWeeks: 9.4,
+    weightLossRiskLevel: 'optimal',
+    calorieSafetyLevel: 'optimal',
+    calorieWarningCodes: [],
+    calculationFormula: 'mifflin_st_jeor',
+    unitSystem: 'metric',
+    goal: 'fat_loss',
+    activityLevel: 'moderate',
     workoutDaysCount: 4,
-    preferredDays: ['الأحد', 'الثلاثاء', 'الخميس', 'السبت'],
+    preferredDays: [],
     equipment: 'gym',
     sessionDurationMin: 50,
-    experienceLevel: 'intermediate',
+    experienceLevel: 'beginner',
     injuries: [],
     allergens: [],
-    likedFoods: ['دجاج', 'أرز', 'بيض'],
-    dislikedFoods: ['سمك', 'بروكلي'],
+    likedFoods: [],
+    dislikedFoods: [],
     supplementsBudget: 'medium',
-    registeredAt: '2026-06-01T00:00:00.000Z'
+    registeredAt: null
   },
 
-  // أهداف اليوم المسجلة (مطابقة تماماً لصورة اليوم 9C561622)
+  // أهداف اليوم — أصفار حتى يتم حساب الهدف من الاستبيان
   today: {
     date: new Date().toISOString().split('T')[0],
-    targetCalories: 2100,
-    consumedCalories: 1420,
-    targetProtein: 160,
-    consumedProtein: 112,
-    targetCarbs: 220,
-    consumedCarbs: 165,
-    targetFats: 65,
-    consumedFats: 45,
+    targetCalories: 2000,
+    consumedCalories: 0,
+    targetProtein: 150,
+    consumedProtein: 0,
+    targetCarbs: 200,
+    consumedCarbs: 0,
+    targetFats: 60,
+    consumedFats: 0,
     // الماء
-    targetWaterLiters: 2.4,
-    consumedWaterLiters: 1.5,
-    targetGlasses: 8,
-    consumedGlasses: 5,
-    waterStreakDays: 7,
+    targetWaterLiters: 2.5,
+    consumedWaterLiters: 0,
+    targetGlasses: 10,
+    consumedGlasses: 0,
+    waterStreakDays: 0,
     // الطاقة (1-5)
-    energyLevel: 5, // ممتاز
+    energyLevel: 3,
     // تمرين اليوم
-    todayWorkoutTitleAr: 'تمارين الـ 40 يوم (Push A)',
-    todayWorkoutDuration: '45 - 60 دقيقة',
-    todayWorkoutExercisesCount: 7,
+    todayWorkoutTitleAr: '',
+    todayWorkoutDuration: '',
+    todayWorkoutExercisesCount: 0,
     isWorkoutCompleted: false,
-    workoutStatus: 'not_started' // 'not_started', 'in_progress', 'completed'
+    workoutStatus: 'not_started'
   },
 
-  // خطة الوجبات
+  // خطة الوجبات الافتراضية
   mealPlan: {
-    status: 'approved_by_coach', // معتمدة من المدرب
-    approvedAt: '2026-09-01',
-    dailyTargetCalories: 2100,
+    status: 'pending',
+    approvedAt: null,
+    dailyTargetCalories: 2000,
     meals: DEFAULT_MEALS
   },
 
-  // سجل الوجبات المؤكدة لليوم
-  loggedMeals: [
-    {
-      id: 'log-1',
-      titleAr: 'وجبة الفطور',
-      time: '08:30 ص',
-      calories: 420,
-      protein: 26,
-      carbs: 58,
-      fats: 9,
-      items: [
-        { nameAr: 'شوفان كامل مع حليب', grams: 60, calories: 233, protein: 10, carbs: 40, fats: 4 },
-        { nameAr: 'توت ولوز', grams: 95, calories: 135, protein: 4, carbs: 13, fats: 7 }
-      ]
-    },
-    {
-      id: 'log-2',
-      titleAr: 'وجبة الغداء',
-      time: '02:15 م',
-      calories: 489,
-      protein: 64,
-      carbs: 40,
-      fats: 7,
-      items: [
-        { nameAr: 'صدر دجاج مشوي', grams: 190, calories: 313, protein: 59, carbs: 0, fats: 7 },
-        { nameAr: 'بطاطا مسلوقة', grams: 170, calories: 148, protein: 3, carbs: 34, fats: 0 },
-        { nameAr: 'سلطة خضراء', grams: 100, calories: 28, protein: 2, carbs: 6, fats: 0 }
-      ]
-    }
-  ],
+  // سجل الوجبات المؤكدة — فارغ
+  loggedMeals: [],
 
-  // جلسة التمرين الحالية (مطابقة للصورة 64E97D80)
+  // جلسة التمرين الحالية — فارغة
   activeWorkoutSession: {
-    sessionNameAr: 'صدر وترايسبس',
+    sessionNameAr: '',
     startedAtTimestamp: null,
-    elapsedSeconds: 1458, // 00:24:18
-    currentExerciseIndex: 1, // تمرين 2 من 6
+    elapsedSeconds: 0,
+    currentExerciseIndex: 0,
     isResting: false,
-    restTimeRemainingSec: 72, // 01:12
+    restTimeRemainingSec: 0,
     totalRestTimeSec: 90,
-    currentExercise: {
-      id: 'incline-bench-press',
-      nameEn: 'Incline Bench Press',
-      nameAr: 'ضغط صدر علوي بزاوية 45°',
-      previousBest: '70 كغ × 10',
-      sets: [
-        { setNumber: 1, weight: 70, reps: 10, rpe: 8, completed: true },
-        { setNumber: 2, weight: 72.5, reps: 9, rpe: 9, completed: true },
-        { setNumber: 3, weight: 70, reps: 8, rpe: 8.5, completed: false }
-      ]
-    },
+    currentExercise: null,
     painReports: []
   },
 
-  // جدول المكملات المعتمد (مطابق للصورة C2DC0486)
-  supplementsSchedule: [
-    {
-      id: 'supp-creatine',
-      nameAr: 'كرياتين مونوهيدرات',
-      dose: '5 غرام',
-      timing: 'الصباح والمساء',
-      verifiedSource: 'البروتوكول الرياضي المعتمد',
-      schedule: {
-        morning: { taken: true, time: '08:00 ص' },
-        evening: { taken: true, time: '09:00 م' }
-      }
-    },
-    {
-      id: 'supp-omega3',
-      nameAr: 'أوميغا 3 (زيت سمك)',
-      dose: '1000 ملغ',
-      timing: 'مع وجبة الإفطار والعشاء',
-      verifiedSource: 'توصية غذائية معتمدة',
-      schedule: {
-        morning: { taken: false, time: null },
-        evening: { taken: false, time: null }
-      }
-    },
-    {
-      id: 'supp-vitamind',
-      nameAr: 'فيتامين D3',
-      dose: '5000 وحدة دولية',
-      timing: 'الصباح مع دهون صحية',
-      verifiedSource: 'فحص دم موثق',
-      schedule: {
-        morning: { taken: true, time: '08:30 ص' },
-        evening: { taken: true, time: '09:00 م' }
-      }
-    }
-  ],
+  // جدول المكملات — فارغ حتى يضيفها المستخدم
+  supplementsSchedule: [],
 
-  // المتابعة الأسبوعية (مطابقة للصورة 54696C39)
+  // المتابعة الأسبوعية
   weeklyCheckin: {
-    weekNumber: 4,
-    completedTasksCount: 6,
-    totalTasksCount: 8,
-    currentWeight: 101.4,
-    weightChangeVsLastWeek: -1.6,
-    energy: 4,
-    hunger: 2,
-    stress: 2,
+    weekNumber: 1,
+    completedTasksCount: 0,
+    totalTasksCount: 0,
+    currentWeight: null,
+    weightChangeVsLastWeek: 0,
+    energy: 3,
+    hunger: 3,
+    stress: 3,
     sleepHours: 7,
-    workoutsCompleted: 4,
+    workoutsCompleted: 0,
     workoutsTarget: 4,
-    waterGlassesAvg: 6,
-    waterGlassesTarget: 8,
+    waterGlassesAvg: 0,
+    waterGlassesTarget: 10,
     hasPain: false,
     painNotes: '',
-    coachFeedback: 'التزام استثنائي في الأسبوع الرابع. استمر في التركيز على كمية شرب الماء.'
+    coachFeedback: ''
   },
 
-  // بيانات تقرير التقدم (مطابقة تماماً للصورة 0D91AB20)
+  // بيانات تقرير التقدم — تُملأ من البيانات الحقيقية
   progressReport: {
-    periodDays: 90,
+    periodDays: 0,
     firstDay: {
-      date: '2026-06-01',
-      weight: 129,
-      waistCm: 122,
-      benchPressKg: 60
+      date: null,
+      weight: null,
+      waistCm: null,
+      benchPressKg: null
     },
     currentDay: {
-      date: '2026-09-01',
-      weight: 118,
-      waistCm: 108,
-      benchPressKg: 82.5
+      date: null,
+      weight: null,
+      waistCm: null,
+      benchPressKg: null
     },
-    weightChangeKg: -11,
-    weightTrendData: [
-      { day: 1, weight: 129 },
-      { day: 15, weight: 127.5 },
-      { day: 30, weight: 125.8 },
-      { day: 45, weight: 123.0 },
-      { day: 60, weight: 120.5 },
-      { day: 75, weight: 119.2 },
-      { day: 90, weight: 118.0 }
-    ],
-    strengthTrendData: [
-      { day: 1, weight: 60 },
-      { day: 15, weight: 62.5 },
-      { day: 30, weight: 65.0 },
-      { day: 45, weight: 67.5 },
-      { day: 60, weight: 72.5 },
-      { day: 75, weight: 77.5 },
-      { day: 90, weight: 82.5 }
-    ],
+    weightChangeKg: 0,
+    weightTrendData: [],
+    strengthTrendData: [],
     adherence: {
-      trainingPct: 87,
-      nutritionPct: 81,
-      waterPct: 74
+      trainingPct: 0,
+      nutritionPct: 0,
+      waterPct: 0
     },
     inBodyResult: {
-      hasResult: true,
-      testDate: '2026-08-28',
-      provider: 'InBody 770 Clinic',
-      skeletalMuscleMassKg: 44.2,
-      bodyFatPercentage: 21.4,
-      visceralFatLevel: 9
+      hasResult: false,
+      testDate: null,
+      provider: null,
+      skeletalMuscleMassKg: null,
+      bodyFatPercentage: null,
+      visceralFatLevel: null
     },
-    coachNotes: 'تقدم ممتاز — نستمر على نفس الخطة.'
+    coachNotes: ''
   },
 
-  // لوحة المدرب — قائمة العملاء التجريبيين
-  coachClients: [
-    {
-      id: 'client-1',
-      name: 'أحمد المنصور',
-      avatar: '👨‍💼',
-      goalAr: 'خسارة دهون وتنشيف',
-      currentWeight: 101.4,
-      startWeight: 129.0,
-      lastCheckinDate: 'اليوم، 10:30 ص',
-      adherencePct: 88,
-      status: 'needs_review', // needs_review, active, rest
-      painAlert: false,
-      unreadMessagesCount: 1
-    },
-    {
-      id: 'client-2',
-      name: 'سارة العتيبي',
-      avatar: '👩‍💻',
-      goalAr: 'زيادة كتلة عضلية ولياقة',
-      currentWeight: 58.2,
-      startWeight: 54.0,
-      lastCheckinDate: 'منذ يومين',
-      adherencePct: 94,
-      status: 'active',
-      painAlert: false,
-      unreadMessagesCount: 0
-    },
-    {
-      id: 'client-3',
-      name: 'عمر الخالد',
-      avatar: '🏃‍♂️',
-      goalAr: 'قوة ورفع أثقال',
-      currentWeight: 84.5,
-      startWeight: 88.0,
-      lastCheckinDate: 'منذ 4 أيام',
-      adherencePct: 76,
-      status: 'pain_alert',
-      painAlert: true,
-      unreadMessagesCount: 2
-    }
-  ]
+  // لوحة المدرب — قائمة العملاء الحقيقيين (تُحمَّل من Supabase)
+  coachClients: [],
+
+  // سجل التمارين — فارغ (يُملأ من Supabase أو من الجلسات المكتملة)
+  workoutHistory: [],
+
+  // ذاكرة محادثات الذكاء الاصطناعي
+  aiChatHistory: []
 };

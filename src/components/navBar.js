@@ -3,7 +3,7 @@
  * الترتيب الصارم من اليمين لليسار: اليوم، التغذية، التدريب، التقدم، حسابي
  */
 
-export function renderBottomNav(currentRoute, standalone = false) {
+export function renderBottomNav(currentRoute) {
   const tabs = [
     { id: 'today', hash: '#today', label: 'اليوم', icon: 'home' },
     { id: 'nutrition', hash: '#nutrition', label: 'التغذية', icon: 'nutrition' },
@@ -14,12 +14,12 @@ export function renderBottomNav(currentRoute, standalone = false) {
   ];
 
   return `
-    <nav class="app-bottom-nav neon-shared-nav" aria-label="التنقل الرئيسي" dir="rtl">
+    <nav class="app-bottom-nav" aria-label="التنقل الرئيسي">
       <div class="nav-container">
         ${tabs.map(tab => {
           const isActive = currentRoute === tab.id || (tab.id === 'today' && (!currentRoute || currentRoute === ''));
           return `
-            <a href="${standalone && tab.hash.startsWith('#') ? './index.html' + tab.hash : tab.hash}" class="nav-item ${isActive ? 'active' : ''} ${tab.id === 'neon-ai' ? 'nav-item-ai' : ''}" data-nav="${tab.id}" ${isActive ? 'aria-current="page"' : ''}>
+            <a href="${tab.hash}" class="nav-item ${isActive ? 'active' : ''} ${tab.id === 'neon-ai' ? 'nav-item-ai' : ''}" data-nav="${tab.id}">
               ${getNavIconSvg(tab.icon)}
               <span>${tab.label}</span>
             </a>

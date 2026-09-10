@@ -1,0 +1,393 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <link
+      rel="shortcut icon"
+      href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png"
+    />
+    <meta name="theme-color" content="#120f24" />
+    <title>لوحة الإنتاجية</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      :root {
+        --glass-bg: rgba(255, 255, 255, 0.06);
+        --glass-border: rgba(255, 255, 255, 0.12);
+        --accent: #7c4dff;
+        --text-main: #ffffff;
+        --text-dim: #cccccc;
+      }
+
+      body.index2x {
+        margin: 0;
+        font-family: "Cairo", "Sora", sans-serif;
+        color: var(--text-main);
+        background-image: url("https://cdn.shopify.com/s/files/1/0701/6736/3720/files/Untitled_design_2.jpg?v=1769285510");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      body.index2x::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        z-index: 0;
+      }
+
+      .login-screen {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(20px);
+      }
+
+      .login-card {
+        background: var(--glass-bg);
+        border-radius: 35px;
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        text-align: center;
+      }
+
+      .login-form input {
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      .app {
+        display: grid;
+        gap: 24px;
+        padding: 28px 24px 60px;
+        max-width: 1300px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      .app.is-locked {
+        display: none;
+      }
+
+      .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(30px);
+        border: 1px solid var(--glass-border);
+        border-radius: 30px;
+        padding: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        grid-template-rows: auto 1fr 0.6fr;
+        gap: 20px;
+      }
+
+      .main-tasks {
+        grid-row: 1 / span 3;
+      }
+
+      .timer-section {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .audio-links {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      .links-card {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      .task-input-group {
+        display: flex;
+        gap: 10px;
+      }
+
+      .task-input-group input {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        padding: 12px;
+        border-radius: 12px;
+        color: white;
+      }
+
+      .task-input-group button {
+        background: var(--accent);
+        border: none;
+        color: white;
+        padding: 0 20px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
+      .task-list {
+        display: grid;
+        gap: 10px;
+        max-height: 360px;
+        overflow-y: auto;
+      }
+
+      .task-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+      }
+
+      .filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .timer-display {
+        font-size: 4rem;
+        text-align: center;
+        margin: 10px 0 0;
+        font-weight: 200;
+        color: var(--accent);
+      }
+
+      .timer-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .timer-actions button {
+        padding: 12px;
+        border-radius: 15px;
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg);
+        color: white;
+        cursor: pointer;
+      }
+
+      .timer-actions #startPauseBtn {
+        grid-column: 1 / -1;
+        background: var(--accent);
+        border: none;
+        font-weight: bold;
+      }
+
+      .audio-item {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 12px;
+        border-radius: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .icon-bubble {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .links-input {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 8px;
+      }
+
+      @media (max-width: 1100px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto;
+        }
+
+        .main-tasks,
+        .timer-section,
+        .audio-links,
+        .links-card {
+          grid-column: auto;
+          grid-row: auto;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .app {
+          padding: 18px;
+        }
+
+        .links-input {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="index2x">
+    <section class="login-screen" id="loginScreen">
+      <div class="login-card">
+        <h1>تسجيل الدخول</h1>
+        <p>ادخل بياناتك لفتح لوحة المذاكرة.</p>
+        <form class="login-form" id="loginForm">
+          <label for="loginEmail">البريد الإلكتروني</label>
+          <input id="loginEmail" type="email" placeholder="name@email.com" autocomplete="username" required />
+
+          <label for="loginPassword">كلمة المرور</label>
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+
+          <button type="submit">دخول</button>
+          <div class="login-error" id="loginError" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
+    <div class="app is-locked" id="app">
+      <nav class="top-nav" aria-label="التنقل">
+        <div class="nav-tabs" dir="ltr">
+          <a class="nav-tab" href="public/pdfs.html">تدريب</a>
+          <a class="nav-tab" href="translator.html">المترجم</a>
+          <a class="nav-tab" href="gpa.html">حاسبة المعدل</a>
+          <a class="nav-tab active" href="index.html">الانتاجية</a>
+        </div>
+      </nav>
+
+      <div class="dashboard-grid">
+        <section class="glass-card main-tasks">
+          <div class="card-header">
+            <div>
+              <h2>قائمة المهام المتقدمة ✅</h2>
+              <span id="progressText">Progress: 0 of 0 completed</span>
+            </div>
+            <div class="icon-bubble">✅</div>
+          </div>
+
+          <div class="task-input-group">
+            <input id="taskInput" type="text" placeholder="ماذا سننجز اليوم؟" />
+            <button id="addTaskBtn">+</button>
+          </div>
+
+          <div class="filters" id="filters">
+            <button class="pill active" data-filter="all">الكل</button>
+            <button class="pill" data-filter="active">قيد التنفيذ</button>
+            <button class="pill" data-filter="done">مكتملة</button>
+          </div>
+
+          <div class="task-list" id="taskList"></div>
+        </section>
+
+        <section class="glass-card timer-section">
+          <div class="card-header">
+            <div>
+              <h2>مؤقت التركيز ⏱️</h2>
+              <span>Customize your focus sessions</span>
+            </div>
+            <div class="icon-bubble">🧘</div>
+          </div>
+
+          <div class="timer-display" id="timerDisplay">25:00</div>
+
+          <div class="timer-actions">
+            <button id="startPauseBtn">Start</button>
+            <button id="resetBtn">Reset</button>
+            <button id="plus5Btn">+5 min</button>
+            <button id="plus10Btn">+10 min</button>
+          </div>
+
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-label">Time Focused</div>
+              <div class="stat-value" id="focusedMinutes">0m</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Completed Sessions</div>
+              <div class="stat-value" id="sessionsCount">0</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass-card audio-links">
+          <div class="card-header">
+            <div>
+              <h2>الأصوات 🎵</h2>
+              <span>Background soundscapes</span>
+            </div>
+            <div class="icon-bubble">🎵</div>
+          </div>
+
+          <div class="sound-list" id="soundList"></div>
+
+          <div class="sound-controls">
+            <div class="control-row">
+              <span>Volume</span>
+              <input id="volume" type="range" min="0" max="1" step="0.01" value="0.6" />
+            </div>
+            <label class="toggle">
+              <input id="loopToggle" type="checkbox" />
+              Loop
+            </label>
+          </div>
+
+          <div class="yt-audio">
+            <div class="yt-title">YouTube Background Audio</div>
+            <div class="yt-list" id="ytList"></div>
+            <div class="yt-controls">
+              <button id="ytPlay">Play</button>
+              <button id="ytPause" class="ghost">Pause</button>
+              <button id="ytStop" class="ghost">Stop</button>
+            </div>
+            <div class="yt-volume">
+              <label for="ytVolume">Volume</label>
+              <input id="ytVolume" type="range" min="0" max="100" value="30" />
+            </div>
+            <div class="yt-status" id="ytStatus">YouTube audio playing in background</div>
+            <div id="ytPlayer" class="yt-player"></div>
+          </div>
+        </section>
+
+        <section class="glass-card links-card">
+          <div class="card-header">
+            <div>
+              <h2>روابط سريعة</h2>
+              <span>احفظ روابطك المهمة هنا</span>
+            </div>
+            <div class="icon-bubble">🔗</div>
+          </div>
+
+          <div class="links-input">
+            <input id="linkTitle" type="text" placeholder="عنوان" />
+            <input id="linkUrl" type="url" placeholder="https://" />
+            <button id="addLinkBtn">إضافة</button>
+          </div>
+          <div class="links-list" id="linksList"></div>
+        </section>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

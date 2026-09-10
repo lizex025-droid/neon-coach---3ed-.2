@@ -3,6 +3,8 @@
  */
 
 import { store } from '../state/store.js';
+import { notificationService } from '../services/notificationService.js';
+import { neonIcon } from '../utils/neonIcons.js';
 
 export function renderHeader() {
   const state = store.getState();
@@ -13,16 +15,11 @@ export function renderHeader() {
       <div class="header-brand">
         <img src="./icons/neon-cat-coach.svg" alt="NEON COACH" style="width: 34px; height: 34px;">
         <span class="header-logo-text">NEON COACH</span>
-        ${state.isDemoMode ? '<span class="badge badge-demo">وضع تجريبي</span>' : ''}
       </div>
 
       <div class="header-actions">
-        <button id="header-calendar-btn" class="btn-icon" aria-label="التقويم">
-          📅
-        </button>
-        
-        <button id="header-notif-btn" class="btn-icon" aria-label="الإشعارات">
-          🔔
+        <button id="header-notif-btn" class="btn-icon" aria-label="الإشعارات" title="الإشعارات والتنبيهات">
+          ${neonIcon('bell', 22)}
         </button>
       </div>
     </header>
@@ -40,17 +37,10 @@ export function bindHeaderEvents() {
     });
   }
 
-  const calendarBtn = document.getElementById('header-calendar-btn');
-  if (calendarBtn) {
-    calendarBtn.addEventListener('click', () => {
-      window.location.hash = '#workout';
-    });
-  }
-
   const notifBtn = document.getElementById('header-notif-btn');
   if (notifBtn) {
     notifBtn.addEventListener('click', () => {
-      alert('مركز الإشعارات:\n- تذكير: موعد شرب كوب الماء القادم\n- تذكير: استمر على أدائك الممتاز اليوم!');
+      notificationService.showToast('🔔 تذكير: استمر على أدائك الممتاز اليوم واشرب كفايتك من الماء!', 'info');
     });
   }
 }

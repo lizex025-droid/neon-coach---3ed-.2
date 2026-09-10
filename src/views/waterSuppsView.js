@@ -6,6 +6,7 @@
 import { store } from '../state/store.js';
 import { notificationService } from '../services/notificationService.js';
 import { STACK_WINDOWS, searchSupplementsDb } from '../data/supplementsDb.js';
+import { neonIcon } from '../utils/neonIcons.js';
 
 export function renderWaterSuppsView() {
   const items = store.getDailyStackItems();
@@ -73,15 +74,15 @@ export function renderWaterSuppsView() {
                     const meta = [item.dose, item.note].filter(Boolean).join(' · ');
                     return `
                       <div class="stack-item-row ${isTaken ? 'taken' : ''}">
-                        <button class="stack-item-check ${isTaken ? 'checked' : ''}" data-action="toggle" data-id="${item.id}" aria-label="تحديد كمكتمل">
-                          ${isTaken ? '✓' : ''}
+                        <button class="stack-item-check ${isTaken ? 'checked' : ''}" data-action="toggle" data-id="${item.id}" aria-label="تحديد كمكتمل" style="display: flex; align-items: center; justify-content: center;">
+                          ${isTaken ? neonIcon('check', 14) : ''}
                         </button>
                         <div class="stack-item-content">
                           <div class="item-name" data-edit="name" data-id="${item.id}" title="اضغط للتعديل">${escapeHtml(item.name)}</div>
                           <div class="item-meta" data-edit="meta" data-id="${item.id}" title="اضغط للتعديل">${escapeHtml(meta)}</div>
                         </div>
-                        <button class="stack-low-tag ${isLow ? 'is-low' : ''}" data-action="low" data-id="${item.id}" title="تنبيه قرب نفاد الكمية">
-                          ${isLow ? '⚠️ قارب على النفاد' : '↓ كمية كافية'}
+                        <button class="stack-low-tag ${isLow ? 'is-low' : ''}" data-action="low" data-id="${item.id}" title="تنبيه قرب نفاد الكمية" style="display: inline-flex; align-items: center; gap: 4px;">
+                          ${isLow ? `${neonIcon('alert', 12)} قارب على النفاد` : '↓ كمية كافية'}
                         </button>
                         <button class="stack-del-btn" data-action="delete" data-id="${item.id}" title="حذف المكمل">
                           ×

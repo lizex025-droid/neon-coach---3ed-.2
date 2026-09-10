@@ -1,0 +1,851 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #000;
+  --bg-deep: #000;
+  --card: rgba(255,255,255,0.02);
+  --row: rgba(255,255,255,0.03);
+  --line: rgba(255,255,255,0.08);
+  --hair: rgba(255,255,255,0.16);
+  --bg-card: var(--card);
+  --bg-secondary: var(--row);
+  --bg-input: rgba(255,255,255,0.022);
+  --bg-input-focus: rgba(110,231,183,0.06);
+  --bg-dropdown: rgba(5,12,8,0.98);
+  --glass-bg: var(--card);
+  --glass-border: var(--line);
+  --glass-border-strong: var(--hair);
+  --glass-shadow: none;
+
+  --mint: #6EE7B7;
+  --mint-ic: #6EE7B7;
+  --ink: #042a1c;
+  --gold: #f59e0b;
+  --fail: #e06a6c;
+  --accent: var(--mint);
+  --accent-glow: rgba(110,231,183,0.28);
+  --success: var(--mint);
+  --good: var(--mint);
+  --warning: var(--gold);
+  --warn: var(--gold);
+  --danger: var(--fail);
+  --bad: var(--fail);
+
+  --text: #fff;
+  --muted: rgba(255,255,255,0.5);
+  --muted-strong: rgba(255,255,255,0.7);
+  --text-primary: var(--text);
+  --text-secondary: var(--muted-strong);
+  --text-tertiary: var(--muted);
+  --text-quaternary: rgba(255,255,255,0.28);
+  --text-1: var(--text);
+  --text-2: var(--muted-strong);
+  --text-3: var(--muted);
+  --text-4: rgba(255,255,255,0.28);
+
+  --font-serif: 'Newsreader';
+  --vt-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --vt-serif: 'Newsreader', 'Times New Roman', Georgia, serif;
+  --vt-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --serif: var(--font-serif), 'Newsreader', Georgia, serif;
+  --sans: var(--vt-sans), 'Inter', system-ui, sans-serif;
+  --mono: var(--vt-mono);
+  --font: var(--sans);
+  --font-mono: var(--mono);
+
+  --spring: cubic-bezier(.34,1.56,.64,1);
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --radius-lg: 12px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 999px;
+  --border: var(--line);
+  --border-soft: rgba(255,255,255,0.05);
+  --border-strong: var(--hair);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+html {
+  background: var(--bg) !important;
+  color-scheme: dark;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+body {
+  margin: 0 !important;
+  min-height: 100dvh;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-family: var(--sans) !important;
+  letter-spacing: 0 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: none !important;
+}
+
+#vt-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: 100%;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--bg);
+  contain: paint;
+}
+
+#vt-backdrop.lift {
+  z-index: 55;
+}
+
+#vt-backdrop .wb-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 50% 40%, rgba(110,231,183,.18) 0%, rgba(110,231,183,.06) 32%, rgba(110,231,183,0) 66%),
+    radial-gradient(34% 26% at 50% 44%, rgba(255,226,181,.08) 0%, rgba(255,226,181,0) 72%),
+    radial-gradient(130% 90% at 50% 120%, rgba(14,38,30,.85) 0%, rgba(0,0,0,1) 72%);
+}
+
+#vt-backdrop .wb-mountains {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42vh;
+  min-height: 240px;
+  pointer-events: none;
+}
+
+#vt-backdrop .wb-mountains svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#vt-backdrop .wb-mist {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 30vh;
+  height: 24vh;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(110,231,183,.06) 40%, rgba(0,0,0,0) 100%);
+  filter: blur(8px);
+}
+
+#vt-backdrop .wb-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#vt-backdrop .wb-particles span {
+  position: absolute;
+  width: 1.5px;
+  height: 1.5px;
+  background: rgba(233,239,233,.55);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(167,243,208,.35);
+  animation: vtDrift linear infinite;
+}
+
+@keyframes vtDrift {
+  0% { transform: translate3d(0,0,0); opacity: 0; }
+  8% { opacity: .7; }
+  92% { opacity: .5; }
+  100% { transform: translate3d(var(--dx,12px),var(--dy,-100vh),0); opacity: 0; }
+}
+
+#vt-grain {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: 100%;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: .05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='vtn'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23vtn)'/></svg>");
+  background-size: 200px 200px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #vt-backdrop .wb-particles span {
+    animation: none;
+  }
+}
+
+body > .page,
+body > .shell,
+body > .po-shell,
+body > main,
+main {
+  position: relative;
+  z-index: 2;
+  width: calc(100% - 28px);
+  max-width: 640px !important;
+  margin: 0 auto !important;
+  padding: max(16px, env(safe-area-inset-top)) 0 calc(96px + env(safe-area-inset-bottom)) !important;
+  min-width: 0;
+}
+
+body.has-bottombar > .page,
+body.has-bottombar > .shell,
+body.has-bottombar > .po-shell,
+body.has-bottombar > main,
+body.has-bottombar main {
+  padding-bottom: calc(116px + env(safe-area-inset-bottom)) !important;
+}
+
+.dash-title,
+.title,
+.fin-title,
+.po-title,
+h1 {
+  color: var(--text) !important;
+  font-family: var(--serif) !important;
+  font-style: italic !important;
+  font-weight: 500 !important;
+  font-size: 33px !important;
+  line-height: 1 !important;
+  letter-spacing: -0.01em !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  margin: 0 0 18px !important;
+}
+
+.sf-title,
+.daytitle,
+.exName,
+.popTitle,
+.addLiftLabel,
+.plabel,
+.pillHit,
+.pillMiss,
+.pillStatus,
+.restTime {
+  font-family: var(--serif) !important;
+  font-style: italic !important;
+}
+
+.sf-title {
+  color: var(--text) !important;
+  font-weight: 500 !important;
+  font-size: 33px !important;
+  line-height: 1 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.section-title,
+.divider,
+.eyebrow,
+.sf-eyebrow,
+.gm-eyebrow,
+.stack-ticker-label,
+.goal-ticker-label,
+.day-pill,
+.po-meta,
+.po-kicker,
+.fin-section-title,
+.water-label,
+.attribution,
+.restLabel,
+.exMeta,
+.bot-tab-label,
+.bottombar-tab span:last-child {
+  font-family: var(--vt-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: .18em !important;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted) !important;
+}
+
+.section-title,
+.divider {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 22px 4px 18px !important;
+}
+
+.section-title::before,
+.section-title::after,
+.divider::before,
+.divider::after {
+  content: '' !important;
+  height: 1px !important;
+  flex: 1;
+  max-width: 180px;
+  background: var(--line) !important;
+  opacity: 1 !important;
+}
+
+.divider span {
+  color: var(--muted) !important;
+}
+
+.sheet,
+.stack-card,
+.gm-card,
+.day-ring-wrap,
+.goal-ticker,
+.stack-ticker,
+.po-card,
+.why-card,
+.hist-card,
+.modal,
+.po-modal,
+.water-iframe,
+.fin-card,
+.nw-card,
+.subs-card,
+.wishlist-card,
+.orders-card,
+.chart-card,
+.card,
+.set-section,
+.tabbar-inner,
+body > .bottom-tabs,
+.topbar,
+.bottombar {
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(20px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+}
+
+.stack-card,
+.gm-card,
+.day-ring-wrap,
+.po-card,
+.why-card,
+.hist-card,
+.fin-card,
+.nw-card,
+.subs-card,
+.wishlist-card,
+.orders-card,
+.chart-card,
+.card {
+  padding: 22px 20px 24px !important;
+}
+
+.stack-card,
+.gm-card,
+.day-ring-wrap,
+.fin-card,
+.po-card,
+.card {
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gm-row,
+.stack-item,
+.po-row,
+.why-row,
+.hist-row,
+.sub-row,
+.wish-row,
+.order-row,
+.pill,
+.metric-card,
+.stat-card,
+.ex-card,
+.lift-card,
+.workout-card,
+.set-row,
+.search-result,
+.stack-result,
+.goal-ticker-meta,
+.water-bar-track,
+.hist-bar-wrap,
+.daytabs,
+.tabbar-inner {
+  background: var(--row) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.pill,
+.stack-item,
+.gm-row,
+.po-row,
+.sub-row,
+.wish-row,
+.order-row {
+  transition: background .48s var(--ease), border-color .48s var(--ease), box-shadow .48s var(--ease), color .48s var(--ease);
+}
+
+.pill:hover,
+.stack-item:hover,
+.gm-row:hover,
+.po-row:hover,
+.sub-row:hover,
+.wish-row:hover,
+.order-row:hover,
+.search-result:hover,
+.stack-result:hover {
+  background: rgba(255,255,255,.05) !important;
+  border-color: var(--hair) !important;
+}
+
+input,
+select,
+textarea,
+.gm-input,
+.stack-input,
+.search-input,
+.sub-dose-input,
+.wInput {
+  background: transparent !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  color: var(--text) !important;
+  font-family: var(--sans) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.gm-input:focus,
+.stack-input:focus,
+.search-input:focus,
+.sub-dose-input:focus,
+.wInput:focus {
+  color: var(--mint) !important;
+  border-color: var(--mint) !important;
+  background: rgba(110,231,183,.06) !important;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+.gm-add,
+.stack-add-btn,
+.finishBtn,
+.add-go,
+.btn-mint,
+.btn-primary,
+.water-plus-btn,
+.daytab.on,
+.pill.done,
+.pill.clean,
+.pill.over,
+.bottom-tabs .tab.active,
+.bot-tab.active,
+.bottombar-tab.active,
+.topbar-water-add,
+.add-btn,
+.addLiftRing,
+.stack-check.checked {
+  background: var(--mint) !important;
+  border-color: var(--mint) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 0 22px rgba(110,231,183,.28) !important;
+}
+
+.pill.done *,
+.daytab.on *,
+.bot-tab.active *,
+.bottombar-tab.active * {
+  color: var(--ink) !important;
+}
+
+.gm-polish,
+.gm-push-btn,
+.chip,
+.actionPill,
+.btn-secondary,
+.why-toggle,
+.topbar-water-pill,
+.topbar-finance-btn,
+.fin-back-btn,
+.bot-tab,
+.bottombar-tab,
+.moonbtn,
+.daypill,
+.day-pill,
+.water-minus-btn,
+.stack-low-btn,
+.bottom-tabs .tab,
+.pbtn,
+.restStep {
+  background: rgba(110,231,183,.04) !important;
+  border: 1px solid rgba(110,231,183,.25) !important;
+  border-radius: var(--radius-pill) !important;
+  color: var(--mint) !important;
+  box-shadow: 0 0 16px rgba(110,231,183,.10) !important;
+  transition: color .15s, border-color .15s, background .15s, box-shadow .48s var(--ease), transform .15s var(--spring);
+}
+
+.gm-polish:hover,
+.gm-push-btn:hover,
+.chip:hover,
+.actionPill:hover,
+.btn-secondary:hover,
+.why-toggle:hover,
+.fin-back-btn:hover,
+.bot-tab:hover,
+.bottombar-tab:hover,
+.moonbtn:hover,
+.water-minus-btn:hover,
+.stack-low-btn:hover,
+.bottom-tabs .tab:hover,
+.pbtn:hover,
+.restStep:hover {
+  color: #fff !important;
+  border-color: var(--mint) !important;
+  background: rgba(110,231,183,.12) !important;
+  box-shadow: 0 0 22px rgba(110,231,183,.20) !important;
+}
+
+.stack-progress-track,
+.gm-bar,
+.water-bar-track,
+.hist-bar-wrap,
+.ptrack {
+  height: 5px;
+  border-radius: var(--radius-pill) !important;
+  background: rgba(255,255,255,.07) !important;
+  overflow: hidden;
+}
+
+.stack-progress-fill,
+.gm-bar > *,
+.water-bar-fill,
+.hist-bar-fill,
+.pfill {
+  background: linear-gradient(90deg,#3ddc97,#a7f3d0) !important;
+  border-radius: var(--radius-pill) !important;
+  box-shadow: none !important;
+  transition: width .5s var(--ease);
+}
+
+.stack-ticker,
+.goal-ticker {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px !important;
+}
+
+.stack-ticker-dot,
+.goal-ticker-led-dot,
+.topbar-pill-dot {
+  background: var(--mint) !important;
+  box-shadow: 0 0 8px rgba(110,231,183,.7) !important;
+}
+
+.topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40 !important;
+  width: 100% !important;
+  border-radius: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left)) !important;
+}
+
+.bottombar,
+body > .bottom-tabs {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  bottom: 0 !important;
+  z-index: 40 !important;
+  border-radius: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+}
+
+.bottombar-tab,
+.bot-tab,
+.bottom-tabs .tab {
+  border-radius: 12px !important;
+}
+
+.bottombar {
+  gap: 0 !important;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bottombar-tab {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bottombar-tab span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-ticker,
+.stack-ticker,
+.day-ring-wrap,
+.gm-card,
+.stack-card,
+.po-card,
+.card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.stack-add-row {
+  min-width: 0;
+}
+
+.stack-add-row > *,
+.goal-input-wrap > *,
+.gm-input-wrap > * {
+  min-width: 0;
+}
+
+.day-ring-text,
+.goal-ticker-stage,
+.goal-ticker-row,
+.goal-ticker-text,
+.stack-ticker-msg,
+.gm-text {
+  min-width: 0;
+}
+
+.water-iframe {
+  display: block;
+  width: 100%;
+  height: 880px;
+  border: 0 !important;
+  overflow: hidden;
+  color-scheme: dark;
+}
+
+.modal-bg,
+.po-modal-bg,
+.wt-overlay,
+.scrim {
+  background: rgba(0,0,0,.34) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.modal,
+.po-modal,
+.pop,
+.menuPop {
+  color: var(--text) !important;
+  background: rgba(5,10,9,.86) !important;
+  border-color: var(--line) !important;
+}
+
+.gm-progress-num,
+.day-ring-percent,
+.stack-progress-num,
+.po-num,
+.water-num,
+.num,
+.pillValue,
+.fin-num,
+.metric-value,
+.stat .v {
+  color: var(--text) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.stack-item-name,
+.gm-text,
+.po-row-name,
+.sub-row-name,
+.search-result-name,
+.fin-card-title,
+.water-target,
+.goal-ticker-text,
+.stack-ticker-msg {
+  color: var(--text) !important;
+}
+
+.stack-item-meta,
+.gm-meta,
+.po-row-meta,
+.sub-row-meta,
+.search-result-meta,
+.water-helper,
+.empty-state,
+.plabel,
+.pillIdx,
+.pillTimes,
+.pillUnit {
+  color: var(--muted) !important;
+}
+
+.stack-item.taken,
+.gm-row.done,
+.pill.done {
+  background: var(--mint) !important;
+  border-color: var(--mint) !important;
+}
+
+.stack-item.taken .stack-item-name,
+.gm-row.done .gm-text {
+  color: var(--ink) !important;
+}
+
+.stack-item.missed,
+.pill.failed {
+  background: rgba(224,106,108,.12) !important;
+  border-color: var(--fail) !important;
+}
+
+.pill.failed .pillIdx,
+.pill.failed .pillStatus {
+  color: var(--fail) !important;
+}
+
+@media (max-width: 640px) {
+  body > .page,
+  body > .shell,
+  body > .po-shell,
+  body > main,
+  main {
+    width: calc(100% - 28px) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-title,
+  .title,
+  .fin-title,
+  .po-title,
+  h1,
+  .sf-title {
+    font-size: 29px !important;
+  }
+
+  .stack-card,
+  .gm-card,
+  .day-ring-wrap,
+  .po-card,
+  .why-card,
+  .hist-card,
+  .fin-card,
+  .nw-card,
+  .subs-card,
+  .wishlist-card,
+  .orders-card,
+  .chart-card,
+  .card {
+    padding: 20px 16px 22px !important;
+  }
+
+  .water-iframe {
+    height: 780px;
+  }
+
+  .day-ring-wrap {
+    gap: 14px !important;
+  }
+
+  .day-ring-text {
+    flex: 1 1 140px;
+    max-width: 100% !important;
+  }
+
+  .goal-ticker {
+    gap: 7px !important;
+  }
+
+  .goal-ticker-label,
+  .stack-ticker-label {
+    letter-spacing: .12em !important;
+  }
+
+  .bottombar-tab {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  .stack-add-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  .stack-add-row .stack-name-wrap,
+  .stack-add-row .stack-select,
+  .stack-add-row .stack-add-btn {
+    grid-column: 1 / -1;
+  }
+
+  .stack-add-row .stack-input,
+  .stack-add-row .stack-add-btn {
+    width: 100%;
+  }
+
+  .stack-search-results {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 56px) !important;
+  }
+
+  .modal,
+  .po-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    padding-top: max(20px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+  }
+}

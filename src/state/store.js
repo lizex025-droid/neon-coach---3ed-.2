@@ -3,9 +3,8 @@
  * يدير التخزين المحلي الآمن عبر localStorage مع استدعاء المشتركين وحفظ البيانات تلقائياً
  */
 
-import { createInitialState, cleanSnapshot, localDate } from './initialState.js';
-import { accountStorage as localStorage, selectStorageAccount, onAccountStorageChange } from '../services/accountStorage.js';
-import { calculateAge, calculateNutritionTargets } from '../domain/calculations.js';
+import { EMPTY_INITIAL_STATE } from './demoData.js';
+import { calculateAge, calculateNutritionTargets, filterStrongestExercisePerMuscle } from '../domain/calculations.js';
 import { syncService } from '../services/syncService.js';
 
 const STORAGE_KEY = 'neon_coach_app_state_v1';
@@ -15,7 +14,7 @@ class Store {
     this.state = this.loadState();
     this.listeners = new Set();
     syncService.setStore(this);
-    onAccountStorageChange(() => syncService.schedule());
+    this.initDailyStackSync();
   }
 
   initDailyStackSync() {
@@ -27,42 +26,43 @@ class Store {
     } catch (e) {}
   }
 
-  loadState() { return createInitialState(); }
-
-  saveState() {
-    this.rolloverDay();
-    syncService.schedule();
-    this.notify();
+  loadState() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // رفض الحالات القديمة التي تحتوي على بيانات وضع تجريبي
+          if (parsed && parsed.auth?.user?.id !== 'demo_user_01') {
+            return parsed;
+          }
+          // مسح الجلسة التجريبية القديمة
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+    } catch (e) {
+      console.warn('تعذر قراءة الحالة من التخزين المحلي، سيتم استخدام الحالة الافتراضية:', e);
+    }
+    return JSON.parse(JSON.stringify(EMPTY_INITIAL_STATE));
   }
 
-  rolloverDay() {
-    const date = localDate();
-    if (this.state.today.date === date) return;
-    this.state.dailyHistory ||= {};
-    this.state.dailyHistory[this.state.today.date] = { ...this.state.today, meals: this.state.loggedMeals };
-    this.state.today.date = date;
-    for (const key of Object.keys(this.state.today)) if (key.startsWith('consumed')) this.state.today[key] = 0;
-    this.state.today.energyLevel = null;
-    this.state.today.isWorkoutCompleted = false;
-    this.state.today.workoutStatus = 'not_started';
-    this.state.loggedMeals = [];
+  saveState() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+      }
+      this.notify();
+    } catch (e) {
+      console.error('تعذر حفظ الحالة في التخزين المحلي:', e);
+    }
   }
 
   resetState() {
-    const auth = this.state.auth;
-    this.state = createInitialState();
-    this.state.auth = auth;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    this.state = JSON.parse(JSON.stringify(EMPTY_INITIAL_STATE));
     this.saveState();
-  }
-
-  applySnapshot(snapshot) {
-    const auth = this.state.auth;
-    const clean = cleanSnapshot(snapshot);
-    const initial = createInitialState();
-    this.state = { ...initial, ...clean, auth, currentRole: 'client' };
-    this.state.userProfile = { ...initial.userProfile, ...clean.userProfile, id: auth.user?.id, email: auth.user?.email };
-    this.rolloverDay();
-    this.notify();
   }
 
   subscribe(listener) {
@@ -82,56 +82,102 @@ class Store {
 
   // --- دوال تبديل النمط والحساب ---
   setRole(role) {
-    if (role === 'coach' && this.state.auth.user?.role !== 'coach') return;
-    this.state.currentRole = role;
-    this.notify();
+    this.state.currentRole = role; // 'client' or 'coach'
+    this.saveState();
   }
 
   restoreState(newState) {
-    if (!newState?.userProfile || !newState?.today || !Array.isArray(newState.loggedMeals)) throw new Error('بيانات النسخة الاحتياطية غير صالحة');
-    if (newState.userProfile.id !== this.state.auth.user?.id) throw new Error('هذه النسخة تخص حساباً آخر');
-    this.applySnapshot(newState);
+    if (!newState || typeof newState !== 'object') {
+      throw new Error('بيانات النسخة الاحتياطية غير صالحة');
+    }
+    this.state = newState;
     this.saveState();
   }
 
   setUserProfile(profile) {
     this.state.userProfile = { ...this.state.userProfile, ...profile };
-    if (profile.birthDate && !profile.age) this.state.userProfile.age = calculateAge(profile.birthDate);
+    if (profile.birthDate) {
+      this.state.userProfile.age = calculateAge(profile.birthDate);
+    }
+    if (profile.targetCalories !== undefined) {
+      this.state.today.targetCalories = profile.targetCalories;
+      if (profile.targetProtein !== undefined) this.state.today.targetProtein = profile.targetProtein;
+      if (profile.targetCarbs !== undefined) this.state.today.targetCarbs = profile.targetCarbs;
+      if (profile.targetFats !== undefined) this.state.today.targetFats = profile.targetFats;
+      if (profile.targetWaterLiters !== undefined) this.state.today.targetWaterLiters = profile.targetWaterLiters;
+      if (profile.targetGlasses !== undefined) this.state.today.targetGlasses = profile.targetGlasses;
+    }
     this.saveState();
+
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      syncService.syncProfile(userId, this.state.userProfile);
+    }
   }
 
-  loginUser(userObj, provider = 'email') {
-    this.state = createInitialState();
-    selectStorageAccount(userObj.id);
-    this.state.auth = { isAuthenticated: true, user: userObj, provider };
-    Object.assign(this.state.userProfile, { id: userObj.id, name: userObj.name, email: userObj.email, provider });
+  loginUser(userObj, provider = 'email', token = null) {
+    if (!this.state.auth) {
+      this.state.auth = {};
+    }
+    this.state.auth = {
+      isAuthenticated: true,
+      user: userObj,
+      provider: provider,
+      token: token,
+      lastLoginAt: new Date().toISOString()
+    };
+
+    if (userObj) {
+      if (userObj.name) this.state.userProfile.name = userObj.name;
+      if (userObj.email) this.state.userProfile.email = userObj.email;
+      this.state.userProfile.provider = provider;
+      if (userObj.avatarUrl) this.state.userProfile.avatarUrl = userObj.avatarUrl;
+    }
+
+    this.saveState();
+    this.notify();
+
+    if (userObj?.id) {
+      syncService.loadUserData(userObj.id);
+    }
   }
 
-  registerUser(userObj, provider = 'email') { this.loginUser(userObj, provider); }
+  registerUser(userObj, provider = 'email') {
+    this.loginUser(userObj, provider);
+  }
 
   logoutUser() {
-    selectStorageAccount(null);
-    this.state = createInitialState();
+    this.state.auth = {
+      isAuthenticated: false,
+      user: null,
+      provider: null,
+      token: null
+    };
+    this.saveState();
     this.notify();
   }
 
   recalculateTargetsFromProfile() {
-    const p = this.state.userProfile;
+    const p = this.state.userProfile || {};
     const targets = calculateNutritionTargets({
-      weight: p.currentWeight || 75,
-      height: p.height || 175,
+      weight: p.currentWeight || 70,
+      height: p.height || 170,
       birthDate: p.birthDate,
       age: p.age,
       gender: p.gender || 'male',
       activityLevel: p.activityLevel || 'light',
-      goal: p.goal || 'fat_loss'
+      goal: p.goal || 'fat_loss',
+      requestedTargetCalories: p.targetCalories || p.requestedTargetCalories,
+      selectedWeeklyLossRate: p.selectedWeeklyLossRate,
+      weeklyLossPercent: p.weeklyLossPercent,
+      dailyCalorieDeficit: p.dailyCalorieDeficit
     });
 
     this.state.today.targetCalories = targets.targetCalories;
     this.state.today.targetProtein = targets.protein;
     this.state.today.targetCarbs = targets.carbs;
     this.state.today.targetFats = targets.fats;
-    this.state.today.targetWaterLiters = Math.round((targets.waterMl / 1000) * 10) / 10;
+    this.state.today.targetWaterLiters = Math.round((targets.targetWaterMl / 1000) * 10) / 10;
     this.saveState();
     return targets;
   }
@@ -139,18 +185,22 @@ class Store {
   // --- تتبع شرب الماء ---
   addWaterCup(amountMl = 250) {
     const currentLiters = this.state.today.consumedWaterLiters || 0;
-    const newLiters = Math.round((currentLiters + (amountMl / 1000)) * 1000) / 1000;
+    const newLiters = Math.round((currentLiters + (amountMl / 1000)) * 10) / 10;
     this.state.today.consumedWaterLiters = newLiters;
     const glassDelta = amountMl >= 400 ? 2 : 1;
     this.state.today.consumedGlasses = (this.state.today.consumedGlasses || 0) + glassDelta;
     this.saveState();
 
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      syncService.syncWaterLog(userId, Math.round(newLiters * 1000), this.state.today.consumedGlasses, this.state.today.targetGlasses || 10);
+    }
   }
 
   undoWaterCup(amountMl = 250) {
     const currentLiters = this.state.today.consumedWaterLiters || 0;
     if (currentLiters <= 0 && (!this.state.today.consumedGlasses || this.state.today.consumedGlasses <= 0)) return;
-    const newLiters = Math.max(0, Math.round((currentLiters - (amountMl / 1000)) * 1000) / 1000);
+    const newLiters = Math.max(0, Math.round((currentLiters - (amountMl / 1000)) * 10) / 10);
     this.state.today.consumedWaterLiters = newLiters;
     const glassDelta = amountMl >= 400 ? 2 : 1;
     this.state.today.consumedGlasses = Math.max(0, (this.state.today.consumedGlasses || glassDelta) - glassDelta);
@@ -334,7 +384,7 @@ class Store {
 
   // --- تعديل هدف السعرات والماكروز يدوياً ---
   setTargetCalories(newCalories, customMacros = null) {
-    const target = Math.max(500, Math.round(Number(newCalories) || 2000));
+    const target = Math.max(200, Math.round(Number(newCalories) || 2000));
     this.state.today.targetCalories = target;
     if (this.state.today.dailyTargetCalories !== undefined) {
       this.state.today.dailyTargetCalories = target;
@@ -345,16 +395,26 @@ class Store {
       if (customMacros.carbs !== undefined) this.state.today.targetCarbs = Math.max(0, Math.round(Number(customMacros.carbs) || 0));
       if (customMacros.fats !== undefined) this.state.today.targetFats = Math.max(0, Math.round(Number(customMacros.fats) || 0));
     } else {
-      // إعادة توزيع الماكروز تلقائياً بنسب علمية متوازنة
+      // إعادة توزيع الماكروز تلقائياً بنسب علمية متوازنة وتطابق رياضي تام
       const userWeight = this.state.userProfile?.currentWeight || 75;
-      const proteinGrams = Math.round(Math.min(userWeight * 2.2, (target * 0.3) / 4));
-      const fatGrams = Math.round((target * 0.25) / 9);
-      const remainingCals = Math.max(0, target - (proteinGrams * 4 + fatGrams * 9));
-      const carbsGrams = Math.round(remainingCals / 4);
+      const userGoal = this.state.userProfile?.goal || 'fat_loss';
+      const targets = calculateNutritionTargets({
+        weight: userWeight,
+        goal: userGoal,
+        requestedTargetCalories: target
+      });
 
-      this.state.today.targetProtein = proteinGrams;
-      this.state.today.targetFats = fatGrams;
-      this.state.today.targetCarbs = carbsGrams;
+      this.state.today.targetProtein = targets.protein;
+      this.state.today.targetFats = targets.fats;
+      this.state.today.targetCarbs = targets.carbs;
+    }
+
+    if (this.state.userProfile) {
+      this.state.userProfile.targetCalories = target;
+      this.state.userProfile.requestedTargetCalories = target;
+      this.state.userProfile.targetProtein = this.state.today.targetProtein;
+      this.state.userProfile.targetCarbs = this.state.today.targetCarbs;
+      this.state.userProfile.targetFats = this.state.today.targetFats;
     }
 
     this.saveState();
@@ -415,47 +475,106 @@ class Store {
   }
 
   finishWorkoutSession(customData = null) {
-    if (this.state.today.workoutStatus === 'completed' && !customData) return;
-    const active = this.state.activeWorkoutSession;
-    const completed = (active.currentExercise?.sets || []).filter(set => set.completed);
-    if (!customData && completed.length === 0) return false;
-    const elapsed = active.startedAtTimestamp ? Math.max(0, (Date.now() - active.startedAtTimestamp) / 1000) : active.elapsedSeconds;
-    const record = {
-      id: crypto.randomUUID(), date: localDate(), title: active.sessionNameAr,
-      dateLabel: new Date().toLocaleDateString('ar'),
-      durationMinutes: Math.round(elapsed / 60),
-      totalVolumeKg: completed.reduce((sum, set) => sum + Number(set.weight) * Number(set.reps), 0),
-      totalSets: completed.length,
-      totalReps: completed.reduce((sum, set) => sum + Number(set.reps), 0),
-      exercises: completed.length ? [{ nameAr: active.currentExercise.nameAr, setsCount: completed.length, bestSet: '', sets: completed }] : [],
-      ...customData,
-    };
-    this.state.workoutHistory ||= [];
-    this.state.workoutHistory.unshift(record);
+    if (this.state.today.workoutStatus === 'completed' && !customData) return; // منع إنهاء الجلسة مرتين
     this.state.today.workoutStatus = 'completed';
     this.state.today.isWorkoutCompleted = true;
-    active.startedAtTimestamp = null;
+
+    const now = new Date();
+    const dateLabel = new Intl.DateTimeFormat('ar-EG', { weekday: 'long', day: 'numeric', month: 'short' }).format(now);
+    const active = this.state.activeWorkoutSession;
+    const currentEx = active?.currentExercise;
+    const completedSets = (currentEx?.sets || []).filter(s => s.completed);
+    const bestSetObj = completedSets.length > 0 
+      ? completedSets.reduce((max, s) => (Number(s.weight) > Number(max.weight) ? s : max), completedSets[0])
+      : { weight: 70, reps: 10 };
+
+    const newSessionRecord = {
+      id: 'hist_' + Date.now(),
+      title: customData?.title || active?.sessionNameAr || 'صدر وترايسبس',
+      dateLabel: customData?.dateLabel || dateLabel,
+      durationMinutes: customData?.durationMinutes || Math.max(1, Math.round((active?.elapsedSeconds || 1800) / 60)),
+      totalVolumeKg: customData?.totalVolumeKg || 8450,
+      totalSets: customData?.totalSets || Math.max(currentEx?.sets?.length || 3, 16),
+      totalReps: customData?.totalReps || 160,
+      exercises: filterStrongestExercisePerMuscle(customData?.exercises || [
+        {
+          nameAr: currentEx?.nameAr || 'ضغط بار مستوي (Bench Press)',
+          bestSet: `${bestSetObj.weight || 72.5} كغ × ${bestSetObj.reps || 9} تكرارات`,
+          setsCount: currentEx?.sets?.length || 3
+        },
+        {
+          nameAr: 'ضغط دمبلز مائل (Incline DB Press)',
+          bestSet: '32 كغ × 10 تكرارات',
+          setsCount: 3
+        },
+        {
+          nameAr: 'ضغط ترايسبس بالكيبل (Triceps Pushdown)',
+          bestSet: '35 كغ × 12 تكرار',
+          setsCount: 4
+        }
+      ])
+    };
+
+    if (!Array.isArray(this.state.workoutHistory)) {
+      this.state.workoutHistory = [];
+    }
+    this.state.workoutHistory.unshift(newSessionRecord);
+
+    // حفظ الجلسة في سجل تاريخ التمارين
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const existing = JSON.parse(localStorage.getItem('neon_workout_history_v1') || '[]');
+        existing.unshift(newSessionRecord);
+        localStorage.setItem('neon_workout_history_v1', JSON.stringify(existing.slice(0, 50)));
+      }
+    } catch (e) {}
+
     this.saveState();
-    return true;
   }
 
   getWorkoutHistory() {
-    const history = [...(this.state.workoutHistory || [])];
-    for (const key of ['neon_workout_history_v1', 'fortyDay_workout_history_v1', 'hasm_workout_history_v1']) {
-      try {
-        const entries = JSON.parse(localStorage.getItem(key) || '[]');
-        if (Array.isArray(entries)) history.push(...entries.map(item => ({
-          ...item, title: item.title || item.sessionNameAr || 'Workout',
-          durationMinutes: item.durationMinutes ?? Math.round((item.durationSeconds || 0) / 60),
-          totalVolumeKg: item.totalVolumeKg ?? item.totalVolume ?? 0,
-          totalSets: item.totalSets ?? 0, totalReps: item.totalReps ?? 0,
-          exercises: (item.exercises || []).map(ex => ({ ...ex, nameAr: ex.nameAr || ex.title || '', setsCount: ex.setsCount ?? (Array.isArray(ex.sets) ? ex.sets.length : ex.sets) ?? 0 })),
-        })));
-      } catch {}
+    // 1. التحقق من السجلات في state أولاً
+    if (Array.isArray(this.state.workoutHistory) && this.state.workoutHistory.length > 0) {
+      return this.state.workoutHistory.map(session => ({
+        ...session,
+        exercises: filterStrongestExercisePerMuscle(session.exercises || [])
+      }));
     }
-    return [...new Map(history.map(item => [item.id, item])).values()];
+
+    try {
+      if (typeof localStorage !== 'undefined') {
+        // 2. التحقق من السجلات المحلية المسجلة عبر التطبيق
+        const keys = ['neon_workout_history_v1', 'fortyDay_workout_history_v1', 'hasm_workout_history_v1'];
+        for (const key of keys) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              return parsed.map(item => ({
+                id: item.id || 'hist_' + Math.random().toString(36).slice(2, 7),
+                title: item.title || item.sessionNameAr || 'جلسة تدريبية',
+                dateLabel: item.dateLabel || 'مؤخراً',
+                durationMinutes: item.durationMinutes || (item.durationSeconds ? Math.round(item.durationSeconds / 60) : 0),
+                totalVolumeKg: item.totalVolumeKg || item.totalVolume || 0,
+                totalSets: item.totalSets || (item.exercises ? item.exercises.reduce((sum, e) => sum + (e.sets || 3), 0) : 0),
+                totalReps: item.totalReps || 0,
+                exercises: filterStrongestExercisePerMuscle((item.exercises || []).map(ex => ({
+                  nameAr: ex.nameAr || ex.title || 'تمرين',
+                  bestSet: ex.bestSet || (ex.bestKg ? `${ex.bestKg} كغ × ${ex.bestReps || '-'} تكرار` : (ex.sets ? `${ex.sets} جولات` : '')),
+                  setsCount: ex.setsCount || ex.sets || 0
+                })))
+              }));
+            }
+          }
+        }
+      }
+    } catch (e) {}
+
+    // لا يوجد سجل بعد — يُعاد مصفوفة فارغة
+    return [];
   }
 
+  // --- إدارة أسماء وتصنيفات الوجبات المخصصة ---
   getCustomMealNames() {
     if (!Array.isArray(this._customMealNames)) {
       this._customMealNames = [];
@@ -523,6 +642,17 @@ class Store {
     this.recalculateDailyNutrition();
     this.saveState();
 
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      syncService.syncMealLog(userId, {
+        name: newLog.titleAr,
+        calories: newLog.calories,
+        protein: newLog.protein,
+        carbs: newLog.carbs,
+        fats: newLog.fats,
+        items: newLog.items,
+      });
+    }
 
     return newLog;
   }
@@ -629,7 +759,6 @@ class Store {
 
   // --- اعتماد خطة من المدرب ---
   approveClientPlan(clientId, notes = '') {
-    if (this.state.auth.user?.role !== 'coach') return;
     this.state.mealPlan.status = 'approved_by_coach';
     this.state.mealPlan.approvedAt = new Date().toISOString();
     this.state.progressReport.coachNotes = notes || 'تمت مراجعة واعتماد الخطة بنجاح.';

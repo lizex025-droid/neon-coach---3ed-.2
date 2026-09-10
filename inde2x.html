@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png">
+    <link rel="shortcut icon" href="https://qkhghqpawzzhgfdvlioc.supabase.co/storage/v1/object/public/AHED%20BSEISO/ChatGPT%20Image%20Feb%2020,%202026,%2010_15_38%20AM.png">
+    <meta name="theme-color" content="#120f24">
+    <title>Ù„ÙˆØ­Ø© Ø§Ù„Ø¥Ù†ØªØ§Ø¬ÙŠØ© - Vibe Coder</title>
+    <style>
+        /* --- Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ§Øª Ø§Ù„Ù…Ø³ØªÙˆØ­Ø§Ø© Ù…Ù† Ø§Ù„Ø¯ÙŠØ²Ø§ÙŠÙ† Ø§Ù„Ø£ÙˆÙ„ --- */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --accent: #4f9fff;
+            --text-main: #ffffff;
+            --text-dim: #cccccc;
+        }
+
+        body {
+            margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070&auto=format&fit=crop'); 
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: var(--text-main); height: 100vh; overflow: hidden;
+        }
+
+        body::before { content: ''; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: -1; }
+
+        /* --- Ø´Ø§Ø´Ø© Ø§Ù„Ø¯Ø®ÙˆÙ„ (Ø³ØªØ§ÙŠÙ„ Ø²Ø¬Ø§Ø¬ÙŠ) --- */
+        #loginScreen {
+            position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(20px); background: rgba(0,0,0,0.4);
+        }
+        .login-card {
+            background: var(--glass-bg); padding: 40px; border-radius: 35px; border: 1px solid var(--glass-border);
+            width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .login-card input {
+            width: 100%; padding: 14px; margin: 10px 0; border-radius: 15px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; outline: none;
+        }
+        .login-card button {
+            width: 100%; padding: 14px; border-radius: 15px; border: none; background: var(--accent);
+            color: white; font-weight: bold; cursor: pointer; margin-top: 15px;
+        }
+
+        /* --- ØªØµÙ…ÙŠÙ… Ø§Ù„ØªØ·Ø¨ÙŠÙ‚ Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠ (Bento) --- */
+        #app { display: none; padding: 30px; height: 90vh; max-width: 1300px; margin: 0 auto; }
+        .is-active { display: grid !important; grid-template-columns: 2fr 1fr; grid-template-rows: auto 1fr 0.6fr; gap: 20px; }
+
+        /* Ø§Ù„Ù‡ÙŠØ¯Ø± ÙˆØ§Ù„ØªØ§Ø¨Ø§Øª */
+        .header-nav { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; 
+                      background: var(--glass-bg); padding: 15px 30px; border-radius: 20px; border: 1px solid var(--glass-border); }
+        .nav-tabs a { color: var(--text-dim); text-decoration: none; margin-left: 20px; font-size: 0.9rem; transition: 0.3s; }
+        .nav-tabs a.active { color: var(--accent); font-weight: bold; }
+
+        /* Ø§Ù„ÙƒØ±ÙˆØª Ø§Ù„Ø²Ø¬Ø§Ø¬ÙŠØ© */
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border); border-radius: 30px; padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); position: relative;
+        }
+
+        .main-tasks { grid-row: 2 / 4; display: flex; flex-direction: column; }
+        .timer-section { grid-column: 2; grid-row: 2; }
+        .audio-links { grid-column: 2; grid-row: 3; }
+
+        /* ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ù…Ù‡Ø§Ù… */
+        .task-input-group { display: flex; gap: 10px; margin: 20px 0; }
+        .task-input-group input { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); 
+                                  padding: 12px; border-radius: 12px; color: white; }
+        .task-list { overflow-y: auto; flex-grow: 1; }
+
+        /* Ø§Ù„Ù…Ø¤Ù‚Øª (Ø³ØªØ§ÙŠÙ„ Ù‚Ø¯ÙŠÙ…) */
+        .timer-display { font-size: 5rem; text-align: center; margin: 20px 0; font-weight: 200; color: var(--accent); }
+        .timer-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .timer-btns button { padding: 12px; border-radius: 15px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: white; cursor: pointer; }
+        #startBtn { grid-column: 1 / -1; background: var(--accent); font-weight: bold; }
+
+        /* Ø§Ù„Ø£ØµÙˆØ§Øª ÙˆØ§Ù„Ø±ÙˆØ§Ø¨Ø· */
+        .audio-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .icon-bubble { background: rgba(255,255,255,0.1); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <section id="loginScreen">
+        <div class="login-card">
+            <h2 style="margin-top: 0;">Vibe Space</h2>
+            <p style="color: var(--text-dim); font-size: 0.9rem;">Ø£Ù‡Ù„Ø§Ù‹ Ø¨Ùƒ ÙŠØ§ Vibe CoderØŒ Ø³Ø¬Ù„ Ø¯Ø®ÙˆÙ„Ùƒ</p>
+            <form id="loginForm">
+                <input type="email" placeholder="Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ" required>
+                <input type="password" placeholder="ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±" required>
+                <button type="submit">ÙØªØ­ Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­ÙƒÙ…</button>
+            </form>
+        </div>
+    </section>
+
+    <div id="app">
+        <nav class="header-nav">
+            <div style="font-weight: bold; letter-spacing: 2px;">MY.SPACE</div>
+            <div class="nav-tabs">
+                <a href="#" class="active">Ø§Ù„Ø¥Ù†ØªØ§Ø¬ÙŠØ©</a>
+                <a href="#">Ø­Ø§Ø³Ø¨Ø© Ø§Ù„Ù…Ø¹Ø¯Ù„</a>
+                <a href="#">Ø§Ù„Ù…ØªØ±Ø¬Ù…</a>
+                <a href="#">Ø§Ù„Ù…Ø´Ø§Ø±ÙŠØ¹</a>
+            </div>
+        </nav>
+
+        <div class="glass-card main-tasks">
+            <div style="display: flex; justify-content: space-between;">
+                <h3>Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ù‡Ø§Ù… Ø§Ù„Ù…ØªÙ‚Ø¯Ù…Ø© âœ…</h3>
+                <span style="color: var(--accent); font-size: 0.9rem;">0/5 Ù…ÙƒØªÙ…Ù„</span>
+            </div>
+            
+            <div class="task-input-group">
+                <input type="text" id="taskInput" placeholder="Ù…Ø§Ø°Ø§ Ø³Ù†Ù†Ø¬Ø² Ø§Ù„ÙŠÙˆÙ…ØŸ (Ø±ÙˆØ³ÙŠØŒ ÙÙŠÙˆØ¬Ù†ØŒ Ù…ÙˆØ§Ù‚Ø¹...)">
+                <button style="background: var(--accent); border:none; color:white; padding:0 20px; border-radius:12px; cursor:pointer;">+</button>
+            </div>
+
+            <div class="task-list">
+                <div class="audio-item">
+                    <span>ØªØ¹Ù„Ù… ÙƒÙ„Ù…Ø§Øª Ø±ÙˆØ³ÙŠØ© Ø¬Ø¯ÙŠØ¯Ø© (20 ÙƒÙ„Ù…Ø©)</span>
+                    <input type="checkbox">
+                </div>
+                <div class="audio-item">
+                    <span>Ø¥ÙƒÙ…Ø§Ù„ Ù…ÙˆØ¯ÙŠÙ„ Fusion 360 Ù„Ù…Ø´Ø±ÙˆØ¹ ØºØ²Ø©</span>
+                    <input type="checkbox">
+                </div>
+                <div class="audio-item">
+                    <span>Ø§Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹ Ù…ÙƒØ§ØªØ¨ Ø§Ù„Ù…Ø­Ø§Ù…Ø§Ø© (Cold Calling)</span>
+                    <input type="checkbox">
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card timer-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Ù…Ø¤Ù‚Øª Ø§Ù„ØªØ±ÙƒÙŠØ² â±ï¸</h3>
+                <div class="icon-bubble">ðŸ§˜</div>
+            </div>
+            <div class="timer-display">25:00</div>
+            <div class="timer-btns">
+                <button id="startBtn">Ø§Ø¨Ø¯Ø£ Ø§Ù„Ø¬Ù„Ø³Ø©</button>
+                <button>Ø¥Ø¹Ø§Ø¯Ø©</button>
+                <button>+5 Ø¯</button>
+            </div>
+        </div>
+
+        <div class="glass-card audio-links">
+            <h3>Ø§Ù„Ø£ØµÙˆØ§Øª ÙˆØ§Ù„Ø±ÙˆØ§Ø¨Ø· ðŸŽµ</h3>
+            <div class="audio-item" style="margin-top: 15px;">
+                <span style="font-size: 0.8rem;">YouTube Lo-Fi Background</span>
+                <button style="background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; padding: 3px 10px; cursor: pointer;">Play</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div class="audio-item" style="font-size: 0.7rem; justify-content: center;">Github</div>
+                <div class="audio-item" style="font-size: 0.7rem; justify-content: center;">Canva</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ø¯Ø§Ù„Ø© Ø§Ù„ØªØ¨Ø¯ÙŠÙ„ Ø¨ÙŠÙ† Ø´Ø§Ø´Ø© Ø§Ù„Ø¯Ø®ÙˆÙ„ ÙˆØ§Ù„ØªØ·Ø¨ÙŠÙ‚
+        const loginForm = document.getElementById('loginForm');
+        const loginScreen = document.getElementById('loginScreen');
+        const app = document.getElementById('app');
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            loginScreen.style.transition = '0.5s';
+            loginScreen.style.opacity = '0';
+            setTimeout(() => {
+                loginScreen.style.display = 'none';
+                app.classList.add('is-active');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

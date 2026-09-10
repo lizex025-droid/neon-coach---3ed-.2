@@ -9,6 +9,7 @@ import { speechService } from '../services/speechService.js';
 import { notificationService } from '../services/notificationService.js';
 import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT } from '../data/foods.js';
 import { mealNameFromItems } from '../domain/nutritionCalculations.js';
+import { neonIcon } from '../utils/neonIcons.js';
 
 let activeDraft = {
   titleAr: 'وجبة جديدة',
@@ -109,8 +110,8 @@ export function renderMealLogView() {
 
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; margin-bottom: 6px;">
           <span style="color: #B8C0BC;">معادلة اليوم: <strong style="color: #FFFFFF; font-family: monospace;">${targetCalories.toLocaleString('en-US')}</strong> - <strong style="color: #FF5555; font-family: monospace;">${consumed.toLocaleString('en-US')}</strong> =</span>
-          <span style="font-weight: 800; font-family: monospace; color: ${isOver ? '#FF5555' : '#55F7A5'};">
-            ${isOver ? `تجاوزت الهدف بـ ${(consumed - targetCalories).toLocaleString('en-US')} سعرة ⚠️` : `متبقي ${remaining.toLocaleString('en-US')} سعرة ⚡`}
+          <span style="font-weight: 800; font-family: monospace; color: ${isOver ? '#FF5555' : '#55F7A5'}; display: inline-flex; align-items: center; gap: 4px;">
+            ${isOver ? `<span>تجاوزت الهدف بـ ${(consumed - targetCalories).toLocaleString('en-US')} سعرة</span> ${neonIcon('alert', 14)}` : `<span>متبقي ${remaining.toLocaleString('en-US')} سعرة</span>`}
           </span>
         </div>
 
@@ -119,28 +120,7 @@ export function renderMealLogView() {
         </div>
       </div>
 
-      <!-- بطاقة البحث السريع في قاعدة الأطعمة (أكثر من 600 صنف) -->
-      <div class="neon-card food-search-card" style="padding: 18px 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div>
-            <span style="font-size: 0.8rem; color: #55F7A5; font-weight: 700;">قاعدة الأطعمة</span>
-            <h3 style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; margin: 2px 0 0;">ابحث وأضف صنفًا للوجبة</h3>
-          </div>
-          <span class="badge" style="background: rgba(85,247,165,0.12); color: #55F7A5; border: 1px solid rgba(85,247,165,0.3); font-size: 0.75rem;">
-            ${IMPORTED_FOOD_COUNT} صنف
-          </span>
-        </div>
-        <div>
-          <input type="text" id="food-search-input" placeholder="مثال: صدر دجاج، بطاطا، أرز، بيض..." autocomplete="off" style="width: 100%; border-radius: 14px; padding: 12px 16px; background: #06100C; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.95rem;">
-          <div id="food-search-results" class="food-search-results" style="display: none; margin-top: 10px;"></div>
-        </div>
-        <small style="color: #8C9992; font-size: 0.75rem; margin-top: 8px; display: block;">
-          أضف أصناف الوجبة واحداً بعد الآخر، ثم عدّل وزن كل صنف مباشرة قبل الحفظ.
-        </small>
-      </div>
-
-
-      <!-- بطاقة مسودة الوجبة الحية -->
+      <!-- بطاقة مسودة الوجبة والبحث المدمجة -->
       <div id="meal-draft-card" class="neon-card" style="padding: 22px; border-color: rgba(85,247,165,0.4); box-shadow: 0 0 25px rgba(85,247,165,0.12);">
         
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
@@ -155,14 +135,14 @@ export function renderMealLogView() {
             <h2 id="draft-title" style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; margin: 0; text-align: left; max-width: 190px;">
               ${activeDraft.titleAr}
             </h2>
-            <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(85,247,165,0.12); border: var(--border-neon); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-              🍲
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(85,247,165,0.12); border: var(--border-neon); display: flex; align-items: center; justify-content: center;">
+              ${neonIcon('plate', 24)}
             </div>
           </div>
         </div>
 
-        <!-- شريط الماكروز P / C / F -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; padding: 12px 0; border-top: 1px solid rgba(85,247,165,0.15); border-bottom: 1px solid rgba(85,247,165,0.15); margin-bottom: 16px;">
+        <!-- شريط الماكروز P / C / F (بروتين، كربوهيدرات، دهون) -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; padding: 12px 0; border-top: 1px solid rgba(85,247,165,0.15); border-bottom: 1px solid rgba(85,247,165,0.15); margin-bottom: 14px;">
           <div>
             <div style="font-size: 0.75rem; color: #B8C0BC;">بروتين</div>
             <div id="draft-protein" style="font-size: 1.1rem; font-weight: 900; color: #55F7A5; font-family: monospace;">${activeDraft.protein}g</div>
@@ -177,10 +157,22 @@ export function renderMealLogView() {
           </div>
         </div>
 
-        <!-- زر إضافة صنف آخر -->
-        <button type="button" id="add-extra-food-btn" class="btn btn-secondary btn-block" style="margin-bottom: 14px; border-radius: 14px; font-weight: 700; border-style: dashed;">
-          <span>➕ إضافة صنف آخر للوجبة</span>
-        </button>
+        <!-- حقل/زر البحث عن صنف (تحت بروتين/كربوهيدرات/دهون) -->
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label for="food-search-input" style="font-size: 0.82rem; color: #55F7A5; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              <span>🔍</span>
+              <span>ابحث وأضف صنفًا للوجبة</span>
+            </label>
+            <span class="badge" style="background: rgba(85,247,165,0.12); color: #55F7A5; border: 1px solid rgba(85,247,165,0.3); font-size: 0.72rem; padding: 2px 8px;">
+              ${IMPORTED_FOOD_COUNT} صنف
+            </span>
+          </div>
+          <div style="position: relative;">
+            <input type="text" id="food-search-input" placeholder="ابحث عن أكلة (مثال: صدر دجاج، بيض، رز، بطاطا...)" autocomplete="off" style="width: 100%; border-radius: 14px; padding: 12px 16px; background: #06100C; border: 1px solid rgba(85,247,165,0.3); color: #FFFFFF; font-size: 0.95rem;">
+            <div id="food-search-results" class="food-search-results" style="display: none; margin-top: 8px;"></div>
+          </div>
+        </div>
 
         <!-- تفاصيل المكونات الفردية والأوزان القابلة للتعديل مباشرة -->
         <div id="draft-items-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
@@ -202,42 +194,21 @@ export function renderMealLogView() {
             </div>
           `).join('') : `
             <div style="padding: 24px 16px; text-align: center; color: #8C9992; font-size: 0.92rem; border: 1px dashed rgba(85,247,165,0.2); border-radius: 14px; background: rgba(5,13,9,0.5);">
-              <div style="font-size: 1.6rem; margin-bottom: 6px;">🍽️</div>
+              <div style="margin-bottom: 6px; display: flex; justify-content: center;">${neonIcon('plate', 32)}</div>
               <div style="color: #FFFFFF; font-weight: 700; margin-bottom: 4px;">لم يتم إضافة أطعمة إلى الوجبة بعد</div>
-              <small style="color: #8C9992;">ابحث عن الأطعمة في الصندوق بالأعلى، أو اكتب، أو صوّر طبقك للبدء.</small>
+              <small style="color: #8C9992;">ابحث عن الأطعمة في الصندوق بالأعلى لإضافتها مباشرة للوجبة.</small>
             </div>
           `}
         </div>
 
         <!-- زر تأكيد وحفظ الوجبة -->
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button id="confirm-save-meal-btn" class="btn btn-primary btn-lg btn-block" style="border-radius: 18px; font-weight: 800;">
-            تأكيد وحفظ الوجبة كاملة 🥗
+          <button id="confirm-save-meal-btn" class="btn btn-primary btn-lg btn-block" style="border-radius: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>تأكيد وحفظ الوجبة كاملة</span>
+            ${neonIcon('check', 18)}
           </button>
         </div>
 
-      </div>
-
-      <!-- إشعار: ضمن خطتك اليوم ✔ -->
-      <div class="neon-card" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-color: rgba(85,247,165,0.35);">
-        <span style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem;">ضمن خطتك اليومية</span>
-        <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(85,247,165,0.15); border: 1px solid #55F7A5; display: flex; align-items: center; justify-content: center; color: #55F7A5;">
-          ✓
-        </div>
-      </div>
-
-      <!-- نافذة إضافة صنف آخر المنبثقة -->
-      <div id="add-extra-food-modal" class="ai-modal-overlay">
-        <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 20px; border-radius: 24px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h3 style="color: #55F7A5; font-size: 1.15rem; margin: 0;">➕ إضافة صنف آخر</h3>
-            <button id="close-extra-food-modal-btn" class="btn-icon">✕</button>
-          </div>
-          <div>
-            <input type="text" id="extra-food-search-input" placeholder="ابحث عن الصنف (مثال: تفاح، بيض، رز...)" autocomplete="off" style="width: 100%; border-radius: 14px; padding: 12px 14px; background: #06100C; border: 1px solid rgba(85,247,165,0.3); color: #FFFFFF;">
-            <div id="extra-food-results" class="food-search-results" style="margin-top: 12px; max-height: 50vh;"></div>
-          </div>
-        </div>
       </div>
 
     </div>
@@ -251,13 +222,19 @@ function refreshMealLogView(focusIdx = null) {
     bindMealLogEvents();
 
     if (focusIdx !== null && focusIdx !== undefined) {
-      setTimeout(() => {
+      const scrollToAdded = () => {
         const row = document.querySelector(`.draft-item-row[data-idx="${focusIdx}"]`);
         if (row) {
           row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          const rect = row.getBoundingClientRect();
+          const currentScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
+          const targetY = currentScroll + rect.top - (window.innerHeight / 2) + (rect.height / 2);
+          window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+
           row.style.transition = 'box-shadow 0.35s ease, border-color 0.35s ease, transform 0.25s ease';
           row.style.borderColor = '#55F7A5';
-          row.style.boxShadow = '0 0 18px rgba(85, 247, 165, 0.45)';
+          row.style.boxShadow = '0 0 22px rgba(85, 247, 165, 0.6)';
           row.style.transform = 'scale(1.02)';
 
           const input = row.querySelector('.draft-item-grams-input');
@@ -270,12 +247,16 @@ function refreshMealLogView(focusIdx = null) {
             row.style.borderColor = '';
             row.style.boxShadow = '';
             row.style.transform = '';
-          }, 1800);
+          }, 2000);
         } else {
           const draftCard = document.getElementById('meal-draft-card');
           draftCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 100);
+      };
+
+      requestAnimationFrame(scrollToAdded);
+      setTimeout(scrollToAdded, 80);
+      setTimeout(scrollToAdded, 250);
     }
   }
 }
@@ -291,12 +272,6 @@ export function bindMealLogEvents() {
 
   const foodSearchInput = document.getElementById('food-search-input');
   const foodSearchResults = document.getElementById('food-search-results');
-
-  const addExtraFoodBtn = document.getElementById('add-extra-food-btn');
-  const extraFoodModal = document.getElementById('add-extra-food-modal');
-  const closeExtraFoodModalBtn = document.getElementById('close-extra-food-modal-btn');
-  const extraFoodInput = document.getElementById('extra-food-search-input');
-  const extraFoodResults = document.getElementById('extra-food-results');
 
   // زر الرجوع
   backBtn?.addEventListener('click', () => {
@@ -372,52 +347,6 @@ export function bindMealLogEvents() {
         }
       });
     });
-  });
-
-  // نافذة إضافة صنف آخر
-  addExtraFoodBtn?.addEventListener('click', () => {
-    extraFoodModal?.classList.add('open');
-    if (extraFoodInput) {
-      extraFoodInput.value = '';
-      renderExtraFoodList(searchFoods('', 10));
-      setTimeout(() => extraFoodInput.focus(), 80);
-    }
-  });
-
-  closeExtraFoodModalBtn?.addEventListener('click', () => {
-    extraFoodModal?.classList.remove('open');
-  });
-
-  const renderExtraFoodList = (results) => {
-    if (!extraFoodResults) return;
-    if (!results.length) {
-      extraFoodResults.innerHTML = '<div style="padding: 10px; color: #8C9992; font-size: 0.85rem; text-align: center;">اكتب اسم الصنف للبحث...</div>';
-      return;
-    }
-    extraFoodResults.innerHTML = results.map(f => `
-      <button type="button" class="food-search-result-btn" data-extra-food-id="${f.id}">
-        <div>
-          <b>${f.name || f.nameAr}</b>
-          ${f.nameEn ? `<small>${f.nameEn}</small>` : ''}
-        </div>
-        <span class="food-kcal-badge">${f.per100?.kcal || 0} kcal / 100g</span>
-      </button>
-    `).join('');
-
-    extraFoodResults.querySelectorAll('[data-extra-food-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const f = foodById(btn.getAttribute('data-extra-food-id'));
-        if (f) {
-          extraFoodModal?.classList.remove('open');
-          addFoodToDraft(f);
-        }
-      });
-    });
-  };
-
-  extraFoodInput?.addEventListener('input', () => {
-    const q = extraFoodInput.value.trim();
-    renderExtraFoodList(searchFoods(q, 18));
   });
 
   // تعديل الغرامات اللحظي لكل صنف
@@ -524,7 +453,6 @@ export function bindMealLogEvents() {
       notificationService.showToast(photoResult.warningAr, 'warning');
       refreshMealLogView(0);
     }
-    if (!photoResult.success) notificationService.showToast(photoResult.warningAr, 'warning');
   });
 
   // تأكيد وحفظ الوجبة في السجل اليومي المركزي

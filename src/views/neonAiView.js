@@ -7,6 +7,7 @@ import { aiService } from '../services/aiService.js';
 import { store } from '../state/store.js';
 import { speechService } from '../services/speechService.js';
 import { notificationService } from '../services/notificationService.js';
+import { neonIcon } from '../utils/neonIcons.js';
 
 // ذاكرة المحادثة المستمرة لشاشة NEON AI
 const screenChatHistory = [];
@@ -53,8 +54,8 @@ export function renderNeonAiView() {
             <button id="neon-ai-clear-chat-btn" class="btn-icon" style="width: 34px; height: 34px; font-size: 0.95rem; border-color: rgba(255,85,85,0.3); color: #ff7777;" title="مسح سجل المحادثة والبدء من جديد" aria-label="مسح المحادثة">
               🗑️
             </button>
-            <button id="neon-ai-settings-toggle-btn" class="btn-icon" style="width: 34px; height: 34px; font-size: 1rem; border-color: rgba(85,247,165,0.3);" title="إعدادات المفتاح والنموذج" aria-label="الإعدادات">
-              ⚙️
+            <button id="neon-ai-settings-toggle-btn" class="btn-icon" style="width: 34px; height: 34px; font-size: 1rem; border-color: rgba(85,247,165,0.3); display: flex; align-items: center; justify-content: center;" title="إعدادات المفتاح والنموذج" aria-label="الإعدادات">
+              ${neonIcon('pencil', 16)}
             </button>
           </div>
         </div>
@@ -62,25 +63,25 @@ export function renderNeonAiView() {
         <!-- شريط اطلاع الذكاء الاصطناعي على السجلات الحية -->
         <div style="display: flex; gap: 6px; overflow-x: auto; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(85,247,165,0.15); scrollbar-width: none; -webkit-overflow-scrolling: touch;">
           <div class="badge" style="flex-shrink: 0; background: ${isOverCals ? 'rgba(255,85,85,0.12)' : 'rgba(85,247,165,0.08)'}; color: #B8C0BC; font-size: 0.72rem; display: flex; align-items: center; gap: 5px; border: 1px solid ${isOverCals ? 'rgba(255,85,85,0.3)' : 'rgba(85,247,165,0.2)'}; white-space: nowrap;">
-            <span>🔥</span>
+            <span>${neonIcon('flame', 14)}</span>
             <span>الكلية: <strong style="color: #FFFFFF; font-family: monospace;">${targetCals.toLocaleString('en-US')}</strong></span>
             <span style="color: rgba(255,255,255,0.25);">|</span>
             <span>المستهلك: <strong style="color: ${isOverCals ? '#FF5555' : '#55F7A5'}; font-family: monospace;">${consumedCals.toLocaleString('en-US')}</strong></span>
             <span style="color: rgba(255,255,255,0.25);">|</span>
             ${isOverCals ? `
-              <span style="color: #FF5555; font-weight: 800;">تجاوز بـ ${(consumedCals - targetCals).toLocaleString('en-US')} سعرة!</span>
+              <span style="color: #FF5555; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">تجاوز بـ ${(consumedCals - targetCals).toLocaleString('en-US')} سعرة! ${neonIcon('alert', 12)}</span>
             ` : `
               <span style="color: #55F7A5; font-weight: 800;">المتبقي بعد الخصم: <strong style="color: #FFFFFF; font-family: monospace;">${remCals.toLocaleString('en-US')}</strong> سعرة</span>
             `}
           </div>
           <div class="badge" style="flex-shrink: 0; white-space: nowrap; background: rgba(85,247,165,0.08); color: #B8C0BC; font-size: 0.72rem; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(85,247,165,0.2);">
-            💧 ماء: <strong style="color: #FFFFFF;">${waterGlasses}</strong> أكواب
+            ${neonIcon('water', 14)} ماء: <strong style="color: #FFFFFF;">${waterGlasses}</strong> أكواب
           </div>
           <div class="badge" style="flex-shrink: 0; white-space: nowrap; background: rgba(85,247,165,0.08); color: #B8C0BC; font-size: 0.72rem; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(85,247,165,0.2);">
-            💊 مكملات: <strong style="color: #FFFFFF;">${suppsTaken}/${suppsTotal}</strong>
+            ${neonIcon('shield', 14)} مكملات: <strong style="color: #FFFFFF;">${suppsTaken}/${suppsTotal}</strong>
           </div>
           <div class="badge" style="flex-shrink: 0; white-space: nowrap; background: rgba(85,247,165,0.08); color: #B8C0BC; font-size: 0.72rem; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(85,247,165,0.2);">
-            🏋️ ${todayWorkout}
+            ${neonIcon('dumbbell', 14)} ${todayWorkout}
           </div>
         </div>
       </div>
@@ -88,7 +89,7 @@ export function renderNeonAiView() {
       <!-- لوحة إعدادات المفتاح والنموذج (قابلة للفتح/الإغلاق) -->
       <div id="neon-ai-settings-panel" class="neon-card" style="display: none; padding: 14px 16px; border-color: rgba(85,247,165,0.3); background: #06140b;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span style="font-size: 0.82rem; font-weight: 700; color: #55F7A5;">⚙️ إعدادات محرك NEON AI الذكي</span>
+          <span style="font-size: 0.82rem; font-weight: 700; color: #55F7A5; display: flex; align-items: center; gap: 6px;">${neonIcon('pencil', 14)} إعدادات محرك NEON AI الذكي</span>
           <button type="button" id="neon-ai-settings-close-btn" style="background: none; border: none; color: #8fa097; font-size: 0.85rem; cursor: pointer;">✕ إغلاق</button>
         </div>
         <div style="font-size: 0.75rem; color: #b2c2ba; margin-bottom: 10px; line-height: 1.4;">
@@ -117,27 +118,27 @@ export function renderNeonAiView() {
       <!-- مقترحات سريعة تفاعلية بأسلوب Chips أفقية متجاوبة بدون تكدس -->
       <div class="neon-ai-quick-scroll-row" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
         <button class="neon-ai-quick-btn" data-prompt="احسب 200غ صدر دجاج مع 150غ أرز مسلوق وسلطة">
-          <span style="font-size: 1rem;">🥗</span>
+          ${neonIcon('plate', 16)}
           <span>احسب وجبة</span>
         </button>
         <button class="neon-ai-quick-btn" data-prompt="كم متبقي لي من السعرات والبروتين اليوم وكيف أكملهم؟">
-          <span style="font-size: 1rem;">📊</span>
+          ${neonIcon('chart', 16)}
           <span>متبقي الماكروز</span>
         </button>
         <button class="neon-ai-quick-btn" data-prompt="ما هو تمرين اليوم بالتفصيل وكيف أطبقه؟">
-          <span style="font-size: 1rem;">🏋️</span>
+          ${neonIcon('dumbbell', 16)}
           <span>تمرين اليوم</span>
         </button>
         <button class="neon-ai-quick-btn" data-prompt="ما رأيك العلمي في الكرياتين والبروتين وكيف أتناولهم؟">
-          <span style="font-size: 1rem;">💊</span>
+          ${neonIcon('shield', 16)}
           <span>المكملات اليومية</span>
         </button>
         <button class="neon-ai-quick-btn" data-prompt="أشعر بألم في مفصل الكتف أثناء البنش، ما التعديل الآمن؟">
-          <span style="font-size: 1rem;">⚠️</span>
+          ${neonIcon('alert', 16)}
           <span>ألم الكتف</span>
         </button>
         <button class="neon-ai-quick-btn" data-prompt="ما هي أفضل استراتيجية للتدرج بالأوزان (Progressive Overload)؟">
-          <span style="font-size: 1rem;">📈</span>
+          ${neonIcon('chart', 16)}
           <span>التدرج بالأوزان</span>
         </button>
       </div>

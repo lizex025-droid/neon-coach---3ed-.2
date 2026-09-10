@@ -6,10 +6,9 @@
 import { store } from '../state/store.js';
 import { calculatePercentage } from '../domain/calculations.js';
 import { animateCountUp, animateRingOffset } from '../utils/animUtils.js';
-import { notificationService } from '../services/notificationService.js';
+import { neonIcon } from '../utils/neonIcons.js';
 
 export function renderTodayView() {
-  document.querySelector('body > #today-calorie-target-modal')?.remove();
   const state = store.getState();
   const { today, userProfile } = state;
 
@@ -49,10 +48,11 @@ export function renderTodayView() {
       <!-- قسم الترحيب ورسائل المدرب -->
       <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
         <h1 style="font-size: 1.8rem; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px;">
-          مساء الخير، ${userProfile.name || 'أحمد'}
+          مساء الخير، ${userProfile.name || 'متدرب نيون'}
         </h1>
         <span style="display: inline-flex; align-items: center; gap: 6px; color: #55F7A5; font-size: 0.88rem; font-weight: 600;">
-          <span>جاهز لليوم؟ واصل الالتزام ⚡</span>
+          <span>جاهز لليوم؟ واصل الالتزام</span>
+          ${neonIcon('flame', 16)}
         </span>
       </div>
 
@@ -60,8 +60,8 @@ export function renderTodayView() {
       <div id="today-calorie-card" class="neon-card" style="padding: 20px 18px; display: flex; flex-direction: column; gap: 16px; cursor: pointer;" title="اضغط لعرض خطة وسجل التغذية">
         
         <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 6px; color: #F59E0B; font-weight: 700; font-size: 0.95rem;">
-            <span>🔥</span>
+          <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-weight: 700; font-size: 0.95rem;">
+            ${neonIcon('flame', 20)}
             <span>سعرات اليوم</span>
           </div>
           <a href="#nutrition" style="color: #55F7A5; font-size: 0.82rem; font-weight: 700; text-decoration: none;">خطة التغذية ❯</a>
@@ -95,16 +95,17 @@ export function renderTodayView() {
                 ${today.targetCalories.toLocaleString('en-US')}
               </span>
               <span style="font-size: 0.8rem; color: #8F9692; margin-inline-start: 2px;">سعرة</span>
-              <button id="today-edit-target-cals-btn" style="background: rgba(85,247,165,0.1); border: 1px solid rgba(85,247,165,0.3); border-radius: 6px; color: #55F7A5; cursor: pointer; font-size: 0.7rem; font-weight: 700; padding: 2px 7px; margin-inline-start: auto;" title="تعديل هدف السعرات يدوياً">
-                ✏️ تعديل
+              <button id="today-edit-target-cals-btn" style="background: rgba(85,247,165,0.1); border: 1px solid rgba(85,247,165,0.3); border-radius: 6px; color: #55F7A5; cursor: pointer; font-size: 0.7rem; font-weight: 700; padding: 2px 7px; margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px;" title="تعديل هدف السعرات يدوياً">
+                ${neonIcon('pencil', 12)}
+                <span>تعديل</span>
               </button>
             </div>
 
             <!-- تفصيل المتبقي بعد الخصم -->
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.76rem; background: ${today.consumedCalories > today.targetCalories ? 'rgba(255,85,85,0.12)' : 'rgba(85,247,165,0.08)'}; border: 1px solid ${today.consumedCalories > today.targetCalories ? 'rgba(255,85,85,0.3)' : 'rgba(85,247,165,0.22)'}; border-radius: 8px; padding: 5px 9px;">
               <span style="color: #B8C0BC; white-space: nowrap; font-size: 0.72rem;">المتبقي بعد الخصم:</span>
-              <span style="font-weight: 800; font-family: monospace; color: ${today.consumedCalories > today.targetCalories ? '#FF6B6B' : '#55F7A5'}; white-space: nowrap; font-size: 0.75rem;">
-                ${today.consumedCalories > today.targetCalories ? `+${(today.consumedCalories - today.targetCalories).toLocaleString('en-US')} زيادة ⚠️` : `${(today.targetCalories - today.consumedCalories).toLocaleString('en-US')} متبقية ⚡`}
+              <span style="font-weight: 800; font-family: monospace; color: ${today.consumedCalories > today.targetCalories ? '#FF6B6B' : '#55F7A5'}; white-space: nowrap; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
+                ${today.consumedCalories > today.targetCalories ? `+${(today.consumedCalories - today.targetCalories).toLocaleString('en-US')} زيادة ${neonIcon('alert', 13)}` : `${(today.targetCalories - today.consumedCalories).toLocaleString('en-US')} متبقية ${neonIcon('flame', 13)}`}
               </span>
             </div>
 
@@ -181,7 +182,7 @@ export function renderTodayView() {
           
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-size: 0.95rem; font-weight: 700;">
-              <span>🏋️</span>
+              ${neonIcon('dumbbell', 22)}
               <span>تمرين اليوم</span>
             </div>
           </div>
@@ -192,7 +193,10 @@ export function renderTodayView() {
             </h2>
             <div style="display: flex; align-items: center; gap: 14px; font-size: 0.88rem; color: #B8C0BC;">
               <span>• ${today.todayWorkoutExercisesCount} تمارين</span>
-              <span>⏱️ ${today.todayWorkoutDuration}</span>
+              <span style="display: inline-flex; align-items: center; gap: 4px;">
+                ${neonIcon('timer', 16)}
+                <span>${today.todayWorkoutDuration}</span>
+              </span>
             </div>
           </div>
 
@@ -210,7 +214,7 @@ export function renderTodayView() {
         <div class="neon-card" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px; color: #38BDF8; font-weight: 700; font-size: 1rem;">
-              <span style="font-size: 1.3rem;">💧</span>
+              ${neonIcon('water', 26)}
               <div>
                 <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem;">تتبع الماء والترطيب</div>
                 <div style="font-size: 0.78rem; color: #8C9992;">الهدف اليومي: ${today.targetWaterLiters || 2.5} لتر (${today.targetGlasses} أكواب)</div>
@@ -270,7 +274,7 @@ export function renderTodayView() {
         <div class="neon-card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px;">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-weight: 700; font-size: 1rem;">
-              <span style="font-size: 1.3rem;">💊</span>
+              ${neonIcon('shield', 22)}
               <div>
                 <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem;">المكملات اليومية (Daily Stack)</div>
                 <div style="font-size: 0.78rem; color: #8C9992;">خطة مكملاتك وجرعاتها بالعربي والإنجليزي</div>
@@ -285,8 +289,9 @@ export function renderTodayView() {
             <div style="font-size: 0.86rem; color: #B8C0BC;">
               تم تناول <b style="color: #55F7A5;">${suppsTakenCount}</b> من أصل <b style="color: #FFFFFF;">${suppsTotalCount}</b> مكملات اليوم (${suppsPct}%)
             </div>
-            <a href="#water-supps" class="btn btn-primary" style="border-radius: 12px; padding: 8px 16px; font-size: 0.86rem; text-decoration: none; white-space: nowrap;">
-              فتح المكملات 💊
+            <a href="#water-supps" class="btn btn-primary" style="border-radius: 12px; padding: 8px 16px; font-size: 0.86rem; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+              <span>فتح المكملات</span>
+              ${neonIcon('shield', 14)}
             </a>
           </div>
         </div>
@@ -296,7 +301,7 @@ export function renderTodayView() {
       <!-- بطاقة: كيف طاقتك اليوم؟ (5 حالات طاقة - مطابقة للصورة 9C561622) -->
       <div class="neon-card" style="padding: 18px;">
         <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">
-          <span>⚡</span>
+          ${neonIcon('flame', 20)}
           <span>كيف طاقتك اليوم؟</span>
         </div>
         <p style="font-size: 0.82rem; color: #B8C0BC; margin-bottom: 12px;">
@@ -321,10 +326,13 @@ export function renderTodayView() {
 
       <!-- نافذة تعديل هدف السعرات اليومي يدوياً -->
       <div id="today-calorie-target-modal" class="ai-modal-overlay">
-        <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 22px; border-radius: 24px; max-width: 440px; margin: auto;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0;">🔥 تعديل هدف السعرات اليومي</h3>
-            <button id="close-today-cal-modal-btn" class="btn-icon">✕</button>
+        <div class="ai-modal-panel" style="height: auto; max-height: 90vh; padding: 22px; border-radius: 24px; max-width: 440px; margin: auto; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 8px; flex-wrap: wrap;">
+            <h3 style="color: #55F7A5; font-size: 1.1rem; margin: 0; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+              ${neonIcon('flame', 20)}
+              <span>تعديل هدف السعرات اليومي</span>
+            </h3>
+            <button type="button" id="close-today-cal-modal-btn" class="btn-icon" data-action="close" style="flex-shrink: 0;" aria-label="إغلاق">✕</button>
           </div>
           
           <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -333,27 +341,31 @@ export function renderTodayView() {
                 هدف السعرات الجديد
               </label>
               <div style="position: relative;">
-                <input type="number" id="today-manual-target-cals-input" class="stack-field" style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px;" value="${today.targetCalories}" min="500" max="8000" step="1" inputmode="numeric" />
-                <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8C9992; font-size: 0.85rem; font-weight: 700;">سعرة</span>
+                <input type="number" id="today-manual-target-cals-input" class="stack-field"
+                  inputmode="numeric" autocomplete="off"
+                  style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px; width: 100%; box-sizing: border-box;"
+                  value="${today.targetCalories}" min="800" max="8000" step="50" />
+                <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8C9992; font-size: 0.85rem; font-weight: 700; pointer-events: none;">سعرة</span>
               </div>
             </div>
 
-            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(85, 247, 165, 0.15); border-radius: 14px; padding: 14px;">
-              <div style="font-size: 0.82rem; color: #B8C0BC; margin-bottom: 8px;">
-                سيتم تلقائياً تحديث وتوزيع أهداف البروتين، الكاربوهيدرات، والدهون بنسب علمية متوازنة.
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(85, 247, 165, 0.15); border-radius: 14px; padding: 14px; overflow: visible;">
+              <div style="font-size: 0.82rem; color: #B8C0BC; margin-bottom: 10px; line-height: 1.5; word-break: keep-all; overflow-wrap: break-word;">
+                سيتم توزيع أهداف البروتين، الكاربوهيدرات، والدهون تلقائياً بنسب علمية.
               </div>
-              <div id="today-macros-preview" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; font-size: 0.82rem; color: #B8C0BC;">
-                <div>بروتين: <b id="today-preview-protein" style="color: #FFFFFF; font-family: monospace;">${today.targetProtein}غ</b></div>
-                <div>كارب: <b id="today-preview-carbs" style="color: #FFFFFF; font-family: monospace;">${today.targetCarbs}غ</b></div>
-                <div>دهون: <b id="today-preview-fats" style="color: #FFFFFF; font-family: monospace;">${today.targetFats}غ</b></div>
+              <div id="today-macros-preview" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center;">
+                <div style="font-size: 0.8rem; color: #B8C0BC;">بروتين<br><b id="today-preview-protein" style="color: #FFFFFF; font-family: monospace; font-size: 0.95rem;">${today.targetProtein}غ</b></div>
+                <div style="font-size: 0.8rem; color: #B8C0BC;">كارب<br><b id="today-preview-carbs" style="color: #FFFFFF; font-family: monospace; font-size: 0.95rem;">${today.targetCarbs}غ</b></div>
+                <div style="font-size: 0.8rem; color: #B8C0BC;">دهون<br><b id="today-preview-fats" style="color: #FFFFFF; font-family: monospace; font-size: 0.95rem;">${today.targetFats}غ</b></div>
               </div>
             </div>
 
             <div style="display: flex; gap: 10px;">
-              <button id="save-today-cal-target-btn" class="btn btn-primary" style="flex: 1; border-radius: 14px; font-weight: 800; padding: 12px;">
-                حفظ الهدف الجديد ✅
+              <button type="button" id="save-today-cal-target-btn" class="btn btn-primary" style="flex: 1; border-radius: 14px; font-weight: 800; padding: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>حفظ الهدف</span>
+                ${neonIcon('check', 16)}
               </button>
-              <button id="cancel-today-cal-modal-btn" class="btn btn-secondary" style="border-radius: 14px; padding: 12px 18px;">
+              <button type="button" id="cancel-today-cal-modal-btn" class="btn btn-secondary" data-action="close" style="border-radius: 14px; padding: 12px 18px;">
                 إلغاء
               </button>
             </div>
@@ -406,23 +418,48 @@ export function bindTodayViewEvents() {
   const cancelTodayCalBtn = document.getElementById('cancel-today-cal-modal-btn');
   const saveTodayCalBtn = document.getElementById('save-today-cal-target-btn');
   const todayCalInput = document.getElementById('today-manual-target-cals-input');
-  if (todayCalModal) {
-    todayCalModal.dataset.routeModal = 'today';
-    todayCalModal.setAttribute('role', 'dialog');
-    todayCalModal.setAttribute('aria-label', 'تعديل هدف السعرات اليومي');
-    document.body.appendChild(todayCalModal);
-    todayCalModal.addEventListener('click', e => { if (e.target === todayCalModal) todayCalModal.classList.remove('open'); });
-  }
+
+  const closeTodayCalModal = () => {
+    todayCalModal?.classList.remove('open');
+    document.querySelectorAll('#today-calorie-target-modal').forEach(m => m.classList.remove('open'));
+  };
 
   todayEditCalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     todayCalModal?.classList.add('open');
-    todayCalInput?.focus();
-    todayCalInput?.select();
+    // تأخير بسيط للسماح للمودال بالظهور قبل التركيز (iOS fix)
+    setTimeout(() => {
+      if (todayCalInput) {
+        todayCalInput.focus();
+        todayCalInput.select();
+      }
+    }, 50);
   });
 
-  closeTodayCalBtn?.addEventListener('click', () => todayCalModal?.classList.remove('open'));
-  cancelTodayCalBtn?.addEventListener('click', () => todayCalModal?.classList.remove('open'));
+  closeTodayCalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeTodayCalModal();
+  });
+  cancelTodayCalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeTodayCalModal();
+  });
+
+  todayCalModal?.addEventListener('click', (e) => {
+    if (
+      e.target === todayCalModal ||
+      e.target.closest('[data-action="close"]') ||
+      e.target.closest('#close-today-cal-modal-btn') ||
+      e.target.closest('#cancel-today-cal-modal-btn')
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeTodayCalModal();
+    }
+  });
 
   // معاينة الماكروز المحدثة
   todayCalInput?.addEventListener('input', () => {
@@ -443,13 +480,11 @@ export function bindTodayViewEvents() {
 
   saveTodayCalBtn?.addEventListener('click', () => {
     const newTarget = Number(todayCalInput?.value);
-    if (!Number.isFinite(newTarget) || newTarget < 500 || newTarget > 8000) {
-      notificationService.showToast('أدخل هدفاً بين 500 و8000 سعرة. لم يتم تغيير هدفك.', 'error');
-      todayCalInput?.focus();
+    if (!newTarget || newTarget < 500) {
       return;
     }
-    todayCalModal?.classList.remove('open');
     store.setTargetCalories(newTarget);
+    closeTodayCalModal();
     const container = document.getElementById('view-container');
     if (container) {
       container.innerHTML = renderTodayView();

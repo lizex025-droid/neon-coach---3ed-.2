@@ -8,9 +8,9 @@ import { calculatePercentage } from '../domain/calculations.js';
 import { findMealSwaps } from '../domain/nutritionEngine.js';
 import { macrosFor } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
+import { neonIcon } from '../utils/neonIcons.js';
 
 export function renderNutritionView() {
-  removeDetachedModals();
   const state = store.getState();
   const { today, mealPlan } = state;
   const loggedMeals = state.loggedMeals || [];
@@ -38,8 +38,8 @@ export function renderNutritionView() {
           <h1 style="font-size: 1.4rem; font-weight: 900; color: #FFFFFF; margin-bottom: 4px;">
             خطتي الغذائية
           </h1>
-          <span class="badge badge-verified">
-            🛡️ خطة معتمدة
+          <span class="badge badge-verified" style="display: inline-flex; align-items: center; gap: 4px;">
+            ${neonIcon('shield', 14)} خطة معتمدة
           </span>
         </div>
         <button id="shopping-list-btn" class="btn-icon" title="قائمة المشتريات" aria-label="قائمة المشتريات">
@@ -71,9 +71,9 @@ export function renderNutritionView() {
           <div style="flex: 1;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
               <span style="font-size: 0.85rem; color: #B8C0BC;">الهدف اليومي</span>
-              <button id="edit-calorie-target-btn" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 8px; gap: 4px; height: 24px; border-color: rgba(85,247,165,0.3);" title="تعديل هدف السعرات يدوياً">
+              <button id="edit-calorie-target-btn" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 8px; gap: 4px; height: 24px; border-color: rgba(85,247,165,0.3); display: inline-flex; align-items: center;" title="تعديل هدف السعرات يدوياً">
                 <span>تعديل</span>
-                <span>✏️</span>
+                ${neonIcon('pencil', 12)}
               </button>
             </div>
             <div id="target-calories-display-wrap" style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; cursor: pointer;" title="اضغط للتعديل اليدوي">
@@ -81,11 +81,11 @@ export function renderNutritionView() {
                 ${today.targetCalories.toLocaleString('en-US')}
               </span>
               <span style="font-size: 0.85rem; color: #B8C0BC;">سعرة</span>
-              <span style="margin-inline-start: auto; font-size: 1.2rem; color: ${isOverCalories ? '#FF5555' : '#55F7A5'};">🔥</span>
+              <span style="margin-inline-start: auto; display: inline-flex; align-items: center;">${neonIcon('flame', 22)}</span>
             </div>
 
             <!-- تفصيل السعرات الكلية والمخصوم والمتبقي -->
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.76rem; background: ${isOverCalories ? 'rgba(255,85,85,0.08)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isOverCalories ? 'rgba(255,85,85,0.3)' : 'rgba(85,247,165,0.18)'}; border-radius: 8px; padding: 4px 8px; margin-bottom: 12px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px; font-size: 0.76rem; background: ${isOverCalories ? 'rgba(255,85,85,0.08)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isOverCalories ? 'rgba(255,85,85,0.3)' : 'rgba(85,247,165,0.18)'}; border-radius: 8px; padding: 6px 8px; margin-bottom: 12px; word-break: break-word;">
               <span style="color: #B8C0BC;">الكلية: <b style="color: #FFFFFF;">${today.targetCalories.toLocaleString('en-US')}</b> - الخصم: <b style="color: ${isOverCalories ? '#FF5555' : '#55F7A5'};">${(today.consumedCalories || 0).toLocaleString('en-US')}</b></span>
               <span style="font-weight: 800; color: ${isOverCalories ? '#FF5555' : '#55F7A5'}; font-family: monospace;">
                 = ${isOverCalories ? `تجاوز +${(today.consumedCalories - today.targetCalories).toLocaleString('en-US')}` : `المتبقي ${Math.max(0, today.targetCalories - today.consumedCalories).toLocaleString('en-US')} سعرة`}
@@ -123,7 +123,7 @@ export function renderNutritionView() {
         <!-- شريط تم تناول السعرات -->
         <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.88rem; margin-bottom: 6px; padding-top: 10px; border-top: 1px solid rgba(85,247,165,0.12);">
           <div style="display: flex; align-items: center; gap: 6px; color: #FFFFFF;">
-            <span>🍽️</span>
+            ${neonIcon('plate', 18)}
             <span>تم تناول <b style="color: ${isOverCalories ? '#FF5555' : '#55F7A5'}; font-family: monospace;">${today.consumedCalories.toLocaleString('en-US')}</b> سعرة</span>
           </div>
           ${isOverCalories ? `
@@ -143,7 +143,7 @@ export function renderNutritionView() {
         ${isOverCalories ? `
           <div style="margin-top: 12px; background: rgba(255, 85, 85, 0.12); border: 1px solid #FF5555; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; color: #FF8888; font-size: 0.85rem; font-weight: 700; box-shadow: 0 0 14px rgba(255,85,85,0.25);">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.2rem;">⚠️</span>
+              ${neonIcon('alert', 20)}
               <span>تم أكل <strong style="color: #FFFFFF; font-family: monospace;">${actualPct}%</strong> من سعرات اليوم</span>
             </div>
             <span class="badge" style="background: rgba(255,85,85,0.25); color: #FF5555; border: 1px solid #FF5555; font-family: monospace; font-size: 0.78rem;">
@@ -162,7 +162,7 @@ export function renderNutritionView() {
             <small style="color: #8C9992; font-size: 0.8rem;">الوجبات التي أكلتها بالفعل اليوم (${loggedMeals.length})</small>
           </div>
           <a href="#meal-log" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 12px;">
-            <span>➕ إضافة أكل</span>
+            <span>➕ إضافة وجبة</span>
           </a>
         </div>
 
@@ -197,8 +197,8 @@ export function renderNutritionView() {
             </div>
 
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
-              <button type="button" class="btn btn-secondary edit-logged-meal-btn" data-meal-id="${meal.id}" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 10px;">
-                ✏️ تعديل
+              <button type="button" class="btn btn-secondary edit-logged-meal-btn" data-meal-id="${meal.id}" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;">
+                ${neonIcon('pencil', 14)} تعديل
               </button>
               <button type="button" class="btn btn-secondary delete-logged-meal-btn" data-meal-id="${meal.id}" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 10px; color: #FF6B6B; border-color: rgba(255,107,107,0.3);">
                 🗑️ حذف
@@ -207,25 +207,19 @@ export function renderNutritionView() {
           </div>
         `).join('') : `
           <div class="neon-card" style="padding: 18px; text-align: center; color: #8C9992; font-size: 0.88rem;">
-            لم تسجل أي وجبة اليوم بعد. اضغط "➕ إضافة أكل" لإضافة وجبتك الأولى.
+            لم تسجل أي وجبة اليوم بعد. اضغط "➕ إضافة وجبة" لإضافة وجبتك الأولى.
           </div>
         `}
       </div>
 
       <!-- تم إخفاء قسم (الخطة المقترحة من المدرب وتوزيع الوجبات الموصى بها مع إمكانية التبديل) مؤقتاً بناءً على الطلب -->
 
-      <!-- زر تسجيل وجبة الأساسي في الأسفل -->
-      <a href="#meal-log" class="btn btn-primary btn-lg btn-block" style="border-radius: 24px; font-size: 1.15rem; box-shadow: var(--neon-glow-btn);">
-        <span>تسجيل وجبة</span>
-        <span style="font-size: 1.3rem;">➕</span>
-      </a>
-
       <!-- نافذة تبديل الوجبة المنبثقة -->
       <div id="swap-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 20px; border-radius: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h3 style="color: #55F7A5; font-size: 1.2rem;">🔁 اختر بديل الوجبة</h3>
-            <button id="close-swap-modal-btn" class="btn-icon">✕</button>
+            <button type="button" id="close-swap-modal-btn" class="btn-icon" data-action="close" aria-label="إغلاق">✕</button>
           </div>
           <div id="swap-options-list" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 60vh;">
           </div>
@@ -237,9 +231,10 @@ export function renderNutritionView() {
         <div class="ai-modal-panel" style="height: auto; max-height: 88vh; padding: 22px; border-radius: 24px; max-width: 460px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
             <h3 style="color: #55F7A5; font-size: 1.25rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-              <span>✏️ تعديل الوجبة</span>
+              ${neonIcon('pencil', 20)}
+              <span>تعديل الوجبة</span>
             </h3>
-            <button type="button" id="close-edit-logged-meal-modal-btn" class="btn-icon" aria-label="إغلاق">✕</button>
+            <button type="button" id="close-edit-logged-meal-modal-btn" class="btn-icon" data-action="close" aria-label="إغلاق">✕</button>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -274,10 +269,11 @@ export function renderNutritionView() {
             <div id="edit-logged-meal-fields" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 2px;"></div>
 
             <div style="display: flex; gap: 10px; margin-top: 6px;">
-              <button type="button" id="save-edited-logged-meal-btn" class="btn btn-primary" style="flex: 1; border-radius: 14px; font-weight: 800; padding: 12px;">
-                حفظ التعديل ✅
+              <button type="button" id="save-edited-logged-meal-btn" class="btn btn-primary" style="flex: 1; border-radius: 14px; font-weight: 800; padding: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>حفظ التعديل</span>
+                ${neonIcon('check', 16)}
               </button>
-              <button type="button" id="cancel-edit-logged-meal-btn" class="btn btn-secondary" style="border-radius: 14px; padding: 12px 18px;">
+              <button type="button" id="cancel-edit-logged-meal-btn" class="btn btn-secondary" data-action="close" style="border-radius: 14px; padding: 12px 18px;">
                 إلغاء
               </button>
             </div>
@@ -289,8 +285,11 @@ export function renderNutritionView() {
       <div id="edit-calorie-target-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 22px; border-radius: 24px; max-width: 440px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0;">🔥 تعديل هدف السعرات اليومي</h3>
-            <button id="close-calorie-target-modal-btn" class="btn-icon">✕</button>
+            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+              ${neonIcon('flame', 22)}
+              <span>تعديل هدف السعرات اليومي</span>
+            </h3>
+            <button type="button" id="close-calorie-target-modal-btn" class="btn-icon" data-action="close" aria-label="إغلاق">✕</button>
           </div>
           
           <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -299,14 +298,14 @@ export function renderNutritionView() {
                 هدف السعرات الجديد
               </label>
               <div style="position: relative;">
-                <input type="number" id="manual-target-calories-input" class="stack-field" style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px;" value="${today.targetCalories}" min="500" max="8000" step="1" inputmode="numeric" />
+                <input type="number" id="manual-target-calories-input" class="stack-field" style="font-size: 1.35rem; font-weight: 900; font-family: monospace; color: #55F7A5; padding-inline-end: 55px;" value="${today.targetCalories}" min="800" max="8000" step="50" />
                 <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8C9992; font-size: 0.85rem; font-weight: 700;">سعرة</span>
               </div>
             </div>
 
             <!-- خيار توزيع الماكروز -->
             <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(85, 247, 165, 0.15); border-radius: 14px; padding: 14px;">
-              <div class="macro-options-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                 <span style="font-size: 0.85rem; font-weight: 800; color: #FFFFFF;">توزيع الماكروز</span>
                 <label style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #55F7A5; cursor: pointer;">
                   <input type="checkbox" id="auto-recalc-macros-checkbox" checked style="accent-color: #55F7A5;" />
@@ -342,19 +341,21 @@ export function renderNutritionView() {
                 <!-- تنبيه عدم التطابق والزر الذكي لتعديل وتوزيع الماكروز -->
                 <div id="macro-validation-warning" style="display: none; padding: 12px; border-radius: 12px; background: rgba(255, 85, 85, 0.12); border: 1px solid #FF5555; color: #FFAAAA; font-size: 0.8rem; line-height: 1.5;">
                   <div style="font-weight: 800; color: #FF5555; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                    <span>⚠️ تنبيه: الماكروز المدخلة لا تطابق هدف السعرات!</span>
+                    ${neonIcon('alert', 16)}
+                    <span>تنبيه: الماكروز المدخلة لا تطابق هدف السعرات!</span>
                   </div>
                   <div id="macro-validation-text"></div>
-                  <div style="font-size: 0.72rem; color: #B8C0BC; margin-top: 6px; border-top: 1px dashed rgba(255,85,85,0.3); padding-top: 4px;">
-                    💡 <strong>القاعدة العلمية:</strong> 1غ بروتين = 4 سعرة | 1غ كارب = 4 سعرة | 1غ دهون = 9 سعرة
+                  <div style="font-size: 0.72rem; color: #B8C0BC; margin-top: 6px; border-top: 1px dashed rgba(255,85,85,0.3); padding-top: 4px; display: flex; align-items: center; gap: 4px;">
+                    ${neonIcon('bulb', 14)} <strong>القاعدة العلمية:</strong> 1غ بروتين = 4 سعرة | 1غ كارب = 4 سعرة | 1غ دهون = 9 سعرة
                   </div>
                   <button type="button" id="auto-fix-macros-btn" class="btn btn-primary" style="width: 100%; margin-top: 8px; padding: 8px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 8px;">
                     ⚡ تعديل واقتراح تقسيم الماكروز لتطابق الهدف تماماً
                   </button>
                 </div>
 
-                <div id="macro-validation-success" style="display: none; padding: 8px 12px; border-radius: 10px; background: rgba(85, 247, 165, 0.1); border: 1px solid #55F7A5; color: #55F7A5; font-size: 0.78rem; font-weight: 700;">
-                  ✅ الماكروز مطابقة بدقة لهدف السعرات (100% علمياً)
+                <div id="macro-validation-success" style="display: none; padding: 8px 12px; border-radius: 10px; background: rgba(85, 247, 165, 0.1); border: 1px solid #55F7A5; color: #55F7A5; font-size: 0.78rem; font-weight: 700; align-items: center; gap: 6px;">
+                  ${neonIcon('check', 16)}
+                  <span>الماكروز مطابقة بدقة لهدف السعرات (100% علمياً)</span>
                 </div>
               </div>
 
@@ -366,10 +367,11 @@ export function renderNutritionView() {
             </div>
 
             <div style="display: flex; gap: 10px;">
-              <button id="save-calorie-target-btn" class="btn btn-primary" style="flex: 1; border-radius: 14px; font-weight: 800; padding: 12px;">
-                حفظ الهدف الجديد ✅
+              <button type="button" id="save-calorie-target-btn" class="btn btn-primary" style="flex: 1; border-radius: 14px; font-weight: 800; padding: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>حفظ الهدف الجديد</span>
+                ${neonIcon('check', 16)}
               </button>
-              <button id="cancel-calorie-target-btn" class="btn btn-secondary" style="border-radius: 14px; padding: 12px 18px;">
+              <button type="button" id="cancel-calorie-target-btn" class="btn btn-secondary" data-action="close" style="border-radius: 14px; padding: 12px 18px;">
                 إلغاء
               </button>
             </div>
@@ -430,6 +432,9 @@ export function bindNutritionEvents() {
     });
   });
 
+  // تنظيف أي نوافذ يتيمة قديمة ملحقة بـ body مباشرة
+  document.querySelectorAll('body > #edit-calorie-target-modal, body > #edit-logged-meal-modal, body > #swap-modal').forEach(el => el.remove());
+
   // عناصر نافذة تعديل الوجبة المسجلة
   const editModal = document.getElementById('edit-logged-meal-modal');
   const closeEditModalBtn = document.getElementById('close-edit-logged-meal-modal-btn');
@@ -441,24 +446,28 @@ export function bindNutritionEvents() {
   const swapModal = document.getElementById('swap-modal');
   let currentEditingMealId = null;
 
-  // نقل النوافذ المنبثقة إلى document.body مباشرة لضمان ظهورها أمام المستخدم بدقة 100% فوق كل العناصر ودون تأثر بالتمرير
-  [editModal, calModal, swapModal].forEach(modal => {
-    if (modal && modal.parentElement !== document.body) {
-      modal.dataset.routeModal = 'nutrition';
-      modal.setAttribute('role', 'dialog');
-      document.body.appendChild(modal);
-    }
-  });
-
   const closeEditModal = () => {
     editModal?.classList.remove('open');
+    document.querySelectorAll('#edit-logged-meal-modal').forEach(m => m.classList.remove('open'));
     currentEditingMealId = null;
   };
 
-  closeEditModalBtn?.addEventListener('click', closeEditModal);
-  cancelEditModalBtn?.addEventListener('click', closeEditModal);
+  closeEditModalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeEditModal();
+  });
+  cancelEditModalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeEditModal();
+  });
   editModal?.addEventListener('click', (e) => {
-    if (e.target === editModal) closeEditModal();
+    if (e.target === editModal || e.target.closest('[data-action="close"]') || e.target.closest('#close-edit-logged-meal-modal-btn') || e.target.closest('#cancel-edit-logged-meal-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeEditModal();
+    }
   });
 
   // فتح وتعبئة نافذة تعديل الوجبة
@@ -685,26 +694,77 @@ export function bindNutritionEvents() {
   const customInputs = document.getElementById('custom-macros-inputs');
   const previewDiv = document.getElementById('auto-macros-preview');
 
+  const closeCalModal = () => {
+    if (calModal) calModal.classList.remove('open');
+    document.querySelectorAll('#edit-calorie-target-modal').forEach(m => m.classList.remove('open'));
+  };
+
   const openCalModal = () => {
-    calModal?.classList.add('open');
-    calInput?.focus();
-    calInput?.select();
+    if (calModal) calModal.classList.add('open');
+    setTimeout(() => {
+      calInput?.focus();
+      calInput?.select();
+    }, 50);
   };
 
   openCalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     openCalModal();
   });
-  targetWrap?.addEventListener('click', openCalModal);
+  targetWrap?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openCalModal();
+  });
 
-  closeCalBtn?.addEventListener('click', () => calModal?.classList.remove('open'));
-  cancelCalBtn?.addEventListener('click', () => calModal?.classList.remove('open'));
+  closeCalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeCalModal();
+  });
+  cancelCalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeCalModal();
+  });
+
   calModal?.addEventListener('click', (e) => {
-    if (e.target === calModal) calModal.classList.remove('open');
+    if (
+      e.target === calModal ||
+      e.target.closest('[data-action="close"]') ||
+      e.target.closest('#close-calorie-target-modal-btn') ||
+      e.target.closest('#cancel-calorie-target-btn')
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeCalModal();
+    }
   });
+
+  const closeSwapModal = () => {
+    swapModal?.classList.remove('open');
+    document.querySelectorAll('#swap-modal').forEach(m => m.classList.remove('open'));
+  };
+
   swapModal?.addEventListener('click', (e) => {
-    if (e.target === swapModal) swapModal.classList.remove('open');
+    if (e.target === swapModal || e.target.closest('[data-action="close"]') || e.target.closest('#close-swap-modal-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeSwapModal();
+    }
   });
+
+  // صمام أمان: زر Esc للإغلاق الفوري لأي نافذة منبثقة مفتوحة
+  const handleEscModalClose = (e) => {
+    if (e.key === 'Escape') {
+      closeCalModal();
+      closeEditModal();
+      closeSwapModal();
+    }
+  };
+  document.removeEventListener('keydown', handleEscModalClose);
+  document.addEventListener('keydown', handleEscModalClose);
 
   // التحقق الحي من تطابق سعرات الماكروز مع هدف السعرات اليومية
   const updateMacroValidation = () => {
@@ -829,9 +889,8 @@ export function bindNutritionEvents() {
 
   saveCalBtn?.addEventListener('click', () => {
     const newTarget = Number(calInput?.value);
-    if (!Number.isFinite(newTarget) || newTarget < 500 || newTarget > 8000) {
-      notificationService.showToast('أدخل هدفاً بين 500 و8000 سعرة. لم يتم تغيير هدفك.', 'error');
-      calInput?.focus();
+    if (!newTarget || newTarget < 500) {
+      notificationService.showToast('يرجى إدخال رقم سعرات صحيح (500 على الأقل)', 'error');
       return;
     }
 
@@ -851,7 +910,7 @@ export function bindNutritionEvents() {
     }
 
     store.setTargetCalories(newTarget, customMacros);
-    calModal?.classList.remove('open');
+    closeCalModal();
     notificationService.showToast(`تم تعديل هدف السعرات اليومي إلى ${newTarget.toLocaleString('en-US')} سعرة بنجاح 🔥`, 'success');
     refreshNutritionView();
   });

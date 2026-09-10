@@ -7,7 +7,6 @@ import { renderHeader, bindHeaderEvents } from '../components/header.js';
 import { renderBottomNav } from '../components/navBar.js';
 import { renderAiDrawer, bindAiDrawerEvents } from '../components/aiDrawer.js';
 
-import { renderAuthView, bindAuthViewEvents, renderResetPasswordView, bindResetPasswordEvents } from '../views/authView.js';
 import { renderQuestionnaireView, bindQuestionnaireEvents } from '../views/questionnaireView.js';
 import { renderTodayView, bindTodayViewEvents } from '../views/todayView.js';
 import { renderWorkoutListView, bindWorkoutListEvents } from '../views/workoutListView.js';
@@ -23,12 +22,8 @@ import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
 import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
-import { authService } from '../services/authService.js';
-import { timerService } from '../services/timerService.js';
 
 export const ROUTES = {
-  'reset-password': { render: renderResetPasswordView, bind: bindResetPasswordEvents, showNav: false, showHeader: false },
-  auth: { render: renderAuthView, bind: bindAuthViewEvents, showNav: false, showHeader: false },
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
   today: { render: renderTodayView, bind: bindTodayViewEvents, showNav: true, showHeader: true },
   workout: { render: renderWorkoutListView, bind: bindWorkoutListEvents, showNav: true, showHeader: true },
@@ -48,8 +43,7 @@ export class Router {
   constructor(appElement) {
     this.appElement = appElement;
     this.currentRoute = '';
-    this.ready = false;
-    window.addEventListener('hashchange', () => { if (this.ready) this.handleRoute(); });
+    window.addEventListener('hashchange', () => this.handleRoute());
     
     // إعادة رسم الشاشة تلقائياً عند تغير الحالة المركزية
     store.subscribe(() => {
@@ -58,32 +52,58 @@ export class Router {
   }
 
   async init() {
-    await authService.ready;
-    this.ready = true;
-    authService.onAuthStateChange(() => this.handleRoute());
+    this.checkInitialAccess();
+  }
+
+  checkInitialAccess() {
+    const hash = window.location.hash || '';
+    const profile = store.getState()?.userProfile;
+    const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
+    const rawHash = hash.replace(/^#\/?/, '').split('?')[0];
+
+    // توجيه تلقائي: البدء بشاشة الأسئلة (الاستبيان) بدون طلب تسجيل الدخول إطلاقاً
+    if (!hasCompletedOnboarding) {
+      if (rawHash !== 'questionnaire') {
+        window.location.hash = '#questionnaire';
+        return;
+      }
+    } else {
+      // إذا كان قد أكمل الاستبيان ودخل بدون مسار محدد أو حاول طلب صفحة المصادقة
+      if (!rawHash || rawHash === 'auth') {
+        window.location.hash = '#today';
+        return;
+      }
+    }
+
     this.handleRoute();
   }
 
   handleRoute() {
-    let routeKey = location.hash.replace(/^#\/?/, '').split('?')[0];
-    if (routeKey === 'forty-day') routeKey = 'workout';
-    const isAuth = authService.isAuthenticated();
-    const completed = !!store.getState().userProfile?.onboardingCompleted;
-    if (!isAuth) routeKey = 'auth';
-    else if (authService.recovery) routeKey = 'reset-password';
-    else if (!completed && routeKey !== 'reset-password') routeKey = 'questionnaire';
-    else if (!ROUTES[routeKey] || routeKey === 'auth') routeKey = 'today';
-    if (routeKey === 'coach' && authService.getCurrentUser()?.role !== 'coach') routeKey = 'today';
-    const owner = authService.getCurrentUser()?.id || null;
-    if (this.currentRoute === routeKey && this.owner === owner) return;
-    this.owner = owner;
-    if (routeKey !== 'workout-session') {
-      timerService.stopSessionTimer();
-      timerService.stopRestTimer();
+    const hash = window.location.hash || '';
+    const rawHash = hash.replace(/^#\/?/, '') || '';
+    const routeKey = rawHash.split('?')[0];
+
+    const profile = store.getState()?.userProfile;
+    const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
+
+    // توجيه المستخدم الجديد إلى شاشة الأسئلة
+    if (!hasCompletedOnboarding && routeKey !== 'questionnaire') {
+      window.location.hash = '#questionnaire';
+      return;
     }
-    if (location.hash !== '#' + routeKey) history.replaceState(null, '', '#' + routeKey);
-    this.currentRoute = routeKey;
-    this.renderRoute(ROUTES[routeKey], routeKey);
+
+    // إبعاد المستخدم عن مسار المصادقة أو مسار الـ 40 يوم المحذوف
+    if (routeKey === 'auth' || routeKey === 'forty-day') {
+      window.location.hash = hasCompletedOnboarding ? '#today' : '#questionnaire';
+      return;
+    }
+
+    const defaultRoute = hasCompletedOnboarding ? 'today' : 'questionnaire';
+    const effectiveKey = ROUTES[routeKey] ? routeKey : defaultRoute;
+    const route = ROUTES[effectiveKey];
+    this.currentRoute = effectiveKey;
+
+    this.renderRoute(route, effectiveKey);
   }
 
   scrollToTop() {
@@ -100,7 +120,9 @@ export class Router {
   }
 
   renderRoute(route, routeKey) {
-    document.querySelectorAll('[data-route-modal]').forEach(modal => modal.remove());
+    // تنظيف أي نوافذ منبثقة ملحقة بـ body مباشرة قبل التبديل
+    document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
+
     let html = '';
 
     if (route.showHeader) {
@@ -123,16 +145,14 @@ export class Router {
   }
 
   refreshCurrentView() {
-    if (!this.currentRoute) return;
-    if (!authService.isAuthenticated() && this.currentRoute !== 'auth') { this.handleRoute(); return; }
-    if (this.currentRoute === 'auth' || this.currentRoute === 'questionnaire') return;
-    if (document.querySelector('.ai-modal-overlay.open, [role="dialog"][open]')) return;
-    if (document.activeElement?.matches('input,textarea,select,[role="slider"]')) return;
-    const route = ROUTES[this.currentRoute];
+    // تنظيف أي نوافذ منبثقة ملحقة بـ body مباشرة قبل إعادة الرسم
+    document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
+
+    const route = ROUTES[this.currentRoute] || ROUTES['today'];
     const container = document.getElementById('view-container');
-    if (container && route) {
+    if (container) {
       container.innerHTML = route.render();
-      route.bind?.();
+      if (route.bind) route.bind();
     }
   }
 }

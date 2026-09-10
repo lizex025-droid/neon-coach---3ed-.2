@@ -1,14 +1,11 @@
-import { cleanSnapshot } from '../state/initialState.js';
-import { syncService } from '../services/syncService.js';
 /**
  * NEON COACH - شاشة الملف الشخصي والإعدادات (Profile & Settings)
  */
 
 import { store } from '../state/store.js';
-import { authService } from '../services/authService.js';
 import { notificationService } from '../services/notificationService.js';
 import { calculateAge, calculateBMI, calculateNutritionTargets } from '../domain/calculations.js';
-import { renderMeasurementPicker, bindMeasurementPickers } from '../components/measurementPicker.js';
+import { neonIcon } from '../utils/neonIcons.js';
 
 export function renderProfileView() {
   const state = store.getState();
@@ -18,7 +15,8 @@ export function renderProfileView() {
   const currentWeight = Number(profile.currentWeight) || 75;
   const targetWeight = Number(profile.targetWeight) || currentWeight;
   const height = Number(profile.height) || 175;
-  const age = profile.age || calculateAge(profile.birthDate) || 25;
+  const birthDate = profile.birthDate || '2001-08-24';
+  const age = calculateAge(birthDate) || 25;
   const gender = profile.gender || 'male';
   const goal = profile.goal || 'fat_loss';
   const workoutDaysCount = profile.workoutDaysCount || 4;
@@ -45,13 +43,10 @@ export function renderProfileView() {
         </div>
         <div style="flex: 1; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <h2 id="display-name" style="font-size: 1.15rem; font-weight: 800; color: #FFFFFF; margin: 0;">${profile.name || 'أحمد'}</h2>
-            ${profile.provider === 'google' ? '<span class="badge" style="background: rgba(66,133,244,0.2); color: #8ab4f8; font-size: 0.68rem; padding: 2px 8px;">حساب Google 🌐</span>' :
-              profile.provider === 'apple' ? '<span class="badge" style="background: rgba(255,255,255,0.12); color: #FFFFFF; font-size: 0.68rem; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.1c.62-.75 1.04-1.8.93-2.85-.9.04-1.99.6-2.64 1.35-.57.66-1.07 1.72-.94 2.74 1.01.08 2.03-.49 2.65-1.24z"/></svg> Apple ID</span>' :
-              profile.provider === 'demo' ? '<span class="badge" style="background: rgba(85,247,165,0.18); color: #55F7A5; font-size: 0.68rem; padding: 2px 8px;">وضع تجريبي ⚡</span>' :
-              '<span class="badge badge-neon" style="font-size: 0.68rem; padding: 2px 8px;">بريد إلكتروني ✉️</span>'}
+            <h2 id="display-name" style="font-size: 1.15rem; font-weight: 800; color: #FFFFFF; margin: 0;">${profile.name || 'متدرب نيون'}</h2>
+            <span class="badge badge-neon" style="font-size: 0.68rem; padding: 2px 8px;">ملف شخصي محلي 📱</span>
           </div>
-          <div id="display-email" style="font-size: 0.8rem; color: #B8C0BC; margin-top: 2px; font-family: monospace;">${profile.email || 'ahmed@neoncoach.app'}</div>
+          ${profile.email ? `<div id="display-email" style="font-size: 0.8rem; color: #B8C0BC; margin-top: 2px; font-family: monospace;">${profile.email}</div>` : ''}
         </div>
       </div>
 
@@ -64,12 +59,12 @@ export function renderProfileView() {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">الاسم</label>
-            <input type="text" id="setting-name" value="${profile.name || 'أحمد'}" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.9rem;">
+            <input type="text" id="setting-name" value="${profile.name || ''}" placeholder="اسمك الكامل" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.9rem;">
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">البريد الإلكتروني</label>
-            <input type="email" id="setting-email" value="${profile.email || 'ahmed@neoncoach.app'}" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem; font-family: monospace;">
+            <input type="email" id="setting-email" value="${profile.email || ''}" placeholder="بريدك الإلكتروني" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem; font-family: monospace;">
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
@@ -80,7 +75,13 @@ export function renderProfileView() {
             </select>
           </div>
 
-${renderMeasurementPicker('setting-age', 'العمر', 'سنة', age, 18, 100)}
+          <div class="form-group" style="margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label" style="font-size: 0.82rem;">تاريخ الميلاد</label>
+              <span id="label-age" style="font-size: 0.72rem; color: #55F7A5; font-weight: 700;">${age} سنة</span>
+            </div>
+            <input type="date" id="setting-birthdate" value="${birthDate}" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem; text-align: center;">
+          </div>
         </div>
       </div>
 
@@ -91,10 +92,16 @@ ${renderMeasurementPicker('setting-age', 'العمر', 'سنة', age, 18, 100)}
           <span id="quick-bmi-badge" class="badge badge-neon" style="font-size: 0.72rem; padding: 2px 8px;">BMI: ${bmiInfo.bmi} (${bmiInfo.category})</span>
         </div>
 
-        <div style="display: grid; grid-template-columns: minmax(0,1fr); gap: 10px;">
-${renderMeasurementPicker('setting-height', 'الطول', 'سم', height, 100, 250)}
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.8rem;">الطول (سم)</label>
+            <input type="number" id="setting-height" value="${height}" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-weight: 700;">
+          </div>
 
-${renderMeasurementPicker('setting-current-weight', 'الوزن', 'كغ', currentWeight, 30, 400, 0.5)}
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.8rem;">الوزن الحالي (كغ)</label>
+            <input type="number" id="setting-current-weight" value="${currentWeight}" step="0.1" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.35); color: #55F7A5; font-weight: 800;">
+          </div>
 
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.8rem;">الوزن المطلوب (كغ)</label>
@@ -194,20 +201,22 @@ ${renderMeasurementPicker('setting-current-weight', 'الوزن', 'كغ', curren
           </button>
           <input type="file" id="import-data-json-file" accept=".json" style="display: none;" />
 
-          <button id="logout-app-btn" class="btn btn-secondary" style="width: 100%; padding: 10px; font-size: 0.84rem; border-radius: 10px; margin-top: 4px; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-weight: 700;">
-            <span>تسجيل الخروج من الحساب</span> 🚪
+          <button id="restart-questionnaire-btn" class="btn btn-secondary" style="width: 100%; padding: 10px; font-size: 0.84rem; border-radius: 10px; margin-top: 4px; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-weight: 700;">
+            <span>إعادة تحديد الخطة والأسئلة</span> 🔄
           </button>
 
-          <button id="reset-app-data-btn" class="btn btn-danger" style="width: 100%; padding: 9px; font-size: 0.8rem; border-radius: 10px; margin-top: 2px;">
-            <span>مسح البيانات وإعادة البدء</span> ⚠️
+          <button id="reset-app-data-btn" class="btn btn-danger" style="width: 100%; padding: 9px; font-size: 0.8rem; border-radius: 10px; margin-top: 2px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>مسح البيانات وإعادة البدء</span>
+            ${neonIcon('alert', 14)}
           </button>
         </div>
       </div>
 
       <!-- زر الحفظ الثابت بالأسفل -->
       <div style="position: sticky; bottom: 74px; z-index: 50; padding: 4px 0;">
-        <button id="profile-save-all-btn" class="btn btn-primary btn-block btn-lg" style="border-radius: 14px; font-size: 1rem; padding: 13px; box-shadow: 0 0 20px rgba(85,247,165,0.35);">
-          حفظ التغييرات 💾
+        <button id="profile-save-all-btn" class="btn btn-primary btn-block btn-lg" style="border-radius: 14px; font-size: 1rem; padding: 13px; box-shadow: 0 0 20px rgba(85,247,165,0.35); display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>حفظ التغييرات</span>
+          ${neonIcon('check', 16)}
         </button>
       </div>
 
@@ -216,11 +225,18 @@ ${renderMeasurementPicker('setting-current-weight', 'الوزن', 'كغ', curren
 }
 
 export function bindProfileEvents() {
-  bindMeasurementPickers();
   // تحديث العمر ومؤشر كتلة الجسم فوراً عند تغيير الأرقام
   function updateLiveMetrics() {
     const weight = Number(document.getElementById('setting-current-weight')?.value) || 75;
     const height = Number(document.getElementById('setting-height')?.value) || 175;
+    const birthDate = document.getElementById('setting-birthdate')?.value;
+
+    if (birthDate) {
+      const age = calculateAge(birthDate);
+      const ageLabel = document.getElementById('label-age');
+      if (ageLabel) ageLabel.textContent = `${age} سنة`;
+    }
+
     const bmiInfo = calculateBMI(weight, height);
     const bmiBadge = document.getElementById('quick-bmi-badge');
     if (bmiBadge) {
@@ -228,7 +244,7 @@ export function bindProfileEvents() {
     }
   }
 
-  ['setting-current-weight', 'setting-height', 'setting-age'].forEach(id => {
+  ['setting-current-weight', 'setting-height', 'setting-birthdate'].forEach(id => {
     const el = document.getElementById(id);
     el?.addEventListener('input', updateLiveMetrics);
     el?.addEventListener('change', updateLiveMetrics);
@@ -236,37 +252,41 @@ export function bindProfileEvents() {
 
   // زر الاحتساب التلقائي للسعرات والماء
   document.getElementById('btn-recalculate-simple')?.addEventListener('click', () => {
-    const weight = Number(document.getElementById('setting-current-weight')?.value) || 75;
-    const height = Number(document.getElementById('setting-height')?.value) || 175;
-    const age = Number(document.getElementById('setting-age')?.value);
-    const gender = document.getElementById('setting-gender')?.value || 'male';
-    const goal = document.getElementById('setting-goal')?.value || 'fat_loss';
+    const existingProfile = store.getState().userProfile || {};
+    const weight = Number(document.getElementById('setting-current-weight')?.value) || existingProfile.currentWeight || 75;
+    const height = Number(document.getElementById('setting-height')?.value) || existingProfile.height || 175;
+    const birthDate = document.getElementById('setting-birthdate')?.value || existingProfile.birthDate || '2001-08-24';
+    const gender = document.getElementById('setting-gender')?.value || existingProfile.gender || 'male';
+    const goal = document.getElementById('setting-goal')?.value || existingProfile.goal || 'fat_loss';
 
     const targets = calculateNutritionTargets({
       weight,
       height,
-      age,
-      birthDate: null,
+      birthDate,
       gender,
-      activityLevel: 'light',
-      goal
+      activityLevel: existingProfile.activityLevel || 'moderate',
+      goal,
+      selectedWeeklyLossRate: existingProfile.selectedWeeklyLossRate || existingProfile.weeklyLossPercent,
+      weeklyLossPercent: existingProfile.weeklyLossPercent,
+      age: calculateAge(birthDate)
     });
 
     const calsInput = document.getElementById('setting-target-calories');
     const waterInput = document.getElementById('setting-target-water');
 
     if (calsInput) calsInput.value = targets.targetCalories;
-    if (waterInput) waterInput.value = (Math.round((targets.waterMl / 1000) * 10) / 10).toFixed(1);
+    if (waterInput) waterInput.value = (Math.round((targets.targetWaterMl / 1000) * 10) / 10).toFixed(1);
 
     notificationService.showToast('تم احتساب السعرات والماء بنجاح ⚡', 'success');
   });
 
   // زر حفظ التغييرات
   document.getElementById('profile-save-all-btn')?.addEventListener('click', () => {
-    const name = document.getElementById('setting-name')?.value.trim() || 'أحمد';
-    const email = document.getElementById('setting-email')?.value.trim() || 'ahmed@neoncoach.app';
-    const gender = document.getElementById('setting-gender')?.value || 'male';
-    const age = Number(document.getElementById('setting-age')?.value);
+    const existingProfile = store.getState().userProfile || {};
+    const name = document.getElementById('setting-name')?.value.trim() || existingProfile.name || 'متدرب نيون';
+    const email = document.getElementById('setting-email')?.value.trim() || existingProfile.email || '';
+    const gender = document.getElementById('setting-gender')?.value || existingProfile.gender || 'male';
+    const birthDate = document.getElementById('setting-birthdate')?.value || existingProfile.birthDate || '';
     const currentWeight = Number(document.getElementById('setting-current-weight')?.value) || 75;
     const targetWeight = Number(document.getElementById('setting-target-weight')?.value) || currentWeight;
     const height = Number(document.getElementById('setting-height')?.value) || 175;
@@ -278,25 +298,22 @@ export function bindProfileEvents() {
 
     const targetCalories = Number(document.getElementById('setting-target-calories')?.value) || 2100;
     const targetWaterLiters = Number(document.getElementById('setting-target-water')?.value) || 2.4;
-    if (!Number.isInteger(age) || age < 18 || age > 100 || currentWeight < 30 || currentWeight > 400 || height < 100 || height > 250 || targetWeight < 30 || targetWeight > 400) {
-      notificationService.showToast('راجع العمر والطول والوزن قبل الحفظ.', 'error');
-      return;
-    }
 
     // حفظ في مخزن الحالة
     store.setUserProfile({
+      ...existingProfile,
       name,
       email,
       gender,
-      age,
-      birthDate: null,
+      birthDate,
       currentWeight,
       targetWeight,
       height,
       goal,
       workoutDaysCount,
       equipment,
-      unitSystem
+      unitSystem,
+      targetCalories
     });
 
     store.setTargetCalories(targetCalories);
@@ -316,7 +333,7 @@ export function bindProfileEvents() {
 
   // تصدير نسخة احتياطية
   document.getElementById('export-data-json-btn')?.addEventListener('click', () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleanSnapshot(store.getState()), null, 2));
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store.getState(), null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", `neon_coach_backup_${new Date().toISOString().split('T')[0]}.json`);
@@ -347,7 +364,7 @@ export function bindProfileEvents() {
         }
         store.restoreState(parsed);
         notificationService.showToast('تمت استعادة البيانات بنجاح 🚀', 'success');
-        syncService.flush().then(result => { if (result.success) window.location.reload(); });
+        setTimeout(() => window.location.reload(), 500);
       } catch (err) {
         alert('فشل استيراد الملف: ' + (err.message || 'الملف غير صالح'));
       }
@@ -356,27 +373,18 @@ export function bindProfileEvents() {
     importFileInput.value = '';
   });
 
-  // تسجيل الخروج من الحساب
-  document.getElementById('logout-app-btn')?.addEventListener('click', async () => {
-    const confirmed = confirm('هل أنت متأكد من رغبتك في تسجيل الخروج من الحساب؟');
-    if (confirmed) {
-      const result = await authService.logout();
-      if (!result.success) { notificationService.showToast(result.error, 'error'); return; }
-      notificationService.showToast('تم تسجيل الخروج بنجاح 👋', 'info');
-      setTimeout(() => {
-        window.location.hash = '#auth';
-      }, 300);
-    }
+  // إعادة تحديد الخطة والأسئلة
+  document.getElementById('restart-questionnaire-btn')?.addEventListener('click', () => {
+    window.location.hash = '#questionnaire';
   });
 
   // إعادة ضبط التطبيق ومسح البيانات
-  document.getElementById('reset-app-data-btn')?.addEventListener('click', async () => {
+  document.getElementById('reset-app-data-btn')?.addEventListener('click', () => {
     const confirmed = confirm('هل أنت متأكد من رغبتك في مسح كافة البيانات والبدء من جديد؟');
     if (confirmed) {
       store.resetState();
-      if (!(await syncService.flush()).success) return;
       alert('تم مسح البيانات بنجاح.');
-      window.location.hash = '#auth';
+      window.location.hash = '#questionnaire';
       window.location.reload();
     }
   });

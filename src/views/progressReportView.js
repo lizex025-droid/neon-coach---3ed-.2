@@ -14,6 +14,8 @@ import { store } from '../state/store.js';
 import { pdfService } from '../services/pdfService.js';
 import { notificationService } from '../services/notificationService.js';
 import { animateCountUp, animateRingOffset } from '../utils/animUtils.js';
+import { neonIcon } from '../utils/neonIcons.js';
+import { filterStrongestExercisePerMuscle } from '../domain/calculations.js';
 
 let activePeriod = '90'; // '7' | '30' | '90'
 
@@ -21,7 +23,7 @@ export function renderProgressReportView() {
   const state = store.getState();
   const report = state.progressReport || {};
   const user = state.userProfile || {};
-
+  const workoutHistory = store.getWorkoutHistory() || [];
 
   const currentWeight = user.currentWeight || report.currentDay?.weight || 118;
   const currentWaist = report.currentDay?.waistCm || 108;
@@ -58,7 +60,7 @@ export function renderProgressReportView() {
           NEON PROGRESS
         </span>
         <button id="report-info-btn" class="btn-icon no-print" aria-label="دليل القياس والتقدم" title="دليل قراءة المؤشرات">
-          ℹ️
+          ${neonIcon('bulb', 18)}
         </button>
       </div>
 
@@ -76,7 +78,7 @@ export function renderProgressReportView() {
         <div class="no-print" style="display: flex; align-items: center; gap: 8px;">
           <!-- فلتر الفترة -->
           <div style="display: flex; align-items: center; gap: 6px; background: #07100D; border: 1px solid rgba(85,247,165,0.3); border-radius: 12px; padding: 6px 12px; font-size: 0.88rem; color: #FFFFFF; font-weight: 700;">
-            <span>📅</span>
+            <span>${neonIcon('calendar', 16)}</span>
             <select id="report-period-select" style="background: transparent; border: none; color: #FFFFFF; font-size: 0.88rem; font-weight: 700; padding: 0; width: auto; cursor: pointer; outline: none;">
               <option value="90" ${activePeriod === '90' ? 'selected' : ''}>آخر 90 يوم</option>
               <option value="30" ${activePeriod === '30' ? 'selected' : ''}>آخر 30 يوم</option>
@@ -86,7 +88,8 @@ export function renderProgressReportView() {
 
           <!-- زر تسجيل قياس جديد -->
           <button id="open-measurement-modal-btn" class="btn btn-primary no-print" style="border-radius: 12px; padding: 8px 14px; font-size: 0.86rem; font-weight: 800; display: flex; align-items: center; gap: 6px;" title="تسجيل وزن أو قياس جديد">
-            <span>➕ قياس جديد</span>
+            ${neonIcon('pencil', 14)}
+            <span>قياس جديد</span>
           </button>
         </div>
       </div>
@@ -120,7 +123,7 @@ export function renderProgressReportView() {
             <!-- الوزن -->
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; align-items: center; font-size: 0.92rem;">
               <div style="display: flex; align-items: center; gap: 6px; color: #FFFFFF; font-weight: 600;">
-                <span>⚖️</span>
+                <span>${neonIcon('target', 16)}</span>
                 <span>الوزن</span>
               </div>
               <div style="text-align: center; color: #55F7A5; font-weight: 900; font-family: monospace;">
@@ -137,7 +140,7 @@ export function renderProgressReportView() {
             <!-- محيط الخصر -->
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; align-items: center; font-size: 0.92rem;">
               <div style="display: flex; align-items: center; gap: 6px; color: #FFFFFF; font-weight: 600;">
-                <span>📏</span>
+                <span>${neonIcon('target', 16)}</span>
                 <span>محيط الخصر</span>
               </div>
               <div style="text-align: center; color: #55F7A5; font-weight: 900; font-family: monospace;">
@@ -154,7 +157,7 @@ export function renderProgressReportView() {
             <!-- Bench Press (القوة) -->
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; align-items: center; font-size: 0.92rem;">
               <div style="display: flex; align-items: center; gap: 6px; color: #FFFFFF; font-weight: 600;">
-                <span>🏋️</span>
+                <span>${neonIcon('dumbbell', 16)}</span>
                 <span class="ltr-text">Bench Press</span>
               </div>
               <div style="text-align: center; color: #55F7A5; font-weight: 900; font-family: monospace;">
@@ -177,7 +180,7 @@ export function renderProgressReportView() {
       <div class="neon-card" style="padding: 18px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
           <div style="display: flex; align-items: center; gap: 6px; color: #FFFFFF; font-weight: 800; font-size: 0.95rem;">
-            <span>📈 اتجاه الوزن (${activePeriod} يوم)</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px;">${neonIcon('chart', 18)} اتجاه الوزن (${activePeriod} يوم)</span>
           </div>
           <span style="font-size: 0.78rem; color: #55F7A5; font-family: monospace; font-weight: 700;">
             ${periodData.startWeight} كغ ➔ ${periodData.currentWeight} كغ
@@ -199,7 +202,7 @@ export function renderProgressReportView() {
       <div class="neon-card" style="padding: 18px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
           <div style="display: flex; align-items: center; gap: 6px; color: #FFFFFF; font-weight: 800; font-size: 0.95rem;">
-            <span>🏋️ اتجاه القوة Bench Press (${activePeriod} يوم)</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px;">${neonIcon('dumbbell', 18)} اتجاه القوة Bench Press (${activePeriod} يوم)</span>
           </div>
           <span style="font-size: 0.78rem; color: #55F7A5; font-family: monospace; font-weight: 700;">
             ${periodData.startStrength} كغ ➔ ${periodData.currentStrength} كغ
@@ -223,7 +226,7 @@ export function renderProgressReportView() {
         <!-- التدريب -->
         <div class="neon-card" style="padding: 16px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 4px; color: #FFFFFF; font-weight: 700; font-size: 0.85rem;">
-            <span>🏋️</span>
+            <span>${neonIcon('dumbbell', 16)}</span>
             <span>التدريب</span>
           </div>
           <div class="neon-ring-container" style="width: 76px; height: 76px;">
@@ -241,7 +244,7 @@ export function renderProgressReportView() {
         <!-- التغذية -->
         <div class="neon-card" style="padding: 16px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 4px; color: #FFFFFF; font-weight: 700; font-size: 0.85rem;">
-            <span>🍽️</span>
+            <span>${neonIcon('plate', 16)}</span>
             <span>التغذية</span>
           </div>
           <div class="neon-ring-container" style="width: 76px; height: 76px;">
@@ -259,7 +262,7 @@ export function renderProgressReportView() {
         <!-- الماء -->
         <div class="neon-card" style="padding: 16px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 4px; color: #38BDF8; font-weight: 700; font-size: 0.85rem;">
-            <span>💧</span>
+            <span>${neonIcon('water', 16)}</span>
             <span>الماء</span>
           </div>
           <div class="neon-ring-container" style="width: 76px; height: 76px;">
@@ -280,8 +283,8 @@ export function renderProgressReportView() {
       <!-- بطاقة فحص تركيب الجسم InBody -->
       <div class="neon-card" id="inbody-card" style="padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; border-color: rgba(85,247,165,0.35);" title="اضغط لتعديل أو إضافة نتيجة فحص InBody">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(85,247,165,0.12); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-            🧬
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(85,247,165,0.12); display: flex; align-items: center; justify-content: center;">
+            ${neonIcon('camera', 24)}
           </div>
           <div>
             <div style="font-weight: 800; color: #FFFFFF; font-size: 1rem; display: flex; align-items: center; gap: 6px;">
@@ -296,7 +299,7 @@ export function renderProgressReportView() {
           </div>
         </div>
         <button class="btn-icon no-print" style="width: 36px; height: 36px;" title="إدخال نتيجة جديدة">
-          ⚙️
+          ${neonIcon('pencil', 16)}
         </button>
       </div>
 
@@ -304,7 +307,7 @@ export function renderProgressReportView() {
       <div class="neon-card" style="padding: 20px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
           <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: #FFFFFF; font-size: 1rem;">
-            <span>💡</span>
+            <span>${neonIcon('bulb', 20)}</span>
             <span>تحليل الأداء والتوصيات الذكية</span>
           </div>
           <span style="font-size: 0.76rem; color: #55F7A5; font-family: monospace;">AI INSIGHTS</span>
@@ -314,6 +317,61 @@ export function renderProgressReportView() {
         </p>
       </div>
 
+      <!-- بطاقة سجل تاريخ التمارين والتدريب (Workout History) -->
+      <div class="neon-card workout-history-card" style="padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: #FFFFFF; font-size: 1.05rem;">
+            <span>${neonIcon('calendar', 18)}</span>
+            <span>سجل تاريخ التمارين (Workout History)</span>
+          </div>
+          <span style="font-size: 0.78rem; color: #55F7A5; font-family: monospace; font-weight: 700;">
+            ${workoutHistory.length} جلسات تدريبية
+          </span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          ${workoutHistory.length === 0 ? `
+            <div style="text-align: center; color: #8C9992; padding: 18px; font-size: 0.9rem;">
+              لا توجد جلسات تدريب مسجلة حالياً. أكمل تمارينك في صفحة التدريب ليتم تسجيلها هنا تلقائياً!
+            </div>
+          ` : workoutHistory.map(session => `
+            <div class="workout-history-item" style="background: rgba(85,247,165,0.04); border: 1px solid rgba(85,247,165,0.18); border-radius: 14px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                <div>
+                  <div style="font-weight: 800; color: #FFFFFF; font-size: 0.98rem; display: flex; align-items: center; gap: 6px;">
+                    <span>⚡</span>
+                    <span>${escapeHtml(session.title || 'جلسة تدريب')}</span>
+                  </div>
+                  <div style="font-size: 0.78rem; color: #8C9992; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                    ${neonIcon('calendar', 13)} ${escapeHtml(session.dateLabel || '')}
+                  </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.76rem; font-family: monospace;">
+                  ${session.durationMinutes ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">${neonIcon('timer', 13)} ${session.durationMinutes} دقيقة</span>` : ''}
+                  ${session.totalVolumeKg ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;">⚖️ ${Number(session.totalVolumeKg).toLocaleString('ar-EG')} كغ حجم</span>` : ''}
+                  ${session.totalSets ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;">🔢 ${session.totalSets} جولات</span>` : ''}
+                </div>
+              </div>
+
+              <!-- تفاصيل التمارين وجولاتها في هذه الجلسة (إظهار أقوى تمرين فقط لكل عضلة) -->
+              ${session.exercises && session.exercises.length > 0 ? `
+                <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed rgba(85,247,165,0.15); padding-top: 10px;">
+                  ${filterStrongestExercisePerMuscle(session.exercises).map(ex => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.84rem; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                      <span style="color: #F1F5F9; font-weight: 600;">• ${escapeHtml(ex.nameAr || ex.name || 'تمرين')}</span>
+                      <span style="color: #55F7A5; font-family: monospace; font-size: 0.8rem; background: rgba(85,247,165,0.08); padding: 2px 8px; border-radius: 6px;">
+                        ${escapeHtml(ex.bestSet || (ex.setsCount ? `${ex.setsCount} جولات` : ''))}
+                      </span>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- زري الإجراءات السفليين (مشاركة وحفظ PDF) - مخفيان في الطباعة والـ PDF -->
       <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px;">
         
         <!-- زر مشاركة التقرير -->
@@ -341,7 +399,10 @@ export function renderProgressReportView() {
       <div id="measurement-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 22px; border-radius: 24px; max-width: 440px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0;">📏 تسجيل قياسات جديدة</h3>
+            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+              ${neonIcon('pencil', 20)}
+              <span>تسجيل قياسات جديدة</span>
+            </h3>
             <button id="close-measure-modal-btn" class="btn-icon">✕</button>
           </div>
 
@@ -368,8 +429,9 @@ export function renderProgressReportView() {
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button id="save-measure-btn" class="btn btn-primary btn-block" style="border-radius: 14px;">
-                ✓ حفظ القياسات وتحديث التقرير
+              <button id="save-measure-btn" class="btn btn-primary btn-block" style="border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>حفظ القياسات وتحديث التقرير</span>
+                ${neonIcon('check', 16)}
               </button>
             </div>
           </div>
@@ -382,7 +444,10 @@ export function renderProgressReportView() {
       <div id="inbody-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 22px; border-radius: 24px; max-width: 440px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0;">🧬 تحديث فحص تركيب الجسم InBody</h3>
+            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+              ${neonIcon('camera', 20)}
+              <span>تحديث فحص تركيب الجسم InBody</span>
+            </h3>
             <button id="close-inbody-modal-btn" class="btn-icon">✕</button>
           </div>
 
@@ -416,8 +481,9 @@ export function renderProgressReportView() {
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button id="save-inbody-btn" class="btn btn-primary btn-block" style="border-radius: 14px;">
-                ✓ حفظ نتيجة InBody
+              <button id="save-inbody-btn" class="btn btn-primary btn-block" style="border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>حفظ نتيجة InBody</span>
+                ${neonIcon('check', 16)}
               </button>
             </div>
           </div>
@@ -430,7 +496,10 @@ export function renderProgressReportView() {
       <div id="info-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 22px; border-radius: 24px; max-width: 460px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0;">ℹ️ دليل فهم مؤشرات التقدم</h3>
+            <h3 style="color: #55F7A5; font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+              ${neonIcon('bulb', 20)}
+              <span>دليل فهم مؤشرات التقدم</span>
+            </h3>
             <button id="close-info-modal-btn" class="btn-icon">✕</button>
           </div>
 
@@ -450,8 +519,9 @@ export function renderProgressReportView() {
               الالتزام فوق 80% في التدريب والتغذية والماء يضمن استمرارية النتائج على المدى البعيد دون حميات قاسية أو إجهاد مفرط.
             </div>
 
-            <button id="close-info-modal-btn-bottom" class="btn btn-secondary btn-block" style="border-radius: 12px; margin-top: 6px;">
-              فهمت ذلك 👍
+            <button id="close-info-modal-btn-bottom" class="btn btn-secondary btn-block" style="border-radius: 12px; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>فهمت ذلك</span>
+              ${neonIcon('check', 16)}
             </button>
           </div>
         </div>
@@ -651,12 +721,16 @@ function getPeriodMetrics(report, period, currentWeight, currentWaist, currentSt
     };
   } else {
     // 90 يوم
-    const startWeight = report.firstDay?.weight || 129;
-    const startWaist = report.firstDay?.waistCm || 122;
-    const startStrength = report.firstDay?.benchPressKg || 60;
+    const userProfile = store.getState()?.userProfile;
+    const startWeight = report.firstDay?.weight || userProfile?.startWeight || currentWeight;
+    const startWaist = report.firstDay?.waistCm || currentWaist;
+    const startStrength = report.firstDay?.benchPressKg || currentStrength;
     const weightChange = Math.round((currentWeight - startWeight) * 10) / 10;
     const waistChange = Math.round((currentWaist - startWaist) * 10) / 10;
     const strengthChange = Math.round((currentStrength - startStrength) * 10) / 10;
+
+    const wDiff = currentWeight - startWeight;
+    const sDiff = currentStrength - startStrength;
 
     return {
       startWeight,
@@ -668,8 +742,22 @@ function getPeriodMetrics(report, period, currentWeight, currentWaist, currentSt
       startStrength,
       currentStrength,
       strengthChange,
-      weightPoints: [startWeight, 127.5, 125.0, 123.0, 120.5, 119.2, currentWeight],
-      strengthPoints: [startStrength, 62.5, 65.0, 68.0, 72.5, 78.0, currentStrength],
+      weightPoints: [
+        startWeight,
+        Math.round((startWeight + wDiff * 0.2) * 10) / 10,
+        Math.round((startWeight + wDiff * 0.4) * 10) / 10,
+        Math.round((startWeight + wDiff * 0.6) * 10) / 10,
+        Math.round((startWeight + wDiff * 0.8) * 10) / 10,
+        currentWeight
+      ],
+      strengthPoints: [
+        startStrength,
+        Math.round((startStrength + sDiff * 0.2) * 10) / 10,
+        Math.round((startStrength + sDiff * 0.4) * 10) / 10,
+        Math.round((startStrength + sDiff * 0.6) * 10) / 10,
+        Math.round((startStrength + sDiff * 0.8) * 10) / 10,
+        currentStrength
+      ],
       labels: ['أول يوم', '45 يوم', '90 يوم']
     };
   }
