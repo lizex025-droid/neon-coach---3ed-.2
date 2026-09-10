@@ -346,6 +346,7 @@ class SyncService {
       const { data, error } = await supabase
         .from('custom_foods')
         .insert({
+          id: food.id,
           user_id: user.id,
           name: food.nameAr || food.name,
           category: food.category || 'عام',
@@ -360,6 +361,56 @@ class SyncService {
       return data;
     } catch (err) {
       console.warn('فشل حفظ الصنف المخصص سحابياً في Supabase:', err);
+      return null;
+    }
+  }
+
+  /**
+   * تحديث صنف مخصص في Supabase
+   */
+  async updateCustomFood(foodId, food) {
+    if (!isSupabaseConfigured() || !foodId || !food) return null;
+    const user = this.getStore()?.state?.auth?.user;
+    if (!user?.id) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('custom_foods')
+        .update({
+          name: food.nameAr || food.name,
+          category: food.category || 'عام',
+          calories: food.per100?.kcal || food.caloriesPer100g || 0,
+          protein: food.per100?.p || food.proteinPer100g || 0,
+          carbs: food.per100?.c || food.carbsPer100g || 0,
+          fats: food.per100?.f || food.fatsPer100g || 0,
+          serving_size: food.baseWeight || 100
+        })
+        .match({ id: foodId, user_id: user.id });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('فشل تحديث الصنف المخصص سحابياً في Supabase:', err);
+      return null;
+    }
+  }
+
+  /**
+   * حذف صنف مخصص من Supabase
+   */
+  async deleteCustomFood(foodId) {
+    if (!isSupabaseConfigured() || !foodId) return null;
+    const user = this.getStore()?.state?.auth?.user;
+    if (!user?.id) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('custom_foods')
+        .delete()
+        .match({ id: foodId, user_id: user.id });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('فشل حذف الصنف المخصص سحابياً في Supabase:', err);
       return null;
     }
   }

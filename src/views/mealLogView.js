@@ -176,8 +176,8 @@ export function renderMealLogView() {
               <span>ابحث وأضف صنفًا للوجبة</span>
             </label>
             <div style="display: flex; align-items: center; gap: 6px;">
-              <button type="button" id="meallog-open-custom-food-btn" class="btn btn-outline-neon btn-sm" style="font-size: 0.74rem; padding: 3px 10px; border-radius: 10px; border-color: rgba(85,247,165,0.4); color: #55F7A5; background: rgba(85,247,165,0.08); display: inline-flex; align-items: center; gap: 4px;" title="إضافة أكلة يدوياً لقاعدة البيانات">
-                <span>➕ أكلة غير موجودة؟</span>
+              <button type="button" id="meallog-open-custom-food-btn" class="btn btn-outline-neon btn-sm" style="font-size: 0.74rem; padding: 3px 10px; border-radius: 10px; border-color: rgba(85,247,165,0.4); color: #55F7A5; background: rgba(85,247,165,0.08); display: inline-flex; align-items: center; gap: 4px;" title="إضافة أو تعديل أكلة في قاعدة البيانات">
+                <span>🥗 أكلاتي المخصصة / إضافة</span>
               </button>
               <span class="badge" style="background: rgba(85,247,165,0.12); color: #55F7A5; border: 1px solid rgba(85,247,165,0.3); font-size: 0.72rem; padding: 2px 8px;">
                 ${IMPORTED_FOOD_COUNT} صنف
@@ -329,17 +329,41 @@ export function bindMealLogEvents() {
     refreshMealLogView(targetIdx);
   };
 
-  // تفعيل نافذة إضافة أكلة يدوياً لقاعدة البيانات
+  // تفعيل نافذة إضافة وتعديل الأكلات في قاعدة البيانات
   const customModal = bindCustomFoodModal({
     modalId: 'meallog-custom-food-modal',
     triggerBtn: document.getElementById('meallog-open-custom-food-btn'),
-    onSaved: (newFood) => {
+    onSaved: (savedFood, mode) => {
       if (foodSearchInput) foodSearchInput.value = '';
       if (foodSearchResults) {
         foodSearchResults.style.display = 'none';
         foodSearchResults.innerHTML = '';
       }
-      addFoodToDraft(newFood);
+      if (mode === 'create') {
+        addFoodToDraft(savedFood);
+      } else if (mode === 'edit' && savedFood) {
+        // تحديث أي أصناف موجودة بالفعل في المسودة الحالية بنفس الصنف المعدل
+        let modified = false;
+        activeDraft.items.forEach(item => {
+          if (item.id === savedFood.id) {
+            item.name = savedFood.name || savedFood.nameAr || item.name;
+            item.caloriesPer100g = savedFood.per100?.kcal || 0;
+            item.proteinPer100g = savedFood.per100?.p || 0;
+            item.carbsPer100g = savedFood.per100?.c || 0;
+            item.fatsPer100g = savedFood.per100?.f || 0;
+            const factor = (item.grams || 100) / 100;
+            item.calories = Math.round(item.caloriesPer100g * factor);
+            item.protein = Math.round(item.proteinPer100g * factor);
+            item.carbs = Math.round(item.carbsPer100g * factor);
+            item.fats = Math.round(item.fatsPer100g * factor);
+            modified = true;
+          }
+        });
+        if (modified) {
+          recalcDraft(activeDraft);
+          refreshMealLogView();
+        }
+      }
     }
   });
 
@@ -357,36 +381,72 @@ export function bindMealLogEvents() {
       foodSearchResults.innerHTML = `
         <div style="padding: 14px 10px; text-align: center; color: #8C9992; font-size: 0.86rem; display: flex; flex-direction: column; align-items: center; gap: 8px;">
           <div>لم نجد صنفًا مطابقًا لـ "<span style="color: #FFFFFF; font-weight: 700;">${escapeHtml(q)}</span>"</div>
-          <button type="button" id="search-empty-add-custom-btn" class="btn btn-primary btn-sm" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 12px;">
-            ➕ أضف "${escapeHtml(q)}" يدوياً لقاعدة البيانات
-          </button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+            <button type="button" id="search-empty-add-custom-btn" class="btn btn-primary btn-sm" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 12px;">
+              ➕ أضف "${escapeHtml(q)}" يدوياً لقاعدة البيانات
+            </button>
+            <button type="button" id="search-empty-manage-custom-btn" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px;">
+              📋 إدارة أكلاتي
+            </button>
+          </div>
         </div>
       `;
       document.getElementById('search-empty-add-custom-btn')?.addEventListener('click', () => {
         customModal?.open(q);
       });
+      document.getElementById('search-empty-manage-custom-btn')?.addEventListener('click', () => {
+        customModal?.open({ tab: 'list' });
+      });
       return;
     }
     foodSearchResults.innerHTML = results.map(f => `
-      <button type="button" class="food-search-result-btn" data-food-id="${f.id}">
-        <div>
-          <b>${escapeHtml(f.name || f.nameAr)}</b>
-          ${f.nameEn ? `<small>${escapeHtml(f.nameEn)}</small>` : ''}
-          ${f.isCustom ? '<span style="color: #55F7A5; font-size: 0.72rem; margin-right: 4px; font-weight: 700;">(مخصص)</span>' : ''}
-        </div>
-        <span class="food-kcal-badge">${f.per100?.kcal || 0} kcal / 100g</span>
-      </button>
-    `).join('') + `
-      <div style="padding: 8px 12px; border-top: 1px solid rgba(85,247,165,0.15); display: flex; justify-content: space-between; align-items: center; background: rgba(5,13,9,0.85); border-radius: 0 0 14px 14px;">
-        <span style="font-size: 0.76rem; color: #8C9992;">الصنف غير موجود؟</span>
-        <button type="button" id="search-footer-add-custom-btn" class="btn btn-outline-neon btn-sm" style="font-size: 0.74rem; padding: 3px 10px; border-radius: 10px;">
-          ➕ أضفه يدوياً
+      <div class="food-search-result-row" style="display: flex; align-items: center; gap: 6px; width: 100%;">
+        <button type="button" class="food-search-result-btn" data-food-id="${f.id}" style="flex: 1;">
+          <div>
+            <b>${escapeHtml(f.name || f.nameAr)}</b>
+            ${f.nameEn ? `<small>${escapeHtml(f.nameEn)}</small>` : ''}
+            ${f.isCustom ? '<span style="color: #55F7A5; font-size: 0.72rem; margin-right: 4px; font-weight: 700;">(مخصص)</span>' : ''}
+          </div>
+          <span class="food-kcal-badge">${f.per100?.kcal || 0} kcal / 100g</span>
         </button>
+        ${f.isCustom ? `
+          <button type="button" class="edit-custom-food-search-btn" data-custom-id="${f.id}" title="تعديل أو حذف الصنف من قاعدة البيانات" style="background: #07100D; border: 1px solid rgba(85,247,165,0.25); border-radius: 12px; color: #55F7A5; padding: 9px 10px; font-size: 0.82rem; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;">
+            <span>✏️</span>
+            <span style="font-size: 0.72rem; font-weight: 700;">تعديل</span>
+          </button>
+        ` : ''}
+      </div>
+    `).join('') + `
+      <div style="padding: 8px 12px; border-top: 1px solid rgba(85,247,165,0.15); display: flex; justify-content: space-between; align-items: center; background: rgba(5,13,9,0.85); border-radius: 0 0 14px 14px; gap: 8px; flex-wrap: wrap;">
+        <span style="font-size: 0.76rem; color: #8C9992;">الصنف غير موجود أو تريد إدارة أكلاتك؟</span>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" id="search-footer-manage-custom-btn" class="btn btn-secondary btn-sm" style="font-size: 0.74rem; padding: 4px 8px; border-radius: 10px;">
+            📋 أكلاتي
+          </button>
+          <button type="button" id="search-footer-add-custom-btn" class="btn btn-outline-neon btn-sm" style="font-size: 0.74rem; padding: 4px 10px; border-radius: 10px;">
+            ➕ أضف صنفاً
+          </button>
+        </div>
       </div>
     `;
 
     document.getElementById('search-footer-add-custom-btn')?.addEventListener('click', () => {
       customModal?.open(q);
+    });
+
+    document.getElementById('search-footer-manage-custom-btn')?.addEventListener('click', () => {
+      customModal?.open({ tab: 'list' });
+    });
+
+    foodSearchResults.querySelectorAll('.edit-custom-food-search-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cid = btn.getAttribute('data-custom-id');
+        const customFood = foodById(cid);
+        if (customFood) {
+          customModal?.open({ editFood: customFood });
+        }
+      });
     });
 
     foodSearchResults.querySelectorAll('[data-food-id]').forEach(btn => {

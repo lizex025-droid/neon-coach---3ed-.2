@@ -7,7 +7,7 @@ import {
   mealNameFromItems,
   hasFoodSearchInput
 } from '../src/domain/nutritionCalculations.js';
-import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, addCustomFood, getCustomFoods, deleteCustomFood } from '../src/data/foods.js';
+import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, addCustomFood, updateCustomFood, getCustomFoods, deleteCustomFood } from '../src/data/foods.js';
 
 test('حساب الماكروز بدقة لوزن 150غ من قيم 100غ', () => {
   const result = scalePer100({ kcal: 200, p: 20, c: 10, f: 5, fiber: 2 }, 150);
@@ -109,3 +109,63 @@ test('قاعدة البيانات تضم الأصناف الـ 121 المعتم�
   assert.ok(searchEnglish.length > 0);
   assert.equal(searchEnglish[0].id, 'F068');
 });
+
+test('تعديل صنف مخصص في قاعدة البيانات وتحديث السعرات والماكروز والبحث عنه وحذفه', () => {
+  // 1. إضافة صنف تجريبي
+  const created = addCustomFood({
+    name: 'ساندويتش تونة لايت تجريبي',
+    calories: 150,
+    protein: 20,
+    carbs: 10,
+    fats: 3,
+    servingSize: 100
+  });
+
+  assert.ok(created.id);
+  assert.equal(created.name, 'ساندويتش تونة لايت تجريبي');
+  assert.equal(created.per100.kcal, 150);
+
+  // 2. تعديل الصنف بقيم جديدة
+  const updated = updateCustomFood(created.id, {
+    name: 'ساندويتش تونة بروتين إكسترا معدل',
+    calories: 220,
+    protein: 32,
+    carbs: 12,
+    fats: 4,
+    servingSize: 100
+  });
+
+  assert.equal(updated.id, created.id);
+  assert.equal(updated.name, 'ساندويتش تونة بروتين إكسترا معدل');
+  assert.equal(updated.per100.kcal, 220);
+  assert.equal(updated.per100.p, 32);
+  assert.equal(updated.per100.c, 12);
+  assert.equal(updated.per100.f, 4);
+
+  // 3. التحقق من التحديث في foodById
+  const fetched = foodById(created.id);
+  assert.ok(fetched);
+  assert.equal(fetched.name, 'ساندويتش تونة بروتين إكسترا معدل');
+  assert.equal(fetched.per100.kcal, 220);
+
+  // 4. التحقق من البحث بالاسم الجديد
+  const searchResults = searchFoods('تونة بروتين إكسترا', 5);
+  assert.ok(searchResults.length > 0);
+  assert.equal(searchResults[0].id, created.id);
+
+  // 5. احتساب الماكروز لوزن 200غ من الصنف المعدل
+  const macros200 = macrosFor(created.id, 200);
+  assert.equal(macros200.kcal, 440);
+  assert.equal(macros200.p, 64);
+  assert.equal(macros200.c, 24);
+  assert.equal(macros200.f, 8);
+
+  // 6. حذف الصنف والتأكد من إزالته
+  deleteCustomFood(created.id);
+  assert.equal(foodById(created.id), undefined);
+  const searchAfterDelete = searchFoods('ساندويتش تونة بروتين إكسترا معدل', 5);
+  assert.ok(!searchAfterDelete.some(f => f.id === created.id));
+  const customList = getCustomFoods();
+  assert.ok(!customList.some(f => f.id === created.id));
+});
+

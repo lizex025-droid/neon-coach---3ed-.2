@@ -463,6 +463,87 @@ export function addCustomFood({ name, calories, protein, carbs, fats, servingSiz
 }
 
 /**
+ * تعديل أكلة مخصصة محفوظة في قاعدة البيانات
+ */
+export function updateCustomFood(id, { name, calories, protein, carbs, fats, servingSize = 100 }) {
+  if (!id) throw new Error('معرف الصنف مطلوب للتعديل');
+  const trimmedName = (name || '').trim();
+  if (!trimmedName) throw new Error('يرجى كتابة اسم الأكلة');
+
+  const cleanNum = (v) => {
+    if (typeof v === 'string') {
+      v = v.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    }
+    return Math.max(0, Number(v) || 0);
+  };
+
+  const kcal = Math.round(cleanNum(calories));
+  const p = Math.round(cleanNum(protein) * 10) / 10;
+  const c = Math.round(cleanNum(carbs) * 10) / 10;
+  const f = Math.round(cleanNum(fats) * 10) / 10;
+  const baseWeight = Math.max(1, Math.round(cleanNum(servingSize) || 100));
+
+  const existingFood = foodById(id);
+  const updatedFood = {
+    ...(existingFood || {}),
+    id,
+    name: trimmedName,
+    nameAr: trimmedName,
+    baseWeight,
+    per100: {
+      kcal,
+      p,
+      c,
+      f,
+      fiber: existingFood?.per100?.fiber || 0
+    },
+    caloriesPer100g: kcal,
+    proteinPer100g: p,
+    carbsPer100g: c,
+    fatsPer100g: f,
+    source: 'custom',
+    isCustom: true,
+    available: true,
+    updatedAt: new Date().toISOString()
+  };
+
+  // تحديث في الذاكرة
+  const idx = FOODS.findIndex(f => f.id === id);
+  if (idx !== -1) {
+    FOODS[idx] = updatedFood;
+  } else {
+    FOODS.unshift(updatedFood);
+  }
+  FOOD_INDEX.set(id, updatedFood);
+
+  _inMemoryCustomFoods = _inMemoryCustomFoods.map(item => item.id === id ? updatedFood : item);
+  if (!_inMemoryCustomFoods.some(item => item.id === id)) {
+    _inMemoryCustomFoods.unshift(updatedFood);
+  }
+
+  // تحديث في localStorage
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const stored = getCustomFoods();
+      const newStored = stored.map(item => item.id === id ? updatedFood : item);
+      if (!newStored.some(item => item.id === id)) newStored.unshift(updatedFood);
+      localStorage.setItem('neon_custom_foods_v1', JSON.stringify(newStored));
+    }
+  } catch (e) {
+    console.warn('Failed to update custom food in localStorage:', e);
+  }
+
+  // مزامنة مع Supabase في الخلفية
+  try {
+    import('../services/syncService.js').then(({ syncService }) => {
+      syncService?.updateCustomFood?.(id, updatedFood);
+    }).catch(() => {});
+  } catch (e) {}
+
+  return updatedFood;
+}
+
+/**
  * حذف أكلة مخصصة من قاعدة البيانات
  */
 export function deleteCustomFood(id) {
@@ -479,6 +560,13 @@ export function deleteCustomFood(id) {
       const existing = getCustomFoods().filter(f => f.id !== id);
       localStorage.setItem('neon_custom_foods_v1', JSON.stringify(existing));
     }
+  } catch (e) {}
+
+  // حذف من Supabase في الخلفية
+  try {
+    import('../services/syncService.js').then(({ syncService }) => {
+      syncService?.deleteCustomFood?.(id);
+    }).catch(() => {});
   } catch (e) {}
 
   return true;

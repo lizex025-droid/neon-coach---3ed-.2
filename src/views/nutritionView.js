@@ -163,8 +163,8 @@ export function renderNutritionView() {
             <small style="color: #8C9992; font-size: 0.8rem;">الوجبات التي أكلتها بالفعل اليوم (${loggedMeals.length})</small>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <button type="button" id="open-custom-food-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(85,247,165,0.35);" title="إضافة أكلة يدوياً لقاعدة البيانات">
-              <span>➕ أكلة يدوية</span>
+            <button type="button" id="open-custom-food-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(85,247,165,0.35);" title="إضافة أو تعديل أكلة في قاعدة البيانات">
+              <span>🥗 أكلاتي المخصصة</span>
             </button>
             <a href="#meal-log" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 12px;">
               <span>➕ إضافة وجبة</span>
