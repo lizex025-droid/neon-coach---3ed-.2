@@ -327,6 +327,13 @@ class SyncService {
           metadata: metadata,
         });
       if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('فشل مزامنة رسالة الذكاء الاصطناعي:', err);
+      return null;
+    }
+  }
+
   /**
    * مزامنة صنف غذائي مخصص لقاعدة بيانات Supabase
    */
