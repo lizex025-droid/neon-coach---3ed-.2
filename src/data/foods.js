@@ -138,6 +138,10 @@ export const FOOD_ITEMS = [
     fatsPer100g: 10.6,
     fiberPer100g: 0,
     category: 'protein',
+    isCountBased: true,
+    pieceWeight: 50,
+    unitLabel: 'بيضة كاملة',
+    unitName: 'بيضة كاملة',
     allergens: ['eggs']
   },
   {
@@ -309,12 +313,26 @@ export const IMPORTED_FOODS = (foodSource?.foods || []).map(row => {
   const duplicate = seenFoodKeys.has(key);
   seenFoodKeys.add(key);
   const kcal = Number(row.calories_kcal) || 0;
+  
+  // الكشف عن أصناف البيض المستوردة
+  const arName = row.arabic_name || '';
+  const isEggWhite = row.id === 39 || row.id === 40 || arName.includes('بياض البيض');
+  const isWholeEgg = row.id === 38 || (arName.includes('بيض') && !isEggWhite && !arName.includes('شكشوكة') && !arName.includes('سمك'));
+  const isCountBased = isEggWhite || isWholeEgg;
+  const pieceWeight = isEggWhite ? 33 : (isWholeEgg ? 50 : null);
+  const unitLabel = isEggWhite ? 'بياض بيض' : (isWholeEgg ? 'بيضة كاملة' : 'غ');
+  const unitName = isEggWhite ? 'بياض بيض' : (isWholeEgg ? 'بيضة كاملة' : '');
+
   return {
     id: `egy_${String(row.id).padStart(3, '0')}`,
     name: row.arabic_name,
     nameAr: row.arabic_name,
     nameEn: row.english_name || '',
     baseWeight: 100,
+    isCountBased,
+    pieceWeight,
+    unitLabel,
+    unitName,
     per100: {
       kcal,
       p: Number(row.protein_g) || 0,
@@ -324,7 +342,7 @@ export const IMPORTED_FOODS = (foodSource?.foods || []).map(row => {
     },
     source: foodSource.source || 'egyfitness',
     state: 'as-listed',
-    allergens: [],
+    allergens: isCountBased ? ['eggs'] : [],
     available: kcal > 0 && !duplicate
   };
 });
@@ -340,6 +358,10 @@ const ADAPTED_FOOD_ITEMS = FOOD_ITEMS.map(f => ({
   category: f.category || '',
   state: f.state || '',
   baseWeight: 100,
+  isCountBased: f.isCountBased || false,
+  pieceWeight: f.pieceWeight || null,
+  unitLabel: f.unitLabel || 'غ',
+  unitName: f.unitName || '',
   per100: {
     kcal: f.caloriesPer100g,
     p: f.proteinPer100g,
@@ -586,6 +608,49 @@ export function macrosFor(food, grams) {
     fiber: f.fiberPer100g || 0
   };
   return scalePer100(per100, grams);
+}
+
+/**
+ * التحقق مما إذا كان الصنف يعتمد على العدد والحبات (كالبيض وبياض وصفار البيض)
+ */
+export function isCountBasedFood(food) {
+  if (!food) return false;
+  const f = typeof food === 'string' ? foodById(food) : food;
+  if (!f) return false;
+  if (f.isCountBased) return true;
+  const name = (f.name || f.nameAr || '').trim();
+  if (name.includes('بياض البيض') || name.includes('بياض بيض')) return true;
+  if (name.includes('صفار البيض') || name.includes('صفار بيض')) return true;
+  if (name.includes('بيض') && !name.includes('دجاج') && !name.includes('سمك') && !name.includes('شكشوكة') && !name.includes('خبز')) return true;
+  return false;
+}
+
+/**
+ * وزن الحبة الواحدة للصنف المعتمد على العدد (50غ بيضة كاملة، 33غ بياض بيض، 17غ صفار بيض)
+ */
+export function getFoodPieceWeight(food) {
+  const f = typeof food === 'string' ? foodById(food) : food;
+  if (!f) return 100;
+  if (f.pieceWeight) return f.pieceWeight;
+  const name = (f.name || f.nameAr || '').trim();
+  if (name.includes('بياض')) return 33;
+  if (name.includes('صفار')) return 17;
+  if (name.includes('بيض')) return 50;
+  return 100;
+}
+
+/**
+ * اسم وحدة الصنف (بيضة كاملة، بياض بيض، صفار بيض، أو غ)
+ */
+export function getFoodUnitLabel(food) {
+  const f = typeof food === 'string' ? foodById(food) : food;
+  if (!f) return 'غ';
+  if (f.unitLabel) return f.unitLabel;
+  const name = (f.name || f.nameAr || '').trim();
+  if (name.includes('بياض')) return 'بياض بيض';
+  if (name.includes('صفار')) return 'صفار بيض';
+  if (name.includes('بيض')) return 'بيضة كاملة';
+  return 'غ';
 }
 
 /**

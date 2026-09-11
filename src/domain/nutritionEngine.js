@@ -142,17 +142,100 @@ export function parseArabicMealText(text) {
     });
   }
 
-  // 6. فحص بيض
-  const eggMatch = lower.match(/(\d+)\s*(?:حبة|بيضات|بيضة)/);
-  if (eggMatch || (lower.includes('بيض') && !chickenMatch)) {
-    const count = eggMatch ? Number(eggMatch[1]) : 2;
+  // 6. فحص البيض (بيض كامل 50غ، بياض بيض 33غ، صفار بيض 17غ) بالعدد
+  const hasEggWhite = lower.includes('بياض');
+  if (hasEggWhite) {
+    let count = 3;
+    const eggWhiteMatch = lower.match(/(\d+)\s*(?:حبة|حبات)?\s*بياض|بياض\s*(\d+)?\s*(?:حبة|حبات|بيضات|بيضة|بيض)?/);
+    if (eggWhiteMatch && (eggWhiteMatch[1] || eggWhiteMatch[2])) {
+      count = Number(eggWhiteMatch[1] || eggWhiteMatch[2]);
+    } else {
+      const numBefore = lower.match(/(\d+)\s*بياض/);
+      const numAfter = lower.match(/بياض\s*(\d+)/);
+      if (numBefore) count = Number(numBefore[1]);
+      else if (numAfter) count = Number(numAfter[1]);
+    }
+    const grams = count * 33;
+    const factor = grams / 100;
     items.push({
-      nameAr: `${count} بيض مسلوق`,
-      grams: count * 50,
-      calories: count * 78,
-      protein: count * 6.3,
-      carbs: Math.round(count * 0.6),
-      fats: count * 5.3,
+      foodId: 'F026',
+      nameAr: `${count} بياض بيض`,
+      name: `${count} بياض بيض`,
+      count,
+      isCountBased: true,
+      pieceWeight: 33,
+      unitLabel: 'بياض بيض',
+      grams,
+      calories: Math.round(52 * factor),
+      protein: Math.round(10.9 * factor * 10) / 10,
+      carbs: Math.round(0.7 * factor * 10) / 10,
+      fats: Math.round(0.2 * factor * 10) / 10,
+      icon: 'egg',
+      isEstimated: false
+    });
+  }
+
+  const hasEggYolk = lower.includes('صفار');
+  if (hasEggYolk) {
+    let count = 1;
+    const eggYolkMatch = lower.match(/(\d+)\s*(?:حبة|حبات)?\s*صفار|صفار\s*(\d+)?\s*(?:حبة|حبات|بيضات|بيضة|بيض)?/);
+    if (eggYolkMatch && (eggYolkMatch[1] || eggYolkMatch[2])) {
+      count = Number(eggYolkMatch[1] || eggYolkMatch[2]);
+    }
+    const grams = count * 17;
+    const factor = grams / 100;
+    items.push({
+      foodId: 'F027',
+      nameAr: `${count} صفار بيض`,
+      name: `${count} صفار بيض`,
+      count,
+      isCountBased: true,
+      pieceWeight: 17,
+      unitLabel: 'صفار بيض',
+      grams,
+      calories: Math.round(322 * factor),
+      protein: Math.round(15.9 * factor * 10) / 10,
+      carbs: Math.round(3.6 * factor * 10) / 10,
+      fats: Math.round(26.5 * factor * 10) / 10,
+      icon: 'egg',
+      isEstimated: false
+    });
+  }
+
+  // فحص البيض الكامل (إذا ذُكر صراحة "كامل" أو ذُكر بيض بدون بياض/صفار أو بجانب بياض وصفار)
+  const textWithoutWhiteOrYolk = lower
+    .replace(/بياض\s*\d*\s*(?:بيض\w*)?/g, '')
+    .replace(/\d+\s*بياض/g, '')
+    .replace(/صفار\s*\d*\s*(?:بيض\w*)?/g, '')
+    .replace(/\d+\s*صفار/g, '');
+  const wholeEggExplicit = lower.includes('كامل') && lower.includes('بيض');
+  const hasGeneralEgg = textWithoutWhiteOrYolk.includes('بيض') && !chickenMatch;
+
+  if (wholeEggExplicit || hasGeneralEgg) {
+    let count = 2;
+    const wholeMatch = textWithoutWhiteOrYolk.match(/(\d+)\s*(?:حبة|بيضات|بيضة|بيض)/) || lower.match(/(\d+)\s*(?:حبة|بيضات|بيضة)?\s*(?:كامل|مسلوق)/);
+    if (wholeMatch && wholeMatch[1]) {
+      count = Number(wholeMatch[1]);
+    } else if (textWithoutWhiteOrYolk.includes('بيضتين')) {
+      count = 2;
+    } else if (textWithoutWhiteOrYolk.includes('بيضة') && !textWithoutWhiteOrYolk.includes('بيضات')) {
+      count = 1;
+    }
+    const grams = count * 50;
+    const factor = grams / 100;
+    items.push({
+      foodId: 'F025',
+      nameAr: `${count} بيض كامل`,
+      name: `${count} بيض كامل`,
+      count,
+      isCountBased: true,
+      pieceWeight: 50,
+      unitLabel: 'بيضة كاملة',
+      grams,
+      calories: Math.round(143 * factor),
+      protein: Math.round(12.6 * factor * 10) / 10,
+      carbs: Math.round(0.7 * factor * 10) / 10,
+      fats: Math.round(9.5 * factor * 10) / 10,
       icon: 'egg',
       isEstimated: false
     });

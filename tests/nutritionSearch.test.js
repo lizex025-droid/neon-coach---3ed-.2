@@ -7,7 +7,20 @@ import {
   mealNameFromItems,
   hasFoodSearchInput
 } from '../src/domain/nutritionCalculations.js';
-import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, addCustomFood, updateCustomFood, getCustomFoods, deleteCustomFood } from '../src/data/foods.js';
+import {
+  searchFoods,
+  foodById,
+  macrosFor,
+  IMPORTED_FOOD_COUNT,
+  addCustomFood,
+  updateCustomFood,
+  getCustomFoods,
+  deleteCustomFood,
+  isCountBasedFood,
+  getFoodPieceWeight,
+  getFoodUnitLabel
+} from '../src/data/foods.js';
+import { parseArabicMealText } from '../src/domain/nutritionEngine.js';
 import { POPULAR_ARAB_RECOMMENDED_FOODS, COMMON_DISLIKED_SUGGESTIONS, getActiveSteps, STEP_KEYS } from '../src/views/questionnaireView.js';
 
 test('حساب الماكروز بدقة لوزن 150غ من قيم 100غ', () => {
@@ -221,6 +234,64 @@ test('التحقق من تسلسل خطوات الاستبيان والتنقل 
   
   currentStep = navigateBack(currentStep);
   assert.strictEqual(currentStep, 1, 'الرجوع من الخطوة 1 يجب أن يظل في الخطوة 1');
+});
+
+test('تطابق أوزان البيض بدقة وحساب السعرات بالعدد (البيضة 50غ، البياض 33غ، الصفار 17غ)', () => {
+  // 1. فحص بيانات الأصناف في قاعدة البيانات
+  const wholeEgg = foodById('F025');
+  assert.ok(wholeEgg, 'يجب توفير بيض كامل F025');
+  assert.strictEqual(wholeEgg.pieceWeight, 50, 'وزن البيضة الكاملة بدون قشرة يجب أن يكون 50 غرام');
+  assert.strictEqual(wholeEgg.isCountBased, true);
+  assert.strictEqual(getFoodPieceWeight('F025'), 50);
+
+  const eggWhite = foodById('F026');
+  assert.ok(eggWhite, 'يجب توفير بياض البيض F026');
+  assert.strictEqual(eggWhite.pieceWeight, 33, 'وزن بياض البيضة يجب أن يكون 33 غرام');
+  assert.strictEqual(eggWhite.isCountBased, true);
+  assert.strictEqual(getFoodPieceWeight('F026'), 33);
+
+  const eggYolk = foodById('F027');
+  assert.ok(eggYolk, 'يجب توفير صفار البيض F027');
+  assert.strictEqual(eggYolk.pieceWeight, 17, 'وزن صفار البيضة يجب أن يكون 17 غرام');
+  assert.strictEqual(eggYolk.isCountBased, true);
+  assert.strictEqual(getFoodPieceWeight('F027'), 17);
+
+  // مجموع وزن البياض والصفار يساوي وزن البيضة الكاملة تماماً: 33 + 17 = 50 غرام
+  assert.strictEqual(eggWhite.pieceWeight + eggYolk.pieceWeight, wholeEgg.pieceWeight, '33غ + 17غ = 50غ');
+
+  // 2. حساب الماكروز والسعرات بالعدد
+  // 2 بيضة كاملة = 100غ
+  const twoEggsMacros = macrosFor('F025', 2 * wholeEgg.pieceWeight);
+  assert.strictEqual(twoEggsMacros.kcal, 143);
+  assert.strictEqual(twoEggsMacros.p, 12.6);
+
+  // 1 بيضة كاملة = 50غ -> حوالي 71.5 سعرة
+  const oneEggMacros = macrosFor('F025', 1 * wholeEgg.pieceWeight);
+  assert.strictEqual(oneEggMacros.kcal, 71.5);
+  assert.strictEqual(oneEggMacros.p, 6.3);
+
+  // 3 بياض بيض = 99غ -> حوالي 51.5 سعرة و 10.8غ بروتين
+  const threeWhitesMacros = macrosFor('F026', 3 * eggWhite.pieceWeight);
+  assert.strictEqual(threeWhitesMacros.kcal, 51.5);
+  assert.strictEqual(threeWhitesMacros.p, 10.8);
+
+  // 1 صفار بيض = 17غ -> حوالي 54.7 سعرة
+  const oneYolkMacros = macrosFor('F027', 1 * eggYolk.pieceWeight);
+  assert.strictEqual(oneYolkMacros.kcal, 54.7);
+  assert.strictEqual(oneYolkMacros.p, 2.7);
+
+  // 3. التحليل الذكي للنصوص باللغة العربية لاستخراج العدد
+  const parsedCompound = parseArabicMealText('أكلت 2 بيضة كاملة و 3 بياض بيض');
+  assert.strictEqual(parsedCompound.success, true);
+  const foundWhite = parsedCompound.items.find(i => i.nameAr.includes('بياض'));
+  const foundWhole = parsedCompound.items.find(i => i.nameAr.includes('كامل') || (i.nameAr.includes('بيض') && !i.nameAr.includes('بياض')));
+  assert.ok(foundWhite, 'يجب التعرف على بياض البيض');
+  assert.strictEqual(foundWhite.count, 3, 'عدد بياض البيض يجب أن يكون 3');
+  assert.strictEqual(foundWhite.grams, 99, 'وزن 3 بياض يجب أن يكون 99 غرام (3 * 33)');
+
+  assert.ok(foundWhole, 'يجب التعرف على البيض الكامل');
+  assert.strictEqual(foundWhole.count, 2, 'عدد البيض الكامل يجب أن يكون 2');
+  assert.strictEqual(foundWhole.grams, 100, 'وزن 2 بيضة كاملة يجب أن يكون 100 غرام (2 * 50)');
 });
 
 

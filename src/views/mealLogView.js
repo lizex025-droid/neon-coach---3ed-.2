@@ -7,7 +7,7 @@ import { store } from '../state/store.js';
 import { aiService } from '../services/aiService.js';
 import { speechService } from '../services/speechService.js';
 import { notificationService } from '../services/notificationService.js';
-import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT } from '../data/foods.js';
+import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, isCountBasedFood, getFoodPieceWeight, getFoodUnitLabel } from '../data/foods.js';
 import { mealNameFromItems } from '../domain/nutritionCalculations.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
@@ -38,6 +38,10 @@ function recalcDraft(draft) {
   draft.fats = 0;
 
   for (const item of draft.items) {
+    if (item.isCountBased && item.pieceWeight) {
+      item.count = Math.max(1, Number(item.count) || Math.round((Number(item.grams) || item.pieceWeight) / item.pieceWeight));
+      item.grams = item.count * item.pieceWeight;
+    }
     const grams = Math.max(0, Number(item.grams) || 0);
     const m = item.foodId ? macrosFor(item.foodId, grams) : null;
     if (m) {
@@ -192,23 +196,41 @@ export function renderMealLogView() {
 
         <!-- تفاصيل المكونات الفردية والأوزان القابلة للتعديل مباشرة -->
         <div id="draft-items-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-          ${activeDraft.items.length ? activeDraft.items.map((item, idx) => `
-            <div class="draft-item-row" data-idx="${idx}">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <button type="button" class="btn-icon delete-draft-item" data-idx="${idx}" style="color: #FF6B6B; font-size: 1.1rem; width: 32px; height: 32px;" title="حذف">
-                  ✕
-                </button>
-                <div>
-                  <div style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem;">${item.nameAr || item.name}</div>
-                  <small class="item-cal-badge" style="color: #55F7A5; font-family: monospace; font-size: 0.8rem;">${item.calories} سعرة</small>
+          ${activeDraft.items.length ? activeDraft.items.map((item, idx) => {
+            const isCount = item.isCountBased || isCountBasedFood(item.foodId || item.nameAr || item.name);
+            const pWeight = item.pieceWeight || getFoodPieceWeight(item.foodId || item.nameAr || item.name);
+            const uLabel = item.unitLabel || getFoodUnitLabel(item.foodId || item.nameAr || item.name);
+            const countVal = item.count || Math.max(1, Math.round((item.grams || pWeight) / pWeight));
+
+            return `
+              <div class="draft-item-row" data-idx="${idx}">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button type="button" class="btn-icon delete-draft-item" data-idx="${idx}" style="color: #FF6B6B; font-size: 1.1rem; width: 32px; height: 32px;" title="حذف">
+                    ✕
+                  </button>
+                  <div>
+                    <div style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem;">${item.nameAr || item.name}</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <small class="item-cal-badge" style="color: #55F7A5; font-family: monospace; font-size: 0.8rem;">${item.calories} سعرة</small>
+                      ${isCount ? `<small style="color: #8C9992; font-size: 0.72rem;">(${pWeight}غ / ${uLabel})</small>` : ''}
+                    </div>
+                  </div>
                 </div>
+                ${isCount ? `
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <input type="number" class="draft-item-count-input" data-idx="${idx}" min="1" step="1" value="${countVal}" style="width: 65px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.4); color: #55F7A5; font-size: 1.05rem; font-weight: 800; font-family: monospace; padding: 6px 4px;">
+                    <span style="color: #55F7A5; font-weight: 700; font-size: 0.84rem; white-space: nowrap;">${uLabel}</span>
+                    <span class="item-grams-hint" style="color: #8C9992; font-size: 0.75rem; font-family: monospace;">(~${item.grams}غ)</span>
+                  </div>
+                ` : `
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <input type="number" class="draft-item-grams-input" data-idx="${idx}" min="0" step="5" value="${item.grams}">
+                    <span style="color: #B8C0BC; font-size: 0.85rem;">غ</span>
+                  </div>
+                `}
               </div>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <input type="number" class="draft-item-grams-input" data-idx="${idx}" min="0" step="5" value="${item.grams}">
-                <span style="color: #B8C0BC; font-size: 0.85rem;">غ</span>
-              </div>
-            </div>
-          `).join('') : `
+            `;
+          }).join('') : `
             <div style="padding: 24px 16px; text-align: center; color: #8C9992; font-size: 0.92rem; border: 1px dashed rgba(85,247,165,0.2); border-radius: 14px; background: rgba(5,13,9,0.5);">
               <div style="margin-bottom: 6px; display: flex; justify-content: center;">${neonIcon('plate', 32)}</div>
               <div style="color: #FFFFFF; font-weight: 700; margin-bottom: 4px;">لم يتم إضافة أطعمة إلى الوجبة بعد</div>
@@ -306,26 +328,44 @@ export function bindMealLogEvents() {
   const addFoodToDraft = (food) => {
     if (!food) return;
     let targetIdx = -1;
+    const isCount = isCountBasedFood(food);
+    const pieceWeight = getFoodPieceWeight(food);
+    const unitLabel = getFoodUnitLabel(food);
     const existingIdx = activeDraft.items.findIndex(item => item.foodId === food.id);
+
     if (existingIdx !== -1) {
-      activeDraft.items[existingIdx].grams = (Number(activeDraft.items[existingIdx].grams) || 0) + 100;
+      if (isCount) {
+        activeDraft.items[existingIdx].count = (Number(activeDraft.items[existingIdx].count) || 1) + 1;
+        activeDraft.items[existingIdx].grams = activeDraft.items[existingIdx].count * pieceWeight;
+      } else {
+        activeDraft.items[existingIdx].grams = (Number(activeDraft.items[existingIdx].grams) || 0) + 100;
+      }
       targetIdx = existingIdx;
     } else {
+      const defaultCount = isCount ? ((food.id === 'F026' || (food.nameAr && food.nameAr.includes('بياض'))) ? 3 : (food.id === 'F027' ? 1 : 2)) : 1;
+      const initialGrams = isCount ? (defaultCount * pieceWeight) : 100;
+      const factor = initialGrams / 100;
+
       activeDraft.items.push({
         id: `food_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
         foodId: food.id,
         nameAr: food.name || food.nameAr,
         name: food.name || food.nameAr,
-        grams: 100,
-        calories: Math.round(food.per100?.kcal || 0),
-        protein: Math.round(food.per100?.p || 0),
-        carbs: Math.round(food.per100?.c || 0),
-        fats: Math.round(food.per100?.f || 0)
+        isCountBased: isCount,
+        pieceWeight: isCount ? pieceWeight : null,
+        unitLabel: isCount ? unitLabel : 'غ',
+        count: isCount ? defaultCount : null,
+        grams: initialGrams,
+        calories: Math.round((food.per100?.kcal || 0) * factor),
+        protein: Math.round((food.per100?.p || 0) * factor * 10) / 10,
+        carbs: Math.round((food.per100?.c || 0) * factor * 10) / 10,
+        fats: Math.round((food.per100?.f || 0) * factor * 10) / 10
       });
       targetIdx = activeDraft.items.length - 1;
     }
     recalcDraft(activeDraft);
-    notificationService.showToast(`تمت إضافة ${food.name || food.nameAr} إلى الوجبة 🥗`, 'success');
+    const msg = isCount ? `تمت إضافة ${food.name || food.nameAr} بالعدد إلى الوجبة 🍳` : `تمت إضافة ${food.name || food.nameAr} إلى الوجبة 🥗`;
+    notificationService.showToast(msg, 'success');
     refreshMealLogView(targetIdx);
   };
 
@@ -399,24 +439,33 @@ export function bindMealLogEvents() {
       });
       return;
     }
-    foodSearchResults.innerHTML = results.map(f => `
-      <div class="food-search-result-row" style="display: flex; align-items: center; gap: 6px; width: 100%;">
-        <button type="button" class="food-search-result-btn" data-food-id="${f.id}" style="flex: 1;">
-          <div>
-            <b>${escapeHtml(f.name || f.nameAr)}</b>
-            ${f.nameEn ? `<small>${escapeHtml(f.nameEn)}</small>` : ''}
-            ${f.isCustom ? '<span style="color: #55F7A5; font-size: 0.72rem; margin-right: 4px; font-weight: 700;">(مخصص)</span>' : ''}
-          </div>
-          <span class="food-kcal-badge">${f.per100?.kcal || 0} kcal / 100g</span>
-        </button>
-        ${f.isCustom ? `
-          <button type="button" class="edit-custom-food-search-btn" data-custom-id="${f.id}" title="تعديل أو حذف الصنف من قاعدة البيانات" style="background: #07100D; border: 1px solid rgba(85,247,165,0.25); border-radius: 12px; color: #55F7A5; padding: 9px 10px; font-size: 0.82rem; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;">
-            <span>✏️</span>
-            <span style="font-size: 0.72rem; font-weight: 700;">تعديل</span>
+    foodSearchResults.innerHTML = results.map(f => {
+      const isCount = isCountBasedFood(f);
+      const pWeight = getFoodPieceWeight(f);
+      const uLabel = getFoodUnitLabel(f);
+      const perUnitKcal = Math.round((f.per100?.kcal || 0) * (pWeight / 100));
+      const kcalBadge = isCount ? `~${perUnitKcal} kcal / ${uLabel} (${pWeight}غ)` : `${f.per100?.kcal || 0} kcal / 100g`;
+
+      return `
+        <div class="food-search-result-row" style="display: flex; align-items: center; gap: 6px; width: 100%;">
+          <button type="button" class="food-search-result-btn" data-food-id="${f.id}" style="flex: 1;">
+            <div>
+              <b>${escapeHtml(f.name || f.nameAr)}</b>
+              ${f.nameEn ? `<small>${escapeHtml(f.nameEn)}</small>` : ''}
+              ${f.isCustom ? '<span style="color: #55F7A5; font-size: 0.72rem; margin-right: 4px; font-weight: 700;">(مخصص)</span>' : ''}
+              ${isCount ? `<span style="color: #55F7A5; font-size: 0.72rem; margin-right: 4px; font-weight: 700;">(بالعدد: ${pWeight}غ)</span>` : ''}
+            </div>
+            <span class="food-kcal-badge">${kcalBadge}</span>
           </button>
-        ` : ''}
-      </div>
-    `).join('') + `
+          ${f.isCustom ? `
+            <button type="button" class="edit-custom-food-search-btn" data-custom-id="${f.id}" title="تعديل أو حذف الصنف من قاعدة البيانات" style="background: #07100D; border: 1px solid rgba(85,247,165,0.25); border-radius: 12px; color: #55F7A5; padding: 9px 10px; font-size: 0.82rem; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;">
+              <span>✏️</span>
+              <span style="font-size: 0.72rem; font-weight: 700;">تعديل</span>
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join('') + `
       <div style="padding: 8px 12px; border-top: 1px solid rgba(85,247,165,0.15); display: flex; justify-content: space-between; align-items: center; background: rgba(5,13,9,0.85); border-radius: 0 0 14px 14px; gap: 8px; flex-wrap: wrap;">
         <span style="font-size: 0.76rem; color: #8C9992;">الصنف غير موجود أو تريد إدارة أكلاتك؟</span>
         <div style="display: flex; gap: 6px;">
@@ -464,7 +513,39 @@ export function bindMealLogEvents() {
     });
   });
 
-  // تعديل الغرامات اللحظي لكل صنف
+  // تعديل عدد الحبات اللحظي للأصناف المعتمدة على العدد (كالبيض)
+  document.querySelectorAll('.draft-item-count-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const idx = Number(input.getAttribute('data-idx'));
+      const count = Math.max(1, Number(input.value) || 1);
+      const item = activeDraft.items[idx];
+      if (item) {
+        item.count = count;
+        item.grams = count * (item.pieceWeight || 50);
+        recalcDraft(activeDraft);
+
+        const calsEl = document.getElementById('draft-calories');
+        const pEl = document.getElementById('draft-protein');
+        const cEl = document.getElementById('draft-carbs');
+        const fEl = document.getElementById('draft-fats');
+        const row = input.closest('.draft-item-row');
+        const itemCal = row?.querySelector('.item-cal-badge');
+        const gramsHint = row?.querySelector('.item-grams-hint');
+        if (calsEl) calsEl.textContent = activeDraft.calories;
+        if (pEl) pEl.textContent = activeDraft.protein + 'g';
+        if (cEl) cEl.textContent = activeDraft.carbs + 'g';
+        if (fEl) fEl.textContent = activeDraft.fats + 'g';
+        if (itemCal && item) itemCal.textContent = item.calories + ' سعرة';
+        if (gramsHint) gramsHint.textContent = `(~${item.grams}غ)`;
+      }
+    });
+
+    input.addEventListener('change', () => {
+      refreshMealLogView();
+    });
+  });
+
+  // تعديل الغرامات اللحظي للأصناف العادية
   document.querySelectorAll('.draft-item-grams-input').forEach(input => {
     input.addEventListener('input', () => {
       const idx = Number(input.getAttribute('data-idx'));

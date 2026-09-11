@@ -6,7 +6,7 @@
 import { store } from '../state/store.js';
 import { calculatePercentage } from '../domain/calculations.js';
 import { findMealSwaps } from '../domain/nutritionEngine.js';
-import { macrosFor } from '../data/foods.js';
+import { macrosFor, isCountBasedFood, getFoodPieceWeight, getFoodUnitLabel } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
@@ -185,12 +185,20 @@ export function renderNutritionView() {
             <!-- أصناف الوجبة -->
             ${meal.items && meal.items.length ? `
               <div style="display: flex; flex-direction: column; gap: 6px; margin: 8px 0; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(85,247,165,0.08);">
-                ${meal.items.map(it => `
-                  <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: #FFFFFF;">
-                    <span>${it.nameAr || it.name}</span>
-                    <b style="color: #55F7A5; font-family: monospace;">${it.grams} غ</b>
-                  </div>
-                `).join('')}
+                ${meal.items.map(it => {
+                  const isCount = it.isCountBased || isCountBasedFood(it.foodId || it.nameAr || it.name);
+                  const pWeight = it.pieceWeight || getFoodPieceWeight(it.foodId || it.nameAr || it.name);
+                  const uLabel = it.unitLabel || getFoodUnitLabel(it.foodId || it.nameAr || it.name);
+                  const countVal = it.count || Math.max(1, Math.round((it.grams || pWeight) / pWeight));
+                  const displayQty = isCount ? `${countVal} ${uLabel} <span style="color: #8C9992; font-size: 0.72rem; font-family: monospace;">(~${it.grams}غ)</span>` : `${it.grams} غ`;
+
+                  return `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: #FFFFFF; align-items: center;">
+                      <span>${it.nameAr || it.name}</span>
+                      <b style="color: #55F7A5; font-family: monospace;">${displayQty}</b>
+                    </div>
+                  `;
+                }).join('')}
               </div>
             ` : ''}
 
@@ -492,18 +500,36 @@ export function bindNutritionEvents() {
 
       const items = meal.items || [];
       if (items.length > 0) {
-        editFieldsContainer.innerHTML = items.map((item, idx) => `
-          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(85,247,165,0.15); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <div style="flex: 1;">
-              <span style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; display: block;">${item.nameAr || item.name}</span>
-              <small class="item-cal-badge" id="item-cal-${idx}" style="color: #55F7A5; font-size: 0.76rem;">${item.calories || 0} سعرة</small>
+        editFieldsContainer.innerHTML = items.map((item, idx) => {
+          const isCount = item.isCountBased || isCountBasedFood(item.foodId || item.nameAr || item.name);
+          const pWeight = item.pieceWeight || getFoodPieceWeight(item.foodId || item.nameAr || item.name);
+          const uLabel = item.unitLabel || getFoodUnitLabel(item.foodId || item.nameAr || item.name);
+          const countVal = item.count || Math.max(1, Math.round((item.grams || pWeight) / pWeight));
+
+          return `
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(85,247,165,0.15); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="flex: 1;">
+                <span style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; display: block;">${item.nameAr || item.name}</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <small class="item-cal-badge" id="item-cal-${idx}" style="color: #55F7A5; font-size: 0.76rem;">${item.calories || 0} سعرة</small>
+                  ${isCount ? `<small style="color: #8C9992; font-size: 0.72rem;">(${pWeight}غ / ${uLabel})</small>` : ''}
+                </div>
+              </div>
+              ${isCount ? `
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <input type="number" class="edit-logged-count" data-idx="${idx}" data-weight="${pWeight}" data-unit="${uLabel}" value="${countVal}" min="1" step="1" style="width: 70px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.4); color: #55F7A5; font-size: 1rem; font-weight: 800; font-family: monospace; padding: 8px 4px;">
+                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.82rem; white-space: nowrap;">${uLabel}</span>
+                  <span class="edit-item-grams-hint-${idx}" style="color: #8C9992; font-size: 0.75rem; font-family: monospace;">(~${countVal * pWeight}غ)</span>
+                </div>
+              ` : `
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <input type="number" class="edit-logged-grams" data-idx="${idx}" value="${item.grams || 100}" min="0" step="5" style="width: 85px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 1rem; font-weight: 800; font-family: monospace; padding: 8px 4px;">
+                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.85rem;">غ</span>
+                </div>
+              `}
             </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <input type="number" class="edit-logged-grams" data-idx="${idx}" value="${item.grams || 100}" min="0" step="5" style="width: 85px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 1rem; font-weight: 800; font-family: monospace; padding: 8px 4px;">
-              <span style="color: #55F7A5; font-weight: 700; font-size: 0.85rem;">غ</span>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       } else {
         // وجبة مباشرة بدون تفصيل أصناف
         editFieldsContainer.innerHTML = `
@@ -532,6 +558,7 @@ export function bindNutritionEvents() {
       const updateLiveEditSummary = () => {
         let totalC = 0, totalP = 0, totalCarb = 0, totalF = 0;
         if (items.length > 0) {
+          // حساب مدخلات الغرامات
           editFieldsContainer.querySelectorAll('.edit-logged-grams').forEach(inp => {
             const idx = Number(inp.getAttribute('data-idx'));
             const newG = Math.max(0, Number(inp.value) || 0);
@@ -554,6 +581,36 @@ export function bindNutritionEvents() {
               totalC += itemCal;
               const badge = document.getElementById(`item-cal-${idx}`);
               if (badge) badge.textContent = `${itemCal} سعرة`;
+            }
+          });
+
+          // حساب مدخلات العدد للبيض
+          editFieldsContainer.querySelectorAll('.edit-logged-count').forEach(inp => {
+            const idx = Number(inp.getAttribute('data-idx'));
+            const count = Math.max(1, Number(inp.value) || 1);
+            const pWeight = Number(inp.getAttribute('data-weight')) || 50;
+            const newG = count * pWeight;
+            const it = items[idx];
+            if (it) {
+              const m = it.foodId ? macrosFor(it.foodId, newG) : null;
+              let itemCal = 0;
+              if (m) {
+                itemCal = Math.round(m.kcal);
+                totalP += Math.round(m.p);
+                totalCarb += Math.round(m.c);
+                totalF += Math.round(m.f);
+              } else {
+                const ratio = (it.grams && it.grams > 0) ? (newG / it.grams) : 1;
+                itemCal = Math.round((it.calories || 0) * ratio);
+                totalP += Math.round((it.protein || 0) * ratio);
+                totalCarb += Math.round((it.carbs || 0) * ratio);
+                totalF += Math.round((it.fats || 0) * ratio);
+              }
+              totalC += itemCal;
+              const badge = document.getElementById(`item-cal-${idx}`);
+              if (badge) badge.textContent = `${itemCal} سعرة`;
+              const hint = editFieldsContainer.querySelector(`.edit-item-grams-hint-${idx}`);
+              if (hint) hint.textContent = `(~${newG}غ)`;
             }
           });
         } else {
@@ -595,11 +652,42 @@ export function bindNutritionEvents() {
 
     const items = copy.items || [];
     if (items.length > 0) {
+      // حفظ الغرامات للأصناف العادية
       editFieldsContainer?.querySelectorAll('.edit-logged-grams').forEach(input => {
         const idx = Number(input.getAttribute('data-idx'));
         const newGrams = Math.max(0, Number(input.value) || 0);
         const item = copy.items[idx];
         if (item) {
+          item.grams = newGrams;
+          const m = item.foodId ? macrosFor(item.foodId, newGrams) : null;
+          if (m) {
+            item.calories = Math.round(m.kcal);
+            item.protein = Math.round(m.p);
+            item.carbs = Math.round(m.c);
+            item.fats = Math.round(m.f);
+          } else {
+            const ratio = (item.grams && item.grams > 0) ? (newGrams / item.grams) : 1;
+            item.calories = Math.round((item.calories || 0) * ratio);
+            item.protein = Math.round((item.protein || 0) * ratio);
+            item.carbs = Math.round((item.carbs || 0) * ratio);
+            item.fats = Math.round((item.fats || 0) * ratio);
+          }
+        }
+      });
+
+      // حفظ العدد للأصناف المعتمدة على العدد كأصناف البيض
+      editFieldsContainer?.querySelectorAll('.edit-logged-count').forEach(input => {
+        const idx = Number(input.getAttribute('data-idx'));
+        const count = Math.max(1, Number(input.value) || 1);
+        const pWeight = Number(input.getAttribute('data-weight')) || 50;
+        const uLabel = input.getAttribute('data-unit') || 'بيضة كاملة';
+        const newGrams = count * pWeight;
+        const item = copy.items[idx];
+        if (item) {
+          item.count = count;
+          item.isCountBased = true;
+          item.pieceWeight = pWeight;
+          item.unitLabel = uLabel;
           item.grams = newGrams;
           const m = item.foodId ? macrosFor(item.foodId, newGrams) : null;
           if (m) {

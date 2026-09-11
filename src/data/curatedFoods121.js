@@ -314,6 +314,10 @@ export const CURATED_121_FOODS = [
     "fatsPer100g": 0.2,
     "fiberPer100g": 0,
     "category": "بيض",
+    "isCountBased": true,
+    "pieceWeight": 33,
+    "unitLabel": "بياض بيض",
+    "unitName": "بياض بيض",
     "allergens": [
       "eggs"
     ]
@@ -329,6 +333,10 @@ export const CURATED_121_FOODS = [
     "fatsPer100g": 9.5,
     "fiberPer100g": 0,
     "category": "بيض",
+    "isCountBased": true,
+    "pieceWeight": 50,
+    "unitLabel": "بيضة كاملة",
+    "unitName": "بيضة كاملة",
     "allergens": [
       "eggs"
     ]
@@ -344,6 +352,10 @@ export const CURATED_121_FOODS = [
     "fatsPer100g": 26.5,
     "fiberPer100g": 0,
     "category": "بيض",
+    "isCountBased": true,
+    "pieceWeight": 17,
+    "unitLabel": "صفار بيض",
+    "unitName": "صفار بيض",
     "allergens": [
       "eggs"
     ]
