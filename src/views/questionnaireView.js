@@ -991,11 +991,26 @@ function renderStepContent(step) {
 
             <!-- تصنيفات الأطعمة المقترحة -->
             <div class="food-rec-category-tabs" data-type="liked">
-              <button type="button" class="rec-cat-tab active" data-cat="all">🔥 الأكثر شعبية</button>
-              <button type="button" class="rec-cat-tab" data-cat="protein">🍗 بروتينات ولحوم</button>
-              <button type="button" class="rec-cat-tab" data-cat="carbs">🍚 نشويات وطاقة</button>
-              <button type="button" class="rec-cat-tab" data-cat="veggies">🥗 خضار وسلطات</button>
-              <button type="button" class="rec-cat-tab" data-cat="fruits">🍎 فواكه وسناك</button>
+              <button type="button" class="rec-cat-tab active" data-cat="all">
+                <span class="tab-emoji">🔥</span>
+                <span class="tab-label">الأكثر شعبية</span>
+              </button>
+              <button type="button" class="rec-cat-tab" data-cat="protein">
+                <span class="tab-emoji">🍗</span>
+                <span class="tab-label">بروتينات ولحوم</span>
+              </button>
+              <button type="button" class="rec-cat-tab" data-cat="carbs">
+                <span class="tab-emoji">🍚</span>
+                <span class="tab-label">نشويات وطاقة</span>
+              </button>
+              <button type="button" class="rec-cat-tab" data-cat="veggies">
+                <span class="tab-emoji">🥗</span>
+                <span class="tab-label">خضار وسلطات</span>
+              </button>
+              <button type="button" class="rec-cat-tab" data-cat="fruits">
+                <span class="tab-emoji">🍎</span>
+                <span class="tab-label">فواكه وسناك</span>
+              </button>
             </div>
 
             <!-- شبكة الأزرار المقترحة -->
