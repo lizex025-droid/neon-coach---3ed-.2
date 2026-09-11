@@ -417,7 +417,7 @@ export function renderQuestionnaireView() {
       
       <!-- شريط التقدم بين الخطوات -->
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-        <button id="q-back-step-btn" class="btn-icon" style="width: 38px; height: 38px; ${currentStep === 1 ? 'visibility: hidden;' : ''}" aria-label="رجوع">
+        <button id="q-back-step-btn" type="button" class="btn-icon" style="width: 38px; height: 38px; ${currentStep === 1 ? 'visibility: hidden;' : ''}" aria-label="رجوع">
           ❯
         </button>
         <span id="q-step-indicator-text" style="font-weight: 800; color: #55F7A5; font-size: 0.95rem; font-family: monospace;">
@@ -1357,67 +1357,76 @@ export function bindQuestionnaireEvents() {
   }
 
   // التقدم للخطوة التالية
-  nextBtn?.addEventListener('click', () => {
-    const stepsNow = getActiveSteps();
-    const totalNow = stepsNow.length;
-    const stepKeyNow = stepsNow[currentStep - 1] || stepsNow[0];
+  if (nextBtn) {
+    nextBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const stepsNow = getActiveSteps();
+      const totalNow = stepsNow.length;
+      const stepKeyNow = stepsNow[currentStep - 1] || stepsNow[0];
 
-    // التحقق عند الخطوة 2 لهدف خسارة الدهون: الوزن المستهدف يجب أن يكون أقل
-    if (stepKeyNow === STEP_KEYS.GOAL && formData.goal === 'fat_loss') {
-      const targetWeight = Number(document.getElementById('q-target-weight')?.value) || formData.targetWeight;
-      const weight = Number(formData.weight) || 70;
-      if (targetWeight >= weight) {
-        notificationService.showToast(`لهدف خسارة الدهون، يجب أن يكون الوزن المستهدف أقل من وزنك الحالي (${weight} كغ)`, 'warning');
-        return;
-      }
-    }
-
-    // التحقق عند الخطوة 2 لهدف زيادة الكتلة: الوزن المستهدف يجب أن يكون أكبر
-    if (stepKeyNow === STEP_KEYS.GOAL && formData.goal === 'muscle_gain') {
-      const targetWeight = Number(document.getElementById('q-target-weight')?.value) || formData.targetWeight;
-      const weight = Number(formData.weight) || 70;
-      if (targetWeight <= weight) {
-        notificationService.showToast(`لهدف زيادة الكتلة، يجب أن يكون الوزن المستهدف أكبر من وزنك الحالي (${weight} كغ)`, 'warning');
-        return;
-      }
-    }
-
-    // التحقق عند شاشة معدل النزول: التأكيد لمعدل 2% EXTREME
-    if (stepKeyNow === STEP_KEYS.WEEKLY_LOSS_RATE) {
-      if (formData.weeklyLossPercent >= 0.02 && !extremeConfirmed) {
-        const modal = document.getElementById('extreme-loss-modal');
-        if (modal) {
-          modal.style.display = 'flex';
+      // التحقق عند الخطوة 2 لهدف خسارة الدهون: الوزن المستهدف يجب أن يكون أقل
+      if (stepKeyNow === STEP_KEYS.GOAL && formData.goal === 'fat_loss') {
+        const targetWeight = Number(document.getElementById('q-target-weight')?.value) || formData.targetWeight;
+        const weight = Number(formData.weight) || 70;
+        if (targetWeight >= weight) {
+          notificationService.showToast(`لهدف خسارة الدهون، يجب أن يكون الوزن المستهدف أقل من وزنك الحالي (${weight} كغ)`, 'warning');
           return;
         }
       }
-    }
 
-    // التحقق عند شاشة معدل زيادة الوزن: التأكيد لمعدل 2% EXTREME BULK
-    if (stepKeyNow === STEP_KEYS.WEEKLY_GAIN_RATE) {
-      if ((formData.weeklyGainPercent || 0.0050) >= 0.02 && !extremeGainConfirmed) {
-        const modal = document.getElementById('extreme-gain-modal');
-        if (modal) {
-          modal.style.display = 'flex';
+      // التحقق عند الخطوة 2 لهدف زيادة الكتلة: الوزن المستهدف يجب أن يكون أكبر
+      if (stepKeyNow === STEP_KEYS.GOAL && formData.goal === 'muscle_gain') {
+        const targetWeight = Number(document.getElementById('q-target-weight')?.value) || formData.targetWeight;
+        const weight = Number(formData.weight) || 70;
+        if (targetWeight <= weight) {
+          notificationService.showToast(`لهدف زيادة الكتلة، يجب أن يكون الوزن المستهدف أكبر من وزنك الحالي (${weight} كغ)`, 'warning');
           return;
         }
       }
-    }
 
-    saveCurrentStepInputs();
-    if (currentStep < totalNow) {
-      currentStep++;
-      render();
-    }
-  });
+      // التحقق عند شاشة معدل النزول: التأكيد لمعدل 2% EXTREME
+      if (stepKeyNow === STEP_KEYS.WEEKLY_LOSS_RATE) {
+        if (formData.weeklyLossPercent >= 0.02 && !extremeConfirmed) {
+          const modal = document.getElementById('extreme-loss-modal');
+          if (modal) {
+            modal.style.display = 'flex';
+            return;
+          }
+        }
+      }
 
-  // الرجوع للخطوة السابقة
-  backBtn?.addEventListener('click', () => {
-    if (currentStep > 1) {
-      currentStep--;
-      render();
-    }
-  });
+      // التحقق عند شاشة معدل زيادة الوزن: التأكيد لمعدل 2% EXTREME BULK
+      if (stepKeyNow === STEP_KEYS.WEEKLY_GAIN_RATE) {
+        if ((formData.weeklyGainPercent || 0.0050) >= 0.02 && !extremeGainConfirmed) {
+          const modal = document.getElementById('extreme-gain-modal');
+          if (modal) {
+            modal.style.display = 'flex';
+            return;
+          }
+        }
+      }
+
+      saveCurrentStepInputs();
+      if (currentStep < totalNow) {
+        currentStep++;
+        render();
+      }
+    };
+  }
+
+  // الرجوع للخطوة السابقة (خطوة واحدة للخلف بدقة وبدون أي تراكم لمستمعي الأحداث)
+  if (backBtn) {
+    backBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentStep > 1) {
+        saveCurrentStepInputs();
+        currentStep--;
+        render();
+      }
+    };
+  }
 
   // زر إنشاء الخطة النهائي
   createPlanBtn?.addEventListener('click', async () => {

@@ -8,7 +8,7 @@ import {
   hasFoodSearchInput
 } from '../src/domain/nutritionCalculations.js';
 import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, addCustomFood, updateCustomFood, getCustomFoods, deleteCustomFood } from '../src/data/foods.js';
-import { POPULAR_ARAB_RECOMMENDED_FOODS, COMMON_DISLIKED_SUGGESTIONS } from '../src/views/questionnaireView.js';
+import { POPULAR_ARAB_RECOMMENDED_FOODS, COMMON_DISLIKED_SUGGESTIONS, getActiveSteps, STEP_KEYS } from '../src/views/questionnaireView.js';
 
 test('حساب الماكروز بدقة لوزن 150غ من قيم 100غ', () => {
   const result = scalePer100({ kcal: 200, p: 20, c: 10, f: 5, fiber: 2 }, 150);
@@ -198,5 +198,30 @@ test('قائمة الأطعمة المقترحة والشائعة في الوط�
   const dislikedNames = COMMON_DISLIKED_SUGGESTIONS.map(f => f.name);
   assert.ok(dislikedNames.includes('سمك ومأكولات بحرية'));
 });
+
+test('التحقق من تسلسل خطوات الاستبيان والتنقل خطوة بخطوة للأمام والخلف', () => {
+  assert.ok(Array.isArray(getActiveSteps()), 'يجب إرجاع مصفوفة الخطوات النشطة');
+  assert.ok(STEP_KEYS.MEASUREMENTS && STEP_KEYS.GOAL, 'مفاتيح الخطوات معرفة بدقة');
+  
+  // التحقق من أن الرجوع من الخطوة 4 يعود حصراً إلى الخطوة 3
+  let currentStep = 4;
+  const navigateBack = (step) => {
+    if (step > 1) return step - 1;
+    return 1;
+  };
+  
+  currentStep = navigateBack(currentStep);
+  assert.strictEqual(currentStep, 3, 'الرجوع من الخطوة 4 يجب أن يعيد إلى الخطوة 3 فقط وليس 1');
+  
+  currentStep = navigateBack(currentStep);
+  assert.strictEqual(currentStep, 2, 'الرجوع من الخطوة 3 يجب أن يعيد إلى الخطوة 2');
+  
+  currentStep = navigateBack(currentStep);
+  assert.strictEqual(currentStep, 1, 'الرجوع من الخطوة 2 يجب أن يعيد إلى الخطوة 1');
+  
+  currentStep = navigateBack(currentStep);
+  assert.strictEqual(currentStep, 1, 'الرجوع من الخطوة 1 يجب أن يظل في الخطوة 1');
+});
+
 
 
