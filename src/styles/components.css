@@ -2771,48 +2771,46 @@ a:hover .neon-icon,
    Food Recommendations & Arab Staples Quick-Pick
    ========================================================================== */
 .food-recommendations-wrapper {
-  margin-top: 12px;
-  background: rgba(4, 14, 9, 0.5);
-  border: 1px solid rgba(85, 247, 165, 0.16);
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  margin-top: 8px;
+  background: rgba(4, 14, 9, 0.45);
+  border: 1px solid rgba(85, 247, 165, 0.15);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .food-rec-category-tabs {
   display: flex;
-  flex-wrap: wrap;
+  gap: 6px;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0 10px 0;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   width: 100%;
 }
 
 .rec-cat-tab {
-  flex-shrink: 0;
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  background: rgba(10, 26, 18, 0.7);
-  border: 1px solid rgba(85, 247, 165, 0.22);
+  gap: 5px;
+  background: rgba(10, 26, 18, 0.65);
+  border: 1px solid rgba(85, 247, 165, 0.18);
   border-radius: 999px;
-  padding: 7px 15px;
-  font-size: 0.82rem;
+  padding: 6px 6px;
+  font-size: 0.76rem;
   font-weight: 700;
   color: #A3B3AA;
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  line-height: 1.25;
+  line-height: 1.2;
   box-sizing: border-box;
-  min-height: 38px;
+  min-height: 34px;
 }
 
 .rec-cat-tab .tab-emoji {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   line-height: 1;
   display: inline-block;
   flex-shrink: 0;
@@ -2830,49 +2828,47 @@ a:hover .neon-icon,
   color: #FFFFFF;
   border-color: rgba(85, 247, 165, 0.45);
   background: rgba(85, 247, 165, 0.12);
-  transform: translateY(-1px);
 }
 
 .rec-cat-tab.active {
-  background: rgba(85, 247, 165, 0.22);
+  background: rgba(85, 247, 165, 0.2);
   border-color: #55F7A5;
   color: #55F7A5;
   font-weight: 800;
-  box-shadow: 0 0 14px rgba(85, 247, 165, 0.25);
+  box-shadow: 0 0 10px rgba(85, 247, 165, 0.22);
 }
 
 .food-rec-chips-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   max-height: none;
   overflow: visible;
-  padding: 4px 2px;
+  padding: 2px 0;
 }
 
 .food-rec-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   background: rgba(8, 22, 15, 0.7);
-  border: 1px solid rgba(85, 247, 165, 0.22);
+  border: 1px solid rgba(85, 247, 165, 0.2);
   border-radius: 999px;
-  padding: 7px 14px;
-  color: #E2E8F0;
-  font-size: 0.84rem;
+  padding: 5px 10px;
+  color: #DDE5E0;
+  font-size: 0.79rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .food-rec-chip:hover {
   background: rgba(85, 247, 165, 0.14);
-  border-color: rgba(85, 247, 165, 0.55);
+  border-color: rgba(85, 247, 165, 0.5);
   color: #FFFFFF;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .food-rec-chip.selected {
@@ -2880,22 +2876,22 @@ a:hover .neon-icon,
   border-color: #55F7A5;
   color: #55F7A5;
   font-weight: 800;
-  box-shadow: 0 0 12px rgba(85, 247, 165, 0.28);
+  box-shadow: 0 0 10px rgba(85, 247, 165, 0.24);
 }
 
 .food-rec-chip .chip-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 19px;
-  height: 19px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
   background: rgba(85, 247, 165, 0.12);
   color: #55F7A5;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 900;
   line-height: 1;
-  margin-inline-start: 4px;
+  margin-inline-start: 2px;
   transition: all 0.18s ease;
   flex-shrink: 0;
 }
@@ -2903,18 +2899,20 @@ a:hover .neon-icon,
 .food-rec-chip.selected .chip-status {
   background: #55F7A5;
   color: #031108;
-  box-shadow: 0 0 8px rgba(85, 247, 165, 0.6);
+  box-shadow: 0 0 6px rgba(85, 247, 165, 0.5);
 }
 
 .food-rec-chip.disliked {
-  border-color: rgba(248, 113, 113, 0.28);
+  border-color: rgba(248, 113, 113, 0.25);
   background: rgba(24, 10, 10, 0.65);
   color: #FCA5A5;
+  padding: 5px 10px;
+  font-size: 0.79rem;
 }
 
 .food-rec-chip.disliked:hover {
   background: rgba(248, 113, 113, 0.15);
-  border-color: rgba(248, 113, 113, 0.6);
+  border-color: rgba(248, 113, 113, 0.55);
   color: #FFFFFF;
 }
 
@@ -2922,18 +2920,21 @@ a:hover .neon-icon,
   background: rgba(248, 113, 113, 0.25);
   border-color: #F87171;
   color: #F87171;
-  box-shadow: 0 0 12px rgba(248, 113, 113, 0.3);
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.28);
 }
 
 .food-rec-chip.disliked .chip-status {
   background: rgba(248, 113, 113, 0.15);
   color: #F87171;
+  width: 17px;
+  height: 17px;
+  font-size: 0.68rem;
 }
 
 .food-rec-chip.disliked.selected .chip-status {
   background: #F87171;
   color: #1a0808;
-  box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.5);
 }
 
 /* ==========================================================================

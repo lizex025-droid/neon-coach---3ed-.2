@@ -989,13 +989,9 @@ function renderStepContent(step) {
               </span>
             </div>
 
-            <!-- تصنيفات الأطعمة المقترحة -->
+            <!-- تصنيفات الأطعمة المقترحة (3 تبويبات مدمجة ومضغوطة) -->
             <div class="food-rec-category-tabs" data-type="liked">
-              <button type="button" class="rec-cat-tab active" data-cat="all">
-                <span class="tab-emoji">🔥</span>
-                <span class="tab-label">الأكثر شعبية</span>
-              </button>
-              <button type="button" class="rec-cat-tab" data-cat="protein">
+              <button type="button" class="rec-cat-tab active" data-cat="protein">
                 <span class="tab-emoji">🍗</span>
                 <span class="tab-label">بروتينات ولحوم</span>
               </button>
@@ -1003,13 +999,9 @@ function renderStepContent(step) {
                 <span class="tab-emoji">🍚</span>
                 <span class="tab-label">نشويات وطاقة</span>
               </button>
-              <button type="button" class="rec-cat-tab" data-cat="veggies">
+              <button type="button" class="rec-cat-tab" data-cat="produce">
                 <span class="tab-emoji">🥗</span>
-                <span class="tab-label">خضار وسلطات</span>
-              </button>
-              <button type="button" class="rec-cat-tab" data-cat="fruits">
-                <span class="tab-emoji">🍎</span>
-                <span class="tab-label">فواكه وسناك</span>
+                <span class="tab-label">خضار وفواكه وسلطات</span>
               </button>
             </div>
 
@@ -2564,8 +2556,8 @@ export function bindQuestionnaireEvents() {
             const cat = tab.dataset.cat;
             const chips = chipsContainer?.querySelectorAll('.food-rec-chip');
             chips?.forEach(chip => {
-              if (cat === 'all') {
-                chip.style.display = chip.dataset.popular === 'true' ? 'inline-flex' : 'none';
+              if (cat === 'produce') {
+                chip.style.display = (chip.dataset.category === 'veggies' || chip.dataset.category === 'fruits') ? 'inline-flex' : 'none';
               } else {
                 chip.style.display = chip.dataset.category === cat ? 'inline-flex' : 'none';
               }
@@ -2573,10 +2565,10 @@ export function bindQuestionnaireEvents() {
           });
         });
 
-        // ضبط الفلتر الافتراضي عند التحميل
+        // ضبط الفلتر الافتراضي عند التحميل (بروتينات أولاً)
         const chips = chipsContainer?.querySelectorAll('.food-rec-chip');
         chips?.forEach(chip => {
-          chip.style.display = chip.dataset.popular === 'true' ? 'inline-flex' : 'none';
+          chip.style.display = chip.dataset.category === 'protein' ? 'inline-flex' : 'none';
         });
       }
 
