@@ -3,20 +3,28 @@ import {
   ACTIVITY_FACTORS,
   ACTIVITY_UI_MAP,
   WEEKLY_LOSS_OPTIONS,
+  WEEKLY_GAIN_OPTIONS,
   calculateBMR,
   calculateMaintenanceCalories,
   calculateWeeklyLossKg,
+  calculateWeeklyGainKg,
   calculateEstimatedWeeks,
+  calculateEstimatedGainWeeks,
   evaluateCalorieTarget,
+  evaluateGainCalorieTarget,
   calculateWeightLossOption,
+  calculateWeightGainOption,
   calculateAllWeightLossOptions,
+  calculateAllWeightGainOptions,
   getRecommendedWeeklyLossRate,
+  getRecommendedWeeklyGainRate,
   resolveActivityFactor
 } from '../src/utils/calorieEngine.js';
 
 import {
   calculateNutritionTargets,
   calculateFatLossPlan,
+  calculateWeightGainPlan,
   GOALS
 } from '../src/domain/calculations.js';
 
@@ -174,5 +182,80 @@ assert(extreme130Result.requestedTargetCalories === 660, 'Preserves requestedTar
 const extremeSum = (extreme130Result.protein * 4) + (extreme130Result.carbs * 4) + (extreme130Result.fats * 9);
 assert(extremeSum === 660, `Macro sum (${extremeSum}) strictly equals 660`);
 
-console.log('\n🎉 ALL 9 TEST SUITES PASSED SUCCESSFULLY!');
+// 10. Weight Gain Test Case: 70kg, 0.50% Recommended Rate, TDEE 2452
+console.log('\n--- Test 10: Weight Gain 70kg at 0.5% (Recommended Rate) ---');
+const gain050 = calculateWeightGainOption({
+  currentWeightKg: 70,
+  maintenanceCalories: tdeeMale,
+  weeklyRate: 0.0050,
+  sex: 'male',
+  age: 25,
+  targetWeightKg: 80
+});
+assertCloseTo(gain050.weeklyGainKg, 0.35, 0.001, 'Weekly gain for 0.5% of 70kg = 0.35 kg');
+assertCloseTo(gain050.dailySurplus, 388.8888, 0.01, 'Daily surplus for 0.35 kg/week ≈ 388.89 kcal');
+assert(gain050.dailySurplusRounded === 389, 'Daily surplus rounded = 389 kcal');
+assertCloseTo(gain050.requestedTargetCalories, 2840.9326, 0.01, 'Daily gain target = 2840.93 kcal');
+assert(gain050.targetCaloriesRounded === 2841, 'Daily gain target rounded = 2841 kcal');
+assertCloseTo(gain050.estimatedWeeks, 28.6, 0.1, 'Estimated weeks 70kg -> 80kg at 0.35kg/wk ≈ 28.6 wks');
+
+// 11. 70kg Gain Rates Across All 6 Options
+console.log('\n--- Test 11: 70kg Gain Rates Across All 6 Options ---');
+const expectedGains = [
+  { rate: 0.0025, expectedKg: 0.175 },
+  { rate: 0.0050, expectedKg: 0.350 },
+  { rate: 0.0075, expectedKg: 0.525 },
+  { rate: 0.0100, expectedKg: 0.700 },
+  { rate: 0.0150, expectedKg: 1.050 },
+  { rate: 0.0200, expectedKg: 1.400 },
+];
+const allGainOptions70 = calculateAllWeightGainOptions({
+  currentWeightKg: 70,
+  maintenanceCalories: tdeeMale,
+  sex: 'male',
+  age: 25,
+  targetWeightKg: 80
+});
+assert(allGainOptions70.length === 6, 'Generated all 6 gain options');
+expectedGains.forEach((exp, idx) => {
+  assertCloseTo(allGainOptions70[idx].weeklyGainKg, exp.expectedKg, 0.001, `Gain Option ${idx + 1} (${exp.rate * 100}%): ${exp.expectedKg} kg/week`);
+});
+
+// 12. Gain Under-18 Restrictions and Extreme Confirmation
+console.log('\n--- Test 12: Gain Under-18 Restrictions & Extreme Confirmation ---');
+const u18GainOpt = calculateWeightGainOption({
+  currentWeightKg: 60,
+  maintenanceCalories: 2200,
+  weeklyRate: 0.015,
+  sex: 'male',
+  age: 16
+});
+assert(u18GainOpt.isUnder18Disabled === true, '1.5% gain disabled for under 18');
+const extremeGainOpt = calculateWeightGainOption({
+  currentWeightKg: 70,
+  maintenanceCalories: 2400,
+  weeklyRate: 0.02,
+  sex: 'male',
+  age: 25
+});
+assert(extremeGainOpt.safety.requiresConfirmation === true, '2.0% EXTREME BULK requires confirmation');
+
+// 13. Muscle Gain Nutrition Targets Macro Consistency
+console.log('\n--- Test 13: Muscle Gain Nutrition Targets Macro Consistency ---');
+const muscleGainTargets = calculateNutritionTargets({
+  weight: 70,
+  height: 175,
+  age: 25,
+  gender: 'male',
+  activityLevel: 'moderate',
+  goal: GOALS.MUSCLE_GAIN,
+  weeklyGainPercent: 0.0050
+});
+assert(muscleGainTargets.protein === 140, 'Muscle gain protein = 70 * 2.0 = 140g');
+assert(muscleGainTargets.targetCalories === 2841, `Target calories = 2841, got ${muscleGainTargets.targetCalories}`);
+const muscleSum = (muscleGainTargets.protein * 4) + (muscleGainTargets.carbs * 4) + (muscleGainTargets.fats * 9);
+assert(muscleSum === muscleGainTargets.targetCalories, `Muscle gain macro sum (${muscleSum}) strictly equals targetCalories (${muscleGainTargets.targetCalories})`);
+
+console.log('\n🎉 ALL 13 TEST SUITES PASSED SUCCESSFULLY!');
+
 

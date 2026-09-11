@@ -67,6 +67,7 @@ import {
   calculateBMR as engineCalculateBMR,
   calculateMaintenanceCalories,
   calculateWeightLossOption,
+  calculateWeightGainOption,
   resolveActivityFactor,
   KCAL_PER_KG
 } from '../utils/calorieEngine.js';
@@ -104,7 +105,10 @@ export function calculateNutritionTargets(userProfile) {
     requestedTargetCalories,
     dailyCalorieDeficit,
     selectedWeeklyLossRate,
-    weeklyLossPercent
+    weeklyLossPercent,
+    dailyCalorieSurplus,
+    selectedWeeklyGainRate,
+    weeklyGainPercent
   } = userProfile;
 
   // استخدام العمر المُدخَل مباشرة أولاً، ثم حسابه من تاريخ الميلاد كحل بديل
@@ -141,8 +145,31 @@ export function calculateNutritionTargets(userProfile) {
       targetCalories = option.targetCaloriesRounded;
     }
   } else if (goal === GOALS.MUSCLE_GAIN) {
-    // فائض بناء عضلي نظيف 12% (حوالي 250-350 سعرة)
-    targetCalories = Math.round(rawTdee * 1.12);
+    if (requestedTargetCalories && Number(requestedTargetCalories) > 0) {
+      targetCalories = Math.round(Number(requestedTargetCalories));
+    } else if (dailyCalorieSurplus && Number(dailyCalorieSurplus) > 0) {
+      targetCalories = Math.round(rawTdee + Number(dailyCalorieSurplus));
+    } else if (selectedWeeklyGainRate || weeklyGainPercent) {
+      const rate = Number(selectedWeeklyGainRate || weeklyGainPercent);
+      const option = calculateWeightGainOption({
+        currentWeightKg: weight,
+        maintenanceCalories: rawTdee,
+        weeklyRate: rate,
+        sex: gender,
+        age
+      });
+      targetCalories = option.targetCaloriesRounded;
+    } else {
+      // فائض بناء عضلي موصى به 0.50% (المعدل الذهبي للبناء العضلي)
+      const option = calculateWeightGainOption({
+        currentWeightKg: weight,
+        maintenanceCalories: rawTdee,
+        weeklyRate: 0.0050,
+        sex: gender,
+        age
+      });
+      targetCalories = option.targetCaloriesRounded;
+    }
   } else if (goal === GOALS.RECOMP) {
     // إعادة تركيب الجسم: عجز طفيف جداً 7%
     targetCalories = Math.round(rawTdee * 0.93);
@@ -169,8 +196,8 @@ export function calculateNutritionTargets(userProfile) {
   const totalCalsForPAndC = target - (fatGrams * 9);
   const totalGramsPAndC = Math.floor(totalCalsForPAndC / 4);
 
-  // البروتين: 2.0 غرام لكل كغ لخسارة الدهون، 1.8 غرام للأهداف الأخرى
-  const idealProtein = Math.round(weight * (goal === GOALS.FAT_LOSS ? 2.0 : 1.8));
+  // البروتين: 2.0 غرام لكل كغ لخسارة الدهون وبناء الكتلة العضلية، 1.8 غرام للأهداف الأخرى
+  const idealProtein = Math.round(weight * ((goal === GOALS.FAT_LOSS || goal === GOALS.MUSCLE_GAIN) ? 2.0 : 1.8));
   let proteinGrams = 0;
   let carbGrams = 0;
 
@@ -595,4 +622,54 @@ export function calculateFatLossPlan({
     deficitRatio: Math.round((option.dailyDeficit / (tdee || 2500)) * 100)
   };
 }
+
+/**
+ * دالة إنشاء خطة زيادة الوزن والكتلة العضلية الشاملة
+ */
+export function calculateWeightGainPlan({
+  currentWeight = 70,
+  targetWeight = 75,
+  weeklyGainPercent = 0.0050,
+  tdee = 2500,
+  bmr = 1700,
+  gender = 'male',
+  age = 25
+} = {}) {
+  const weight = Number(currentWeight) || 70;
+  const target = Number(targetWeight) || (weight + 5);
+  const rate = Number(weeklyGainPercent) || 0.0050;
+
+  const option = calculateWeightGainOption({
+    currentWeightKg: weight,
+    maintenanceCalories: tdee,
+    weeklyRate: rate,
+    sex: gender,
+    age,
+    targetWeightKg: target
+  });
+
+  const totalGainKg = Math.max(0, Math.round((target - weight) * 10) / 10);
+
+  return {
+    currentWeight: weight,
+    targetWeight: target,
+    weeklyGainPercent: rate,
+    weeklyGainKg: option.weeklyGainKgRounded,
+    weeklySurplus: option.weeklySurplusRounded,
+    dailySurplus: option.dailySurplusRounded,
+    requestedCalories: option.targetCaloriesRounded,
+    totalGainKg,
+    estimatedWeeks: option.estimatedWeeks,
+    tdee: Math.round(tdee),
+    bmr: Math.round(bmr),
+    safety: option.safety,
+    riskLevel: option.safety.safetyLevel,
+    requiresConfirmation: option.safety.requiresConfirmation,
+    badgeText: option.safety.badgeText,
+    badgeClass: option.safety.badgeClass,
+    warningText: option.safety.warningMessages.join(' '),
+    surplusRatio: Math.round((option.dailySurplus / (tdee || 2500)) * 100)
+  };
+}
+
 

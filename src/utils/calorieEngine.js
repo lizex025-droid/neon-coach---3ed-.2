@@ -143,6 +143,88 @@ export const WEEKLY_LOSS_OPTIONS = [
 ];
 
 /**
+ * 6 Standard Weekly Muscle / Weight Gain Rate Options (as percentage of body weight)
+ */
+export const WEEKLY_GAIN_OPTIONS = [
+  {
+    id: 'gain_025',
+    rate: 0.0025,
+    percent: 0.25,
+    percentText: '0.25%',
+    label: 'بطيء ونقي (Lean Bulk)',
+    speedCategory: 'gentle',
+    description: 'بناء عضلي نقي بأقل زيادة دهون ممكنة، أسهل في الهضم وأكثر استدامة',
+    tag: 'نقي ومستدام 🛡️',
+    riskLevel: 'mild',
+    requiresConfirmation: false
+  },
+  {
+    id: 'gain_050',
+    rate: 0.0050,
+    percent: 0.50,
+    percentText: '0.5%',
+    label: 'معتدل (موصى به)',
+    speedCategory: 'recommended',
+    description: 'المعدل الذهبي للبناء العضلي: تضخيم ممتاز وتطور ملحوظ في القوة مع دهون دنيا',
+    tag: 'موصى به ⭐',
+    isRecommended: true,
+    riskLevel: 'optimal',
+    requiresConfirmation: false
+  },
+  {
+    id: 'gain_075',
+    rate: 0.0075,
+    percent: 0.75,
+    percentText: '0.75%',
+    label: 'نشط (Steady Bulk)',
+    speedCategory: 'steady',
+    description: 'زيادة سريعة ونشطة، مثالية للأجسام النحيفة أو من يجد صعوبة في زيادة الوزن',
+    tag: 'نشط 🚀',
+    riskLevel: 'normal',
+    requiresConfirmation: false
+  },
+  {
+    id: 'gain_100',
+    rate: 0.0100,
+    percent: 1.00,
+    percentText: '1.0%',
+    label: 'سريع (Hardgainer)',
+    speedCategory: 'fast',
+    description: 'زيادة وزن قوية وسريعة للأجسام سريعة الحرق، تتطلب وجبات عالية الكثافة وسعرات فائضة',
+    tag: 'سريع ⚡',
+    riskLevel: 'fast',
+    requiresConfirmation: false
+  },
+  {
+    id: 'gain_150',
+    rate: 0.0150,
+    percent: 1.50,
+    percentText: '1.5%',
+    label: 'سريع جداً (Aggressive)',
+    speedCategory: 'aggressive',
+    description: 'تضخيم مكثف وفائض حراري كبير لزيادة سريعة للوزن، قد يصاحبه زيادة في نسبة الدهون',
+    tag: 'تحدي تضخيم 🔥',
+    isAggressive: true,
+    riskLevel: 'aggressive',
+    requiresConfirmation: false
+  },
+  {
+    id: 'gain_200',
+    rate: 0.0200,
+    percent: 2.00,
+    percentText: '2.0%',
+    label: 'أقصى زيادة (EXTREME BULK)',
+    speedCategory: 'extreme',
+    description: 'أقصى معدل زيادة وزن — فائض سعري ضخم جداً يتطلب تدريباً شاقاً لتوجيه الطاقة نحو العضلات',
+    tag: 'EXTREME ⚠️',
+    isExtreme: true,
+    riskLevel: 'extreme',
+    requiresConfirmation: true
+  }
+];
+
+
+/**
  * Calculate Basal Metabolic Rate (BMR) using Mifflin-St Jeor formula without intermediate rounding.
  * Supports both object signature ({ sex, age, weightKg, heightCm }) and positional (weightKg, heightCm, age, gender).
  */
@@ -413,3 +495,199 @@ export function getRecommendedWeeklyLossRate(userData = {}) {
   }
   return WEEKLY_LOSS_OPTIONS.find(r => r.rate === 0.0075) || WEEKLY_LOSS_OPTIONS[2];
 }
+
+/**
+ * Calculate weekly weight gain in kilograms
+ */
+export function calculateWeeklyGainKg(currentWeightKg, weeklyRate) {
+  const weight = Number(currentWeightKg) || 70;
+  const rate = Number(weeklyRate) || 0.0050;
+  return weight * rate;
+}
+
+/**
+ * Calculate estimated weeks to reach goal weight for weight gain
+ */
+export function calculateEstimatedGainWeeks({ currentWeightKg, targetWeightKg, weeklyGainKg }) {
+  const current = Number(currentWeightKg);
+  const target = Number(targetWeightKg);
+  const gain = Number(weeklyGainKg);
+
+  if (!current || !target || !gain || gain <= 0 || current >= target) {
+    return null;
+  }
+
+  const weightToGain = target - current;
+  const weeks = weightToGain / gain;
+  return Math.round(weeks * 10) / 10;
+}
+
+/**
+ * Evaluate safety and physiological guidance limits for weight/muscle gain
+ */
+export function evaluateGainCalorieTarget({
+  maintenanceCalories = 2400,
+  dailySurplus = 400,
+  requestedTargetCalories = 2800,
+  weeklyRate = 0.005,
+  age = 25
+} = {}) {
+  const isSurplusOver1000 = dailySurplus > 1000;
+  const isExtreme = weeklyRate >= 0.02;
+  const isUnder18 = Number(age) > 0 && Number(age) < 18;
+  const isUnder18Restricted = isUnder18 && weeklyRate > 0.01;
+
+  const warningCodes = [];
+  const warningMessages = [];
+
+  if (isSurplusOver1000) {
+    warningCodes.push('SURPLUS_OVER_1000');
+    warningMessages.push(`الفائض اليومي (+${Math.round(dailySurplus)} سعرة) يتجاوز 1000 سعرة يومياً، وهو فائض مرتفع جداً قد يزيد من تخزين الدهون بجانب البناء العضلي.`);
+  }
+
+  if (isExtreme) {
+    warningCodes.push('EXTREME_GAIN_RATE');
+    warningMessages.push('معدل 2.0% زيادة فائقة وقوية جداً. يتطلب تمريناً رياضياً مكثفاً ومتابعة دورية لتجنب اكتساب دهون فائضة.');
+  }
+
+  if (isUnder18Restricted) {
+    warningCodes.push('UNDER_18_RESTRICTION');
+    warningMessages.push('نظراً لأن عمرك دون 18 عاماً، يُنصح بمعدلات زيادة معتدلة (1% أو أقل) لدعم النمو والتوازن الهرموني الطبيعي.');
+  }
+
+  let safetyLevel = 'optimal';
+  let badgeText = 'ضمن حدود النمو المتوازن ✅';
+  let badgeClass = 'badge-optimal';
+
+  if (isExtreme || (isSurplusOver1000 && weeklyRate >= 0.015)) {
+    safetyLevel = 'extreme';
+    badgeText = 'تضخيم مكثف ⚠️';
+    badgeClass = 'badge-extreme';
+  } else if (isSurplusOver1000) {
+    safetyLevel = 'caution';
+    badgeText = 'يتطلب تمرين شاق ⚠️';
+    badgeClass = 'badge-warning';
+  } else if (weeklyRate >= 0.01) {
+    safetyLevel = 'fast';
+    badgeText = 'زيادة نشطة وسريعة ⚡';
+    badgeClass = 'badge-aggressive';
+  } else if (weeklyRate <= 0.0025) {
+    safetyLevel = 'mild';
+    badgeText = 'زيادة نقية ومستدامة ✅';
+    badgeClass = 'badge-mild';
+  }
+
+  return {
+    safetyLevel,
+    isSurplusOver1000,
+    isExtreme,
+    isUnder18Restricted,
+    requiresConfirmation: isExtreme || isSurplusOver1000,
+    warningCodes,
+    warningMessages,
+    badgeText,
+    badgeClass
+  };
+}
+
+/**
+ * Calculate weight/muscle gain metrics for a single option
+ */
+export function calculateWeightGainOption({
+  currentWeightKg = 70,
+  maintenanceCalories = 2400,
+  weeklyRate = 0.0050,
+  sex = 'male',
+  age = 25,
+  targetWeightKg = null
+}) {
+  const weight = Number(currentWeightKg) || 70;
+  const maintenance = Number(maintenanceCalories) || 2400;
+  const rate = Number(weeklyRate) || 0.0050;
+
+  const weeklyGainKg = weight * rate;
+  const weeklySurplus = weeklyGainKg * KCAL_PER_KG;
+  const dailySurplus = weeklySurplus / 7;
+  const requestedTargetCalories = maintenance + dailySurplus;
+
+  const safety = evaluateGainCalorieTarget({
+    maintenanceCalories: maintenance,
+    dailySurplus,
+    requestedTargetCalories,
+    weeklyRate: rate,
+    age
+  });
+
+  const estimatedWeeks = calculateEstimatedGainWeeks({
+    currentWeightKg: weight,
+    targetWeightKg,
+    weeklyGainKg
+  });
+
+  const optionMeta = WEEKLY_GAIN_OPTIONS.find(o => Math.abs(o.rate - rate) < 0.0001) || {
+    rate,
+    percent: rate * 100,
+    percentText: `${(rate * 100).toFixed(2)}%`,
+    label: 'مخصص',
+    description: '',
+    tag: ''
+  };
+
+  const isUnder18 = Number(age) > 0 && Number(age) < 18;
+  const isUnder18Disabled = isUnder18 && rate > 0.01;
+
+  return {
+    ...optionMeta,
+    weeklyGainKg,
+    weeklyGainKgRounded: Number(weeklyGainKg.toFixed(2)),
+    weeklySurplus,
+    weeklySurplusRounded: Math.round(weeklySurplus),
+    dailySurplus,
+    dailySurplusRounded: Math.round(dailySurplus),
+    requestedTargetCalories,
+    targetCaloriesRounded: Math.round(requestedTargetCalories),
+    estimatedWeeks,
+    safety,
+    isUnder18Disabled,
+    raw: {
+      weeklyGainKg,
+      weeklySurplus,
+      dailySurplus,
+      requestedTargetCalories
+    }
+  };
+}
+
+/**
+ * Calculate all 6 weight gain rate options for the given profile
+ */
+export function calculateAllWeightGainOptions({
+  currentWeightKg = 70,
+  maintenanceCalories = 2400,
+  sex = 'male',
+  age = 25,
+  targetWeightKg = null
+}) {
+  return WEEKLY_GAIN_OPTIONS.map(opt => {
+    return calculateWeightGainOption({
+      currentWeightKg,
+      maintenanceCalories,
+      weeklyRate: opt.rate,
+      sex,
+      age,
+      targetWeightKg
+    });
+  });
+}
+
+/**
+ * Smart recommendation logic for default gain rate
+ */
+export function getRecommendedWeeklyGainRate(userData = {}) {
+  const age = Number(userData.age) || 25;
+  if (age < 18) {
+    return WEEKLY_GAIN_OPTIONS.find(r => r.rate === 0.0025) || WEEKLY_GAIN_OPTIONS[0];
+  }
+  return WEEKLY_GAIN_OPTIONS.find(r => r.rate === 0.0050) || WEEKLY_GAIN_OPTIONS[1];
+}
+

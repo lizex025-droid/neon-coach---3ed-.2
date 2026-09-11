@@ -2485,9 +2485,10 @@ a:hover .neon-icon,
 }
 
 /* ----------------------------------------------------
-   Weekly Loss Rate Cards & Summary (Step 2)
+   Weekly Loss & Gain Rate Cards & Summary (Step 2)
 ---------------------------------------------------- */
-.weekly-loss-rates-grid {
+.weekly-loss-rates-grid,
+.weekly-gain-rates-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
@@ -2495,7 +2496,8 @@ a:hover .neon-icon,
 }
 
 @media (max-width: 600px) {
-  .weekly-loss-rates-grid {
+  .weekly-loss-rates-grid,
+  .weekly-gain-rates-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
@@ -2568,6 +2570,13 @@ a:hover .neon-icon,
 .rate-card-deficit {
   font-size: 0.75rem;
   color: #9CA3AF;
+  margin-bottom: 4px;
+}
+
+.rate-card-surplus {
+  font-size: 0.75rem;
+  color: #55F7A5;
+  font-weight: 700;
   margin-bottom: 4px;
 }
 

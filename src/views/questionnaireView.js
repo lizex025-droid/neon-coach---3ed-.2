@@ -13,6 +13,11 @@ import {
   calculateWeightLossOption,
   calculateAllWeightLossOptions,
   WEEKLY_LOSS_OPTIONS,
+  calculateWeightGainOption,
+  calculateAllWeightGainOptions,
+  WEEKLY_GAIN_OPTIONS,
+  getRecommendedWeeklyGainRate,
+  calculateWeightGainPlan,
   ACTIVITY_UI_MAP,
   kgToLbs, 
   lbsToKg,
@@ -29,11 +34,13 @@ import { searchFoods } from '../data/foods.js';
 
 let currentStep = 1;
 let extremeConfirmed = false;
+let extremeGainConfirmed = false;
 
 export const STEP_KEYS = {
   MEASUREMENTS: 'measurements',
   GOAL: 'goal',
   WEEKLY_LOSS_RATE: 'weekly_loss_rate',
+  WEEKLY_GAIN_RATE: 'weekly_gain_rate',
   NUTRITION: 'nutrition',
   HEALTH: 'health',
   TRAINING: 'training',
@@ -47,6 +54,18 @@ export function getActiveSteps() {
       STEP_KEYS.MEASUREMENTS,
       STEP_KEYS.GOAL,
       STEP_KEYS.WEEKLY_LOSS_RATE,
+      STEP_KEYS.NUTRITION,
+      STEP_KEYS.HEALTH,
+      STEP_KEYS.TRAINING,
+      STEP_KEYS.SUPPLEMENTS,
+      STEP_KEYS.REVIEW
+    ];
+  }
+  if (formData.goal === 'muscle_gain') {
+    return [
+      STEP_KEYS.MEASUREMENTS,
+      STEP_KEYS.GOAL,
+      STEP_KEYS.WEEKLY_GAIN_RATE,
       STEP_KEYS.NUTRITION,
       STEP_KEYS.HEALTH,
       STEP_KEYS.TRAINING,
@@ -85,10 +104,18 @@ let formData = {
   weeklyLossKg: 0.53,
   weeklyCalorieDeficit: 4083,
   dailyCalorieDeficit: 583,
+  selectedWeeklyGainRate: 0.0050,
+  selectedWeeklyGainPercent: 0.0050,
+  weeklyGainPercent: 0.0050,
+  selectedWeeklyGainKg: 0.35,
+  weeklyGainKg: 0.35,
+  weeklyCalorieSurplus: 2722,
+  dailyCalorieSurplus: 389,
   requestedTargetCalories: 1869,
   requestedCalories: 1869,
   estimatedGoalWeeks: 9.4,
   weightLossRiskLevel: 'optimal',
+  weightGainRiskLevel: 'optimal',
   calorieSafetyLevel: 'optimal',
   calorieWarningCodes: [],
   activityLevel: 'moderate',
@@ -255,6 +282,95 @@ function renderFatLossSummaryHTML(data) {
     </div>
   `;
 }
+
+/**
+ * دالة إنشاء HTML ملخص خطة زيادة الوزن والكتلة العضلية التفاعلي المركزي
+ */
+function renderWeightGainSummaryHTML(data) {
+  const weight = Number(data.weight) || 70;
+  const target = Number(data.targetWeight) || (weight + 5);
+  const percent = Number(data.weeklyGainPercent) || 0.0050;
+  const age = Number(data.age) || 18;
+  const height = Number(data.height) || 175;
+  const gender = data.gender || 'male';
+  const activity = data.activityLevel || 'moderate';
+
+  const rawBmr = calculateBMR({ sex: gender, age, weightKg: weight, heightCm: height });
+  const rawTdee = calculateMaintenanceCalories(rawBmr, activity);
+
+  const option = calculateWeightGainOption({
+    currentWeightKg: weight,
+    maintenanceCalories: rawTdee,
+    weeklyRate: percent,
+    sex: gender,
+    age,
+    targetWeightKg: target
+  });
+
+  const isTargetInvalid = target <= weight;
+
+  return `
+    <div class="neon-card" style="padding: 16px; border-radius: 16px; background: rgba(14, 22, 18, 0.7); border: 1px solid rgba(85,247,165,0.25);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 8px;">
+        <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+          <span>🎯</span>
+          <span>هدفك المتوقع لبناء الكتلة</span>
+        </div>
+        <div class="badge ${option.safety.badgeClass}" style="padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem;">
+          ${option.safety.badgeText}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.72rem; color: #9CA3AF; margin-bottom: 2px;">سعرات الثبات المقدرة</div>
+          <div style="font-size: 1.1rem; font-weight: 800; color: #55F7A5;">${Math.round(rawTdee).toLocaleString('en-US')} <span style="font-size: 0.75rem; color: #B8C0BC;">سعرة / يوم</span></div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.72rem; color: #9CA3AF; margin-bottom: 2px;">الزيادة الأسبوعية المقدرة</div>
+          <div style="font-size: 1.1rem; font-weight: 800; color: #55F7A5;">+${option.weeklyGainKgRounded.toFixed(2)} <span style="font-size: 0.75rem; color: #B8C0BC;">كغ / أسبوع</span></div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.72rem; color: #9CA3AF; margin-bottom: 2px;">الفائض اليومي المقدر</div>
+          <div style="font-size: 1.1rem; font-weight: 800; color: #55F7A5;">+${option.dailySurplusRounded} <span style="font-size: 0.75rem; color: #B8C0BC;">سعرة</span></div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.72rem; color: #9CA3AF; margin-bottom: 2px;">السعرات اليومية المقترحة</div>
+          <div style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF;">${option.targetCaloriesRounded.toLocaleString('en-US')} <span style="font-size: 0.75rem; color: #B8C0BC;">سعرة</span></div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); grid-column: span 2;">
+          <div style="font-size: 0.72rem; color: #9CA3AF; margin-bottom: 2px;">المدة التقديرية للوصول للهدف (${target} كغ)</div>
+          <div style="font-size: 1.05rem; font-weight: 800; color: ${isTargetInvalid ? '#F87171' : '#55F7A5'};">
+            ${isTargetInvalid 
+              ? 'تتطلب وزناً مستهدفاً أكبر من وزنك الحالي' 
+              : `~ ${option.estimatedWeeks || '—'} <span style="font-size: 0.75rem; color: #B8C0BC;">أسبوع</span>`}
+          </div>
+        </div>
+      </div>
+
+      ${isTargetInvalid ? `
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #FCA5A5; margin-bottom: 8px; text-align: center;">
+          ⚠️ الوزن المستهدف (${target} كغ) يجب أن يكون أكبر من وزنك الحالي (${weight} كغ) لحساب مدة الوصول.
+        </div>
+      ` : ''}
+
+      ${option.safety.warningMessages.length > 0 ? `
+        <div style="background: rgba(245, 158, 11, 0.09); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #FBBF24; margin-bottom: 8px; line-height: 1.4;">
+          ${option.safety.warningMessages.map(msg => `<div>⚠️ ${msg}</div>`).join('')}
+        </div>
+      ` : ''}
+
+      <div style="font-size: 0.68rem; color: #8E9892; text-align: center; margin-top: 4px;">
+        المدة تقديرية وتعتمد على الالتزام بالتدريب والتغذية لبناء كتلة عضلية نقية.
+      </div>
+    </div>
+  `;
+}
+
 
 
 export function renderQuestionnaireView() {
@@ -688,6 +804,149 @@ function renderStepContent(step) {
       `;
     }
 
+    case STEP_KEYS.WEEKLY_GAIN_RATE: {
+      // الصفحة المخصصة والمستقلة: سرعة زيادة الوزن الأسبوعي وهدفك المتوقع
+      const currentWeight = Number(formData.weight) || 70;
+      const currentHeight = Number(formData.height) || 175;
+      const currentAge = Number(formData.age) || 18;
+      const currentGender = formData.gender || 'male';
+      const currentActivity = formData.activityLevel || 'moderate';
+
+      const rawBmr = calculateBMR({ sex: currentGender, age: currentAge, weightKg: currentWeight, heightCm: currentHeight });
+      const rawTdee = calculateMaintenanceCalories(rawBmr, currentActivity);
+
+      const options = calculateAllWeightGainOptions({
+        currentWeightKg: currentWeight,
+        maintenanceCalories: rawTdee,
+        sex: currentGender,
+        age: currentAge,
+        targetWeightKg: formData.targetWeight
+      });
+
+      return `
+        <div style="text-align: center; margin-bottom: 16px;">
+          <h2 style="font-size: 1.6rem; color: #55F7A5; margin-bottom: 6px; font-weight: 800;">ما سرعة زيادة الوزن التي تريدها؟</h2>
+          <p style="font-size: 0.95rem; color: #B8C0BC;">اختر معدل زيادة الوزن الأسبوعي كنسبة من وزن جسمك (${currentWeight} كغ)</p>
+        </div>
+
+        <!-- بطاقة سعرات الثبات و BMR العلوية البارزة -->
+        <div class="neon-card maintenance-highlight-card" style="padding: 14px 16px; border-radius: 16px; margin-bottom: 18px; text-align: center;">
+          <div style="font-size: 0.8rem; color: #B8C0BC; margin-bottom: 4px;">تقدير مبني على بيانات جسمك ومستوى النشاط</div>
+          <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 1.25rem; font-weight: 900; color: #55F7A5;">🔥 سعرات الثبات: ${Math.round(rawTdee).toLocaleString('en-US')} سعرة / يوم</span>
+            <span style="font-size: 0.88rem; color: #9CA3AF;">(BMR: ${Math.round(rawBmr).toLocaleString('en-US')} سعرة / يوم)</span>
+          </div>
+          <div style="font-size: 0.72rem; color: #6B7280; margin-top: 4px;">
+            السعرات التي تحافظ على وزنك الحالي — سنضيف عليها فائضاً محسوباً لبناء الكتلة العضلية
+          </div>
+        </div>
+
+        <!-- شبكة بطاقات المعدلات الستة الديناميكية -->
+        <div class="weekly-gain-rates-grid" role="radiogroup" aria-label="معدل زيادة الوزن الأسبوعي" style="margin-bottom: 18px;">
+          ${options.map(opt => {
+            const isSelected = Math.abs((formData.weeklyGainPercent || 0.0050) - opt.rate) < 0.0001;
+            const isDisabled = opt.isUnder18Disabled;
+            const isExtreme = opt.isExtreme;
+            return `
+              <div class="neon-card rate-card ${isSelected ? 'active-rate' : ''} ${isExtreme ? 'extreme-card' : ''} ${isDisabled ? 'disabled' : ''}" 
+                   data-rate="${opt.rate}" 
+                   data-extreme="${isExtreme}"
+                   data-disabled="${isDisabled}"
+                   tabindex="${isDisabled ? '-1' : '0'}"
+                   role="radio"
+                   aria-checked="${isSelected}"
+                   aria-disabled="${isDisabled}"
+                   style="padding: 14px 10px; cursor: ${isDisabled ? 'not-allowed' : 'pointer'};">
+                
+                ${isSelected ? `
+                  <div class="rate-card-check">✓</div>
+                ` : ''}
+
+                ${opt.isRecommended ? `
+                  <div style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #55F7A5; color: #0D1512; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; white-space: nowrap; box-shadow: 0 0 10px rgba(85,247,165,0.4);">
+                    موصى به ⭐
+                  </div>
+                ` : ''}
+
+                ${isExtreme ? `
+                  <div style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F59E0B; color: #000; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; white-space: nowrap;">
+                    EXTREME ⚠️
+                  </div>
+                ` : ''}
+
+                ${isDisabled ? `
+                  <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(239, 68, 68, 0.85); color: #FFF; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 10px; white-space: nowrap;">
+                    غير متاح دون 18 عاماً 🛡️
+                  </div>
+                ` : ''}
+
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                  <span style="font-weight: 800; font-size: 1.05rem; color: ${isExtreme ? '#FBBF24' : '#55F7A5'};">${opt.percentText}</span>
+                  <span style="font-size: 0.76rem; font-weight: 700; color: #FFFFFF;">${opt.label}</span>
+                </div>
+
+                <div style="font-size: 0.82rem; font-weight: 700; color: #E5E7EB; margin-bottom: 2px;">
+                  + <span class="rate-card-kg">${opt.weeklyGainKgRounded.toFixed(2)}</span> كغ / أسبوع
+                </div>
+
+                <div class="rate-card-calories">
+                  ${opt.targetCaloriesRounded.toLocaleString('en-US')} <span style="font-size: 0.72rem; font-weight: 600; color: #B8C0BC;">سعرة / يوم</span>
+                </div>
+
+                <div class="rate-card-surplus">
+                  فائض يومي: +${opt.dailySurplusRounded} سعرة
+                </div>
+
+                <div style="font-size: 0.68rem; color: #9CA3AF; line-height: 1.35; margin-top: auto;">
+                  ${opt.description}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- صندوق الملخص التفاعلي المصغر -->
+        <div id="weight-gain-summary-box" style="margin-bottom: 20px;">
+          ${renderWeightGainSummaryHTML(formData)}
+        </div>
+
+        <!-- مودال التأكيد لمعدل 2% EXTREME BULK -->
+        <div id="extreme-gain-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(6px);">
+          <div class="neon-card" style="max-width: 440px; width: 100%; border: 1.5px solid #F59E0B; box-shadow: 0 0 25px rgba(245,158,11,0.25); padding: 24px; border-radius: 20px; background: #121A16;">
+            <div style="text-align: center; margin-bottom: 16px;">
+              <div style="font-size: 2.2rem; margin-bottom: 6px;">⚠️</div>
+              <h3 style="font-size: 1.25rem; color: #FBBF24; font-weight: 800; margin-bottom: 6px;">تأكيد هدف التضخيم الأقصى (EXTREME BULK)</h3>
+              <p style="font-size: 0.85rem; color: #D1D5DB; line-height: 1.5;">
+                لقد اخترت معدل زيادة أسبوعي <strong>2.0%</strong> من وزن جسمك. هذا المعدل يمثل فائضاً حرارياً هائلاً قد يؤدي لاكتساب دهون سريعة إذا لم يقترن بتدريب مقاومة مكثف وانضباط مستمر.
+              </p>
+            </div>
+
+            <div id="extreme-gain-modal-stats" style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.85rem; border: 1px solid rgba(245,158,11,0.2);">
+              <!-- يتم ملء الإحصائيات ديناميكياً -->
+            </div>
+
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.82rem; color: #D1D5DB; margin-bottom: 20px; line-height: 1.4;">
+              <input type="checkbox" id="extreme-gain-confirm-checkbox" style="margin-top: 3px; accent-color: #55F7A5; width: 18px; height: 18px; flex-shrink: 0;">
+              <span>أفهم أن هذا الفائض كبير جداً وسأقوم بتكثيف تمارين المقاومة ومراقبة نسبة الدهون.</span>
+            </label>
+
+            <div style="display: flex; gap: 10px;">
+              <button type="button" id="extreme-gain-cancel-btn" class="btn btn-secondary" style="flex: 1; border-radius: 14px; font-size: 0.88rem; padding: 10px;">
+                اختيار معدل معتدل (0.5%)
+              </button>
+              <button type="button" id="extreme-gain-accept-btn" class="btn btn-primary" disabled style="flex: 1; border-radius: 14px; font-size: 0.88rem; padding: 10px; opacity: 0.5; cursor: not-allowed;">
+                فهمت، متابعة
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 10px; border-radius: 22px;">
+          متابعة
+        </button>
+      `;
+    }
+
     case STEP_KEYS.NUTRITION:
     case 3:
       // تفضيلات التغذية والحساسيات
@@ -933,7 +1192,7 @@ function renderStepContent(step) {
       const goalNames = {
         fat_loss: `خسارة دهون (عجز ${formData.dailyCalorieDeficit || 500} سعرة)`,
         maintenance: 'تثبيت الوزن (سعرات المحافظة)',
-        muscle_gain: 'زيادة الكتلة العضلية (فائض 10%)'
+        muscle_gain: `زيادة الكتلة العضلية (فائض ${formData.dailyCalorieSurplus || 389} سعرة)`
       };
       const goalText = goalNames[formData.goal] || 'خسارة دهون';
       const eqText = formData.equipment === 'home' ? 'منزل بأوزان خفيفة' : 'صالة جيم';
@@ -959,6 +1218,19 @@ function renderStepContent(step) {
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
               <span style="color: #B8C0BC;">معدل النزول الأسبوعي</span>
               <span style="font-weight: 800; color: #55F7A5;">${(formData.weeklyLossPercent * 100).toFixed(2)}% (~${formData.weeklyLossKg} كغ/أسبوع)</span>
+            </div>
+            ${formData.estimatedGoalWeeks ? `
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
+                <span style="color: #B8C0BC;">المدة التقديرية للهدف</span>
+                <span style="font-weight: 800; color: #FFFFFF;">حوالي ${formData.estimatedGoalWeeks} أسبوع</span>
+              </div>
+            ` : ''}
+          ` : ''}
+
+          ${formData.goal === 'muscle_gain' ? `
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
+              <span style="color: #B8C0BC;">معدل الزيادة الأسبوعية</span>
+              <span style="font-weight: 800; color: #55F7A5;">${((formData.weeklyGainPercent || 0.0050) * 100).toFixed(2)}% (~${formData.weeklyGainKg || 0.35} كغ/أسبوع)</span>
             </div>
             ${formData.estimatedGoalWeeks ? `
               <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
@@ -1030,7 +1302,7 @@ function renderStepContent(step) {
             <div class="plan-gen-checklist">
               <div class="plan-step-item" id="plan-step-1">
                 <span class="step-icon">1</span>
-                <span class="step-text">حساب معدل الحرق اليومي (BMR & TDEE) وهندسة عجز السعرات</span>
+                <span class="step-text">حساب معدل الحرق اليومي (BMR & TDEE) وهندسة ${formData.goal === 'muscle_gain' ? 'الفائض السعري لبناء الكتلة' : 'عجز السعرات'}</span>
               </div>
               <div class="plan-step-item" id="plan-step-2">
                 <span class="step-icon">2</span>
@@ -1071,6 +1343,8 @@ export function bindQuestionnaireEvents() {
     initGoalStepEvents();
   } else if (currentStepKey === STEP_KEYS.WEEKLY_LOSS_RATE) {
     initWeeklyLossRateEvents();
+  } else if (currentStepKey === STEP_KEYS.WEEKLY_GAIN_RATE) {
+    initWeeklyGainRateEvents();
   } else if (currentStepKey === STEP_KEYS.NUTRITION) {
     initNutritionStepEvents();
   }
@@ -1091,10 +1365,31 @@ export function bindQuestionnaireEvents() {
       }
     }
 
+    // التحقق عند الخطوة 2 لهدف زيادة الكتلة: الوزن المستهدف يجب أن يكون أكبر
+    if (stepKeyNow === STEP_KEYS.GOAL && formData.goal === 'muscle_gain') {
+      const targetWeight = Number(document.getElementById('q-target-weight')?.value) || formData.targetWeight;
+      const weight = Number(formData.weight) || 70;
+      if (targetWeight <= weight) {
+        notificationService.showToast(`لهدف زيادة الكتلة، يجب أن يكون الوزن المستهدف أكبر من وزنك الحالي (${weight} كغ)`, 'warning');
+        return;
+      }
+    }
+
     // التحقق عند شاشة معدل النزول: التأكيد لمعدل 2% EXTREME
     if (stepKeyNow === STEP_KEYS.WEEKLY_LOSS_RATE) {
       if (formData.weeklyLossPercent >= 0.02 && !extremeConfirmed) {
         const modal = document.getElementById('extreme-loss-modal');
+        if (modal) {
+          modal.style.display = 'flex';
+          return;
+        }
+      }
+    }
+
+    // التحقق عند شاشة معدل زيادة الوزن: التأكيد لمعدل 2% EXTREME BULK
+    if (stepKeyNow === STEP_KEYS.WEEKLY_GAIN_RATE) {
+      if ((formData.weeklyGainPercent || 0.0050) >= 0.02 && !extremeGainConfirmed) {
+        const modal = document.getElementById('extreme-gain-modal');
         if (modal) {
           modal.style.display = 'flex';
           return;
@@ -1532,6 +1827,16 @@ export function bindQuestionnaireEvents() {
         card.style.borderColor = '#55F7A5';
         formData.goal = card.getAttribute('data-goal');
 
+        // تعديل افتراضي ذكي للوزن المستهدف حسب الهدف
+        const currentW = Number(formData.weight) || 70;
+        if (formData.goal === 'muscle_gain' && formData.targetWeight <= currentW) {
+          formData.targetWeight = Math.round(currentW + 5);
+          if (targetWeightInput) targetWeightInput.value = formData.targetWeight;
+        } else if (formData.goal === 'fat_loss' && formData.targetWeight >= currentW) {
+          formData.targetWeight = Math.round(currentW - 5);
+          if (targetWeightInput) targetWeightInput.value = formData.targetWeight;
+        }
+
         // تحديث شريط الخطوات والمؤشر ديناميكياً فور تغيير الهدف
         const activeSteps = getActiveSteps();
         const totalSteps = activeSteps.length;
@@ -1783,6 +2088,244 @@ export function bindQuestionnaireEvents() {
         }
       });
       updateFatLossSummary();
+    });
+  }
+
+  function initWeeklyGainRateEvents() {
+    const extremeModal = document.getElementById('extreme-gain-modal');
+    const extremeCheckbox = document.getElementById('extreme-gain-confirm-checkbox');
+    const extremeAcceptBtn = document.getElementById('extreme-gain-accept-btn');
+    const extremeCancelBtn = document.getElementById('extreme-gain-cancel-btn');
+
+    const updateWeightGainSummary = () => {
+      const box = document.getElementById('weight-gain-summary-box');
+      if (box) {
+        box.innerHTML = renderWeightGainSummaryHTML(formData);
+      }
+      const w = Number(formData.weight) || 70;
+      const h = Number(formData.height) || 175;
+      const age = Number(formData.age) || 18;
+      const g = formData.gender || 'male';
+      const act = formData.activityLevel || 'moderate';
+
+      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
+      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+
+      document.querySelectorAll('.weekly-gain-rates-grid .rate-card').forEach(rc => {
+        const rateVal = parseFloat(rc.dataset.rate);
+        if (!isNaN(rateVal)) {
+          const opt = calculateWeightGainOption({
+            currentWeightKg: w,
+            maintenanceCalories: rawTdee,
+            weeklyRate: rateVal,
+            sex: g,
+            age,
+            targetWeightKg: formData.targetWeight
+          });
+          const kgEl = rc.querySelector('.rate-card-kg');
+          if (kgEl) kgEl.textContent = opt.weeklyGainKgRounded.toFixed(2);
+          const calEl = rc.querySelector('.rate-card-calories');
+          if (calEl) calEl.innerHTML = `${opt.targetCaloriesRounded.toLocaleString('en-US')} <span style="font-size: 0.72rem; font-weight: 600; color: #B8C0BC;">سعرة / يوم</span>`;
+          const surEl = rc.querySelector('.rate-card-surplus');
+          if (surEl) surEl.textContent = `فائض يومي: +${opt.dailySurplusRounded} سعرة`;
+        }
+      });
+    };
+
+    const showExtremeModal = () => {
+      if (!extremeModal) return;
+      const w = Number(formData.weight) || 70;
+      const h = Number(formData.height) || 175;
+      const age = Number(formData.age) || 18;
+      const g = formData.gender || 'male';
+      const act = formData.activityLevel || 'moderate';
+
+      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
+      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const plan = calculateWeightGainOption({
+        currentWeightKg: w,
+        maintenanceCalories: rawTdee,
+        weeklyRate: 0.02,
+        sex: g,
+        age,
+        targetWeightKg: formData.targetWeight || (w + 5)
+      });
+
+      const statsDiv = document.getElementById('extreme-gain-modal-stats');
+      if (statsDiv) {
+        statsDiv.innerHTML = `
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #E5E7EB;">
+            <span>الزيادة الأسبوعية المقدرة:</span>
+            <strong style="color: #FBBF24;">+${plan.weeklyGainKgRounded.toFixed(2)} كغ / أسبوع</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #E5E7EB;">
+            <span>الفائض اليومي المطلوب:</span>
+            <strong style="color: #FBBF24;">+${plan.dailySurplusRounded} سعرة</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; color: #E5E7EB;">
+            <span>سعراتك اليومية الناتجة:</span>
+            <strong style="color: #FBBF24;">${plan.targetCaloriesRounded.toLocaleString('en-US')} سعرة / يوم</strong>
+          </div>
+        `;
+      }
+
+      if (extremeCheckbox) {
+        extremeCheckbox.checked = extremeGainConfirmed;
+      }
+      if (extremeAcceptBtn) {
+        extremeAcceptBtn.disabled = !extremeGainConfirmed;
+        extremeAcceptBtn.style.opacity = extremeGainConfirmed ? '1' : '0.5';
+        extremeAcceptBtn.style.cursor = extremeGainConfirmed ? 'pointer' : 'not-allowed';
+      }
+
+      extremeModal.style.display = 'flex';
+    };
+
+    const hideExtremeModal = () => {
+      if (extremeModal) extremeModal.style.display = 'none';
+    };
+
+    // تفاعل بطاقات المعدلات الستة لزيادة الوزن
+    document.querySelectorAll('.weekly-gain-rates-grid .rate-card').forEach(rc => {
+      const handleSelect = () => {
+        if (rc.classList.contains('disabled') || rc.dataset.disabled === 'true') {
+          notificationService.showToast('هذا الخيار غير متاح لمن هم دون 18 عاماً للحفاظ على النمو الصحي 🛡️', 'warning');
+          return;
+        }
+
+        const rateVal = parseFloat(rc.dataset.rate);
+        formData.weeklyGainPercent = rateVal;
+        formData.selectedWeeklyGainRate = rateVal;
+        formData.selectedWeeklyGainPercent = rateVal;
+
+        const w = Number(formData.weight) || 70;
+        const h = Number(formData.height) || 175;
+        const age = Number(formData.age) || 18;
+        const g = formData.gender || 'male';
+        const act = formData.activityLevel || 'moderate';
+        const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
+        const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+        const opt = calculateWeightGainOption({
+          currentWeightKg: w,
+          maintenanceCalories: rawTdee,
+          weeklyRate: rateVal,
+          sex: g,
+          age,
+          targetWeightKg: formData.targetWeight || (w + 5)
+        });
+
+        formData.bmr = Math.round(rawBmr);
+        formData.rawBmr = rawBmr;
+        formData.maintenanceCalories = Math.round(rawTdee);
+        formData.rawMaintenanceCalories = rawTdee;
+        formData.selectedWeeklyGainKg = opt.weeklyGainKgRounded;
+        formData.weeklyGainKg = opt.weeklyGainKgRounded;
+        formData.weeklyCalorieSurplus = opt.weeklySurplusRounded;
+        formData.dailyCalorieSurplus = opt.dailySurplusRounded;
+        formData.requestedTargetCalories = opt.targetCaloriesRounded;
+        formData.requestedCalories = opt.targetCaloriesRounded;
+        formData.targetCalories = opt.targetCaloriesRounded;
+        formData.estimatedGoalWeeks = opt.estimatedWeeks;
+        formData.weightGainRiskLevel = opt.safety.safetyLevel;
+        formData.calorieSafetyLevel = opt.safety.safetyLevel;
+        formData.calorieWarningCodes = opt.safety.warningCodes;
+
+        document.querySelectorAll('.weekly-gain-rates-grid .rate-card').forEach(c => {
+          c.classList.remove('active-rate');
+          c.setAttribute('aria-checked', 'false');
+          c.querySelector('.rate-card-check')?.remove();
+        });
+
+        rc.classList.add('active-rate');
+        rc.setAttribute('aria-checked', 'true');
+        const check = document.createElement('div');
+        check.className = 'rate-card-check';
+        check.textContent = '✓';
+        rc.appendChild(check);
+
+        if (rateVal >= 0.02) {
+          showExtremeModal();
+        } else {
+          extremeGainConfirmed = false;
+        }
+
+        updateWeightGainSummary();
+      };
+
+      rc.addEventListener('click', handleSelect);
+      rc.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleSelect();
+        }
+      });
+    });
+
+    // أحداث المودال
+    extremeCheckbox?.addEventListener('change', (e) => {
+      if (extremeAcceptBtn) {
+        extremeAcceptBtn.disabled = !e.target.checked;
+        extremeAcceptBtn.style.opacity = e.target.checked ? '1' : '0.5';
+        extremeAcceptBtn.style.cursor = e.target.checked ? 'pointer' : 'not-allowed';
+      }
+    });
+
+    extremeAcceptBtn?.addEventListener('click', () => {
+      extremeGainConfirmed = true;
+      hideExtremeModal();
+      notificationService.showToast('تم تأكيد اختيار معدل التضخيم الأقصى ⚠️', 'info');
+    });
+
+    extremeCancelBtn?.addEventListener('click', () => {
+      hideExtremeModal();
+      formData.weeklyGainPercent = 0.0050;
+      formData.selectedWeeklyGainRate = 0.0050;
+      extremeGainConfirmed = false;
+
+      const w = Number(formData.weight) || 70;
+      const h = Number(formData.height) || 175;
+      const age = Number(formData.age) || 18;
+      const g = formData.gender || 'male';
+      const act = formData.activityLevel || 'moderate';
+      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
+      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const opt = calculateWeightGainOption({
+        currentWeightKg: w,
+        maintenanceCalories: rawTdee,
+        weeklyRate: 0.0050,
+        sex: g,
+        age,
+        targetWeightKg: formData.targetWeight || (w + 5)
+      });
+      formData.bmr = Math.round(rawBmr);
+      formData.rawBmr = rawBmr;
+      formData.maintenanceCalories = Math.round(rawTdee);
+      formData.rawMaintenanceCalories = rawTdee;
+      formData.selectedWeeklyGainKg = opt.weeklyGainKgRounded;
+      formData.weeklyGainKg = opt.weeklyGainKgRounded;
+      formData.weeklyCalorieSurplus = opt.weeklySurplusRounded;
+      formData.dailyCalorieSurplus = opt.dailySurplusRounded;
+      formData.requestedTargetCalories = opt.targetCaloriesRounded;
+      formData.requestedCalories = opt.targetCaloriesRounded;
+      formData.targetCalories = opt.targetCaloriesRounded;
+      formData.estimatedGoalWeeks = opt.estimatedWeeks;
+      formData.weightGainRiskLevel = opt.safety.safetyLevel;
+      formData.calorieSafetyLevel = opt.safety.safetyLevel;
+      formData.calorieWarningCodes = opt.safety.warningCodes;
+
+      document.querySelectorAll('.weekly-gain-rates-grid .rate-card').forEach(c => {
+        const isRec = Math.abs(parseFloat(c.dataset.rate) - 0.0050) < 0.0001;
+        c.classList.toggle('active-rate', isRec);
+        c.setAttribute('aria-checked', String(isRec));
+        c.querySelector('.rate-card-check')?.remove();
+        if (isRec) {
+          const check = document.createElement('div');
+          check.className = 'rate-card-check';
+          check.textContent = '✓';
+          c.appendChild(check);
+        }
+      });
+      updateWeightGainSummary();
     });
   }
 
@@ -2094,6 +2637,40 @@ export function bindQuestionnaireEvents() {
       formData.requestedCalories = option.targetCaloriesRounded;
       formData.estimatedGoalWeeks = option.estimatedWeeks;
       formData.weightLossRiskLevel = option.safety.safetyLevel;
+      formData.calorieSafetyLevel = option.safety.safetyLevel;
+      formData.calorieWarningCodes = option.safety.warningCodes;
+    } else if (currentStepKey === STEP_KEYS.WEEKLY_GAIN_RATE) {
+      const w = Number(formData.weight) || 70;
+      const h = Number(formData.height) || 175;
+      const age = Number(formData.age) || 18;
+      const g = formData.gender || 'male';
+      const act = formData.activityLevel || 'moderate';
+      const bmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
+      const tdee = calculateMaintenanceCalories(bmr, act);
+      const option = calculateWeightGainOption({
+        currentWeightKg: w,
+        maintenanceCalories: tdee,
+        weeklyRate: formData.weeklyGainPercent || 0.0050,
+        sex: g,
+        age,
+        targetWeightKg: formData.targetWeight || (w + 5)
+      });
+      formData.bmr = Math.round(bmr);
+      formData.rawBmr = bmr;
+      formData.maintenanceCalories = Math.round(tdee);
+      formData.rawMaintenanceCalories = tdee;
+      formData.selectedWeeklyGainRate = option.rate;
+      formData.selectedWeeklyGainPercent = option.rate;
+      formData.weeklyGainPercent = option.rate;
+      formData.selectedWeeklyGainKg = option.weeklyGainKgRounded;
+      formData.weeklyGainKg = option.weeklyGainKgRounded;
+      formData.weeklyCalorieSurplus = option.weeklySurplusRounded;
+      formData.dailyCalorieSurplus = option.dailySurplusRounded;
+      formData.requestedTargetCalories = option.targetCaloriesRounded;
+      formData.requestedCalories = option.targetCaloriesRounded;
+      formData.targetCalories = option.targetCaloriesRounded;
+      formData.estimatedGoalWeeks = option.estimatedWeeks;
+      formData.weightGainRiskLevel = option.safety.safetyLevel;
       formData.calorieSafetyLevel = option.safety.safetyLevel;
       formData.calorieWarningCodes = option.safety.warningCodes;
     } else if (currentStepKey === STEP_KEYS.NUTRITION) {
