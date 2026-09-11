@@ -39,12 +39,25 @@ export const ROUTES = {
   profile: { render: renderProfileView, bind: bindProfileEvents, showNav: true, showHeader: true }
 };
 
+// تعطيل استعادة المتصفح التلقائية لموضع التمرير لضمان بدء كل تابة دائماً من أعلى الصفحة
+if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual';
+}
+
 export class Router {
   constructor(appElement) {
     this.appElement = appElement;
     this.currentRoute = '';
     window.addEventListener('hashchange', () => this.handleRoute());
     
+    // ضمان بدء كل تابة وشاشة من أعلى الصفحة (من فوق لتحت) عند النقر على أي تابة أو زر تنقل
+    document.addEventListener('click', (e) => {
+      const navTarget = e.target.closest('a[href^="#"], .nav-item, .btn-icon, .client-tab-btn, .ws-view-tab, .auth-tab-btn');
+      if (navTarget) {
+        this.scrollToTop();
+      }
+    });
+
     // إعادة رسم الشاشة تلقائياً عند تغير الحالة المركزية
     store.subscribe(() => {
       this.refreshCurrentView();
@@ -107,16 +120,25 @@ export class Router {
   }
 
   scrollToTop() {
-    try {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    } catch (_) {
-      window.scrollTo(0, 0);
-    }
-    if (document.documentElement) document.documentElement.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
-    const container = document.getElementById('view-container');
-    if (container) container.scrollTop = 0;
-    if (this.appElement) this.appElement.scrollTop = 0;
+    const performScroll = () => {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch (_) {
+        window.scrollTo(0, 0);
+      }
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+      const container = document.getElementById('view-container');
+      if (container) container.scrollTop = 0;
+      if (this.appElement) this.appElement.scrollTop = 0;
+      const appRoot = document.getElementById('app');
+      if (appRoot) appRoot.scrollTop = 0;
+    };
+
+    performScroll();
+    requestAnimationFrame(performScroll);
+    setTimeout(performScroll, 10);
+    setTimeout(performScroll, 60);
   }
 
   renderRoute(route, routeKey) {
@@ -136,6 +158,9 @@ export class Router {
     }
 
     this.appElement.innerHTML = html;
+
+    // بدء الشاشة فوراً من أعلى الصفحة قبل وبعد ربط الأحداث
+    this.scrollToTop();
 
     // ربط الأحداث
     if (route.showHeader) bindHeaderEvents();

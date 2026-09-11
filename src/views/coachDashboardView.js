@@ -187,6 +187,11 @@ export function bindCoachDashboardEvents() {
     btn.addEventListener('click', () => {
       activeClientTab = btn.getAttribute('data-tab');
       window.location.hash = '#coach';
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const vc = document.getElementById('view-container');
+      if (vc) vc.scrollTop = 0;
     });
   });
 

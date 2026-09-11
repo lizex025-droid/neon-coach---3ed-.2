@@ -499,5 +499,9 @@ function refreshAuthView() {
   if (container) {
     container.innerHTML = renderAuthView();
     bindAuthViewEvents();
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    container.scrollTop = 0;
   }
 }

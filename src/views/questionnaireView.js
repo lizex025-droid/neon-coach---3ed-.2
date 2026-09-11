@@ -2755,8 +2755,23 @@ export function bindQuestionnaireEvents() {
       area.innerHTML = renderStepContent(currentStepKey);
     }
 
-    // 5. إعادة ربط أحداث الخطوة والتمرير للأعلى بسلاسة
+    // 5. إعادة ربط أحداث الخطوة والتمرير فورياً لأعلى الشاشة لتبدأ دائماً من فوق لتحت
     bindQuestionnaireEvents();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const scrollToStepTop = () => {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch (_) {
+        window.scrollTo(0, 0);
+      }
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+      const container = document.getElementById('view-container');
+      if (container) container.scrollTop = 0;
+      const appRoot = document.getElementById('app');
+      if (appRoot) appRoot.scrollTop = 0;
+    };
+    scrollToStepTop();
+    requestAnimationFrame(scrollToStepTop);
+    setTimeout(scrollToStepTop, 15);
   }
 }
