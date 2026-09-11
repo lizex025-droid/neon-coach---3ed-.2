@@ -1045,7 +1045,7 @@ function renderStepContent(step) {
               <span>⚡</span>
               <span>استبعاد سريع لأصناف لا يفضلها البعض:</span>
             </div>
-            <div class="food-rec-chips-grid" id="disliked-food-rec-chips" style="max-height: 120px;">
+            <div class="food-rec-chips-grid" id="disliked-food-rec-chips">
               ${COMMON_DISLIKED_SUGGESTIONS.map(f => {
                 const isSelected = formData.dislikedFoods.includes(f.name);
                 return `
