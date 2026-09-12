@@ -366,8 +366,16 @@ export function bindNeonAiViewEvents() {
   // 5. بدء وإيقاف جلسة الصوت الحقيقية
   async function toggleVoiceSession() {
     if (isListening) {
+      const textToRun = (neonActionAgent.currentUtteranceText || neonActionAgent.lastInterimText || '').trim();
       neonActionAgent.stopVoiceSession();
-      setVoiceState('idle');
+      if (textToRun) {
+        neonActionAgent.currentUtteranceText = '';
+        neonActionAgent.lastInterimText = '';
+        setVoiceState('processing');
+        await neonActionAgent.handleUserUtterance(textToRun, { isVoice: true });
+      } else {
+        setVoiceState('idle');
+      }
       return;
     }
 
@@ -457,7 +465,8 @@ export function bindNeonAiViewEvents() {
     if (sendBtn) sendBtn.disabled = true;
 
     try {
-      const response = await neonActionAgent.handleUserUtterance(text);
+      // تمرير isVoice: false لكتم صوت النظام بالكامل ومنع أي نغمات صوتية عند الكتابة
+      const response = await neonActionAgent.handleUserUtterance(text, { isVoice: false });
 
       if (!response) {
         // إذا لم يكن إجراءً، تجربة الإجابة الذكية

@@ -224,8 +224,15 @@ export class NeonVoiceOverlay {
       this.mainBtnEl.addEventListener('click', () => {
         const state = neonActionAgent.getState();
         if (state === 'listening' || state === 'speech_detected') {
+          const textToRun = (neonActionAgent.currentUtteranceText || neonActionAgent.lastInterimText || '').trim();
           neonActionAgent.stopVoiceSession();
-          this._updateUiState('stopped');
+          if (textToRun) {
+            neonActionAgent.currentUtteranceText = '';
+            neonActionAgent.lastInterimText = '';
+            neonActionAgent.handleUserUtterance(textToRun, { isVoice: true });
+          } else {
+            this._updateUiState('stopped');
+          }
         } else {
           this._activateMicAction();
         }

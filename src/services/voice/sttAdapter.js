@@ -66,25 +66,26 @@ export class SttAdapter {
       rec.onresult = (event) => {
         if (!this.isActive) return;
 
-        let interimTranscript = '';
-        let finalTranscript = '';
+        let fullFinal = '';
+        let fullInterim = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = 0; i < event.results.length; ++i) {
           const result = event.results[i];
-          const text = result[0].transcript;
+          const text = result[0]?.transcript || '';
           if (result.isFinal) {
-            finalTranscript += text;
+            fullFinal += text + ' ';
           } else {
-            interimTranscript += text;
+            fullInterim += text;
           }
         }
 
-        if (interimTranscript && this.onInterim) {
-          this.onInterim(interimTranscript);
+        const combined = (fullFinal + fullInterim).trim();
+        if (combined && this.onInterim) {
+          this.onInterim(combined);
         }
 
-        if (finalTranscript && this.onFinal) {
-          this.onFinal(finalTranscript.trim());
+        if (fullFinal.trim() && !fullInterim.trim() && this.onFinal) {
+          this.onFinal(fullFinal.trim());
         }
       };
 

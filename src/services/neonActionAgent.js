@@ -39,8 +39,37 @@ class NeonActionAgent {
     this.spokenReplies = false; // الإخراج كتابة على الشاشة فقط بدون صوت
     this.lang = 'ar-JO';
     this.lastInterimText = '';
+    this.currentUtteranceText = '';
+    this._pauseTimer = null;
 
     this._initStt();
+  }
+
+  _scheduleAutoSubmit(text) {
+    this._clearAutoSubmit();
+    const clean = (text || '').trim();
+    if (!clean || clean.length < 2) return;
+
+    // بعد 1.2 ثانية من توقف الكلام، إيقاف الاستماع والبدء بتنفيذ الـ FUNCTION فوراً
+    this._pauseTimer = setTimeout(async () => {
+      if (this.state === 'listening' || this.state === 'speech_detected') {
+        const textToRun = (this.currentUtteranceText || this.lastInterimText || '').trim();
+        if (textToRun) {
+          this.lastInterimText = '';
+          this.currentUtteranceText = '';
+          this._emit('transcript', { text: textToRun, isFinal: true });
+          this.stopVoiceSession();
+          await this.handleUserUtterance(textToRun, { isVoice: true });
+        }
+      }
+    }, 1200);
+  }
+
+  _clearAutoSubmit() {
+    if (this._pauseTimer) {
+      clearTimeout(this._pauseTimer);
+      this._pauseTimer = null;
+    }
   }
 
   _initStt() {
@@ -55,12 +84,20 @@ class NeonActionAgent {
       },
       onInterim: (interimText) => {
         this.lastInterimText = interimText;
+        this.currentUtteranceText = interimText;
         this._emit('transcript', { text: interimText, isFinal: false });
+        this._scheduleAutoSubmit(interimText);
       },
       onFinal: async (finalText) => {
+        this._clearAutoSubmit();
+        const textToRun = (finalText || this.currentUtteranceText || this.lastInterimText || '').trim();
         this.lastInterimText = '';
-        this._emit('transcript', { text: finalText, isFinal: true });
-        await this.handleUserUtterance(finalText);
+        this.currentUtteranceText = '';
+        if (textToRun) {
+          this._emit('transcript', { text: textToRun, isFinal: true });
+          this.stopVoiceSession();
+          await this.handleUserUtterance(textToRun, { isVoice: true });
+        }
       },
       onError: (errorMsg) => {
         this._setState('error', { error: errorMsg });
@@ -136,11 +173,14 @@ class NeonActionAgent {
           }
         },
         onSilence: () => {
-          // السكوت بعد الكلام: إنهاء التسجيل تلقائياً ومعالجة النص المكتشف
-          if (this.lastInterimText && (this.state === 'speech_detected' || this.state === 'listening')) {
-            const txt = this.lastInterimText.trim();
+          // السكوت بعد الكلام: إنهاء التسجيل تلقائياً ومعالجة النص المكتشف فوراً
+          const txt = (this.currentUtteranceText || this.lastInterimText || '').trim();
+          if (txt && (this.state === 'speech_detected' || this.state === 'listening')) {
             this.lastInterimText = '';
-            this.handleUserUtterance(txt);
+            this.currentUtteranceText = '';
+            this._clearAutoSubmit();
+            this.stopVoiceSession();
+            this.handleUserUtterance(txt, { isVoice: true });
           }
         }
       });
@@ -169,6 +209,7 @@ class NeonActionAgent {
    * إيقاف الاستماع الفعلي وإغلاق قنوات الصوت
    */
   stopVoiceSession() {
+    this._clearAutoSubmit();
     if (this.audioAnalyser) this.audioAnalyser.stop();
     if (this.stt) this.stt.stop();
     if (this.tts) this.tts.stop();
@@ -177,8 +218,10 @@ class NeonActionAgent {
 
   /**
    * معالجة نص المستخدم الصوتي أو المكتوب وتحديد وتنفيذ الأداة
+   * @param {string} text النص المراد تنفيذه
+   * @param {object} options خيارات التنفيذ (مثل isVoice لكتم صوت النظام عند الكتابة)
    */
-  async handleUserUtterance(text) {
+  async handleUserUtterance(text, { isVoice = true } = {}) {
     const raw = (text || '').trim();
     if (!raw) return null;
 
@@ -204,7 +247,7 @@ class NeonActionAgent {
           }, []);
           const chatReply = chatRes?.reply || 'تم استلام طلبك.';
           this._setState('success', { actions: [], results: [], reply: chatReply });
-          if (this.spokenReplies && chatReply) {
+          if (isVoice && this.spokenReplies && chatReply) {
             this.tts.speak(chatReply, { lang: this.lang });
           }
           return { success: true, actions: [], reply: chatReply, results: [] };
@@ -221,7 +264,7 @@ class NeonActionAgent {
         this.sessionContext.pendingWeight = plan.pendingWeight;
 
         this._setState('clarification', { reply: plan.reply });
-        if (this.spokenReplies && plan.reply) {
+        if (isVoice && this.spokenReplies && plan.reply) {
           this.tts.speak(plan.reply, { lang: this.lang });
         }
         return { reply: plan.reply, isClarification: true };
@@ -241,18 +284,18 @@ class NeonActionAgent {
           executionResults.push(res);
         }
 
-        // تشغيل صوت التأكيد (Acknowledgement Beep) مرة واحدة فقط بعد نجاح مهام التعديل والحفظ الحقيقية
+        // تشغيل صوت التأكيد (Acknowledgement Beep) حصرياً عند استخدام الصوت ونجاح مهام الحفظ الفعلية
         const hasWriteAction = plan.actions.some(act => isWriteActionTool(act.tool));
         const allSucceeded = executionResults.length > 0 && executionResults.every(r => r && r.success !== false);
 
-        if (hasWriteAction && allSucceeded) {
+        if (isVoice && hasWriteAction && allSucceeded) {
           const isOnlyUndo = plan.actions.length === 1 && plan.actions[0].tool === 'undoLastAction';
           if (!isOnlyUndo) {
             neonSoundService.playAcknowledgement();
           }
         }
 
-        // تحضير الرد المكتوب التفصيلي للعرض على الشاشة (بدون صوت)
+        // تحضير الرد المكتوب التفصيلي للعرض على الشاشة (بدون صوت عند الكتابة)
         let finalReply = plan.reply;
         if (!finalReply || finalReply === 'تم.' || finalReply === 'تسجل.' || finalReply === 'سجلته.') {
           const summaries = executionResults.map(r => r?.summaryText).filter(Boolean);
@@ -271,7 +314,7 @@ class NeonActionAgent {
           reply: finalReply
         });
 
-        if (this.spokenReplies && finalReply) {
+        if (isVoice && this.spokenReplies && finalReply) {
           this.tts.speak(finalReply, { lang: this.lang });
         }
 
@@ -298,7 +341,7 @@ class NeonActionAgent {
           results: [],
           reply: plan.reply
         });
-        if (this.spokenReplies && plan.reply) {
+        if (isVoice && this.spokenReplies && plan.reply) {
           // قراءة الجملة الأولى بصوت واضح لتجربة استماع مريحة
           const spoken = plan.reply.split('\n').find(s => s.trim()) || plan.reply;
           const cleanSpoken = spoken.replace(/[*#-]/g, '').trim();
