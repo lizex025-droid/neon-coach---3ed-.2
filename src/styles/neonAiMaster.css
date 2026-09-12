@@ -35,179 +35,194 @@
 }
 
 /* ==========================================================================
-   1. VOICE RECORDING AREA (Top Tier)
+   1. VOICE RECORDING AREA (Taskmaster Voice Orb + Mirrored Waveform)
    ========================================================================== */
-.neon-ai-voice-card {
+.neon-ai-voice-stage {
   position: relative;
-  background: linear-gradient(180deg, rgba(3, 14, 8, 0.96) 0%, rgba(2, 8, 5, 0.98) 100%);
-  border: 1.5px solid var(--neon-ai-border-subtle);
-  border-radius: 26px;
-  padding: 24px 28px;
-  box-shadow: 0 0 28px rgba(0, 255, 156, 0.08), inset 0 0 20px rgba(0, 255, 156, 0.02);
-  transition: all 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-  user-select: none;
-  overflow: hidden;
-}
-
-.neon-ai-voice-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 156, 0.6), transparent);
-  pointer-events: none;
-}
-
-.neon-ai-voice-card:hover {
-  border-color: rgba(0, 255, 156, 0.55);
-  box-shadow: 0 0 35px rgba(0, 255, 156, 0.15), inset 0 0 25px rgba(0, 255, 156, 0.04);
-}
-
-.neon-ai-voice-card.is-listening {
-  border-color: var(--neon-ai-primary);
-  box-shadow: 0 0 45px rgba(0, 255, 156, 0.28), inset 0 0 30px rgba(0, 255, 156, 0.08);
-  animation: neonCardPulse 2s infinite ease-in-out;
-}
-
-.neon-ai-voice-card.is-processing {
-  border-color: #56CCF2;
-  box-shadow: 0 0 40px rgba(86, 204, 242, 0.25);
-}
-
-.neon-ai-voice-card.compact {
-  padding: 16px 24px;
-}
-
-/* ترويسة بطاقة الصوت */
-.neon-ai-voice-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  gap: 12px;
-}
-
-.neon-ai-voice-titles {
+  width: 100%;
+  min-height: 130px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0 14px;
+  box-sizing: border-box;
+  user-select: none;
+  background: radial-gradient(circle at 50% 30%, rgba(0, 255, 156, 0.05) 0%, transparent 70%);
+  border-radius: 26px;
+  transition: all 0.38s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.neon-ai-voice-title {
-  font-size: 1.32rem;
-  font-weight: 900;
-  color: var(--neon-ai-primary);
-  letter-spacing: 0.5px;
-  text-shadow: 0 0 14px rgba(0, 255, 156, 0.4);
+/* حركة التنفس العضوية المتطابقة مع Taskmaster */
+@keyframes breathe {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 16px #00FF9C, 0 0 32px rgba(0, 255, 156, 0.45);
+  }
+  35% {
+    transform: scale(1.15);
+    box-shadow: 0 0 32px #00FF9C, 0 0 58px rgba(0, 255, 156, 0.7);
+  }
+  45% {
+    transform: scale(1.12);
+    box-shadow: 0 0 28px #00FF9C, 0 0 50px rgba(0, 255, 156, 0.6);
+  }
+  75% {
+    transform: scale(1.04);
+    box-shadow: 0 0 20px #00FF9C, 0 0 38px rgba(0, 255, 156, 0.45);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px #00FF9C, 0 0 32px rgba(0, 255, 156, 0.45);
+  }
+}
+
+/* حاوية الدائرة النيونية المتوهجة (Orb Wrapper) */
+.start-circle-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  cursor: pointer;
+  padding: 14px;
+}
+
+.start-circle-wrapper:hover {
+  transform: scale(1.14);
+}
+
+.start-circle-wrapper:active {
+  transform: scale(0.94);
+}
+
+.start-circle-wrapper.is-hidden {
+  display: none !important;
+}
+
+/* الدائرة النيونية الخضراء الفخمة (Taskmaster Glowing Orb) */
+.start-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #7affc8 0%, #00FF9C 55%, #00b368 100%);
+  box-shadow: 0 0 24px #00FF9C, 0 0 48px rgba(0, 255, 156, 0.55), inset 0 0 8px rgba(255, 255, 255, 0.4);
+  animation: breathe 4.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  transition: box-shadow 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0.95;
+}
+
+.start-circle-wrapper:hover .start-circle {
+  box-shadow: 0 0 38px #00FF9C, 0 0 75px rgba(0, 255, 156, 0.85), inset 0 0 12px #fff;
+  opacity: 1;
+}
+
+/* مسرح الـ Waveform المتطور (Mirrored Waveform Stage) */
+.waveform-container {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  height: 80px;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.waveform-container.active {
+  display: flex;
+}
+
+.waveform-container.visible {
+  opacity: 1;
+}
+
+.waveform-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* زر إيقاف التسجيل يظهر في المنتصف عند التحويم (Taskmaster Stop Button) */
+.waveform-stop-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: rgba(3, 19, 17, 0.92);
+  border: 1.5px solid rgba(0, 255, 156, 0.7);
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  color: #00FF9C;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  pointer-events: none;
+  box-shadow: 0 0 20px rgba(0, 255, 156, 0.35);
 }
 
-.neon-ai-voice-subtitle {
+.waveform-container:hover .waveform-stop-button {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.08);
+  box-shadow: 0 0 25px rgba(0, 255, 156, 0.6);
+}
+
+/* التغذية الراجعة الصوتية والنصوص */
+.neon-ai-voice-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.neon-ai-voice-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   font-size: 0.88rem;
   color: var(--neon-ai-text-dim);
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
-.neon-ai-voice-card.is-listening .neon-ai-voice-subtitle {
-  color: #A3FFD2;
-}
-
-.neon-ai-voice-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .neon-ai-voice-timer {
   font-family: 'SF Mono', Monaco, Consolas, monospace;
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   font-weight: 700;
-  color: #B8DFC9;
-  letter-spacing: 1px;
-}
-
-/* كبسولة الـ Waveform الأفقية الفخمة */
-.neon-ai-waveform-capsule {
-  position: relative;
-  width: 100%;
-  height: 82px;
-  background: var(--neon-ai-bg-inset);
-  border: 1.4px solid var(--neon-ai-border-subtle);
-  border-radius: 40px;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-  box-sizing: border-box;
-  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.95);
-  transition: all 0.35s ease;
-}
-
-.neon-ai-voice-card.compact .neon-ai-waveform-capsule {
-  height: 62px;
-}
-
-.neon-ai-voice-card.is-listening .neon-ai-waveform-capsule {
-  border-color: var(--neon-ai-primary);
-  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 255, 156, 0.22);
-}
-
-.neon-ai-waveform-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* مؤشر الحالة الدائري الصغير داخل طرف الكبسولة */
-.neon-ai-status-indicator {
-  position: absolute;
-  right: 18px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #0D301E;
-  border: 2px solid rgba(0, 255, 156, 0.5);
-  box-shadow: 0 0 10px rgba(0, 255, 156, 0.2);
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.neon-ai-voice-card.is-listening .neon-ai-status-indicator {
-  background: #00FF9C;
-  border-color: #FFFFFF;
-  box-shadow: 0 0 18px #00FF9C, 0 0 30px rgba(0, 255, 156, 0.8);
-  animation: indicatorPulse 1.2s infinite ease-in-out;
-}
-
-.neon-ai-voice-card.is-processing .neon-ai-status-indicator {
-  background: #56CCF2;
-  border-color: #FFFFFF;
-  box-shadow: 0 0 18px #56CCF2;
-  animation: indicatorPulse 0.8s infinite ease-in-out;
-}
-
-/* مسودة النص المنطوق لحظياً */
-.neon-ai-live-transcript {
-  margin-top: 10px;
-  font-size: 0.92rem;
-  color: #A3FFD2;
-  min-height: 22px;
-  padding: 0 8px;
-  text-align: right;
+  color: var(--neon-ai-primary);
   display: none;
-  font-weight: 600;
-  text-shadow: 0 0 10px rgba(0, 255, 156, 0.4);
 }
 
-.neon-ai-voice-card.is-listening .neon-ai-live-transcript,
-.neon-ai-voice-card.is-processing .neon-ai-live-transcript {
+.neon-ai-voice-stage.is-listening .neon-ai-voice-timer {
+  display: inline-block;
+}
+
+.neon-ai-voice-stage.is-listening .neon-ai-voice-hint {
+  color: #A3FFD2;
+}
+
+.neon-ai-live-transcript {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-shadow: 0 0 15px rgba(0, 255, 156, 0.6);
+  min-height: 26px;
+  max-width: 640px;
+  text-align: center;
+  line-height: 1.5;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.neon-ai-voice-stage.is-listening .neon-ai-live-transcript,
+.neon-ai-voice-stage.is-processing .neon-ai-live-transcript {
   display: block;
 }
 
