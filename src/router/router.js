@@ -23,6 +23,7 @@ import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
+import { updateVoiceTriggerVisibility } from '../components/voice/voiceTriggerBtn.js';
 
 export const ROUTES = {
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
@@ -172,6 +173,9 @@ export class Router {
     if (route.showHeader) bindHeaderEvents();
     if (route.bind) this.cleanupView = route.bind();
 
+    // تحديث ظهور زر المايكروفون (يظهر فقط في تابة neon-ai)
+    updateVoiceTriggerVisibility(routeKey);
+
     this.scrollToTop();
   }
 
@@ -186,6 +190,7 @@ export class Router {
       this.cleanupView = null;
       container.innerHTML = route.render();
       if (route.bind) this.cleanupView = route.bind();
+      updateVoiceTriggerVisibility(this.currentRoute);
     }
   }
 }

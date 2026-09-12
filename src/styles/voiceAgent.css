@@ -12,7 +12,7 @@
   --neon-voice-border: rgba(0, 255, 135, 0.28);
 }
 
-/* زر الميكروفون العائم العام (Global Voice FAB) */
+/* زر الميكروفون العائم (Voice FAB) - يظهر حصراً في تاب NEON AI ومخفي في باقي الصفحات */
 .neon-voice-fab {
   position: fixed;
   bottom: 84px;
@@ -24,12 +24,16 @@
   background: radial-gradient(circle, #093322 0%, #030806 100%);
   border: 1.5px solid var(--neon-voice-primary);
   color: var(--neon-voice-primary);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 0 20px var(--neon-voice-glow), inset 0 0 10px rgba(0, 255, 135, 0.2);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.neon-voice-fab.visible {
+  display: flex !important;
 }
 
 .neon-voice-fab:hover {
