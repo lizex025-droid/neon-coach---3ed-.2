@@ -98,20 +98,24 @@ export function renderNeonAiView() {
             <span style="font-weight: 800; color: #00FF9C; font-size: 1.05rem;">إعدادات NEON AI</span>
             <button type="button" id="neon-ai-settings-close-btn" style="background: none; border: none; color: #7E998A; font-size: 1.1rem; cursor: pointer;">✕</button>
           </div>
-          <div style="font-size: 0.82rem; color: #9bb5a7; line-height: 1.45;">
-            أدخل مفتاح <strong>Google Gemini API</strong> لتعزيز الذكاء والسرعة القصوى:
+          <div style="font-size: 0.84rem; color: #00FF9C; line-height: 1.5; background: rgba(0,255,156,0.06); border: 1px solid rgba(0,255,156,0.25); border-radius: 12px; padding: 12px 14px;">
+            🔒 <strong>الذكاء الاصطناعي مفعّل ومحمي تلقائياً:</strong><br>
+            <span style="color: #c0d8cc; font-size: 0.82rem;">نظام NEON AI متصل بمحرك Google Gemini السحابي المحمي المدمج في الخادم — لا يُطلب من المستخدمين إدخال أي مفتاح.</span>
+          </div>
+          <div style="font-size: 0.78rem; color: #7E998A; line-height: 1.4; margin-top: 4px;">
+            (اختياري فقط) إذا كنت ترغب بتجاوز المفتاح السحابي واستخدام مفتاح شخصي خاص بك:
           </div>
           <input 
             type="password" 
             id="neon-ai-gemini-key-input" 
             value="${currentKey}" 
-            placeholder="ألصق مفتاح Gemini (AIza...)" 
+            placeholder="مفتاح شخصي اختياري (متروك فارغاً افتراضياً)" 
             style="padding: 10px 14px; background: #010603; border: 1px solid rgba(0,255,156,0.3); border-radius: 12px; color: #fff; font-size: 0.88rem; outline: none;"
           />
           <select id="neon-ai-model-select" style="padding: 10px 14px; background: #010603; border: 1px solid rgba(0,255,156,0.3); border-radius: 12px; color: #fff; font-size: 0.85rem; outline: none;">
-            <option value="gemini-2.5-flash" ${currentModel === 'gemini-2.5-flash' ? 'selected' : ''}>Gemini 2.5 Flash (فائق السرعة)</option>
-            <option value="gemini-1.5-flash" ${currentModel === 'gemini-1.5-flash' ? 'selected' : ''}>Gemini 1.5 Flash (مستقر)</option>
-            <option value="gemini-1.5-pro" ${currentModel === 'gemini-1.5-pro' ? 'selected' : ''}>Gemini 1.5 Pro (أعلى دقة)</option>
+            <option value="gemini-3.6-flash" selected>Gemini 3.6 Flash (المثبت السحابي - فائق السرعة)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash (مستقر)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (أعلى دقة)</option>
           </select>
           <div id="neon-ai-key-status" style="font-size: 0.78rem; min-height: 18px;"></div>
           <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;">

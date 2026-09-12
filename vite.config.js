@@ -128,6 +128,49 @@ export default defineConfig(({ mode }) => {
         }
       });
 
+      server.middlewares.use(async (req, res, next) => {
+        const parsedUrl = req.url ? req.url.split('?')[0] : '';
+        if (parsedUrl !== '/api/gemini' && parsedUrl !== '/api/gemini/') {
+          return next();
+        }
+
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+          return;
+        }
+
+        let body = '';
+        for await (const chunk of req) body += chunk;
+        try {
+          req.body = body ? JSON.parse(body) : {};
+        } catch (_) {
+          req.body = {};
+        }
+
+        const apiRes = {
+          statusCode: 200,
+          setHeader(k, v) { res.setHeader(k, v); },
+          status(code) { this.statusCode = code; return this; },
+          json(data) {
+            res.statusCode = this.statusCode;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+          }
+        };
+
+        try {
+          const mod = await import('./api/gemini.js');
+          const handler = mod.default || mod;
+          await handler(req, apiRes);
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+
       // تشغيل خادم HTTPS متزامن على المنفذ 3443 خصيصاً لهواتف iPhone ومتصفح Safari
       // Safari على iOS يتطلب اتصال HTTPS (Secure Context) لإظهار نافذة إذن الميكروفون
       try {

@@ -325,14 +325,13 @@ export const aiService = {
   getProviderName() {
     const geminiKey = getGeminiKey();
     const openaiKey = getOpenAIKey();
-    const model = getSelectedModel();
-    if (geminiKey) return `Google Gemini (${model.includes('1.5-pro') ? '1.5 Pro' : '2.0 Flash'}) 🟢`;
+    if (geminiKey) return 'Google Gemini (مفتاح مخصص) 🟢';
     if (openaiKey) return 'OpenAI GPT-4o mini 🟢';
-    return 'محاكي النيون الذكي (وضع Demo) ⚡';
+    return 'Google Gemini 3.6 Flash (سحابي محمي مدمج) 🟢';
   },
 
   isLiveProvider() {
-    return Boolean(getGeminiKey() || getOpenAIKey());
+    return true;
   },
 
   getActiveModel() {
@@ -493,7 +492,42 @@ export const aiService = {
     const activeModel = getSelectedModel();
     const userContextStr = formatUserContext(context);
 
-    // 1) استدعاء نموذج Google Gemini المباشر (2.0 Flash أو 1.5 Pro)
+    // 1) استدعاء خادم Gemini السحابي المحمي (Server-Side Protected Gemini)
+    // يعمل تلقائياً لجميع المستخدمين بدون الحاجة لإدخال أي مفتاح وبحماية كاملة
+    if (!geminiKey) {
+      try {
+        const serverResp = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: rawMsg,
+            dashboardData: {
+              userContext: userContextStr,
+              chatHistory: (chatHistory || []).slice(-6)
+            }
+          })
+        });
+
+        if (serverResp.ok) {
+          const data = await serverResp.json();
+          if (data && data.reply) {
+            const extracted = extractMealsFromAiReply(data.reply, rawMsg);
+            return {
+              success: true,
+              reply: extracted.cleanReply,
+              mealData: extracted.mealData,
+              mealsData: extracted.mealsData,
+              isAiGenerated: true,
+              provider: `Google Gemini (${data.model || 'gemini-3.6-flash'}) 🟢`
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('تعذر استدعاء خادم Gemini السحابي، سيتم الانتقال للبديل:', err);
+      }
+    }
+
+    // 2) استدعاء نموذج Google Gemini المباشر في حال أدخل المستخدم مفتاحاً خاصاً به
     if (geminiKey) {
       try {
         const contents = [];
@@ -527,7 +561,7 @@ export const aiService = {
           });
         }
 
-        const targetModel = activeModel.includes('1.5-pro') ? 'gemini-1.5-pro' : 'gemini-2.0-flash';
+        const targetModel = activeModel.includes('1.5-pro') ? 'gemini-1.5-pro' : 'gemini-3.6-flash';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${geminiKey}`;
 
         const response = await fetch(url, {
@@ -571,7 +605,7 @@ export const aiService = {
       }
     }
 
-    // 2) استدعاء OpenAI كخيار إضافي
+    // 3) استدعاء OpenAI كخيار إضافي
     if (openaiKey) {
       try {
         const messages = [

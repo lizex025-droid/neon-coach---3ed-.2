@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULT_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-flash'];
+const DEFAULT_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
 
 const SYSTEM_PROMPT =
   "You are Nova, Ahed's permanent bilingual AI personal trainer coach and nutrition analyst inside pdfs.html. " +
@@ -45,13 +45,15 @@ function explainEmptyGeminiResponse(json) {
 
 function loadLocalEnv() {
   if (process.env.GEMINI_API_KEY) return;
-  const envPath = path.join(process.cwd(), '.env.local');
-  if (!fs.existsSync(envPath)) return;
-  const text = fs.readFileSync(envPath, 'utf8');
-  for (const line of text.split(/\r?\n/)) {
-    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\s*$/);
-    if (!match || process.env[match[1]] != null) continue;
-    process.env[match[1]] = match[2];
+  for (const f of ['.env.local', '.env']) {
+    const envPath = path.join(process.cwd(), f);
+    if (!fs.existsSync(envPath)) continue;
+    const text = fs.readFileSync(envPath, 'utf8');
+    for (const line of text.split(/\r?\n/)) {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\s*$/);
+      if (!match || process.env[match[1]] != null) continue;
+      process.env[match[1]] = match[2].trim();
+    }
   }
 }
 
@@ -77,9 +79,8 @@ module.exports = async function handler(req, res) {
   const dashboardData = body && body.dashboardData && typeof body.dashboardData === 'object'
     ? body.dashboardData
     : {};
-  const models = process.env.GEMINI_MODEL
-    ? [process.env.GEMINI_MODEL]
-    : DEFAULT_MODELS;
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  const models = [primaryModel, ...DEFAULT_MODELS.filter(m => m !== primaryModel)];
   const prompt = 'Dashboard data as JSON:\n' + JSON.stringify(dashboardData) +
     '\n\nUser message:\n' + message;
 
