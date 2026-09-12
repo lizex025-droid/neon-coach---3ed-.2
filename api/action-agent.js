@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DEFAULT_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
+const DEFAULT_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash'];
 
 const SYSTEM_PROMPT = `You are the NEON ACTION AGENT for NEON COACH fitness app.
 Your job is to convert user natural speech (Arabic, English, Franco, or mixed) into structured action tools.
@@ -29,10 +29,15 @@ ALLOWED TOOLS:
 - logWeight({ weightKg: number })
 - updateWeight({ weightKg: number })
 - logWorkoutSets({ exercise: string, weightKg: number, reps: number, sets: number, rpe?: number })
+- completeWorkout({ title: string })
+- logSupplement({ supplement: string, dose?: string })
+- markSupplementTaken({ supplement: string })
 - logCardio({ cardioType: string, durationMinutes: number })
 - logInBody({ weight: number, bodyFatPercentage?: number, skeletalMuscleMassKg?: number })
+- addShoppingItem({ name: string })
 - addShoppingItems({ names: string[] })
 - removeShoppingItem({ name: string })
+- prioritize_today({ priority: "workout" | "nutrition" | "water" | "supplements" })
 - getTodayNutrition({ query: string })
 - getTodayWorkout({})
 - getTodayWater({})
@@ -111,6 +116,7 @@ export default async function handler(req, res) {
             responseMimeType: 'application/json'
           },
         }),
+        signal: AbortSignal.timeout(7000)
       });
 
       if (upstream.ok) {

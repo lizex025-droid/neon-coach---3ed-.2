@@ -23,8 +23,14 @@ export function normalizeText(text) {
 // قواميس مرادفات الأطعمة والتمارين الشائعة
 const FOOD_ALIASES = {
   'دجاج': 'chicken-breast-cooked',
+  'صدر': 'chicken-breast-cooked',
   'صدر دجاج': 'chicken-breast-cooked',
   'صدور دجاج': 'chicken-breast-cooked',
+  'صدور': 'chicken-breast-cooked',
+  'سدر': 'chicken-breast-cooked',
+  'سدر دجاج': 'chicken-breast-cooked',
+  'سدور': 'chicken-breast-cooked',
+  'سدور دجاج': 'chicken-breast-cooked',
   'دجاج مشوي': 'chicken-breast-cooked',
   'دجاج مطبوخ': 'chicken-breast-cooked',
   'دجاج نيء': 'chicken-breast-raw',
@@ -164,7 +170,7 @@ function parseWaterAmount(text) {
  */
 function parseMealItems(text) {
   const norm = normalizeText(text)
-    .replace(/^(?:اكلت|تناولت|سجل وجبه|سجلت وجبه|i ate|had|ate)\s+/, '')
+    .replace(/^(?:احسبلي|احسب|سجل وجبه|سجلت وجبه|سجلت|سجل|ضيف|حط|اكلت|تناولت|فطرت|تغديت|تعشيت|كلت|وجبه|وجبة|i ate|had|ate|log meal|log)\s+/, '')
     .trim();
 
   // تقسيم الأصناف بحرف الواو أو الفواصل
@@ -172,17 +178,17 @@ function parseMealItems(text) {
   const items = [];
 
   for (const seg of segments) {
-    // 1) صيغة: "250 غ دجاج" أو "250g chicken"
-    let m = seg.match(/^(\d+(?:\.\d+)?)\s*(?:غرام|جرام|غ|غم|جم|g|grams?)\s+(.+)$/i);
-    // 2) صيغة بديلة: "دجاج 250 غ"
-    if (!m) {
-      m = seg.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(?:غرام|جرام|غ|غم|جم|g|grams?)$/i);
+    // 1) صيغة: "250 غ دجاج" أو "250 جرام سدر دجاج" أو "250g chicken"
+    let m = seg.match(/^(\d+(?:\.\d+)?)\s*(?:غرام|جرام|غ|غم|جم|g|grams?)?\s+(.+)$/i);
+    // 2) صيغة بديلة: "دجاج 250 غ" أو "سدر دجاج 250 جرام"
+    if (!m || isNaN(parseFloat(m[1]))) {
+      m = seg.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(?:غرام|جرام|غ|غم|جم|g|grams?)?$/i);
       if (m) m = [m[0], m[2], m[1]]; // توحيد الترتيب
     }
 
-    if (m) {
+    if (m && !isNaN(parseFloat(m[1]))) {
       const grams = parseFloat(m[1]);
-      const foodName = m[2].trim();
+      const foodName = m[2].trim().replace(/^(?:من|جرام|غرام|غ|غم|جم)\s+/, '');
       const food = matchFood(foodName);
 
       if (food) {
@@ -290,7 +296,7 @@ export function parseNaturalAction(rawText, sessionContext = {}) {
   let clarificationNeeded = null;
 
   // 1. أوامر التحكم المباشرة (Stop & Undo)
-  if (/(?:وقف|اوقف|توقف عن|كافي)\s+(?:استماع|تسجيل|مايك)|(?:stop listening|mute)/i.test(norm)) {
+  if (/(?:نيون\s+)?(?:وقف|اوقف|توقف عن|كافي|stop)\s+(?:استماع|الاستماع|تسجيل|التسجيل|مايك|listening)|(?:stop listening|mute)/i.test(norm)) {
     return {
       type: 'actions',
       actions: [{ tool: 'stopVoiceSession', arguments: {} }],
@@ -298,11 +304,29 @@ export function parseNaturalAction(rawText, sessionContext = {}) {
     };
   }
 
-  if (/(?:تراجع|رجع اخر شغله|رجع اخر شغلة|رجع اخر اشي|الغ اخر تغيير|undo)/i.test(norm)) {
+  if (/(?:تراجع|رجع|الغ|إلغاء)\s*(?:اخر|آخر)?\s*(?:شغله|شغلة|اشي|شي|عمل|عملتها|سويتها|تغيير|حاجة|حاجه)|(?:undo)/i.test(norm)) {
     return {
       type: 'actions',
       actions: [{ tool: 'undoLastAction', arguments: {} }],
       reply: 'رجعت آخر إجراء.'
+    };
+  }
+
+  // أولوية اليوم: "خلّي التمرين أهم شي اليوم"
+  const prioMatch = norm.match(/(?:خلي|خلّي|حط|اجعل)?\s*(التمرين|تمرين|التغذية|تغذية|الاكل|الماء|المي|ماء|مي|المكملات|مكملات|workout|nutrition|water|supplements)\s*(?:اهم شي|اهم شيء|اول شي|اول شيء|اولوية|رقم واحد)/i) ||
+    norm.match(/(?:تقديم|ترتيب)?\s*(?:اولوية|أولوية)\s*(التمرين|تمرين|التغذية|تغذية|الماء|المي|المكملات)/i);
+  if (prioMatch) {
+    const rawKind = prioMatch[1];
+    let kind = 'workout';
+    if (/تمرين|workout/.test(rawKind)) kind = 'workout';
+    else if (/تغذي|اكل|طعام|nutrition/.test(rawKind)) kind = 'nutrition';
+    else if (/ماء|مي|water/.test(rawKind)) kind = 'water';
+    else if (/مكمل|supplements/.test(rawKind)) kind = 'supplements';
+
+    return {
+      type: 'actions',
+      actions: [{ tool: 'prioritize_today', arguments: { priority: kind, kind } }],
+      reply: 'حدثت أولويات اليوم وخليتها رقم 1.'
     };
   }
 
@@ -406,7 +430,7 @@ export function parseNaturalAction(rawText, sessionContext = {}) {
     const s = seg.trim();
 
     // أ) الماء
-    if (/(?:شربت|زود|زيد|ضيف|اضف|كاسه|كوب|لتر|ماء|مي|water)/i.test(s) && !/(?:تمرين|وزن|اكلت)/.test(s)) {
+    if ((/(?:شربت|زود|زيد|كاسه|كوب|لتر|ماء|مي|water)/i.test(s) || (/(?:ضيف|اضف)/i.test(s) && /(?:ماء|مي|كاسه|كوب|لتر)/i.test(s))) && !/(?:تمرين|وزن|اكلت|قائمه|قائمة|مشتريات|تسوق)/.test(s)) {
       const ml = parseWaterAmount(s);
       if (ml) {
         actions.push({ tool: 'logWater', arguments: { milliliters: ml } });
@@ -468,11 +492,12 @@ export function parseNaturalAction(rawText, sessionContext = {}) {
     }
 
     // ح) إنهاء التمرين
-    const finishMatch = s.match(/(?:خلصت|انهيت|اكملت)\s+تمرين\s+(.+)$/i);
+    const finishMatch = s.match(/(?:خلصت|انهيت|اكملت)\s+(?:تمرين\s*(.*)|التمرين)$/i);
     if (finishMatch) {
+      const title = (finishMatch[1] && finishMatch[1].trim()) ? finishMatch[1].trim() : 'تمرين اليوم';
       actions.push({
         tool: 'completeWorkout',
-        arguments: { title: finishMatch[1].trim() }
+        arguments: { title }
       });
     }
 
@@ -496,7 +521,7 @@ export function parseNaturalAction(rawText, sessionContext = {}) {
     }
 
     // ي) الوجبات والتغذية
-    if (/(?:اكلت|تناولت|فطرت|تغديت|تعشيت|وجبه|وجبة|غرام|جرام)/i.test(s)) {
+    if (/(?:اكلت|تناولت|فطرت|تغديت|تعشيت|وجبه|وجبة|غرام|جرام|غ\b|غم\b|جم\b|احسب|احسبلي|سدر|صدر|صدور)/i.test(s)) {
       const mealItems = parseMealItems(s);
       if (mealItems.length > 0) {
         actions.push({
@@ -507,7 +532,7 @@ export function parseNaturalAction(rawText, sessionContext = {}) {
     }
 
     // ك) قائمة المشتريات
-    const shopAddMatch = s.match(/(?:ضيف|اضف|حط)\s+(.+?)\s+(?:لقائمه|لقائمة|على قائمة|للمشتريات|للتسوق)/i);
+    const shopAddMatch = s.match(/(?:ضيف|اضف|حط)\s+(.+?)\s+(?:لقائمه|لقائمة|على قائمة|للمشتريات|للتسوق|على المشتريات)/i);
     if (shopAddMatch) {
       const names = shopAddMatch[1].split(/\s+و\s*|\s*[,،+]\s*/).map(n => n.trim()).filter(Boolean);
       actions.push({
@@ -517,7 +542,7 @@ export function parseNaturalAction(rawText, sessionContext = {}) {
     }
 
     const shopRemMatch = s.match(/(?:شيل|احذف|امسح)\s+(.+?)(?:\s+من (?:قائمة )?المشتريات)?$/i);
-    if (shopRemMatch && !/(?:وجبه|تمرين|مجموعه)/.test(shopRemMatch[1])) {
+    if (shopRemMatch && !/(?:وجبه|وجبة|تمرين|مجموعه|مجموعة)/.test(shopRemMatch[1])) {
       actions.push({
         tool: 'removeShoppingItem',
         arguments: { name: shopRemMatch[1].trim() }

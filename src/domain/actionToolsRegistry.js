@@ -32,6 +32,7 @@ export const ALL_ACTION_TOOLS = [
   'addShoppingItem',
   'addShoppingItems',
   'removeShoppingItem',
+  'prioritize_today',
   'getTodayNutrition',
   'getTodayWorkout',
   'getTodayWater',
@@ -67,6 +68,7 @@ export const WRITE_ACTION_TOOLS = new Set([
   'addShoppingItem',
   'addShoppingItems',
   'removeShoppingItem',
+  'prioritize_today',
   'undoLastAction'
 ]);
 
@@ -174,6 +176,11 @@ export const TOOL_SCHEMAS = {
     description: 'حذف عنصر من قائمة التسوق',
     parameters: ['name'],
     category: 'shopping'
+  },
+  prioritize_today: {
+    description: 'إعادة ترتيب أولويات بطاقات اليوم لجعل فئة معينة رقم 1 (workout, nutrition, water, supplements)',
+    parameters: ['priority', 'kind'],
+    category: 'today'
   },
   getTodayNutrition: {
     description: 'استعلام عن التغذية وسعرات وماكروز اليوم',

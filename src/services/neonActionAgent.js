@@ -194,8 +194,24 @@ class NeonActionAgent {
       }
 
       if (!plan) {
-        this._setState('error', { error: 'لم أستطع تحديد الإجراء المناسب. جرب قول: شربت كاسة مي، أو وزني 78.5.' });
-        return null;
+        // محاولة تقديم إجابة ذكية عامة إن لم تكن أمراً تنفيذياً
+        try {
+          const { aiService } = await import('./aiService.js');
+          const chatRes = await aiService.chatWithCoach(raw, {
+            userProfile: store.getState().userProfile,
+            today: store.getState().today,
+            loggedMeals: store.getState().loggedMeals || []
+          }, []);
+          const chatReply = chatRes?.reply || 'تم استلام طلبك.';
+          this._setState('success', { actions: [], results: [], reply: chatReply });
+          if (this.spokenReplies && chatReply) {
+            this.tts.speak(chatReply, { lang: this.lang });
+          }
+          return { success: true, actions: [], reply: chatReply, results: [] };
+        } catch (_) {
+          this._setState('error', { error: 'لم أستطع تحديد الإجراء المناسب. جرب قول: شربت كاسة مي، أو وزني 78.5.' });
+          return null;
+        }
       }
 
       // 3) إذا كان الرد يحتاج توضيحاً (Clarification):
@@ -273,6 +289,20 @@ class NeonActionAgent {
         return { success: true, actions: plan.actions, reply: finalReply, results: executionResults };
       }
 
+      // 5) إذا وُجد رد دون أدوات (مثل رد استعلام خادم)
+      if (plan.reply) {
+        this._setState('success', {
+          actions: [],
+          results: [],
+          reply: plan.reply
+        });
+        if (this.spokenReplies && plan.reply) {
+          this.tts.speak(plan.reply, { lang: this.lang });
+        }
+        return { success: true, actions: [], reply: plan.reply, results: [] };
+      }
+
+      this._setState('idle');
       return null;
     } catch (err) {
       console.error('Error executing user utterance:', err);
@@ -525,27 +555,58 @@ class NeonActionAgent {
       }
 
       case 'markSupplementTaken': {
-        const suppName = args.supplement || 'مكمل';
+        const suppName = (args.supplement || 'مكمل').trim();
+        const cleanSuppName = suppName.replace(/^(?:ال|الـ)/, '');
         const schedule = store.getState().supplementsSchedule || [];
-        const found = schedule.find(s =>
-          s.nameAr?.includes(suppName) || suppName.includes(s.nameAr) ||
-          s.nameEn?.toLowerCase().includes(suppName.toLowerCase())
-        );
+        let found = schedule.find(s => {
+          const sName = (s.nameAr || '').replace(/^(?:ال|الـ)/, '');
+          return sName.includes(cleanSuppName) || cleanSuppName.includes(sName) ||
+            s.nameEn?.toLowerCase().includes(suppName.toLowerCase());
+        });
+
+        const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        const prevSchedule = JSON.parse(JSON.stringify(schedule));
 
         if (found) {
+          if (!found.schedule) found.schedule = {};
+          if (!found.schedule.morning) found.schedule.morning = {};
           found.schedule.morning.taken = true;
-          found.schedule.morning.time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+          found.schedule.morning.time = timeStr;
           store.saveState();
+        } else {
+          const newSupp = {
+            id: 'supp_' + Date.now(),
+            nameAr: suppName,
+            dose: args.dose || 'جرعة يومية',
+            timing: 'صباحاً',
+            verifiedSource: 'مسجل صوتياً',
+            schedule: {
+              morning: { taken: true, time: timeStr },
+              evening: { taken: true, time: timeStr }
+            }
+          };
+          schedule.push(newSupp);
+          store.setState({ supplementsSchedule: schedule });
+          store.saveState();
+          found = newSupp;
         }
+
+        try {
+          const stackItems = store.getDailyStackItems?.() || [];
+          const stackItem = stackItems.find(i => (i.name || '').includes(cleanSuppName));
+          if (stackItem) {
+            const takenMap = store.getDailyStackTaken?.() || {};
+            takenMap[stackItem.id] = Date.now();
+            store.setDailyStackTaken?.(takenMap);
+          }
+        } catch (_) {}
 
         moduleUpdated = 'supplements';
         summaryText = `تناول: ${found?.nameAr || suppName} ✓`;
 
         inverse = () => {
-          if (found) {
-            found.schedule.morning.taken = false;
-            store.saveState();
-          }
+          store.setState({ supplementsSchedule: prevSchedule });
+          store.saveState();
         };
         break;
       }
@@ -606,15 +667,17 @@ class NeonActionAgent {
         break;
       }
 
+      case 'addShoppingItem':
       case 'addShoppingItems': {
-        const names = args.names || [];
+        const names = Array.isArray(args.names) ? args.names : (args.name ? [args.name] : []);
         const currentItems = store.getShoppingItems();
         const newItems = [...currentItems];
 
         for (const n of names) {
+          if (!n || !n.trim()) continue;
           newItems.push({
             id: 'shop_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-            name: n,
+            name: n.trim(),
             category: 'مخصص',
             unit: 'حسب الحاجة',
             checked: false
@@ -631,17 +694,65 @@ class NeonActionAgent {
       }
 
       case 'removeShoppingItem': {
-        const itemNameToRemove = (args.name || '').trim();
+        const rawName = (args.name || '').trim();
+        const nameToClean = rawName.replace(/^(?:ال|الـ)/, '');
         const currentItems = store.getShoppingItems();
-        const updated = currentItems.filter(item =>
-          !item.name?.toLowerCase().includes(itemNameToRemove.toLowerCase())
-        );
+        const updated = currentItems.filter(item => {
+          const itemName = (item.name || '').trim();
+          const cleanItemName = itemName.replace(/^(?:ال|الـ)/, '');
+          return !itemName.toLowerCase().includes(rawName.toLowerCase()) &&
+                 !cleanItemName.toLowerCase().includes(nameToClean.toLowerCase());
+        });
         store.setShoppingItems(updated);
         moduleUpdated = 'shopping';
-        summaryText = `حذف ${itemNameToRemove} من المشتريات`;
+        summaryText = `حذف ${rawName} من المشتريات`;
 
         inverse = () => {
           store.setShoppingItems(currentItems);
+        };
+        break;
+      }
+
+      case 'prioritize_today': {
+        const rawKind = (args.priority || args.kind || '').toLowerCase().trim();
+        let kind = 'workout';
+        if (rawKind.includes('تمرين') || rawKind.includes('workout') || rawKind.includes('تدريب')) kind = 'workout';
+        else if (rawKind.includes('تغذي') || rawKind.includes('اكل') || rawKind.includes('طعام') || rawKind.includes('nutrition') || rawKind.includes('سعرات')) kind = 'nutrition';
+        else if (rawKind.includes('ماء') || rawKind.includes('مي') || rawKind.includes('شرب') || rawKind.includes('water')) kind = 'water';
+        else if (rawKind.includes('مكمل') || rawKind.includes('supplements')) kind = 'supplements';
+
+        const prevOrder = currentState.today?.actionOrder || ['nutrition', 'workout', 'water', 'supplements'];
+        const ALL_KINDS = ['workout', 'nutrition', 'water', 'supplements'];
+        const newOrder = [kind, ...ALL_KINDS.filter(k => k !== kind)];
+
+        store.setState({
+          today: {
+            ...currentState.today,
+            actionOrder: newOrder,
+            priorityFocus: kind
+          }
+        });
+        store.saveState();
+
+        const labelsAr = {
+          workout: 'التمرين',
+          nutrition: 'التغذية',
+          water: 'الماء',
+          supplements: 'المكملات'
+        };
+
+        moduleUpdated = 'today';
+        summaryText = `تم تقديم ${labelsAr[kind] || kind} كأولوية أولى لليوم ⭐`;
+
+        inverse = () => {
+          store.setState({
+            today: {
+              ...store.getState().today,
+              actionOrder: prevOrder,
+              priorityFocus: prevOrder[0] || 'nutrition'
+            }
+          });
+          store.saveState();
         };
         break;
       }

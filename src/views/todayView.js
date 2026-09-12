@@ -42,23 +42,19 @@ export function renderTodayView() {
   const waterOffset = smCircumference - (waterPct / 100) * smCircumference;
   const suppsOffset = smCircumference - (suppsPct / 100) * smCircumference;
 
-  return `
-    <div class="today-view-container" style="padding: 16px 16px 96px; display: flex; flex-direction: column; gap: 16px;">
-      
-      <!-- قسم الترحيب ورسائل المدرب -->
-      <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-        <h1 style="font-size: 1.8rem; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px;">
-          مساء الخير، ${userProfile.name || 'متدرب نيون'}
-        </h1>
-        <span style="display: inline-flex; align-items: center; gap: 6px; color: #55F7A5; font-size: 0.88rem; font-weight: 600;">
-          <span>جاهز لليوم؟ واصل الالتزام</span>
-          ${neonIcon('flame', 16)}
-        </span>
-      </div>
+  const actionOrder = today.actionOrder || (today.priorityFocus ? [today.priorityFocus, ...['nutrition', 'workout', 'water', 'supplements'].filter(k => k !== today.priorityFocus)] : ['nutrition', 'workout', 'water', 'supplements']);
+  const isFirst = (k) => today.priorityFocus && actionOrder[0] === k;
+  const priorityBadge = (lbl) => `
+    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(85, 247, 165, 0.15); border: 1px solid rgba(85, 247, 165, 0.35); color: #55F7A5; font-size: 0.76rem; font-weight: 800; align-self: flex-start; margin-bottom: 2px;">
+      <span>⭐ أولوية اليوم الأولى (${lbl})</span>
+    </div>
+  `;
 
+  const cardsMap = {
+    nutrition: `
       <!-- بطاقة السعرات والماكروز الرئيسية -->
       <div id="today-calorie-card" class="neon-card" style="padding: 20px 18px; display: flex; flex-direction: column; gap: 16px; cursor: pointer;" title="اضغط لعرض خطة وسجل التغذية">
-        
+        ${isFirst('nutrition') ? priorityBadge('التغذية') : ''}
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-weight: 700; font-size: 0.95rem;">
             ${neonIcon('flame', 20)}
@@ -173,13 +169,14 @@ export function renderTodayView() {
         </div>
 
       </div>
-
+    `,
+    workout: `
       <!-- بطاقة تمرين اليوم (مطابقة للصورة 9C561622) -->
       <div class="neon-card" style="padding: 0; overflow: hidden; position: relative; background: #07100D;">
         <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(2,6,5,0.95) 45%, rgba(2,6,5,0.4) 100%), url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&q=80') center/cover no-repeat; opacity: 0.35; pointer-events: none;"></div>
 
         <div style="position: relative; z-index: 2; padding: 22px; display: flex; flex-direction: column; gap: 14px;">
-          
+          ${isFirst('workout') ? priorityBadge('التمرين') : ''}
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-size: 0.95rem; font-weight: 700;">
               ${neonIcon('dumbbell', 22)}
@@ -206,97 +203,115 @@ export function renderTodayView() {
 
         </div>
       </div>
-
-      <!-- قسم تتبع الماء والترطيب والمكملات اليومية -->
-      <div style="display: flex; flex-direction: column; gap: 14px;">
-        
-        <!-- بطاقة تتبع الماء والترطيب الشاملة -->
-        <div class="neon-card" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 8px; color: #38BDF8; font-weight: 700; font-size: 1rem;">
-              ${neonIcon('water', 26)}
-              <div>
-                <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem;">تتبع الماء والترطيب</div>
-                <div style="font-size: 0.78rem; color: #8C9992;">الهدف اليومي: ${today.targetWaterLiters || 2.5} لتر (${today.targetGlasses} أكواب)</div>
-              </div>
+    `,
+    water: `
+      <!-- بطاقة تتبع الماء والترطيب الشاملة -->
+      <div class="neon-card" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+        ${isFirst('water') ? priorityBadge('الماء والترطيب') : ''}
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #38BDF8; font-weight: 700; font-size: 1rem;">
+            ${neonIcon('water', 26)}
+            <div>
+              <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem;">تتبع الماء والترطيب</div>
+              <div style="font-size: 0.78rem; color: #8C9992;">الهدف اليومي: ${today.targetWaterLiters || 2.5} لتر (${today.targetGlasses} أكواب)</div>
             </div>
-            <span id="today-water-pct-badge" style="font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(56, 189, 248, 0.15); color: #38BDF8; font-family: monospace;">
-              ${waterPct}%
-            </span>
           </div>
+          <span id="today-water-pct-badge" style="font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(56, 189, 248, 0.15); color: #38BDF8; font-family: monospace;">
+            ${waterPct}%
+          </span>
+        </div>
 
-          <!-- عداد الترطيب الدائري والإحصائيات -->
-          <div style="display: flex; align-items: center; justify-content: space-around; gap: 16px; background: rgba(3, 14, 9, 0.6); padding: 14px; border-radius: 16px; border: 1px solid rgba(56, 189, 248, 0.2);">
-            <div class="neon-ring-container" style="width: 86px; height: 86px; flex-shrink: 0;">
-              <svg width="86" height="86" viewBox="0 0 86 86">
-                <circle class="neon-ring-track" cx="43" cy="43" r="${smRadius}" stroke-width="7" />
-                <circle id="today-water-ring-circle" cx="43" cy="43" r="${smRadius}" stroke-width="7" fill="transparent" stroke="#38BDF8"
-                  stroke-dasharray="${smCircumference}" stroke-dashoffset="${waterOffset}" stroke-linecap="round"
-                  style="transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);" />
-              </svg>
-              <div class="neon-ring-content">
-                <span id="today-water-glasses-val" style="font-size: 1.15rem; font-weight: 900; color: #38BDF8; font-family: monospace;">
-                  ${today.consumedGlasses}/${today.targetGlasses}
-                </span>
-              </div>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
-                <span style="color: #8C9992;">المستهلك:</span>
-                <span style="color: #FFFFFF; font-weight: 800; font-family: monospace;"><b style="color: #38BDF8;">${today.consumedWaterLiters || 0}</b> / ${today.targetWaterLiters || 2.5} لتر</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
-                <span style="color: #8C9992;">الأكواب:</span>
-                <span style="color: #FFFFFF; font-weight: 800; font-family: monospace;"><b style="color: #38BDF8;">${today.consumedGlasses}</b> / ${today.targetGlasses} كوب</span>
-              </div>
-              <div style="font-size: 0.78rem; color: #55F7A5; margin-top: 2px;">
-                ${waterHelperMsg}
-              </div>
+        <!-- عداد الترطيب الدائري والإحصائيات -->
+        <div style="display: flex; align-items: center; justify-content: space-around; gap: 16px; background: rgba(3, 14, 9, 0.6); padding: 14px; border-radius: 16px; border: 1px solid rgba(56, 189, 248, 0.2);">
+          <div class="neon-ring-container" style="width: 86px; height: 86px; flex-shrink: 0;">
+            <svg width="86" height="86" viewBox="0 0 86 86">
+              <circle class="neon-ring-track" cx="43" cy="43" r="${smRadius}" stroke-width="7" />
+              <circle id="today-water-ring-circle" cx="43" cy="43" r="${smRadius}" stroke-width="7" fill="transparent" stroke="#38BDF8"
+                stroke-dasharray="${smCircumference}" stroke-dashoffset="${waterOffset}" stroke-linecap="round"
+                style="transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);" />
+            </svg>
+            <div class="neon-ring-content">
+              <span id="today-water-glasses-val" style="font-size: 1.15rem; font-weight: 900; color: #38BDF8; font-family: monospace;">
+                ${today.consumedGlasses}/${today.targetGlasses}
+              </span>
             </div>
           </div>
 
-          <!-- أزرار تسجيل الماء السريعة (+ كوب، + زجاجة، - تراجع) -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr 48px; gap: 8px;">
-            <button id="today-add-water-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 8px; font-size: 0.86rem; color: #38BDF8; border-color: rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; gap: 6px;" title="إضافة كوب ماء 250 مل">
-              <span>➕ كوب (+250 مل)</span>
-            </button>
-            <button id="today-add-bottle-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 8px; font-size: 0.86rem; color: #38BDF8; border-color: rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; gap: 6px;" title="إضافة زجاجة ماء 500 مل">
-              <span>🍾 زجاجة (+500 مل)</span>
-            </button>
-            <button id="today-undo-water-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 0; font-size: 1.1rem; color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3); display: flex; align-items: center; justify-content: center;" title="تراجع عن كوب (-250 مل)" ${today.consumedGlasses <= 0 ? 'disabled' : ''}>
-              <span>−</span>
-            </button>
+          <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
+              <span style="color: #8C9992;">المستهلك:</span>
+              <span style="color: #FFFFFF; font-weight: 800; font-family: monospace;"><b style="color: #38BDF8;">${today.consumedWaterLiters || 0}</b> / ${today.targetWaterLiters || 2.5} لتر</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
+              <span style="color: #8C9992;">الأكواب:</span>
+              <span style="color: #FFFFFF; font-weight: 800; font-family: monospace;"><b style="color: #38BDF8;">${today.consumedGlasses}</b> / ${today.targetGlasses} كوب</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #55F7A5; margin-top: 2px;">
+              ${waterHelperMsg}
+            </div>
           </div>
         </div>
 
-        <!-- بطاقة المكملات اليومية -->
-        <div class="neon-card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-weight: 700; font-size: 1rem;">
-              ${neonIcon('shield', 22)}
-              <div>
-                <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem;">المكملات اليومية (Daily Stack)</div>
-                <div style="font-size: 0.78rem; color: #8C9992;">خطة مكملاتك وجرعاتها بالعربي والإنجليزي</div>
-              </div>
-            </div>
-            <span style="font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(85, 247, 165, 0.15); color: #55F7A5; font-family: monospace;">
-              ${suppsTakenCount}/${suppsTotalCount}
-            </span>
-          </div>
-
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(3, 14, 9, 0.6); padding: 12px 16px; border-radius: 14px; border: 1px solid rgba(85, 247, 165, 0.18);">
-            <div style="font-size: 0.86rem; color: #B8C0BC;">
-              تم تناول <b style="color: #55F7A5;">${suppsTakenCount}</b> من أصل <b style="color: #FFFFFF;">${suppsTotalCount}</b> مكملات اليوم (${suppsPct}%)
-            </div>
-            <a href="#water-supps" class="btn btn-primary" style="border-radius: 12px; padding: 8px 16px; font-size: 0.86rem; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
-              <span>فتح المكملات</span>
-              ${neonIcon('shield', 14)}
-            </a>
-          </div>
+        <!-- أزرار تسجيل الماء السريعة (+ كوب، + زجاجة، - تراجع) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 48px; gap: 8px;">
+          <button id="today-add-water-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 8px; font-size: 0.86rem; color: #38BDF8; border-color: rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; gap: 6px;" title="إضافة كوب ماء 250 مل">
+            <span>➕ كوب (+250 مل)</span>
+          </button>
+          <button id="today-add-bottle-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 8px; font-size: 0.86rem; color: #38BDF8; border-color: rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; gap: 6px;" title="إضافة زجاجة ماء 500 مل">
+            <span>🍾 زجاجة (+500 مل)</span>
+          </button>
+          <button id="today-undo-water-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 0; font-size: 1.1rem; color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3); display: flex; align-items: center; justify-content: center;" title="تراجع عن كوب (-250 مل)" ${today.consumedGlasses <= 0 ? 'disabled' : ''}>
+            <span>−</span>
+          </button>
         </div>
-
       </div>
+    `,
+    supplements: `
+      <!-- بطاقة المكملات اليومية -->
+      <div class="neon-card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+        ${isFirst('supplements') ? priorityBadge('المكملات') : ''}
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #55F7A5; font-weight: 700; font-size: 1rem;">
+            ${neonIcon('shield', 22)}
+            <div>
+              <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem;">المكملات اليومية (Daily Stack)</div>
+              <div style="font-size: 0.78rem; color: #8C9992;">خطة مكملاتك وجرعاتها بالعربي والإنجليزي</div>
+            </div>
+          </div>
+          <span style="font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(85, 247, 165, 0.15); color: #55F7A5; font-family: monospace;">
+            ${suppsTakenCount}/${suppsTotalCount}
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(3, 14, 9, 0.6); padding: 12px 16px; border-radius: 14px; border: 1px solid rgba(85, 247, 165, 0.18);">
+          <div style="font-size: 0.86rem; color: #B8C0BC;">
+            تم تناول <b style="color: #55F7A5;">${suppsTakenCount}</b> من أصل <b style="color: #FFFFFF;">${suppsTotalCount}</b> مكملات اليوم (${suppsPct}%)
+          </div>
+          <a href="#water-supps" class="btn btn-primary" style="border-radius: 12px; padding: 8px 16px; font-size: 0.86rem; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+            <span>فتح المكملات</span>
+            ${neonIcon('shield', 14)}
+          </a>
+        </div>
+      </div>
+    `
+  };
+
+  return `
+    <div class="today-view-container" style="padding: 16px 16px 96px; display: flex; flex-direction: column; gap: 16px;">
+      
+      <!-- قسم الترحيب ورسائل المدرب -->
+      <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+        <h1 style="font-size: 1.8rem; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px;">
+          مساء الخير، ${userProfile.name || 'متدرب نيون'}
+        </h1>
+        <span style="display: inline-flex; align-items: center; gap: 6px; color: #55F7A5; font-size: 0.88rem; font-weight: 600;">
+          <span>جاهز لليوم؟ واصل الالتزام</span>
+          ${neonIcon('flame', 16)}
+        </span>
+      </div>
+
+      <!-- البطاقات الأربع مرتبة حسب أولوية المتدرب اليوم -->
+      ${actionOrder.map(k => cardsMap[k] || '').join('\n')}
 
       <!-- بطاقة: كيف طاقتك اليوم؟ (5 حالات طاقة - مطابقة للصورة 9C561622) -->
       <div class="neon-card" style="padding: 18px;">

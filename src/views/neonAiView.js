@@ -509,12 +509,27 @@ export function bindNeonAiViewEvents() {
 
     // في حال وجود إجراء تمرين
     const workoutAction = actions.find(a => a.tool === 'logWorkoutSets' || a.tool === 'logWorkoutSet');
+    // إنهاء جلسة التمرين
+    const completeWorkoutAction = actions.find(a => a.tool === 'completeWorkout');
     // في حال وجود إجراء ماء
     const waterAction = actions.find(a => a.tool === 'logWater' || a.tool === 'updateWater');
     // في حال وجود إجراء وزن
     const weightAction = actions.find(a => a.tool === 'logWeight' || a.tool === 'updateWeight');
     // في حال وجود إجراء وجبة
     const mealAction = actions.find(a => a.tool === 'logMeal' || a.tool === 'updateMeal');
+    // مكملات
+    const suppAction = actions.find(a => a.tool === 'markSupplementTaken' || a.tool === 'logSupplement');
+    // مشتريات
+    const shopAddAction = actions.find(a => a.tool === 'addShoppingItems' || a.tool === 'addShoppingItem');
+    const shopRemAction = actions.find(a => a.tool === 'removeShoppingItem');
+    // أولوية اليوم
+    const prioAction = actions.find(a => a.tool === 'prioritize_today');
+    // استعلام البروتين والتغذية
+    const nutritionQueryAction = actions.find(a => a.tool === 'getTodayNutrition');
+    // استعلام ملخص اليوم
+    const summaryQueryAction = actions.find(a => a.tool === 'getTodaySummary');
+    // إيقاف الاستماع
+    const stopVoiceAction = actions.find(a => a.tool === 'stopVoiceSession');
 
     // إذا كانت أوامر متعددة (أكثر من إجراء واحد)
     if (actions.length > 1) {
@@ -522,7 +537,10 @@ export function bindNeonAiViewEvents() {
       actions.forEach(act => {
         let label = 'إجراء';
         let val = '';
-        if (act.tool.includes('Workout')) {
+        if (act.tool === 'completeWorkout') {
+          label = 'تمرين';
+          val = `${act.arguments.title || 'إكمال التمرين'} ✓`;
+        } else if (act.tool.includes('Workout')) {
           label = 'تمرين';
           val = `${act.arguments.exercise || 'تمرين'} · ${act.arguments.weightKg}كغ × ${act.arguments.reps} × ${act.arguments.sets || 1}`;
         } else if (act.tool.includes('Water')) {
@@ -533,7 +551,16 @@ export function bindNeonAiViewEvents() {
           val = `${act.arguments.weightKg} كغ`;
         } else if (act.tool.includes('Meal')) {
           label = 'تغذية';
-          val = `${act.arguments.items?.[0]?.nameAr || 'وجبة'}`;
+          val = `${act.arguments.items?.map(i => i.nameAr).join(' + ') || 'وجبة'}`;
+        } else if (act.tool.includes('Supplement')) {
+          label = 'مكمل';
+          val = `${act.arguments.supplement || 'مكمل'} ✓`;
+        } else if (act.tool.includes('Shopping')) {
+          label = 'مشتريات';
+          val = `${(act.arguments.names || [act.arguments.name || '']).join(' و ')}`;
+        } else if (act.tool === 'prioritize_today') {
+          label = 'أولويات';
+          val = `تقديم ${act.arguments.priority || 'التمرين'}`;
         }
         rowsHtml += `
           <div class="neon-ai-action-row">
@@ -555,20 +582,36 @@ export function bindNeonAiViewEvents() {
       return;
     }
 
-    // تمرين مفرد (مطابق للصورة المرجعية تماماً)
+    // إنهاء التمرين
+    if (completeWorkoutAction) {
+      const title = completeWorkoutAction.arguments.title || 'جلسة تدريبية';
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
+          <span>🏆 تم إنهاء تمرين اليوم</span>
+        </div>
+        <div class="neon-ai-action-subject">${title}</div>
+        <div class="neon-ai-action-metric">تم تسجيله كمكتمل في سجل تاريخ التمارين واليوم ✓</div>
+        <div class="neon-ai-action-footer-note">عاش يا بطل! تم التحديث فوراً في صفحة اليوم</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // تمرين مفرد مع فحص PR
     if (workoutAction) {
       const ex = workoutAction.arguments.exercise || 'تمرين';
       const w = workoutAction.arguments.weightKg || 0;
       const r = workoutAction.arguments.reps || 8;
       const s = workoutAction.arguments.sets || 1;
+      const isPr = (data.results?.[0]?.summaryText || '').includes('PR') || (data.results?.[0]?.summaryText || '').includes('🏆');
 
       resultBodyEl.innerHTML = `
-        <div class="neon-ai-action-badge">
-          <span>✓ تم اكتشاف تمرين</span>
+        <div class="neon-ai-action-badge" style="${isPr ? 'background: rgba(255,215,0,0.15); color: #FFD700; border-color: rgba(255,215,0,0.3);' : ''}">
+          <span>${isPr ? '🏆 رقم قياسي جديد (PR)!' : '✓ تم تسجيل التمرين'}</span>
         </div>
         <div class="neon-ai-action-subject">${ex}</div>
-        <div class="neon-ai-action-metric">${w} كيلو × ${r} عدات × ${s} جولات</div>
-        <div class="neon-ai-action-footer-note">تم الحفظ في سجل التمرين</div>
+        <div class="neon-ai-action-metric">${w} كيلو × ${r} عدات ${s > 1 ? `× ${s} جولات` : ''}</div>
+        <div class="neon-ai-action-footer-note">${isPr ? 'أعلى إنجاز مسجل لهذا التمرين! تم حفظه في الـ PRs' : 'تم الحفظ في سجل التمرين'}</div>
       `;
       showResultCard();
       return;
@@ -584,7 +627,7 @@ export function bindNeonAiViewEvents() {
         </div>
         <div class="neon-ai-action-subject">+${ml} مل</div>
         <div class="neon-ai-action-metric">المجموع اليومي: ${todayWater} لتر</div>
-        <div class="neon-ai-action-footer-note">تم التحديث في سجل شرب الماء</div>
+        <div class="neon-ai-action-footer-note">تم التحديث الفوري في بطاقة الترطيب بتاب اليوم</div>
       `;
       showResultCard();
       return;
@@ -604,19 +647,124 @@ export function bindNeonAiViewEvents() {
       return;
     }
 
-    // وجبة
+    // وجبة غذائية
     if (mealAction) {
-      const item = mealAction.arguments.items?.[0] || {};
-      const name = item.nameAr || 'وجبة غذائية';
-      const cals = item.calories || 0;
-      const prot = item.protein || 0;
+      const items = mealAction.arguments.items || [];
+      const name = items.map(i => `${i.nameAr} (${i.grams}غ)`).join(' + ') || 'وجبة غذائية';
+      const cals = items.reduce((s, i) => s + (i.calories || 0), 0);
+      const prot = items.reduce((s, i) => s + (i.protein || 0), 0);
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge">
           <span>✓ تم تسجيل الوجبة</span>
         </div>
         <div class="neon-ai-action-subject">${name}</div>
         <div class="neon-ai-action-metric">${cals} سعرة · ${prot}غ بروتين</div>
-        <div class="neon-ai-action-footer-note">تم الخصم من السعرات والماكروز اليومية</div>
+        <div class="neon-ai-action-footer-note">تم الخصم مباشرة من السعرات والماكروز في تاب اليوم</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // مكمل غذائي
+    if (suppAction) {
+      const supp = suppAction.arguments.supplement || 'المكمل';
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
+          <span>💊 تم تسجيل المكمل</span>
+        </div>
+        <div class="neon-ai-action-subject">${supp}</div>
+        <div class="neon-ai-action-metric">تم تأكيد تناوله اليوم بنجاح ✓</div>
+        <div class="neon-ai-action-footer-note">تم التحديث في جدول مكملاتك اليومية (Daily Stack)</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // إضافة للمشتريات
+    if (shopAddAction) {
+      const names = shopAddAction.arguments.names || (shopAddAction.arguments.name ? [shopAddAction.arguments.name] : []);
+      const listStr = names.join(' و ') || 'أصناف التسوق';
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(56,189,248,0.15); color: #38BDF8; border-color: rgba(56,189,248,0.3);">
+          <span>🛒 قائمة المشتريات</span>
+        </div>
+        <div class="neon-ai-action-subject">${listStr}</div>
+        <div class="neon-ai-action-metric">تمت الإضافة إلى قائمة التسوق بنجاح ✓</div>
+        <div class="neon-ai-action-footer-note">يمكنك مراجعتها في قسم خطة التغذية والتسوق</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // حذف من المشتريات
+    if (shopRemAction) {
+      const name = shopRemAction.arguments.name || 'العنصر';
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(255,107,107,0.15); color: #FF6B6B; border-color: rgba(255,107,107,0.3);">
+          <span>🗑️ حذف من المشتريات</span>
+        </div>
+        <div class="neon-ai-action-subject">${name}</div>
+        <div class="neon-ai-action-metric">تمت إزالته من قائمة التسوق ✓</div>
+        <div class="neon-ai-action-footer-note">تم تحديث قائمة المشتريات فورياً</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // أولوية اليوم
+    if (prioAction) {
+      const labelsAr = { workout: 'التمرين', nutrition: 'التغذية', water: 'الماء', supplements: 'المكملات' };
+      const rawKind = prioAction.arguments.priority || prioAction.arguments.kind || 'workout';
+      const label = labelsAr[rawKind] || 'التمرين';
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(255,215,0,0.15); color: #FFD700; border-color: rgba(255,215,0,0.3);">
+          <span>⭐ إعادة ترتيب الأولويات</span>
+        </div>
+        <div class="neon-ai-action-subject">${label} هو الأولوية الأولى</div>
+        <div class="neon-ai-action-metric">تم رفع بطاقة ${label} لأعلى الصفحة في تاب اليوم ✓</div>
+        <div class="neon-ai-action-footer-note">تم تحديث ترتيب أولويات يومك بنجاح</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // استعلام البروتين
+    if (nutritionQueryAction) {
+      const rep = data.reply || (results[0]?.summaryText) || 'معلومات الماكروز';
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
+          <span>🍗 استعلام البروتين</span>
+        </div>
+        <div class="neon-ai-action-subject" style="font-size: 1.15rem; line-height: 1.5;">${rep}</div>
+        <div class="neon-ai-action-footer-note">استناداً إلى أهدافك والوجبات المسجلة اليوم</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // استعلام ملخص اليوم
+    if (summaryQueryAction) {
+      const rep = data.reply || (results[0]?.summaryText) || 'ملخص اليوم';
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
+          <span>📋 ملخص يومك الشامل</span>
+        </div>
+        <div class="neon-ai-action-subject" style="font-size: 1.05rem; line-height: 1.6; font-weight: 600;">${rep}</div>
+        <div class="neon-ai-action-footer-note">كافة بياناتك متزامنة ومحدثة في لوحة التحكم</div>
+      `;
+      showResultCard();
+      return;
+    }
+
+    // إيقاف الاستماع
+    if (stopVoiceAction) {
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(255,107,107,0.15); color: #FF6B6B; border-color: rgba(255,107,107,0.3);">
+          <span>🛑 إيقاف الاستماع</span>
+        </div>
+        <div class="neon-ai-action-subject">أوقفت الاستماع الصوتي</div>
+        <div class="neon-ai-action-metric">الميكروفون مغلق الآن ✓</div>
+        <div class="neon-ai-action-footer-note">انقر على الدائرة في أي وقت لإعادة التشغيل</div>
       `;
       showResultCard();
       return;
