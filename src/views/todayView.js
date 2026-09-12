@@ -7,7 +7,6 @@ import { store } from '../state/store.js';
 import { calculatePercentage } from '../domain/calculations.js';
 import { animateCountUp, animateRingOffset } from '../utils/animUtils.js';
 import { neonIcon } from '../utils/neonIcons.js';
-import { renderTodayPriorities } from '../components/actionPanel.js';
 
 export function renderTodayView() {
   const state = store.getState();
@@ -56,11 +55,6 @@ export function renderTodayView() {
           ${neonIcon('flame', 16)}
         </span>
       </div>
-
-      <section class="neon-card" style="padding: 14px;" aria-label="أولويات اليوم">
-        <a href="#neon-ai" style="color: #55F7A5; font-weight: 800;">أولويات اليوم · رتّبها مع نيون</a>
-        ${renderTodayPriorities(state)}
-      </section>
 
       <!-- بطاقة السعرات والماكروز الرئيسية -->
       <div id="today-calorie-card" class="neon-card" style="padding: 20px 18px; display: flex; flex-direction: column; gap: 16px; cursor: pointer;" title="اضغط لعرض خطة وسجل التغذية">
