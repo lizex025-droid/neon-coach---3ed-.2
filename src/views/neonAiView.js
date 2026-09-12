@@ -20,22 +20,23 @@ export function renderNeonAiView() {
     <div class="neon-ai-master-container">
       
       <!-- =================================================================
-           1. VOICE RECORDING AREA (Living Futuristic Neon Orb - Eye-Friendly)
+           1. VOICE RECORDING AREA (Taskmaster Voice Orb + Directional Waveform)
            ================================================================= -->
       <section id="neon-ai-voice-card" class="neon-ai-voice-stage" aria-label="منطقة التسجيل الصوتي">
         
-        <!-- مسرح الكرة النيونية التفاعلية الحية المريحة للعين -->
-        <div class="neon-ai-orb-container" id="neon-ai-orb-wrapper" role="button" tabindex="0" title="انقر للتحدث مع نيون" aria-label="بدء أو إيقاف التسجيل الصوتي">
-          
-          <!-- حلقات الهالة الصوتية الانسيابية المريحة للعين -->
-          <div class="neon-orb-ripple ring-2" id="neon-orb-ring-2"></div>
-          <div class="neon-orb-ripple ring-1" id="neon-orb-ring-1"></div>
-          
-          <!-- الكرة المركزية النيونية المشعة المتنفسة -->
-          <div class="neon-ai-core-orb" id="neon-ai-start-circle">
-            <div class="neon-orb-stop-glyph">
-              <span class="stop-dot"></span>
-            </div>
+        <!-- الدائرة النيون المتوهجة الأيقونية (Taskmaster Glowing Breathing Orb) -->
+        <div class="start-circle-wrapper" id="neon-ai-orb-wrapper" role="button" tabindex="0" title="انقر للتحدث مع نيون" aria-label="بدء التسجيل الصوتي">
+          <div class="start-circle" id="neon-ai-start-circle"></div>
+        </div>
+
+        <!-- مسرح الـ Waveform الانسيابي باتجاه واحد هادئ ومريح للعين -->
+        <div class="waveform-container" id="neon-ai-waveform-container" role="button" tabindex="0" title="انقر لإيقاف التسجيل" aria-label="إيقاف التسجيل">
+          <canvas id="neon-ai-waveform-canvas" class="waveform-canvas"></canvas>
+          <div class="waveform-stop-button" title="إيقاف التسجيل">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <rect x="9" y="9" width="6" height="6" fill="currentColor"></rect>
+            </svg>
           </div>
         </div>
 
@@ -128,9 +129,8 @@ export function bindNeonAiViewEvents() {
   // 1. استخراج عناصر الواجهة
   const voiceCard = document.getElementById('neon-ai-voice-card');
   const orbWrapper = document.getElementById('neon-ai-orb-wrapper');
-  const coreOrbEl = document.getElementById('neon-ai-start-circle');
-  const ring1El = document.getElementById('neon-orb-ring-2');
-  const ring2El = document.getElementById('neon-orb-ring-1');
+  const waveformContainer = document.getElementById('neon-ai-waveform-container');
+  const canvasEl = document.getElementById('neon-ai-waveform-canvas');
   const voiceSub = document.getElementById('neon-ai-voice-sub');
   const timerEl = document.getElementById('neon-ai-timer');
   const transcriptEl = document.getElementById('neon-ai-transcript');
@@ -165,37 +165,104 @@ export function bindNeonAiViewEvents() {
     voiceSub.innerHTML = `🔒 <span style="color: #00F2FE;">للآيفون:</span> انقر هنا للانتقال للرابط الآمن <code>https://</code> لتفعيل المايك`;
   }
 
-  // 2. حلقة تفاعل الكرة النيونية العضوية الحية (Eye-friendly Living Orb Reactivity)
+  // 2. إعداد الـ Canvas والـ Waveform الانسيابي باتجاه واحد وبسرعة هادئة ومريحة
+  const ctx = canvasEl?.getContext('2d');
+  let currentFreqData = new Uint8Array(64);
   let currentVolume = 0;
   let smoothedVolume = 0;
+  let wavePhase = 0;
+  const smoothedBarHeights = [];
 
-  function updateOrbAnimation() {
-    if (!isRunning) return;
-
-    smoothedVolume += (currentVolume - smoothedVolume) * 0.22;
-
-    if (isListening && coreOrbEl) {
-      // تضخم عضوي ناعم للكرة والحلقات مع نبرة صوت المستخدم بدون أي وميض مزعج
-      const orbScale = 1 + Math.min(0.42, smoothedVolume * 0.9);
-      coreOrbEl.style.transform = `scale(${orbScale})`;
-      if (ring1El) {
-        const r1Scale = 1 + Math.min(0.35, smoothedVolume * 0.65);
-        ring1El.style.transform = `scale(${r1Scale})`;
-      }
-      if (ring2El) {
-        const r2Scale = 1 + Math.min(0.55, smoothedVolume * 1.15);
-        ring2El.style.transform = `scale(${r2Scale})`;
-      }
-    } else if (coreOrbEl && !voiceCard?.classList.contains('is-processing')) {
-      coreOrbEl.style.transform = '';
-      if (ring1El) ring1El.style.transform = '';
-      if (ring2El) ring2El.style.transform = '';
-    }
-
-    animFrameId = requestAnimationFrame(updateOrbAnimation);
+  function resizeCanvas() {
+    if (!canvasEl || !canvasEl.parentElement) return;
+    const rect = canvasEl.parentElement.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvasEl.width = Math.floor(rect.width * dpr);
+    canvasEl.height = Math.floor(rect.height * dpr);
   }
 
-  updateOrbAnimation();
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  function drawWaveform() {
+    if (!isRunning || !ctx || !canvasEl) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const width = canvasEl.width / dpr;
+    const height = canvasEl.height / dpr;
+    if (width <= 0 || height <= 0) {
+      animFrameId = requestAnimationFrame(drawWaveform);
+      return;
+    }
+
+    const centerY = height / 2;
+
+    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    const barWidth = 3;
+    const barGap = 3.5;
+    const step = barWidth + barGap;
+    const maxBarHeight = (height / 2) - 4;
+    const totalBars = Math.min(54, Math.floor((width - 40) / step));
+    const totalW = totalBars * step - barGap;
+    const startX = (width - totalW) / 2;
+
+    // تنعيم مستوى الصوت وتحديث المرحلة بسرعة هادئة وبطيئة ومريحة للعين
+    smoothedVolume += (currentVolume - smoothedVolume) * 0.16;
+    wavePhase += 0.016; // سرعة هادئة وانسيابية (تتحرك باتجاه واحد دون ارتعاش)
+
+    ctx.shadowColor = 'rgba(0, 255, 156, 0.65)';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#00FF9C';
+
+    const isProcessing = voiceCard?.classList.contains('is-processing');
+
+    for (let i = 0; i < totalBars; i++) {
+      // غلاف قوسي ناعم (Hann Window) لضمان تلاشي الأطراف بسلاسة
+      const envelope = Math.sin((i / (totalBars - 1)) * Math.PI);
+
+      let targetH = 2; // حالة السكون
+
+      if (isListening) {
+        // حركة باتجاه واحد متصلة (من اليسار لليمين) بدون أي تقاطع أو خطين يدخلان في بعض
+        const directionalWave = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(i * 0.22 - wavePhase));
+        
+        // ربط ناعم مع الترددات الصوتية
+        const freqIndex = Math.min(currentFreqData.length - 1, Math.floor((i / totalBars) * currentFreqData.length));
+        const freqVal = (currentFreqData[freqIndex] || 0) / 255;
+        
+        const voiceIntensity = freqVal * 0.68 + smoothedVolume * 0.32;
+        targetH = Math.max(2, (2 + voiceIntensity * directionalWave * maxBarHeight * 1.12) * envelope);
+      } else if (isProcessing) {
+        // موجة معالجة نيونية واحدة تمشي باتجاه واحد ببطء وانسيابية تامة
+        const procWave = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(i * 0.16 - wavePhase));
+        targetH = Math.max(2, procWave * envelope * (maxBarHeight * 0.52));
+      }
+
+      // تنعيم تدريجي للارتفاع يمنع أي وميض أو ارتعاش حاد
+      smoothedBarHeights[i] = (smoothedBarHeights[i] || 2) + (targetH - (smoothedBarHeights[i] || 2)) * 0.2;
+      const barHeight = smoothedBarHeights[i];
+
+      const x = startX + i * step;
+      const topY = centerY - barHeight;
+      const totalH = barHeight * 2;
+
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(x, topY, barWidth, totalH, 2);
+      } else {
+        ctx.rect(x, topY, barWidth, totalH);
+      }
+      ctx.fill();
+    }
+
+    ctx.restore();
+    animFrameId = requestAnimationFrame(drawWaveform);
+  }
+
+  drawWaveform();
 
   // 3. إدارة التوقيت الزمني
   function startTimer() {
@@ -225,13 +292,18 @@ export function bindNeonAiViewEvents() {
       case 'listening':
         isListening = true;
         voiceCard?.classList.add('is-listening');
+        orbWrapper?.classList.add('is-hidden');
+        waveformContainer?.classList.add('active', 'visible');
         if (voiceSub) voiceSub.textContent = 'أستمع إليك الآن... تحدث بصوتك المباشر (انقر للإيقاف)';
         startTimer();
+        setTimeout(() => resizeCanvas(), 60);
         break;
 
       case 'processing':
         isListening = false;
         voiceCard?.classList.add('is-processing');
+        orbWrapper?.classList.add('is-hidden');
+        waveformContainer?.classList.add('active', 'visible');
         if (voiceSub) voiceSub.textContent = 'جاري فهم الإجراء وتحديث سجلاتك...';
         stopTimer();
         break;
@@ -239,6 +311,8 @@ export function bindNeonAiViewEvents() {
       case 'idle':
       default:
         isListening = false;
+        orbWrapper?.classList.remove('is-hidden');
+        waveformContainer?.classList.remove('active', 'visible');
         if (voiceSub) voiceSub.textContent = 'انقر على الدائرة لبدء التسجيل الصوتي';
         stopTimer();
         currentVolume = 0;
@@ -327,6 +401,10 @@ export function bindNeonAiViewEvents() {
       e.preventDefault();
       toggleVoiceSession();
     }
+  });
+
+  waveformContainer?.addEventListener('click', () => {
+    toggleVoiceSession();
   });
 
   // 6. الاستماع لأحداث الوكيل الصوتي (neonActionAgent)
