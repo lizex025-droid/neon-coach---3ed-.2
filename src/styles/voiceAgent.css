@@ -24,7 +24,7 @@
   background: radial-gradient(circle, #093322 0%, #030806 100%);
   border: 1.5px solid var(--neon-voice-primary);
   color: var(--neon-voice-primary);
-  display: none;
+  display: none !important;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -33,7 +33,7 @@
 }
 
 .neon-voice-fab.visible {
-  display: flex !important;
+  display: none !important;
 }
 
 .neon-voice-fab:hover {

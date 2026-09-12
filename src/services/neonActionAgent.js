@@ -37,6 +37,7 @@ class NeonActionAgent {
     this.undoStack = [];
     this.spokenReplies = false; // الإخراج كتابة على الشاشة فقط بدون صوت
     this.lang = 'ar-JO';
+    this.lastInterimText = '';
 
     this._initStt();
   }
@@ -52,9 +53,11 @@ class NeonActionAgent {
         this._setState('speech_detected');
       },
       onInterim: (interimText) => {
+        this.lastInterimText = interimText;
         this._emit('transcript', { text: interimText, isFinal: false });
       },
       onFinal: async (finalText) => {
+        this.lastInterimText = '';
         this._emit('transcript', { text: finalText, isFinal: true });
         await this.handleUserUtterance(finalText);
       },
@@ -128,7 +131,12 @@ class NeonActionAgent {
           }
         },
         onSilence: () => {
-          // السكوت بعد الكلام يُعامل في STT عبر onFinal
+          // السكوت بعد الكلام: إنهاء التسجيل تلقائياً ومعالجة النص المكتشف
+          if (this.lastInterimText && (this.state === 'speech_detected' || this.state === 'listening')) {
+            const txt = this.lastInterimText.trim();
+            this.lastInterimText = '';
+            this.handleUserUtterance(txt);
+          }
         }
       });
 
