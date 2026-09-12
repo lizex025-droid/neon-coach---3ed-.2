@@ -42,6 +42,38 @@ export const ALL_ACTION_TOOLS = [
   'stopVoiceSession'
 ];
 
+export const WRITE_ACTION_TOOLS = new Set([
+  'logMeal',
+  'updateMeal',
+  'deleteMeal',
+  'logWater',
+  'updateWater',
+  'logWeight',
+  'updateWeight',
+  'logBodyMeasurement',
+  'logWorkoutSet',
+  'logWorkoutSets',
+  'completeWorkout',
+  'updateWorkoutSet',
+  'deleteWorkoutSet',
+  'logSupplement',
+  'markSupplementTaken',
+  'logSteps',
+  'logSleep',
+  'logMood',
+  'logEnergy',
+  'logCardio',
+  'logInBody',
+  'addShoppingItem',
+  'addShoppingItems',
+  'removeShoppingItem',
+  'undoLastAction'
+]);
+
+export function isWriteActionTool(toolName) {
+  return WRITE_ACTION_TOOLS.has(toolName);
+}
+
 export const TOOL_SCHEMAS = {
   logMeal: {
     description: 'تسجيل وجبة غذائية بالأصناف والغرامات وحساب الماكروز',

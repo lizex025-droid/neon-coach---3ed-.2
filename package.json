@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "test": "node --test tests/neonActionAgent.test.js tests/neonSoundFeedback.test.js tests/actionVoice.test.js tests/supplementsAndWater.test.js tests/calculations.test.js tests/calorieEngine.test.js tests/nutrition.test.js tests/nutritionSearch.test.js tests/planner.test.js"
   },
   "engines": {
     "node": ">=18"

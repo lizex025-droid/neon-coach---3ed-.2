@@ -10,6 +10,7 @@
 import { aiService } from '../services/aiService.js';
 import { store } from '../state/store.js';
 import { neonActionAgent } from '../services/neonActionAgent.js';
+import { neonSoundService } from '../services/neonSoundService.js';
 import '../styles/neonAiMaster.css';
 
 export function renderNeonAiView() {
@@ -162,6 +163,9 @@ export function bindNeonAiViewEvents() {
   let timerInterval = null;
   let startTime = 0;
   let animFrameId = null;
+
+  // تحميل مسبق لصوت التأكيد في الخلفية
+  neonSoundService.preloadSounds().catch(() => {});
 
   // تنبيه استباقي خفيف إذا كان المستخدم على هاتف محمول/آيفون برابط غير مشفر (HTTP)
   const isSecureInitial = typeof window !== 'undefined' && (window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
@@ -372,6 +376,10 @@ export function bindNeonAiViewEvents() {
       renderHttpsRedirectCard();
       return;
     }
+
+    // تهيئة الصوت وتشغيل نغمة التأكيد المباشرة مع تفاعل المستخدم
+    neonSoundService.initializeAudio();
+    neonSoundService.playAcknowledgement();
 
     try {
       setVoiceState('listening');

@@ -8,9 +8,10 @@ import { AudioAnalyser } from './voice/audioAnalyser.js';
 import { SttAdapter } from './voice/sttAdapter.js';
 import { TtsAdapter } from './voice/ttsAdapter.js';
 import { parseNaturalAction } from '../domain/actionParser.js';
-import { validateToolArgs } from '../domain/actionToolsRegistry.js';
+import { isWriteActionTool, validateToolArgs } from '../domain/actionToolsRegistry.js';
 import { store } from '../state/store.js';
 import { syncService } from './syncService.js';
+import { neonSoundService } from './voice/neonSoundService.js';
 
 class NeonActionAgent {
   constructor() {
@@ -115,6 +116,10 @@ class NeonActionAgent {
   async startVoiceSession({ onFrequencyData, stream } = {}) {
     if (this.state === 'listening' || this.state === 'processing') return;
 
+    // تشغيل نغمة التأكيد فوراً عند فتح المايك وبدء الجلسة
+    neonSoundService.initializeAudio();
+    neonSoundService.playAcknowledgement();
+
     this._setState('requesting_permission');
 
     try {
@@ -218,6 +223,17 @@ class NeonActionAgent {
           validateToolArgs(action.tool, action.arguments);
           const res = await this._executeSingleTool(action.tool, action.arguments);
           executionResults.push(res);
+        }
+
+        // تشغيل صوت التأكيد (Acknowledgement Beep) مرة واحدة فقط بعد نجاح مهام التعديل والحفظ الحقيقية
+        const hasWriteAction = plan.actions.some(act => isWriteActionTool(act.tool));
+        const allSucceeded = executionResults.length > 0 && executionResults.every(r => r && r.success !== false);
+
+        if (hasWriteAction && allSucceeded) {
+          const isOnlyUndo = plan.actions.length === 1 && plan.actions[0].tool === 'undoLastAction';
+          if (!isOnlyUndo) {
+            neonSoundService.playAcknowledgement();
+          }
         }
 
         // تحضير الرد المكتوب التفصيلي للعرض على الشاشة (بدون صوت)
@@ -690,6 +706,7 @@ class NeonActionAgent {
     const last = this.undoStack.pop();
     try {
       last.inverse();
+      neonSoundService.playAcknowledgement();
       const msg = `تراجعت عن: ${last.summaryText}`;
       if (this.spokenReplies) this.tts.speak('رجعت آخر شغلة.', { lang: this.lang });
       this._emit('undo_performed', { action: last });
@@ -698,6 +715,10 @@ class NeonActionAgent {
       console.error('Failed to undo action:', e);
       return { success: false, summaryText: 'تعذر التراجع عن الإجراء.' };
     }
+  }
+
+  undo() {
+    return this.undoLastAction();
   }
 
   hasUndo() {
