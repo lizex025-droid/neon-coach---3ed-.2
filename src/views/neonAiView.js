@@ -772,6 +772,37 @@ export function bindNeonAiViewEvents() {
 
     // أي استجابة أخرى أو استعلام (Question/Query)
     const reply = data.reply || 'تم تنفيذ العملية بنجاح ✓';
+    const isLongOrQuery = data.type === 'query' || (!actions.length && reply.length > 30) || reply.includes('\n');
+
+    if (isLongOrQuery) {
+      const formatted = reply
+        .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #55F7A5;">$1</strong>')
+        .split('\n')
+        .filter(l => l.trim())
+        .map(l => {
+          if (l.startsWith('- ') || l.startsWith('* ')) {
+            return `<li style="margin-bottom: 6px; list-style-position: inside;">${l.substring(2)}</li>`;
+          }
+          if (/^\d+\./.test(l)) {
+            return `<div style="margin: 8px 0 4px; font-weight: 700; color: #55F7A5;">${l}</div>`;
+          }
+          return `<p style="margin-bottom: 8px;">${l}</p>`;
+        })
+        .join('');
+
+      resultBodyEl.innerHTML = `
+        <div class="neon-ai-action-badge" style="background: rgba(0,229,255,0.15); color: #00E5FF; border-color: rgba(0,229,255,0.3);">
+          <span>🔍 نتيجة البحث والمعلومات</span>
+        </div>
+        <div style="font-size: 1.02rem; font-weight: 500; color: #F0F6FC; line-height: 1.7; text-align: right; margin-top: 10px; max-width: 750px; padding: 0 8px; width: 100%;">
+          ${formatted}
+        </div>
+        <div class="neon-ai-action-footer-note" style="margin-top: 12px;">مدعوم بالذكاء الاصطناعي والبحث المعرفي · NEON AI</div>
+      `;
+      showResultCard();
+      return;
+    }
+
     resultBodyEl.innerHTML = `
       <div class="neon-ai-action-badge">
         <span>✓ نتيجة الاستعلام</span>

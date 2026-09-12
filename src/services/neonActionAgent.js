@@ -289,17 +289,22 @@ class NeonActionAgent {
         return { success: true, actions: plan.actions, reply: finalReply, results: executionResults };
       }
 
-      // 5) إذا وُجد رد دون أدوات (مثل رد استعلام خادم)
+      // 5) إذا وُجد رد دون أدوات (مثل رد استعلام خادم أو بحث خارجي)
       if (plan.reply) {
+        const isQuery = plan.type === 'query' || (!plan.actions?.length && (plan.reply.length > 25 || plan.reply.includes('\n')));
         this._setState('success', {
+          type: isQuery ? 'query' : 'statement',
           actions: [],
           results: [],
           reply: plan.reply
         });
         if (this.spokenReplies && plan.reply) {
-          this.tts.speak(plan.reply, { lang: this.lang });
+          // قراءة الجملة الأولى بصوت واضح لتجربة استماع مريحة
+          const spoken = plan.reply.split('\n').find(s => s.trim()) || plan.reply;
+          const cleanSpoken = spoken.replace(/[*#-]/g, '').trim();
+          this.tts.speak(cleanSpoken, { lang: this.lang });
         }
-        return { success: true, actions: [], reply: plan.reply, results: [] };
+        return { success: true, type: isQuery ? 'query' : 'statement', actions: [], reply: plan.reply, results: [] };
       }
 
       this._setState('idle');

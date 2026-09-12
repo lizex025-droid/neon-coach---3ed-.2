@@ -1,13 +1,23 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DEFAULT_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash'];
+const DEFAULT_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-3.1-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash'
+];
 
-const SYSTEM_PROMPT = `You are the NEON ACTION AGENT for NEON COACH fitness app.
-Your job is to convert user natural speech (Arabic, English, Franco, or mixed) into structured action tools.
+const SYSTEM_PROMPT = `You are the NEON ACTION & KNOWLEDGE AGENT for NEON COACH fitness app.
+Your role:
+1. Convert user fitness and nutrition commands into structured action tools.
+2. If the user asks for external information, searches, nutrition facts, exercise advice, or scientific studies, answer comprehensively, accurately, and politely in Arabic.
 
 RULES:
-1. Output MUST be valid JSON only, without markdown fences or additional commentary.
+1. Output MUST be valid JSON only, without markdown fences or extra text.
 2. Schema:
 {
   "type": "actions" | "clarification" | "query",
@@ -17,7 +27,7 @@ RULES:
       "arguments": { ... }
     }
   ],
-  "reply": "ultra short Arabic response like: تم، سجلته، تسجل، or a single concise question if missing vital info"
+  "reply": "Arabic response"
 }
 
 ALLOWED TOOLS:
@@ -46,10 +56,10 @@ ALLOWED TOOLS:
 - undoLastAction({})
 - stopVoiceSession({})
 
-3. Multiple actions in one sentence must generate multiple items in the "actions" array.
-4. If the user is clarifying or correcting (e.g. "no, I meant half a liter" or "لا قصدي 85 كيلو"), update the prior action rather than adding extra.
-5. Keep "reply" ultra concise: "تم", "سجلته", "تسجل".
-6. Never output arbitrary code, SQL queries, or unknown tools.`;
+CLASSIFICATION & REPLY RULES:
+1. ACTION: If user wants to log, update, delete, or perform an app action, return type "actions", populate "actions" array, and set "reply" to a short Arabic confirmation like "تم" or "سجلته".
+2. CLARIFICATION: If critical info is missing to perform an action, return type "clarification", actions: [], and ask one concise question.
+3. SEARCH / EXTERNAL QUERY / KNOWLEDGE: If user asks a question, requests a search (e.g. "ابحث عن...", "كم سعرة في...", "ما هي فوائد...", "كيف أسوي...", "أحدث الدراسات عن..."), return type "query", actions: [], and in "reply" provide a direct, accurate, evidence-backed answer in Arabic with exact numbers, calories, macros, or study findings.`;
 
 function loadLocalEnv() {
   if (process.env.GEMINI_API_KEY) return;
@@ -86,7 +96,6 @@ export default async function handler(req, res) {
   const context = body && body.context ? body.context : {};
 
   if (!apiKey) {
-    // إذا لم يكن هناك مفتاح، الرد بتوجيه للمحلل المحلي
     return res.status(200).json({
       type: 'actions',
       actions: [],
@@ -94,13 +103,54 @@ export default async function handler(req, res) {
     });
   }
 
-  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
   const models = [primaryModel, ...DEFAULT_MODELS.filter(m => m !== primaryModel)];
   const prompt = `Context: ${JSON.stringify(context)}\nUser utterance: "${message}"`;
+
+  const isSearchRequest = /(ابحث|بحث|غوغل|جوجل|دراسات|search|google)/i.test(message);
 
   try {
     for (const model of models) {
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+      if (isSearchRequest) {
+        try {
+          const searchUpstream = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey,
+            },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              tools: [{ googleSearch: {} }],
+              generationConfig: {
+                temperature: 0.2,
+                maxOutputTokens: 1000
+              }
+            }),
+            signal: AbortSignal.timeout(6000)
+          });
+          if (searchUpstream.ok) {
+            const json = await searchUpstream.json();
+            const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              try {
+                const parsed = JSON.parse(text);
+                return res.status(200).json(parsed);
+              } catch (_) {
+                return res.status(200).json({
+                  type: 'query',
+                  actions: [],
+                  reply: text.trim()
+                });
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
       const upstream = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -139,4 +189,5 @@ export default async function handler(req, res) {
   } catch (e) {
     return res.status(500).json({ error: 'server error: ' + e.message });
   }
-};
+}
+

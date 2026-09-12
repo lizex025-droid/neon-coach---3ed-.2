@@ -1,7 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULT_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
+const DEFAULT_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-3.1-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash'
+];
 
 const SYSTEM_PROMPT =
   "You are Nova, Ahed's permanent bilingual AI personal trainer coach and nutrition analyst inside pdfs.html. " +
@@ -79,16 +87,48 @@ module.exports = async function handler(req, res) {
   const dashboardData = body && body.dashboardData && typeof body.dashboardData === 'object'
     ? body.dashboardData
     : {};
-  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
   const models = [primaryModel, ...DEFAULT_MODELS.filter(m => m !== primaryModel)];
   const prompt = 'Dashboard data as JSON:\n' + JSON.stringify(dashboardData) +
     '\n\nUser message:\n' + message;
+
+  const isSearchRequest = /(ابحث|بحث|غوغل|جوجل|دراسات|search|google)/i.test(message);
 
   try {
     let lastError = null;
     for (const model of models) {
       const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' +
         encodeURIComponent(model) + ':generateContent';
+
+      if (isSearchRequest) {
+        try {
+          const searchUpstream = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'x-goog-api-key': apiKey,
+            },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              tools: [{ googleSearch: {} }],
+              generationConfig: {
+                maxOutputTokens: 1200,
+                temperature: 0.3,
+              },
+            }),
+            signal: AbortSignal.timeout(6000)
+          });
+          if (searchUpstream.ok) {
+            const json = await searchUpstream.json();
+            const text = extractGeminiText(json);
+            if (text) {
+              return res.status(200).json({ reply: text, model });
+            }
+          }
+        } catch (_) {}
+      }
+
       const upstream = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -120,13 +160,10 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const message = json && json.error && json.error.message
+      const msg = json && json.error && json.error.message
         ? json.error.message
         : (upstreamText || 'Gemini request failed');
-      lastError = { message, status: upstream.status };
-      if (!/high demand|overloaded|temporarily unavailable|try again later|503|unavailable/i.test(message)) {
-        return res.status(upstream.status).json({ error: message, status: upstream.status, model });
-      }
+      lastError = { message: msg, status: upstream.status };
     }
 
     return res.status(lastError && lastError.status ? lastError.status : 503).json({
