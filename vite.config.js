@@ -1,6 +1,23 @@
 import { defineConfig, loadEnv } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
+import https from 'node:https';
+import os from 'node:os';
+import { getCertificate } from '@vitejs/plugin-basic-ssl';
+
+function getLocalNetworkIp() {
+  try {
+    const nets = os.networkInterfaces();
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        if (net.family === 'IPv4' && !net.internal) {
+          return net.address;
+        }
+      }
+    }
+  } catch (_) {}
+  return '192.168.8.202';
+}
 
 function retrieveKnowledge(question) {
   const file = path.resolve('C:/Users/User/Downloads/joker_ai_dataset/rag_chunks.jsonl');
@@ -26,7 +43,7 @@ export default defineConfig(({ mode }) => {
   plugins: [
     {
       name: 'neon-api-middleware',
-      configureServer(server) {
+      async configureServer(server) {
       server.middlewares.use('/api/openai/chat', async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;
@@ -110,6 +127,33 @@ export default defineConfig(({ mode }) => {
           res.end(JSON.stringify({ error: err.message }));
         }
       });
+
+      // تشغيل خادم HTTPS متزامن على المنفذ 3443 خصيصاً لهواتف iPhone ومتصفح Safari
+      // Safari على iOS يتطلب اتصال HTTPS (Secure Context) لإظهار نافذة إذن الميكروفون
+      try {
+        const certPem = await getCertificate('node_modules/.vite/basic-ssl');
+        const httpsServer = https.createServer({ cert: certPem, key: certPem }, server.middlewares);
+        if (server.ws && typeof server.ws.bind === 'function') {
+          server.ws.bind(httpsServer);
+        }
+        httpsServer.on('error', (err) => {
+          if (err.code === 'EADDRINUSE') {
+            console.log('  ⚠️  Port 3443 already in use, companion HTTPS server will reuse it.');
+          } else {
+            console.warn('  ⚠️  Companion HTTPS server error:', err.message);
+          }
+        });
+        server.httpServer?.on('close', () => {
+          try { httpsServer.close(); } catch (_) {}
+        });
+        const lanIp = getLocalNetworkIp();
+        httpsServer.listen(3443, '0.0.0.0', () => {
+          console.log(`\n  \x1b[32m➜\x1b[0m  \x1b[1mMobile HTTPS (iPhone Safari & Mic):\x1b[0m \x1b[36mhttps://${lanIp}:3443/\x1b[0m`);
+          console.log(`  \x1b[32m➜\x1b[0m  \x1b[1mLocal HTTPS:\x1b[0m                         \x1b[36mhttps://localhost:3443/\x1b[0m\n`);
+        });
+      } catch (sslErr) {
+        console.warn('Companion HTTPS server skipped:', sslErr.message);
+      }
     }
   }],
   server: {

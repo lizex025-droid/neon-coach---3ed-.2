@@ -315,7 +315,8 @@ export class NeonVoiceOverlay {
           if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
             textP.textContent = 'تم رفض الإذن من المتصفح. اضغط على أيقونة القفل أو المايك في شريط عنوان المتصفح واختر "سماح (Allow)".';
           } else if (!window.isSecureContext && location.protocol !== 'https:') {
-            textP.textContent = 'يتطلب إذن المايكروفون اتصال HTTPS آمن. يرجى فتح الموقع عبر https://192.168.8.202:3000/ أو localhost.';
+            const host = window.location.hostname;
+            textP.innerHTML = `يتطلب إذن المايكروفون على iPhone اتصال HTTPS آمن.<br><a href="https://${host}:3443/" style="color:#00F2FE;font-weight:bold;text-decoration:underline;display:inline-block;margin-top:6px;">اضغط هنا للانتقال إلى الرابط الآمن https://${host}:3443</a>`;
           } else {
             textP.textContent = err.message || 'تعذر الحصول على إذن المايكروفون من المتصفح.';
           }

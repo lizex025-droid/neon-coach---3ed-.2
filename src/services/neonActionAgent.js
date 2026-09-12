@@ -151,6 +151,8 @@ class NeonActionAgent {
       let errorMsg = 'تعذر تشغيل الميكروفون. يرجى التأكد من منحه الإذن.';
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         errorMsg = 'تم رفض إذن الوصول للميكروفون. يرجى تفعيله من إعدادات المتصفح.';
+      } else if (err.code === 'INSECURE_CONTEXT' || err.message === 'INSECURE_CONTEXT') {
+        errorMsg = 'INSECURE_CONTEXT';
       }
       this._setState('error', { error: errorMsg });
       this.stopVoiceSession();

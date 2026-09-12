@@ -30,11 +30,25 @@ export class AudioAnalyser {
     if (this.isRunning) return;
 
     try {
+      // 1. فتح وتنشيط AudioContext فوراً داخل تفاعل المستخدم المباشر (User Gesture) لتجاوز قيود iOS Safari
+      const AudioContextClass = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+      if (AudioContextClass && !this.audioCtx) {
+        this.audioCtx = new AudioContextClass();
+      }
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        try { await this.audioCtx.resume(); } catch (_) {}
+      }
+
       if (incomingStream) {
         this.stream = incomingStream;
       } else {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('يتطلب المايكروفون اتصالاً آمناً (HTTPS) أو فتحه من المتصفح عبر http://localhost:3000/');
+          const isSecure = typeof window !== 'undefined' && (window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+          const err = new Error(isSecure
+            ? 'متصفحك لا يدعم واجهة المايكروفون (MediaDevices).'
+            : 'INSECURE_CONTEXT');
+          err.code = isSecure ? 'NOT_SUPPORTED' : 'INSECURE_CONTEXT';
+          throw err;
         }
 
         this.stream = await navigator.mediaDevices.getUserMedia({
@@ -46,9 +60,10 @@ export class AudioAnalyser {
         });
       }
 
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      this.audioCtx = new AudioContextClass();
-      if (this.audioCtx.state === 'suspended') {
+      if (!this.audioCtx && AudioContextClass) {
+        this.audioCtx = new AudioContextClass();
+      }
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
         await this.audioCtx.resume();
       }
 

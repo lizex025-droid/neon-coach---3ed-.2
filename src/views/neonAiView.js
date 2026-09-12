@@ -154,6 +154,12 @@ export function bindNeonAiViewEvents() {
   let startTime = 0;
   let animFrameId = null;
 
+  // تنبيه استباقي خفيف إذا كان المستخدم على هاتف محمول/آيفون برابط غير مشفر (HTTP)
+  const isSecureInitial = typeof window !== 'undefined' && (window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  if (!isSecureInitial && window.location.protocol === 'http:' && voiceSub) {
+    voiceSub.innerHTML = `🔒 <span style="color: #00F2FE;">للآيفون:</span> انقر هنا للانتقال للرابط الآمن <code>https://</code> لتفعيل المايك`;
+  }
+
   // 2. إعداد الـ Canvas والـ Waveform الحقيقي
   const ctx = canvasEl?.getContext('2d');
   let currentFreqData = new Uint8Array(48);
@@ -287,11 +293,52 @@ export function bindNeonAiViewEvents() {
     }
   }
 
+  // فحص ما إذا كان المتصفح يعمل في بيئة آمنة (Secure Context)
+  function isSecureContextEnv() {
+    if (typeof window === 'undefined') return true;
+    if (window.isSecureContext) return true;
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1';
+  }
+
+  // بطاقة توجيه iPhone إلى HTTPS لتمكين إذن المايكروفون
+  function renderHttpsRedirectCard() {
+    if (!resultBodyEl) return;
+    resultCard?.classList.remove('is-empty');
+    resultCard?.classList.remove('has-error');
+    const host = window.location.hostname;
+    const httpsUrl = `https://${host}:3443/#neon-ai`;
+
+    resultBodyEl.innerHTML = `
+      <div class="neon-ai-action-badge" style="background: rgba(0, 242, 254, 0.12); color: #00F2FE; border: 1px solid rgba(0, 242, 254, 0.3);">
+        <span>🔒 لتشغيل المايكروفون على الآيفون</span>
+      </div>
+      <div class="neon-ai-action-subject" style="font-size: 1.05rem; line-height: 1.5; color: #fff; margin: 8px 0 10px;">
+        متصفح Safari على iPhone يمنع إظهار إذن المايكروفون عبر روابط HTTP العادية. انقر بالأسفل للانتقال للرابط الآمن:
+      </div>
+      <a href="${httpsUrl}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 16px; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #05070f; font-weight: 800; font-size: 1rem; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 18px rgba(0, 242, 254, 0.35); margin-bottom: 12px;">
+        <span>الانتقال للرابط الآمن https://${host}:3443</span>
+        <span style="font-size: 1.15rem;">↗</span>
+      </a>
+      <div style="background: rgba(255, 255, 255, 0.04); border: 1px dashed rgba(0, 242, 254, 0.3); border-radius: 10px; padding: 10px 12px; font-size: 0.82rem; color: #94A3B8; line-height: 1.55; text-align: right;">
+        <strong style="color: #00FF9C;">📌 خطوة واحدة بسيطة عند فتح الرابط:</strong><br>
+        اضغط على <strong>"إظهار التفاصيل (Show Details)"</strong> ثم <strong>"زيارة هذا الموقع الإلكتروني (visit this website)"</strong>، وبعدها سيطلب منك سفاري إذن المايكروفون وتضغط <strong>[سماح / Allow]</strong> فوراً!
+      </div>
+    `;
+    showResultCard();
+  }
+
   // 5. بدء وإيقاف جلسة الصوت الحقيقية
   async function toggleVoiceSession() {
     if (isListening) {
       neonActionAgent.stopVoiceSession();
       setVoiceState('idle');
+      return;
+    }
+
+    // إذا كان المستخدم على هاتف iPhone عبر رابط غير مشفر HTTP، نوجهه فوراً للرابط الآمن HTTPS
+    if (!isSecureContextEnv() && window.location.protocol === 'http:') {
+      renderHttpsRedirectCard();
       return;
     }
 
@@ -308,7 +355,13 @@ export function bindNeonAiViewEvents() {
     } catch (err) {
       console.error('Voice start failed:', err);
       setVoiceState('idle');
-      displayResultError('تعذر فتح الميكروفون — يرجى السماح بالإذن في المتصفح.');
+      if (err.code === 'INSECURE_CONTEXT' || err.message === 'INSECURE_CONTEXT' || !isSecureContextEnv()) {
+        renderHttpsRedirectCard();
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        displayResultError('تم رفض إذن المايكروفون. يرجى السماح به من إعدادات المتصفح أو أيقونة aA في شريط العنوان.');
+      } else {
+        displayResultError(err.message || 'تعذر فتح الميكروفون — يرجى السماح بالإذن في المتصفح.');
+      }
     }
   }
 
