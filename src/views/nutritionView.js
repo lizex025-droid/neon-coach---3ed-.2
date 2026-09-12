@@ -14,7 +14,7 @@ import { renderCustomFoodModal, bindCustomFoodModal } from '../components/custom
 export function renderNutritionView() {
   const state = store.getState();
   const { today, mealPlan } = state;
-  const loggedMeals = state.loggedMeals || [];
+  const loggedMeals = (state.loggedMeals || []).filter(meal => !meal.date || meal.date === state.today.date);
 
   const isOverCalories = today.consumedCalories > today.targetCalories;
   const actualPct = today.targetCalories > 0 ? Math.round((today.consumedCalories / today.targetCalories) * 100) : 0;

@@ -6,6 +6,7 @@
 import { EMPTY_INITIAL_STATE } from './demoData.js';
 import { calculateAge, calculateNutritionTargets, filterStrongestExercisePerMuscle } from '../domain/calculations.js';
 import { syncService } from '../services/syncService.js';
+import { executeActionTools, shoppingItemsFor, localDate } from '../domain/actionAgent.js';
 
 const STORAGE_KEY = 'neon_coach_app_state_v1';
 
@@ -46,12 +47,12 @@ class Store {
     return JSON.parse(JSON.stringify(EMPTY_INITIAL_STATE));
   }
 
-  saveState() {
+  saveState({ notify = true } = {}) {
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
       }
-      this.notify();
+      if (notify) this.notify();
     } catch (e) {
       console.error('تعذر حفظ الحالة في التخزين المحلي:', e);
     }
@@ -78,6 +79,15 @@ class Store {
 
   getState() {
     return this.state;
+  }
+
+  setState(partialState, { notify = true } = {}) {
+    if (!partialState || typeof partialState !== 'object') return;
+    this.state = {
+      ...this.state,
+      ...partialState
+    };
+    this.saveState({ notify });
   }
 
   // --- دوال تبديل النمط والحساب ---
@@ -629,6 +639,7 @@ class Store {
   logMeal(meal) {
     const newLog = {
       id: 'log-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      date: localDate(),
       time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
       titleAr: meal.titleAr || 'وجبة جديدة',
       calories: Number(meal.calories ?? meal.totalCalories) || 0,
@@ -678,6 +689,7 @@ class Store {
     let c = 0;
     let f = 0;
     for (const meal of this.state.loggedMeals) {
+      if (meal.date && meal.date !== this.state.today.date) continue;
       cals += meal.calories || 0;
       p += meal.protein || 0;
       c += meal.carbs || 0;
@@ -766,6 +778,53 @@ class Store {
   }
 
   // --- إدارة وحفظ ذاكرة محادثات الذكاء الاصطناعي ---
+  getActionContext() {
+    const taken = this.getDailyStackTaken();
+    const supplementsSchedule = (this.state.supplementsSchedule || []).map(item => ({
+      ...item, schedule: { morning: { ...item.schedule?.morning, taken: !!taken[item.id] }, evening: { ...item.schedule?.evening, taken: !!taken[item.id] } }
+    }));
+    return { ...this.state, actionSupplementTaken: taken, supplementsSchedule };
+  }
+
+  executeAgentTools(tools) {
+    const context = this.getActionContext();
+    const result = executeActionTools(context, tools);
+    if (!result.changed) return result;
+    const next = result.state;
+    // Keep the existing standalone supplement and workout screens on the same records.
+    const writes = [[STORAGE_KEY, JSON.stringify(next)]];
+    if (JSON.stringify(next.actionSupplementTaken) !== JSON.stringify(context.actionSupplementTaken)) {
+      writes.unshift(['daily_stack_taken_v2:' + this.getActiveDate(), JSON.stringify(next.actionSupplementTaken || {})]);
+    }
+    if (JSON.stringify(next.workoutHistory) !== JSON.stringify(context.workoutHistory)) {
+      writes.unshift(['neon_workout_history_v1', JSON.stringify(next.workoutHistory || [])]);
+    }
+    const previous = [];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        for (const [key, value] of writes) {
+          previous.push([key, localStorage.getItem(key)]);
+          localStorage.setItem(key, value);
+        }
+      }
+    } catch (error) {
+      for (const [key, value] of previous.reverse()) {
+        try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { /* Keep in-memory state unchanged. */ }
+      }
+      throw new Error('تعذر حفظ الإجراء في المتصفح. تحقق من مساحة التخزين وحاول مجدداً.');
+    }
+    this.state = next;
+    // The chat updates its live panel without destroying the microphone session.
+    return result;
+  }
+
+  getShoppingItems() { return shoppingItemsFor(this.state); }
+
+  setShoppingItems(items) {
+    this.state.shoppingItems = items;
+    this.saveState();
+  }
+
   getAiChatHistory() {
     if (!this.state.aiChatHistory) {
       this.state.aiChatHistory = [];
@@ -785,7 +844,7 @@ class Store {
     if (this.state.aiChatHistory.length > 60) {
       this.state.aiChatHistory = this.state.aiChatHistory.slice(-60);
     }
-    this.saveState();
+    this.saveState({ notify: false });
   }
 
   clearAiChatHistory() {

@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -23,6 +24,9 @@ export default defineConfig(({ mode }) => {
   return {
   root: './',
   base: './',
+  plugins: [
+    basicSsl()
+  ],
   server: {
     port: 3000,
     open: false,
@@ -67,6 +71,49 @@ export default defineConfig(({ mode }) => {
         } catch (error) {
           res.statusCode = 502;
           res.end(JSON.stringify({ error: { message: 'OpenAI proxy request failed' } }));
+        }
+      });
+
+      server.middlewares.use('/api/action-agent', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+          return;
+        }
+
+        let body = '';
+        for await (const chunk of req) body += chunk;
+        try {
+          req.body = body ? JSON.parse(body) : {};
+        } catch (_) {
+          req.body = {};
+        }
+
+        const apiRes = {
+          statusCode: 200,
+          setHeader(k, v) { res.setHeader(k, v); },
+          status(code) { this.statusCode = code; return this; },
+          json(data) {
+            res.statusCode = this.statusCode;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+          }
+        };
+
+        try {
+          const { default: handler } = await import('./api/action-agent.js');
+          await handler(req, apiRes);
+        } catch (err) {
+          // إذا كان CommonJS
+          try {
+            const { createRequire } = await import('node:module');
+            const reqFunc = createRequire(import.meta.url);
+            const cjsHandler = reqFunc('./api/action-agent.js');
+            await cjsHandler(req, apiRes);
+          } catch (e) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e.message }));
+          }
         }
       });
     }

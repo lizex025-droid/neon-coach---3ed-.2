@@ -5,9 +5,9 @@
 
 import { aiService } from '../services/aiService.js';
 import { store } from '../state/store.js';
-import { speechService } from '../services/speechService.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
+import { renderActionPanel, bindActionPanel } from '../components/actionPanel.js';
 
 // ذاكرة المحادثة المستمرة لشاشة NEON AI
 const screenChatHistory = [];
@@ -143,6 +143,8 @@ export function renderNeonAiView() {
         </button>
       </div>
 
+      ${renderActionPanel()}
+
       <!-- حاوية الرسائل والمحادثة المحفوظة -->
       <div id="neon-ai-messages-list" class="neon-card" style="min-height: 380px; max-height: 520px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px; background: rgba(3,10,7,0.85); border-color: rgba(85,247,165,0.2);">
         <div class="chat-bubble ai">
@@ -156,10 +158,10 @@ export function renderNeonAiView() {
 
       <!-- نموذج إرسال الرسالة والإدخال الصوتي -->
       <form id="neon-ai-form" style="display: flex; gap: 8px; align-items: center; position: sticky; bottom: 68px; z-index: 10; background: rgba(2,6,4,0.95); backdrop-filter: blur(12px); padding: 8px 10px; border-radius: 16px; border: 1px solid rgba(85,247,165,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-        <button type="button" id="neon-ai-voice-btn" class="btn-icon" style="width: 42px; height: 42px; font-size: 1.15rem; color: #55F7A5; flex-shrink: 0;" title="تسجيل صوتي">
+        <button type="button" id="neon-ai-voice-btn" class="btn-icon" style="width: 42px; height: 42px; font-size: 1.15rem; color: #55F7A5; flex-shrink: 0;" title="تسجيل صوتي" aria-label="تشغيل أو إيقاف الميكروفون" aria-pressed="false">
           🎙️
         </button>
-        <input type="text" id="neon-ai-input" placeholder="اكتب سؤالك أو اذكر وجبتك لحسابها..." autocomplete="off" style="flex: 1; border: none; background: transparent; color: #FFFFFF; font-size: 0.95rem; outline: none; padding: 6px 4px;">
+        <input type="text" id="neon-ai-input" maxlength="4000" aria-label="رسالتك لنيون" placeholder="احكي لنيون: أكلت… شربت… عملت… أو اسأل الكوتش" autocomplete="off" style="flex: 1; border: none; background: transparent; color: #FFFFFF; font-size: 0.95rem; outline: none; padding: 6px 4px;">
         <button type="submit" class="btn btn-primary" style="padding: 10px 18px; font-weight: 800; font-size: 0.9rem; flex-shrink: 0;">
           إرسال ⚡
         </button>
@@ -242,6 +244,9 @@ export function bindNeonAiViewEvents() {
   const chatInput = document.getElementById('neon-ai-input');
   const messagesContainer = document.getElementById('neon-ai-messages-list');
   const voiceBtn = document.getElementById('neon-ai-voice-btn');
+  let sending = false;
+  let disposed = false;
+  const actionAgent = bindActionPanel({ onCommand: query => sendQuery(query) });
 
   const updateProviderDisplay = () => {
     if (providerBadge) {
@@ -322,7 +327,7 @@ export function bindNeonAiViewEvents() {
   });
 
   clearKeyBtn?.addEventListener('click', () => {
-    aiService.clearCustomApiKey('gemini');
+    aiService.setCustomApiKey('gemini', '');
     if (keyInput) keyInput.value = '';
     updateProviderDisplay();
     if (keyStatusMsg) {
@@ -337,42 +342,8 @@ export function bindNeonAiViewEvents() {
   });
 
   // تسجيل الصوت
-  let isRecording = false;
   voiceBtn?.addEventListener('click', () => {
-    if (!speechService.isSupported()) {
-      notificationService.showToast('ميزة الإدخال الصوتي غير مدعومة في هذا المتصفح', 'warning');
-      return;
-    }
-    if (isRecording) {
-      speechService.stop();
-      isRecording = false;
-      voiceBtn.style.color = '#55F7A5';
-      voiceBtn.textContent = '🎙️';
-    } else {
-      isRecording = true;
-      voiceBtn.style.color = '#ff5555';
-      voiceBtn.textContent = '⏹️';
-      notificationService.showToast('تحدث الآن، جاري الاستماع...', 'info');
-      speechService.listen({
-        onResult: (text) => {
-          if (chatInput) chatInput.value = text;
-        },
-        onEnd: () => {
-          isRecording = false;
-          if (voiceBtn) {
-            voiceBtn.style.color = '#55F7A5';
-            voiceBtn.textContent = '🎙️';
-          }
-        },
-        onError: () => {
-          isRecording = false;
-          if (voiceBtn) {
-            voiceBtn.style.color = '#55F7A5';
-            voiceBtn.textContent = '🎙️';
-          }
-        }
-      });
-    }
+    actionAgent.toggleVoice();
   });
 
   // الأسئلة السريعة
@@ -408,14 +379,22 @@ export function bindNeonAiViewEvents() {
   chatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const query = (chatInput?.value || '').trim();
-    if (!query) return;
+    if (!query || sending) return;
+    chatInput.value = '';
+    await sendQuery(query);
+  });
+
+  async function sendQuery(query) {
+    if (sending || disposed) return 'انتظر انتهاء الطلب الحالي.';
+    sending = true;
+    const sendButton = chatForm?.querySelector('[type="submit"]');
+    if (sendButton) sendButton.disabled = true;
 
     appendScreenMessage(query, 'user');
     screenChatHistory.push({ sender: 'user', text: query });
     if (typeof store.saveAiChatMessage === 'function') {
       store.saveAiChatMessage({ sender: 'user', text: query });
     }
-    chatInput.value = '';
 
     const thinkingId = 'neon-ai-thinking-' + Date.now();
     const thinkingBubble = document.createElement('div');
@@ -444,7 +423,8 @@ export function bindNeonAiViewEvents() {
         workout: state.workout
       };
 
-      const response = await aiService.chatWithCoach(query, context, screenChatHistory);
+      const response = await actionAgent.handle(query) || await aiService.chatWithCoach(query, context, screenChatHistory);
+      if (disposed) return '';
       document.getElementById(thinkingId)?.remove();
 
       const replyText = response.reply || 'تم استلام استفسارك بنجاح.';
@@ -460,15 +440,21 @@ export function bindNeonAiViewEvents() {
       }
 
       appendScreenMessage(replyText, 'ai', mealsToPass);
+      return replyText;
     } catch (err) {
+      if (disposed) return '';
       document.getElementById(thinkingId)?.remove();
       const errMsg = 'عذراً يا بطل! حدث خطأ مؤقت في الاتصال. يمكنك إعادة السؤال أو التحقق من مفتاح API من زر الإعدادات ⚙️.';
       appendScreenMessage(errMsg, 'ai');
       if (typeof store.saveAiChatMessage === 'function') {
         store.saveAiChatMessage({ sender: 'ai', text: errMsg });
       }
+      return errMsg;
+    } finally {
+      sending = false;
+      if (sendButton) sendButton.disabled = false;
     }
-  });
+  }
 
   function appendScreenMessage(msgText, sender, mealsDataOrSingle = null) {
     if (!messagesContainer) return;
@@ -871,4 +857,9 @@ export function bindNeonAiViewEvents() {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
   }
+
+  return () => {
+    disposed = true;
+    actionAgent.dispose();
+  };
 }

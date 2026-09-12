@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node dev-server.js"
+    "dev": "vite",
+    "build": "vite build"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.116.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "vite": "^8.2.2"
   }
 }

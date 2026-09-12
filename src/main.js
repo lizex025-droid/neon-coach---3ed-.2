@@ -10,6 +10,7 @@ import './styles/components.css';
 import { Router } from './router/router.js';
 import { setupTrainingLoadingInterceptors } from './utils/splash.js';
 import { initNeonParticles } from './utils/particles.js';
+import { initGlobalVoiceTrigger } from './components/voice/voiceTriggerBtn.js';
 
 // تشغيل خلفية الجسيمات والنقاط الخضراء النيونية الطائرة
 initNeonParticles();
@@ -27,6 +28,8 @@ function initApp() {
       if (typeof window.dismissNeonSplash === 'function') {
         window.dismissNeonSplash();
       }
+      // تفعيل زر الاستماع الصوتي العام لـ NEON ACTION AGENT
+      initGlobalVoiceTrigger();
     });
   }
 }

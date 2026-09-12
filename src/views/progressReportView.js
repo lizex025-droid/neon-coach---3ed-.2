@@ -16,6 +16,7 @@ import { notificationService } from '../services/notificationService.js';
 import { animateCountUp, animateRingOffset } from '../utils/animUtils.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { filterStrongestExercisePerMuscle } from '../domain/calculations.js';
+import { escapeActionHtml } from '../components/actionPanel.js';
 
 let activePeriod = '90'; // '7' | '30' | '90'
 
@@ -35,6 +36,7 @@ export function renderProgressReportView() {
 
   return `
     <div class="progress-report-container" style="padding: 16px 16px 110px; display: flex; flex-direction: column; gap: 16px; max-width: 780px; margin: 0 auto;">
+      ${Object.keys(state.personalRecords || {}).length ? `<section class="neon-card" style="padding:16px"><h2 style="color:#55F7A5;font-weight:800">أفضل المجموعات المسجلة · PR</h2><p style="font-size:.8rem;color:#B8C0BC">الأعلى وزناً، ثم الأكثر تكراراً عند تساوي الوزن.</p>${Object.values(state.personalRecords).map(record => `<p style="margin-top:8px">${escapeActionHtml(record.nameAr)}: ${record.weight} كغ × ${record.reps} · ${escapeActionHtml(record.date)}</p>`).join('')}</section>` : ''}
       
       <!-- ترويسة خاصة بتقرير الطباعة وPDF بدون أزرار -->
       <div class="print-only" style="margin-bottom: 16px; border-bottom: 2px solid #55F7A5; padding-bottom: 12px;">

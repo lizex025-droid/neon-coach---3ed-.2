@@ -22,6 +22,7 @@ import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
 import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
+import { initCrossTabActionToastListener } from '../services/actionToastService.js';
 
 export const ROUTES = {
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
@@ -62,6 +63,9 @@ export class Router {
     store.subscribe(() => {
       this.refreshCurrentView();
     });
+
+    // الاستماع لإجراءات العميل الصوتي وتنبيه المستخدم عند تعديل تابة أخرى
+    initCrossTabActionToastListener(() => this.currentRoute);
   }
 
   async init() {
@@ -142,6 +146,8 @@ export class Router {
   }
 
   renderRoute(route, routeKey) {
+    this.cleanupView?.();
+    this.cleanupView = null;
     // تنظيف أي نوافذ منبثقة ملحقة بـ body مباشرة قبل التبديل
     document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
 
@@ -164,7 +170,7 @@ export class Router {
 
     // ربط الأحداث
     if (route.showHeader) bindHeaderEvents();
-    if (route.bind) route.bind();
+    if (route.bind) this.cleanupView = route.bind();
 
     this.scrollToTop();
   }
@@ -176,8 +182,10 @@ export class Router {
     const route = ROUTES[this.currentRoute] || ROUTES['today'];
     const container = document.getElementById('view-container');
     if (container) {
+      this.cleanupView?.();
+      this.cleanupView = null;
       container.innerHTML = route.render();
-      if (route.bind) route.bind();
+      if (route.bind) this.cleanupView = route.bind();
     }
   }
 }

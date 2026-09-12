@@ -1,0 +1,829 @@
+/**
+ * NEON ACTION AGENT - Sci-Fi Voice Experience Styles
+ * مستوحى من واجهة Taskmaster بتطبيق الهوية البصرية لـ NEON COACH
+ */
+
+:root {
+  --neon-voice-bg: #030806;
+  --neon-voice-surface: #06150e;
+  --neon-voice-primary: #00ff87;
+  --neon-voice-glow: rgba(0, 255, 135, 0.45);
+  --neon-voice-glow-intense: rgba(0, 255, 135, 0.85);
+  --neon-voice-border: rgba(0, 255, 135, 0.28);
+}
+
+/* زر الميكروفون العائم العام (Global Voice FAB) */
+.neon-voice-fab {
+  position: fixed;
+  bottom: 84px;
+  left: 20px;
+  z-index: 999;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #093322 0%, #030806 100%);
+  border: 1.5px solid var(--neon-voice-primary);
+  color: var(--neon-voice-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--neon-voice-glow), inset 0 0 10px rgba(0, 255, 135, 0.2);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.neon-voice-fab:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 0 30px var(--neon-voice-glow-intense);
+}
+
+.neon-voice-fab.active {
+  animation: neon-fab-pulse 1.6s infinite ease-in-out;
+  border-color: #55f7a5;
+}
+
+@keyframes neon-fab-pulse {
+  0% {
+    box-shadow: 0 0 15px var(--neon-voice-glow);
+  }
+  50% {
+    box-shadow: 0 0 35px var(--neon-voice-glow-intense), 0 0 60px rgba(0, 255, 135, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 15px var(--neon-voice-glow);
+  }
+}
+
+/* شاشة الـ Overlay الكاملة للمحادثة الصوتية */
+.neon-voice-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  background: radial-gradient(ellipse at 50% 25%, #051a11 0%, #020704 60%, #000000 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 24px 40px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+  backdrop-filter: blur(14px);
+  box-sizing: border-box;
+}
+
+.neon-voice-overlay.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* الإطار النيوني الخارجي (مستوحى من Taskmaster) */
+.neon-voice-border-frame {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  border: 1.5px solid rgba(0, 255, 135, 0.35);
+  box-shadow: 0 0 25px rgba(0, 255, 135, 0.15), inset 0 0 20px rgba(0, 255, 135, 0.06);
+  pointer-events: none;
+  border-radius: 8px;
+}
+
+/* شريط الرأس في النافذة الصوتية */
+.neon-voice-header {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 2;
+}
+
+.neon-voice-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.neon-voice-title {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-weight: 900;
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  color: var(--neon-voice-primary);
+  text-shadow: 0 0 15px var(--neon-voice-glow);
+}
+
+.neon-voice-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: rgba(0, 255, 135, 0.1);
+  border: 1px solid var(--neon-voice-border);
+  border-radius: 20px;
+  color: var(--neon-voice-primary);
+}
+
+.neon-voice-mode-badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--neon-voice-primary);
+  box-shadow: 0 0 8px var(--neon-voice-primary);
+}
+
+.neon-voice-close-btn {
+  background: rgba(0, 255, 135, 0.08);
+  border: 1px solid var(--neon-voice-border);
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.neon-voice-close-btn:hover {
+  background: rgba(0, 255, 135, 0.2);
+  color: var(--neon-voice-primary);
+  transform: rotate(90deg);
+}
+
+/* المنطقة التفاعلية المركزية */
+.neon-voice-visual-zone {
+  width: 100%;
+  max-width: 800px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 10px 0;
+  z-index: 2;
+}
+
+/* ========================================================
+   1. شاشة طلب تفعيل المايكروفون (Hero Activate Mic View)
+   ======================================================== */
+.neon-voice-hero-activate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  max-width: 580px;
+  padding: 20px 10px;
+  animation: hero-fade-in 0.4s ease-out;
+}
+
+@keyframes hero-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.neon-voice-activate-orb-wrap {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* الزر الدائري الكبير المتوهج (Activate Mic Button) */
+.neon-voice-activate-btn {
+  width: 145px;
+  height: 145px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #08331f 0%, #03140a 75%, #010603 100%);
+  border: 2px solid var(--neon-voice-primary);
+  color: var(--neon-voice-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+  box-shadow: 0 0 35px var(--neon-voice-glow), inset 0 0 25px rgba(0, 255, 135, 0.25);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.neon-voice-activate-btn:hover {
+  transform: scale(1.08);
+  border-color: #55f7a5;
+  box-shadow: 0 0 50px var(--neon-voice-glow-intense), inset 0 0 35px rgba(0, 255, 135, 0.45);
+}
+
+.neon-voice-activate-btn:active {
+  transform: scale(0.96);
+}
+
+.neon-voice-activate-rings {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.neon-voice-activate-rings .ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 255, 135, 0.4);
+  transform: translate(-50%, -50%);
+  animation: activate-ring-pulse 3s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.neon-voice-activate-rings .r1 {
+  width: 155px;
+  height: 155px;
+  animation-delay: 0s;
+}
+
+.neon-voice-activate-rings .r2 {
+  width: 175px;
+  height: 175px;
+  animation-delay: 0.9s;
+}
+
+.neon-voice-activate-rings .r3 {
+  width: 195px;
+  height: 195px;
+  animation-delay: 1.8s;
+}
+
+@keyframes activate-ring-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.85);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.22);
+    opacity: 0;
+  }
+}
+
+.neon-voice-activate-icon {
+  color: var(--neon-voice-primary);
+  filter: drop-shadow(0 0 8px var(--neon-voice-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.neon-voice-activate-label {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 255, 135, 0.8);
+}
+
+.neon-voice-activate-sub {
+  font-size: 0.68rem;
+  color: #a0aec0;
+  font-weight: 600;
+}
+
+.neon-voice-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.neon-voice-hero-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.neon-voice-hero-desc {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 440px;
+}
+
+/* صندوق إرشادات الإذن في حال حظر المايكروفون */
+.neon-voice-perm-guide {
+  margin-top: 18px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: right;
+  direction: rtl;
+  max-width: 480px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.neon-voice-perm-guide .perm-icon {
+  font-size: 1.6rem;
+}
+
+.neon-voice-perm-guide .perm-text strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #fca5a5;
+  margin-bottom: 2px;
+}
+
+.neon-voice-perm-guide .perm-text p {
+  font-size: 0.82rem;
+  color: #e2e8f0;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.perm-retry-btn {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.perm-retry-btn:hover {
+  background: #dc2626;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+/* ========================================================
+   2. شاشة التفاعل الصوتي النشطة (Active Visualizer View)
+   ======================================================== */
+.neon-voice-active-visualizer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* حاوية الـ Waveform الحقيقي */
+.neon-waveform-container {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: all 0.4s ease;
+}
+
+.neon-waveform-canvas {
+  width: 100%;
+  max-width: 760px;
+  height: 110px;
+  display: block;
+}
+
+/* كرة النيون المشعة النابضة (Thinking / Processing Glowing Orb) */
+.neon-glowing-orb {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00ff87 0%, #00bc62 50%, #02381e 100%);
+  box-shadow: 0 0 40px #00ff87, 0 0 80px rgba(0, 255, 135, 0.6), inset 0 0 20px #ffffff;
+  animation: neon-orb-pulse 1.8s infinite ease-in-out;
+  display: none;
+  margin: 25px 0;
+}
+
+.neon-voice-overlay.state-processing .neon-waveform-container {
+  display: none;
+}
+
+.neon-voice-overlay.state-processing .neon-glowing-orb {
+  display: block;
+}
+
+@keyframes neon-orb-pulse {
+  0% {
+    transform: scale(0.92);
+    box-shadow: 0 0 30px #00ff87, 0 0 60px rgba(0, 255, 135, 0.4);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 60px #00ff87, 0 0 100px rgba(0, 255, 135, 0.8), 0 0 140px rgba(0, 255, 135, 0.4);
+  }
+  100% {
+    transform: scale(0.92);
+    box-shadow: 0 0 30px #00ff87, 0 0 60px rgba(0, 255, 135, 0.4);
+  }
+}
+
+/* حالة النظام المعروضة (LISTENING / UNDERSTANDING...) */
+.neon-voice-status-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.neon-voice-label {
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: #a0aec0;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.neon-voice-state-text {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+.neon-voice-state-text.highlight {
+  color: var(--neon-voice-primary);
+  text-shadow: 0 0 15px var(--neon-voice-glow-intense);
+}
+
+/* غلاف الصناديق (Box Wrappers) */
+.neon-voice-box-wrapper {
+  width: 100%;
+  max-width: 640px;
+  margin: 8px 0;
+}
+
+.neon-voice-box-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  direction: rtl;
+}
+
+.neon-box-tag {
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+
+.neon-box-tag.tag-voice {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+}
+
+.neon-box-tag.tag-reply {
+  background: rgba(0, 255, 135, 0.12);
+  border: 1px solid var(--neon-voice-border);
+  color: var(--neon-voice-primary);
+}
+
+/* حاوية النص الحي الصوتي (Live Transcript) */
+.neon-live-transcript-box {
+  width: 100%;
+  min-height: 48px;
+  background: rgba(6, 21, 14, 0.7);
+  border: 1px solid var(--neon-voice-border);
+  border-radius: 12px;
+  padding: 12px 18px;
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  text-align: center;
+  direction: auto;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+/* ========================================================
+   3. صندوق رد المساعد المكتوب على الشاشة (Written Output)
+   ======================================================== */
+.neon-written-reply-box {
+  width: 100%;
+  background: radial-gradient(ellipse at 50% 0%, #082918 0%, #031209 70%, #010603 100%);
+  border: 1.5px solid var(--neon-voice-primary);
+  box-shadow: 0 0 25px rgba(0, 255, 135, 0.25), inset 0 0 15px rgba(0, 255, 135, 0.08);
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+.neon-written-reply-box.animate-in {
+  animation: neon-written-pop 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes neon-written-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.neon-written-reply-box.reply-clarification {
+  border-color: #fbbf24;
+  box-shadow: 0 0 25px rgba(251, 191, 36, 0.25);
+}
+
+.neon-written-reply-box.reply-error {
+  border-color: #f87171;
+  box-shadow: 0 0 25px rgba(248, 113, 113, 0.25);
+}
+
+.reply-content-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  direction: rtl;
+}
+
+.reply-icon-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 255, 135, 0.15);
+  border: 1px solid var(--neon-voice-border);
+  color: var(--neon-voice-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.reply-clarification .reply-icon-badge {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+}
+
+.reply-error .reply-icon-badge {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.reply-text-body {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.65;
+  color: #ffffff;
+  text-align: right;
+  direction: rtl;
+  text-shadow: 0 0 10px rgba(0, 255, 135, 0.2);
+  flex: 1;
+}
+
+/* بطاقات المعاينة المباشرة للإجراءات المكتشفة (Live Action Preview Cards) */
+.neon-action-preview-deck {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.neon-action-card {
+  background: rgba(0, 255, 135, 0.06);
+  border: 1px solid rgba(0, 255, 135, 0.3);
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  animation: action-card-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes action-card-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.neon-action-badge-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  background: rgba(0, 255, 135, 0.15);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--neon-voice-primary);
+  margin-inline-end: 8px;
+  letter-spacing: 1px;
+}
+
+.neon-action-card-text {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.neon-action-card-check {
+  color: var(--neon-voice-primary);
+  font-weight: 900;
+  font-size: 1.2rem;
+  text-shadow: 0 0 10px var(--neon-voice-primary);
+}
+
+/* شريط التحكم السفلي (Bottom Controls) */
+.neon-voice-footer {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 2;
+}
+
+.neon-voice-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.neon-voice-main-btn {
+  background: transparent;
+  border: 1.5px solid var(--neon-voice-primary);
+  color: var(--neon-voice-primary);
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 14px 34px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(0, 255, 135, 0.35);
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.neon-voice-main-btn:hover {
+  background: rgba(0, 255, 135, 0.12);
+  box-shadow: 0 0 30px rgba(0, 255, 135, 0.6);
+  transform: translateY(-2px);
+}
+
+.neon-voice-undo-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #d1d5db;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.neon-voice-undo-btn:hover {
+  border-color: #00ff87;
+  color: #00ff87;
+}
+
+.neon-voice-undo-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* شرائح الاقتراحات السريعة (Quick Prompt Chips) */
+.neon-voice-chips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.neon-voice-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #a0aec0;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.neon-voice-chip:hover {
+  border-color: var(--neon-voice-primary);
+  color: #fff;
+  background: rgba(0, 255, 135, 0.08);
+}
+
+/* بطاقة الإشعار الذكية عند تحديث تابة ليست مفتوحة (Cross-Tab Action Toast) */
+.neon-action-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-30px);
+  z-index: 11000;
+  background: rgba(6, 21, 14, 0.96);
+  border: 1.5px solid var(--neon-voice-primary);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px var(--neon-voice-glow);
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #ffffff;
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.neon-action-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.neon-action-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.neon-action-toast-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--neon-voice-primary);
+  letter-spacing: 1px;
+}
+
+.neon-action-toast-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.neon-action-toast-view-btn {
+  background: var(--neon-voice-primary);
+  color: #030806;
+  font-weight: 900;
+  font-size: 0.82rem;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.neon-action-toast-view-btn:hover {
+  background: #55f7a5;
+  box-shadow: 0 0 12px var(--neon-voice-primary);
+}

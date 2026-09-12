@@ -2,21 +2,13 @@
  * NEON COACH - قائمة المشتريات الأسبوعية المجمعة (Grocery Shopping List)
  */
 
-import { generateWeeklyShoppingList } from '../domain/nutritionEngine.js';
 import { store } from '../state/store.js';
+import { escapeActionHtml } from '../components/actionPanel.js';
 
 let shoppingItems = null;
 
 export function renderShoppingListView() {
-  const meals = store.getState().mealPlan?.meals || [];
-  const freshItems = generateWeeklyShoppingList(meals);
-  if (shoppingItems && shoppingItems.length) {
-    const checkedMap = new Map(shoppingItems.map(i => [i.name, i.checked]));
-    freshItems.forEach(item => {
-      if (checkedMap.has(item.name)) item.checked = checkedMap.get(item.name);
-    });
-  }
-  shoppingItems = freshItems;
+  shoppingItems = store.getShoppingItems();
 
   // تصنيف العناصر حسب الفئة
   const categories = {};
@@ -49,7 +41,7 @@ export function renderShoppingListView() {
         ${Object.keys(categories).map(catName => `
           <div class="neon-card" style="padding: 16px;">
             <div style="font-weight: 800; color: #55F7A5; font-size: 1rem; margin-bottom: 12px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 6px;">
-              ${catName}
+              ${escapeActionHtml(catName)}
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -57,9 +49,9 @@ export function renderShoppingListView() {
                 <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-decoration: ${item.checked ? 'line-through' : 'none'}; opacity: ${item.checked ? '0.5' : '1'};">
                   <div style="display: flex; align-items: center; gap: 10px;">
                     <input type="checkbox" class="shop-check-item" data-idx="${item.index}" ${item.checked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #55F7A5;">
-                    <span style="font-weight: 600; color: #FFFFFF; font-size: 0.95rem;">${item.name}</span>
+                    <span style="font-weight: 600; color: #FFFFFF; font-size: 0.95rem;">${escapeActionHtml(item.name)}</span>
                   </div>
-                  <span style="color: #B8C0BC; font-size: 0.85rem; font-family: monospace;">${item.unit}</span>
+                  <span style="color: #B8C0BC; font-size: 0.85rem; font-family: monospace;">${escapeActionHtml(item.unit)}</span>
                 </label>
               `).join('')}
             </div>
@@ -79,14 +71,6 @@ export function renderShoppingListView() {
   `;
 }
 
-function refreshShoppingListView() {
-  const container = document.getElementById('view-container');
-  if (container) {
-    container.innerHTML = renderShoppingListView();
-    bindShoppingListEvents();
-  }
-}
-
 export function bindShoppingListEvents() {
   document.getElementById('shop-back-btn')?.addEventListener('click', () => {
     window.location.hash = '#nutrition';
@@ -98,7 +82,7 @@ export function bindShoppingListEvents() {
       const idx = Number(chk.getAttribute('data-idx'));
       if (shoppingItems[idx]) {
         shoppingItems[idx].checked = chk.checked;
-        refreshShoppingListView();
+        store.setShoppingItems(shoppingItems);
       }
     });
   });
@@ -106,7 +90,7 @@ export function bindShoppingListEvents() {
   // حذف العناصر المحددة
   document.getElementById('clear-checked-shop-btn')?.addEventListener('click', () => {
     shoppingItems = shoppingItems.filter(i => !i.checked);
-    refreshShoppingListView();
+    store.setShoppingItems(shoppingItems);
   });
 
   // إضافة صنف مخصص
@@ -116,13 +100,14 @@ export function bindShoppingListEvents() {
     const val = addInput?.value?.trim();
     if (val) {
       shoppingItems.push({
+        id: crypto.randomUUID(),
         name: val,
         category: 'أصناف مخصصة',
         unit: 'حسب الحاجة',
         checked: false
       });
       addInput.value = '';
-      refreshShoppingListView();
+      store.setShoppingItems(shoppingItems);
     }
   });
 }
