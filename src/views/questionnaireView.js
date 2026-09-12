@@ -33,6 +33,7 @@ import { neonIcon } from '../utils/neonIcons.js';
 import { searchFoods } from '../data/foods.js';
 
 let currentStep = 1;
+let showWelcomeScreen = true;
 let extremeConfirmed = false;
 let extremeGainConfirmed = false;
 
@@ -373,6 +374,146 @@ function renderWeightGainSummaryHTML(data) {
 
 
 
+/**
+ * توليد HTML شاشة الترحيب السايبر الفاخرة مع شعار نيون بالمنتصف
+ */
+function renderWelcomeScreenHTML() {
+  return `
+    <div class="welcome-screen-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 82vh; text-align: center; padding: 10px 8px 30px; animation: welcomeFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);">
+      <style>
+        @keyframes welcomeFadeIn {
+          from { opacity: 0; transform: translateY(18px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes welcomeGlowPulse {
+          0% { transform: scale(0.95); opacity: 0.5; }
+          50% { transform: scale(1.1); opacity: 0.85; }
+          100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        @keyframes welcomeOrbitRing {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes welcomeFloatMascot {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-7px); }
+        }
+        .welcome-feature-card {
+          transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .welcome-feature-card:hover {
+          transform: translateY(-2px);
+          border-color: rgba(85, 247, 165, 0.45) !important;
+          box-shadow: 0 4px 20px rgba(85, 247, 165, 0.18);
+        }
+      </style>
+
+      <!-- شعار نيون في المنتصف بالنص مع هالة ضوئية وحلقات سايبر بصرية فاخرة -->
+      <div class="welcome-logo-wrapper" style="position: relative; width: 146px; height: 146px; margin: 15px auto 22px; display: flex; align-items: center; justify-content: center;">
+        <!-- الهالة الضوئية الخارجية المتوهجة -->
+        <div style="position: absolute; inset: -24px; border-radius: 50%; background: radial-gradient(circle, rgba(85, 247, 165, 0.38) 0%, rgba(85, 247, 165, 0.1) 50%, transparent 72%); filter: blur(16px); animation: welcomeGlowPulse 3.2s infinite ease-in-out;"></div>
+        
+        <!-- حلقة السايبر المدارية المتقطعة -->
+        <div style="position: absolute; inset: -8px; border-radius: 50%; border: 1.5px dashed rgba(85, 247, 165, 0.6); animation: welcomeOrbitRing 18s linear infinite;"></div>
+        
+        <!-- حلقة التوهج الداخلية الأساسية -->
+        <div style="position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(85, 247, 165, 0.75); box-shadow: 0 0 28px rgba(85, 247, 165, 0.45), inset 0 0 20px rgba(85, 247, 165, 0.25); background: radial-gradient(circle, rgba(10, 32, 22, 0.9) 0%, rgba(2, 6, 5, 0.96) 100%);"></div>
+
+        <!-- الشعار في المنتصف بالنص -->
+        <div style="position: relative; z-index: 2; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; animation: welcomeFloatMascot 4s ease-in-out infinite;">
+          <img src="./icons/neon-cat-coach.svg" alt="NEON COACH" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 18px rgba(85, 247, 165, 0.7));" onerror="this.src='./icons/icon-192.svg'">
+        </div>
+      </div>
+
+      <!-- اسم وهوية NEON COACH -->
+      <h1 style="font-size: 2.3rem; font-weight: 900; letter-spacing: 2.5px; color: #55F7A5; margin: 0 0 8px; text-shadow: 0 0 26px rgba(85, 247, 165, 0.55);">
+        NEON COACH
+      </h1>
+
+      <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 18px; border-radius: 999px; background: rgba(85, 247, 165, 0.12); border: 1px solid rgba(85, 247, 165, 0.35); color: #55F7A5; font-size: 0.84rem; font-weight: 800; margin-bottom: 22px; box-shadow: 0 0 14px rgba(85, 247, 165, 0.18);">
+        <span>⚡</span>
+        <span>كوتشك الرياضي الذكي بالذكاء الاصطناعي</span>
+      </div>
+
+      <!-- نص الترحيب -->
+      <h2 style="font-size: 1.35rem; font-weight: 800; color: #FFFFFF; margin: 0 0 10px; line-height: 1.4;">
+        أهلاً بك في رحلتك الجديدة! 🚀
+      </h2>
+      <p style="font-size: 0.94rem; color: #B8C0BC; line-height: 1.65; margin: 0 0 26px; max-width: 440px;">
+        سنقوم الآن بتخصيص خطتك الكاملة للتغذية والتمارين في دقائق بسيطة، بدقة علمية محسوبة خصيصاً لجسمك، أهدافك، ونمط حياتك.
+      </p>
+
+      <!-- بطاقات المميزات الترحيبية الثلاثة -->
+      <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 440px; margin-bottom: 30px; text-align: right;">
+        <div class="welcome-feature-card" style="display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-radius: 18px; background: rgba(14, 22, 18, 0.75); border: 1px solid rgba(85, 247, 165, 0.22); backdrop-filter: blur(10px);">
+          <div style="font-size: 1.45rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(85, 247, 165, 0.14); border-radius: 13px; flex-shrink: 0; box-shadow: 0 0 12px rgba(85, 247, 165, 0.2);">🎯</div>
+          <div>
+            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.94rem;">حسابات سعرات وماكروز دقيقة</div>
+            <div style="font-size: 0.78rem; color: #9CA3AF; margin-top: 3px;">حساب معدل الأيض وعجز أو فائض السعرات لبناء العضلات أو حرق الدهون</div>
+          </div>
+        </div>
+
+        <div class="welcome-feature-card" style="display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-radius: 18px; background: rgba(14, 22, 18, 0.75); border: 1px solid rgba(85, 247, 165, 0.22); backdrop-filter: blur(10px);">
+          <div style="font-size: 1.45rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(85, 247, 165, 0.14); border-radius: 13px; flex-shrink: 0; box-shadow: 0 0 12px rgba(85, 247, 165, 0.2);">🏋️</div>
+          <div>
+            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.94rem;">جدول تمارين مهندس لأيامك</div>
+            <div style="font-size: 0.78rem; color: #9CA3AF; margin-top: 3px;">يتكيف مع عدد أيامك ومعداتك مع استبعاد أي تمارين تسبب لك ألماً</div>
+          </div>
+        </div>
+
+        <div class="welcome-feature-card" style="display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-radius: 18px; background: rgba(14, 22, 18, 0.75); border: 1px solid rgba(85, 247, 165, 0.22); backdrop-filter: blur(10px);">
+          <div style="font-size: 1.45rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(85, 247, 165, 0.14); border-radius: 13px; flex-shrink: 0; box-shadow: 0 0 12px rgba(85, 247, 165, 0.2);">🤖</div>
+          <div>
+            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.94rem;">مساعد صوتي ذكي (NEON AI)</div>
+            <div style="font-size: 0.78rem; color: #9CA3AF; margin-top: 3px;">تحدث معه بصوتك ليسجل وجباتك، ماءك، وتمارينك تلقائياً وبكل دقة</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- زر البدء الكبير -->
+      <div style="width: 100%; max-width: 440px;">
+        <button type="button" id="q-welcome-start-btn" class="btn btn-primary btn-lg btn-block" style="border-radius: 24px; font-size: 1.18rem; font-weight: 900; padding: 16px 24px; box-shadow: 0 4px 30px rgba(85, 247, 165, 0.45); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; border: none; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+          <span>ابدأ تخصيص خطتك الآن</span>
+          <span style="font-size: 1.35rem;">⚡</span>
+        </button>
+        <p style="font-size: 0.78rem; color: #8C9992; margin: 12px 0 0; text-align: center;">
+          ⏱️ يستغرق الاستبيان دقيقتين فقط • يمكنك تعديل أي إجابة لاحقاً
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * توليد HTML خطوات الاستبيان مع شريط التقدم وزر الرجوع
+ */
+function renderStepWorkflowHTML(step, totalSteps, stepKey) {
+  return `
+    <!-- شريط التقدم بين الخطوات -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <button id="q-back-step-btn" type="button" class="btn-icon" style="width: 38px; height: 38px; cursor: pointer; visibility: visible;" aria-label="رجوع">
+        ❯
+      </button>
+      <span id="q-step-indicator-text" style="font-weight: 800; color: #55F7A5; font-size: 0.95rem; font-family: monospace;">
+        الخطوة ${step} من ${totalSteps}
+      </span>
+      <div style="width: 38px;"></div>
+    </div>
+
+    <!-- مؤشرات الخطوات -->
+    <div id="q-steps-bar" style="display: flex; gap: 6px; margin-bottom: 24px;">
+      ${Array.from({ length: totalSteps }, (_, i) => `
+        <div style="flex: 1; height: 4px; border-radius: 999px; background: ${i + 1 <= step ? '#55F7A5' : 'rgba(85, 247, 165, 0.15)'}; box-shadow: ${i + 1 === step ? '0 0 8px #55F7A5' : 'none'}; transition: all 0.3s ease;"></div>
+      `).join('')}
+    </div>
+
+    <!-- محتوى الخطوة النشطة -->
+    <div id="step-content-area">
+      ${renderStepContent(stepKey)}
+    </div>
+  `;
+}
+
 export function renderQuestionnaireView() {
   const profile = store.getState()?.userProfile;
   // تحميل البيانات من الملف الشخصي الحقيقي إذا توفرت
@@ -404,9 +545,6 @@ export function renderQuestionnaireView() {
     formData.goal = profile.goal;
   }
 
-
-
-
   const activeSteps = getActiveSteps();
   const totalSteps = activeSteps.length;
   if (currentStep > totalSteps) currentStep = totalSteps;
@@ -414,30 +552,7 @@ export function renderQuestionnaireView() {
 
   return `
     <div class="questionnaire-container" style="min-height: 100vh; padding: 20px 16px 80px; max-width: 500px; margin: 0 auto;">
-      
-      <!-- شريط التقدم بين الخطوات -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-        <button id="q-back-step-btn" type="button" class="btn-icon" style="width: 38px; height: 38px; ${currentStep === 1 ? 'visibility: hidden;' : ''}" aria-label="رجوع">
-          ❯
-        </button>
-        <span id="q-step-indicator-text" style="font-weight: 800; color: #55F7A5; font-size: 0.95rem; font-family: monospace;">
-          الخطوة ${currentStep} من ${totalSteps}
-        </span>
-        <div style="width: 38px;"></div>
-      </div>
-
-      <!-- مؤشرات الخطوات -->
-      <div id="q-steps-bar" style="display: flex; gap: 6px; margin-bottom: 24px;">
-        ${Array.from({ length: totalSteps }, (_, i) => `
-          <div style="flex: 1; height: 4px; border-radius: 999px; background: ${i + 1 <= currentStep ? '#55F7A5' : 'rgba(85, 247, 165, 0.15)'}; box-shadow: ${i + 1 === currentStep ? '0 0 8px #55F7A5' : 'none'}; transition: all 0.3s ease;"></div>
-        `).join('')}
-      </div>
-
-      <!-- محتوى الخطوة النشطة -->
-      <div id="step-content-area">
-        ${renderStepContent(currentStepKey)}
-      </div>
-
+      ${showWelcomeScreen ? renderWelcomeScreenHTML() : renderStepWorkflowHTML(currentStep, totalSteps, currentStepKey)}
     </div>
   `;
 }
@@ -1335,6 +1450,36 @@ function renderStepContent(step) {
 }
 
 export function bindQuestionnaireEvents() {
+  const welcomeStartBtn = document.getElementById('q-welcome-start-btn');
+  if (welcomeStartBtn) {
+    welcomeStartBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showWelcomeScreen = false;
+      currentStep = 1;
+      const container = document.querySelector('.questionnaire-container');
+      if (container) {
+        const activeSteps = getActiveSteps();
+        const totalSteps = activeSteps.length;
+        const currentStepKey = activeSteps[0];
+        container.innerHTML = renderStepWorkflowHTML(1, totalSteps, currentStepKey);
+        bindQuestionnaireEvents();
+        const scrollToTop = () => {
+          try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { window.scrollTo(0, 0); }
+          if (document.documentElement) document.documentElement.scrollTop = 0;
+          if (document.body) document.body.scrollTop = 0;
+          const cont = document.getElementById('view-container');
+          if (cont) cont.scrollTop = 0;
+          const root = document.getElementById('app');
+          if (root) root.scrollTop = 0;
+        };
+        scrollToTop();
+        requestAnimationFrame(scrollToTop);
+      }
+    };
+    return;
+  }
+
   const activeSteps = getActiveSteps();
   const totalSteps = activeSteps.length;
   const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
@@ -1415,7 +1560,7 @@ export function bindQuestionnaireEvents() {
     };
   }
 
-  // الرجوع للخطوة السابقة (خطوة واحدة للخلف بدقة وبدون أي تراكم لمستمعي الأحداث)
+  // الرجوع للخطوة السابقة (خطوة واحدة للخلف بدقة، والرجوع من الخطوة 1 يعود لشاشة الترحيب)
   if (backBtn) {
     backBtn.onclick = (e) => {
       e.preventDefault();
@@ -1424,6 +1569,25 @@ export function bindQuestionnaireEvents() {
         saveCurrentStepInputs();
         currentStep--;
         render();
+      } else if (currentStep === 1) {
+        saveCurrentStepInputs();
+        showWelcomeScreen = true;
+        const container = document.querySelector('.questionnaire-container');
+        if (container) {
+          container.innerHTML = renderWelcomeScreenHTML();
+          bindQuestionnaireEvents();
+          const scrollToTop = () => {
+            try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (_) { window.scrollTo(0, 0); }
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+            const cont = document.getElementById('view-container');
+            if (cont) cont.scrollTop = 0;
+            const root = document.getElementById('app');
+            if (root) root.scrollTop = 0;
+          };
+          scrollToTop();
+          requestAnimationFrame(scrollToTop);
+        }
       }
     };
   }
@@ -1571,6 +1735,7 @@ export function bindQuestionnaireEvents() {
     // الانتقال للوحة اليوم بسلاسة
     setTimeout(() => {
       currentStep = 1;
+      showWelcomeScreen = true;
       window.location.hash = '#today';
     }, 650);
   });
@@ -2724,10 +2889,44 @@ export function bindQuestionnaireEvents() {
   }
 
   function render() {
+    const scrollToStepTop = () => {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch (_) {
+        window.scrollTo(0, 0);
+      }
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+      const container = document.getElementById('view-container');
+      if (container) container.scrollTop = 0;
+      const appRoot = document.getElementById('app');
+      if (appRoot) appRoot.scrollTop = 0;
+    };
+
+    const container = document.querySelector('.questionnaire-container');
+    if (!container) return;
+
+    if (showWelcomeScreen) {
+      container.innerHTML = renderWelcomeScreenHTML();
+      bindQuestionnaireEvents();
+      scrollToStepTop();
+      requestAnimationFrame(scrollToStepTop);
+      return;
+    }
+
     const activeSteps = getActiveSteps();
     const totalSteps = activeSteps.length;
     if (currentStep > totalSteps) currentStep = totalSteps;
     const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
+
+    const area = document.getElementById('step-content-area');
+    if (!area) {
+      container.innerHTML = renderStepWorkflowHTML(currentStep, totalSteps, currentStepKey);
+      bindQuestionnaireEvents();
+      scrollToStepTop();
+      requestAnimationFrame(scrollToStepTop);
+      return;
+    }
 
     // 1. تحديث نص رقم الخطوة بالأعلى ديناميكياً مع كل شاشة: "الخطوة X من Y"
     const headerStep = document.getElementById('q-step-indicator-text');
@@ -2746,30 +2945,14 @@ export function bindQuestionnaireEvents() {
     // 3. تحديث زر الرجوع
     const backBtn = document.getElementById('q-back-step-btn');
     if (backBtn) {
-      backBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+      backBtn.style.visibility = 'visible';
     }
 
     // 4. تحديث محتوى الخطوة
-    const area = document.getElementById('step-content-area');
-    if (area) {
-      area.innerHTML = renderStepContent(currentStepKey);
-    }
+    area.innerHTML = renderStepContent(currentStepKey);
 
     // 5. إعادة ربط أحداث الخطوة والتمرير فورياً لأعلى الشاشة لتبدأ دائماً من فوق لتحت
     bindQuestionnaireEvents();
-    const scrollToStepTop = () => {
-      try {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      } catch (_) {
-        window.scrollTo(0, 0);
-      }
-      if (document.documentElement) document.documentElement.scrollTop = 0;
-      if (document.body) document.body.scrollTop = 0;
-      const container = document.getElementById('view-container');
-      if (container) container.scrollTop = 0;
-      const appRoot = document.getElementById('app');
-      if (appRoot) appRoot.scrollTop = 0;
-    };
     scrollToStepTop();
     requestAnimationFrame(scrollToStepTop);
     setTimeout(scrollToStepTop, 15);
