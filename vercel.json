@@ -1,0 +1,46 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/ai.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/gemini.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/action-agent.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/ai/?",
+      "dest": "/api/ai.js"
+    },
+    {
+      "src": "/api/gemini/?",
+      "dest": "/api/gemini.js"
+    },
+    {
+      "src": "/api/action-agent/?",
+      "dest": "/api/action-agent.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
