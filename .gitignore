@@ -7,3 +7,6 @@ scratch/
 *.checkpoints.json
 .agent_checkpoints.json
 .test_langgraph_checkpoints.json
+
+.vercel
+.env*

@@ -3,6 +3,54 @@ import { SttAdapter } from './voice/sttAdapter.js';
 import { TtsAdapter } from './voice/ttsAdapter.js';
 import { neonSoundService } from './voice/neonSoundService.js';
 import { submitNeonCommand, restoreNeonConversation, retryNeonCommand, commandTrace } from './submitNeonCommand.js';
+import { aiService } from './aiService.js';
+import { store } from '../state/store.js';
+
+const CLOUD_FALLBACK_CODES = new Set(['AUTH_REQUIRED', 'LOCAL_CONFIG_REQUIRED', 'LOCAL_ONLY']);
+
+export function createAiFallbackDispatch({
+  actionDispatch = submitNeonCommand,
+  chat = (text, context, history) => aiService.chatWithCoach(text, context, history),
+  getState = () => store.getState(),
+} = {}) {
+  const history = [];
+
+  return async command => {
+    if (command.restore || command.confirmation || !command.text?.trim()) {
+      return actionDispatch(command);
+    }
+
+    try {
+      const result = await actionDispatch(command);
+      const code = result?.error?.code;
+      if (result?.status !== 'error' || !CLOUD_FALLBACK_CODES.has(code)) return result;
+    } catch (_) {
+      // A missing session or unavailable action backend should not disable AI chat.
+    }
+
+    const text = command.text.trim();
+    const result = await chat(text, getState(), history);
+    if (!result?.success || !result.reply) {
+      throw new Error('تعذر الوصول إلى المدرب الذكي حاليًا. حاول مرة أخرى بعد قليل.');
+    }
+
+    history.push({ sender: 'user', text }, { sender: 'ai', text: result.reply });
+    if (history.length > 20) history.splice(0, history.length - 20);
+
+    return {
+      requestId: command.requestId,
+      status: 'success',
+      reply: result.reply,
+      actions: [],
+      results: [],
+      cards: [],
+      changedResources: [],
+      clarification: null,
+      provider: result.provider,
+      aiOnly: true,
+    };
+  };
+}
 
 export class NeonCommandAgent {
   constructor({ dispatch = submitNeonCommand } = {}) {
@@ -63,4 +111,4 @@ export class NeonCommandAgent {
   hasUndo() { return false; }
   getLastActionSummary() { return null; }
 }
-export const neonActionAgent = new NeonCommandAgent();
+export const neonActionAgent = new NeonCommandAgent({ dispatch: createAiFallbackDispatch() });

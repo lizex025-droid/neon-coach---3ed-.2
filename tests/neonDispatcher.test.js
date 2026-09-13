@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { NeonCommandAgent } from '../src/services/neonCommandAgent.js';
+import { NeonCommandAgent, createAiFallbackDispatch } from '../src/services/neonCommandAgent.js';
 import { SttAdapter } from '../src/services/voice/sttAdapter.js';
 import { neonSoundService } from '../src/services/voice/neonSoundService.js';
 
@@ -34,4 +34,27 @@ test('SpeechRecognition submits only finalized segments on end, never interim/ca
   recognition.onresult({ results: [final] }); recognition.onresult({ results: [final] }); assert.equal(finals.length, 0);
   const end = recognition.onend; end(); end(); assert.deepEqual(finals, ['Log 500 ml water']);
   adapter.start(); recognition.onresult({ results: [final] }); adapter.stop(); recognition.onend?.(); assert.equal(finals.length, 1);
+});
+
+test('AI chat remains available when the authenticated action backend is unavailable', async () => {
+  const calls = [];
+  const dispatch = createAiFallbackDispatch({
+    actionDispatch: async () => { throw new Error('No cloud session'); },
+    chat: async (text, context, history) => {
+      calls.push({ text, context, history: [...history] });
+      return { success: true, reply: 'AI response', provider: 'Google Gemini' };
+    },
+    getState: () => ({ today: { consumedCalories: 500 } }),
+  });
+
+  const first = await dispatch({ requestId: 'request-1', text: 'كيف أتمرن اليوم؟' });
+  const second = await dispatch({ requestId: 'request-2', text: 'وماذا عن التغذية؟' });
+
+  assert.equal(first.status, 'success');
+  assert.equal(first.aiOnly, true);
+  assert.equal(first.reply, 'AI response');
+  assert.equal(second.status, 'success');
+  assert.equal(calls[0].context.today.consumedCalories, 500);
+  assert.equal(calls[0].history.length, 0);
+  assert.equal(calls[1].history.length, 2);
 });
