@@ -8,6 +8,7 @@
  */
 
 import { neonActionAgent } from '../../services/neonActionAgent.js';
+import { renderNeonResult } from '../neonResultCards.js';
 import '../../styles/voiceAgent.css';
 
 export class NeonVoiceOverlay {
@@ -224,15 +225,8 @@ export class NeonVoiceOverlay {
       this.mainBtnEl.addEventListener('click', () => {
         const state = neonActionAgent.getState();
         if (state === 'listening' || state === 'speech_detected') {
-          const textToRun = (neonActionAgent.currentUtteranceText || neonActionAgent.lastInterimText || '').trim();
           neonActionAgent.stopVoiceSession();
-          if (textToRun) {
-            neonActionAgent.currentUtteranceText = '';
-            neonActionAgent.lastInterimText = '';
-            neonActionAgent.handleUserUtterance(textToRun, { isVoice: true });
-          } else {
-            this._updateUiState('stopped');
-          }
+          this._updateUiState('stopped');
         } else {
           this._activateMicAction();
         }
@@ -270,6 +264,9 @@ export class NeonVoiceOverlay {
       switch (eventType) {
         case 'state_change':
           this._updateUiState(state, data);
+          if (['success', 'clarification', 'error', 'partial'].includes(state) && this.writtenReplyEl) {
+            renderNeonResult(this.writtenReplyEl, { ...data, status: state, reply: data.reply || data.error });
+          }
           break;
 
         case 'audio_level':
@@ -629,4 +626,3 @@ export class NeonVoiceOverlay {
 }
 
 export const neonVoiceOverlay = new NeonVoiceOverlay();
-

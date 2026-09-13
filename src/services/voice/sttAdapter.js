@@ -39,7 +39,9 @@ export class SttAdapter {
     }
 
     this.isActive = true;
-    this.shouldRestart = true;
+    this.shouldRestart = false;
+    this.finalSegments = new Map();
+    this.delivered = false;
     this._initInstance();
   }
 
@@ -50,7 +52,7 @@ export class SttAdapter {
       const rec = new this.SpeechRecClass();
       this.recognition = rec;
       rec.lang = this.lang;
-      rec.continuous = true;
+      rec.continuous = false;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
 
@@ -73,6 +75,7 @@ export class SttAdapter {
           const result = event.results[i];
           const text = result[0]?.transcript || '';
           if (result.isFinal) {
+            this.finalSegments.set(i, text.trim());
             fullFinal += text + ' ';
           } else {
             fullInterim += text;
@@ -84,9 +87,7 @@ export class SttAdapter {
           this.onInterim(combined);
         }
 
-        if (fullFinal.trim() && !fullInterim.trim() && this.onFinal) {
-          this.onFinal(fullFinal.trim());
-        }
+        // Only onend submits finalized segments. Interim text never becomes a command.
       };
 
       rec.onerror = (event) => {
@@ -107,6 +108,14 @@ export class SttAdapter {
 
       rec.onend = () => {
         this.recognition = null;
+        if (this.isActive && !this.delivered) {
+          this.delivered = true;
+          this.isActive = false;
+          const text = [...this.finalSegments.entries()].sort((a, b) => a[0] - b[0]).map(([, value]) => value).join(' ').trim();
+          if (text) this.onFinal?.(text);
+          else this.onError?.('لم يصل نص صوتي نهائي. أعد التسجيل أو اكتب الطلب.');
+          return;
+        }
         if (this.isActive && this.shouldRestart) {
           clearTimeout(this.restartTimeout);
           this.restartTimeout = setTimeout(() => {
@@ -132,6 +141,13 @@ export class SttAdapter {
       if (this.recognition) {
         try { this.recognition.abort(); } catch (_) {}
       }
+    }
+  }
+
+  finish() {
+    if (this.isActive && this.recognition) {
+      this.shouldRestart = false;
+      try { this.recognition.stop(); } catch (_) {}
     }
   }
 

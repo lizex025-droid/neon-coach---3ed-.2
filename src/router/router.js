@@ -22,10 +22,12 @@ import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
 import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
+import { renderAuthView, bindAuthViewEvents } from '../views/authView.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
 import { updateVoiceTriggerVisibility } from '../components/voice/voiceTriggerBtn.js';
 
 export const ROUTES = {
+  auth: { render: renderAuthView, bind: bindAuthViewEvents, showNav: false, showHeader: false },
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
   today: { render: renderTodayView, bind: bindTodayViewEvents, showNav: true, showHeader: true },
   workout: { render: renderWorkoutListView, bind: bindWorkoutListEvents, showNav: true, showHeader: true },
@@ -81,13 +83,13 @@ export class Router {
 
     // توجيه تلقائي: البدء بشاشة الأسئلة (الاستبيان) بدون طلب تسجيل الدخول إطلاقاً
     if (!hasCompletedOnboarding) {
-      if (rawHash !== 'questionnaire') {
+      if (rawHash !== 'questionnaire' && rawHash !== 'auth') {
         window.location.hash = '#questionnaire';
         return;
       }
     } else {
       // إذا كان قد أكمل الاستبيان ودخل بدون مسار محدد أو حاول طلب صفحة المصادقة
-      if (!rawHash || rawHash === 'auth') {
+      if (!rawHash) {
         window.location.hash = '#today';
         return;
       }
@@ -105,13 +107,13 @@ export class Router {
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
 
     // توجيه المستخدم الجديد إلى شاشة الأسئلة
-    if (!hasCompletedOnboarding && routeKey !== 'questionnaire') {
+    if (!hasCompletedOnboarding && routeKey !== 'questionnaire' && routeKey !== 'auth') {
       window.location.hash = '#questionnaire';
       return;
     }
 
     // إبعاد المستخدم عن مسار المصادقة أو مسار الـ 40 يوم المحذوف
-    if (routeKey === 'auth' || routeKey === 'forty-day') {
+    if (routeKey === 'forty-day') {
       window.location.hash = hasCompletedOnboarding ? '#today' : '#questionnaire';
       return;
     }
@@ -180,6 +182,8 @@ export class Router {
   }
 
   refreshCurrentView() {
+    // Keep the active command/card and drawer mounted while the store is refreshed.
+    if (this.currentRoute === 'neon-ai') return;
     // تنظيف أي نوافذ منبثقة ملحقة بـ body مباشرة قبل إعادة الرسم
     document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
 

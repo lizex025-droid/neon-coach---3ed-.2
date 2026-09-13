@@ -7,6 +7,9 @@
 
 import { DEFAULT_MEALS } from '../data/foods.js';
 
+const initialDate = new Date();
+const INITIAL_LOCAL_DATE = `${initialDate.getFullYear()}-${String(initialDate.getMonth() + 1).padStart(2, '0')}-${String(initialDate.getDate()).padStart(2, '0')}`;
+
 export const EMPTY_INITIAL_STATE = {
   currentRole: 'client', // 'client' or 'coach'
 
@@ -68,7 +71,7 @@ export const EMPTY_INITIAL_STATE = {
 
   // أهداف اليوم — أصفار حتى يتم حساب الهدف من الاستبيان
   today: {
-    date: new Date().toISOString().split('T')[0],
+    date: INITIAL_LOCAL_DATE,
     targetCalories: 2000,
     consumedCalories: 0,
     targetProtein: 150,
@@ -84,7 +87,7 @@ export const EMPTY_INITIAL_STATE = {
     consumedGlasses: 0,
     waterStreakDays: 0,
     // الطاقة (1-5)
-    energyLevel: 3,
+    energyLevel: 0,
     // تمرين اليوم
     todayWorkoutTitleAr: '',
     todayWorkoutDuration: '',
@@ -103,6 +106,9 @@ export const EMPTY_INITIAL_STATE = {
 
   // سجل الوجبات المؤكدة — فارغ
   loggedMeals: [],
+
+  // ملخص الأيام المغلقة — يحفظ الإنجاز عند بدء يوم جديد
+  dailyHistory: [],
 
   // جلسة التمرين الحالية — فارغة
   activeWorkoutSession: {

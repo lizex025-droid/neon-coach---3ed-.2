@@ -441,9 +441,9 @@ export function bindNutritionEvents() {
 
   // حذف وجبة مسجلة فوراً
   document.querySelectorAll('.delete-logged-meal-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const mealId = btn.getAttribute('data-meal-id');
-      store.deleteLoggedMeal(mealId);
+      try { await store.deleteLoggedMeal(mealId); } catch (e) { notificationService.showToast(e.message, 'error'); return; }
       notificationService.showToast('تم حذف الوجبة وتصحيح المجاميع اليومية', 'info');
       refreshNutritionView();
     });
@@ -639,7 +639,7 @@ export function bindNutritionEvents() {
     });
   });
 
-  saveEditedBtn?.addEventListener('click', () => {
+  saveEditedBtn?.addEventListener('click', async () => {
     if (!currentEditingMealId) return;
     const meal = (store.getState().loggedMeals || []).find(m => m.id === currentEditingMealId);
     if (!meal) return;
@@ -716,7 +716,7 @@ export function bindNutritionEvents() {
       copy.fats = Number(document.getElementById('edit-direct-fats')?.value) || 0;
     }
 
-    store.updateLoggedMeal(currentEditingMealId, copy);
+    try { await store.updateLoggedMeal(currentEditingMealId, copy); } catch (e) { notificationService.showToast(e.message, 'error'); return; }
     closeEditModal();
     notificationService.showToast('تم تعديل الوجبة وتحديث السعرات اليومية بنجاح 🥗', 'success');
     refreshNutritionView();

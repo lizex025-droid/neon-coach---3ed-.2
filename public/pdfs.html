@@ -1259,9 +1259,6 @@
         const panel = $("nvPanel");
         const body = $("nvBody");
         const input = $("nvInput");
-        const KEY_LS = "nova_lite_gemini_api_key";
-        const DEFAULT_GEMINI_API_KEY = "";
-        const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash"];
         const MEMORY_KEY = "nova_pdf_coach_memory_v1";
         let busy = false;
         let greeted = false;
@@ -1319,17 +1316,6 @@
           } catch (e) {
             return fallback;
           }
-        }
-
-        function savedKey() {
-          try { return localStorage.getItem(KEY_LS) || DEFAULT_GEMINI_API_KEY; } catch (e) { return DEFAULT_GEMINI_API_KEY; }
-        }
-
-        function askForKey() {
-          const key = window.prompt("Enter Gemini API key for Nova:");
-          if (!key) return "";
-          try { localStorage.setItem(KEY_LS, key.trim()); } catch (e) {}
-          return key.trim();
         }
 
         function coachMemory() {
@@ -1535,92 +1521,25 @@
           return msg;
         }
 
-        const SYS = "You are Nova, Ahed's permanent bilingual AI personal trainer coach and nutrition analyst inside pdfs.html. " +
-          "Arabic is the default language; use English terms in parentheses only when helpful. " +
-          "You can read page blocks, links, saved supplement stack data, creatine status, water data, body profile, gym logs, and local coach memory from the JSON. " +
-          "Always separate known data, inferred data, and missing data. Do not invent numbers. " +
-          "If critical food quantity, unit, cooked/raw state, dose, timing, or workout context is missing, ask exactly one concise clarifying question. " +
-          "For creatine, mention saved dose, timing, taken-today status, running-low status, water impact if present, and the Supplements + Water link. " +
-          "Be emotionally intelligent, direct, respectful, evidence-aware, and safety-first. " +
-          "No medical diagnosis, medication prescribing, steroid advice, starvation advice, purging advice, or shame-based language. " +
-          "If the user reports severe fatigue, dizziness, chest pain, fainting, self-harm, purging, or dangerous restriction, tell them to stop and seek qualified help. " +
-          "For nutrition calculations, answer with totals first only: calories, protein, carbs, fats, then one short note. Do not include known/inferred/missing sections unless explicitly asked. Do not start with filler phrases like بالتأكيد or تمام. " +
-          "Use short practical bullets and end with one 'اليوم اعمل:' bullet. Keep replies under 180 words.";
-
         async function askServer(text) {
           if (window.location.protocol === "file:") {
             return "";
           }
-          const res = await fetch("/api/gemini", {
+          const res = await fetch("/api/ai", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ message: text, dashboardData: novaData() })
+            body: JSON.stringify({ provider: "auto", message: text, dashboardData: novaData() })
           });
           if (res.status === 404 || res.status === 405) return "";
           const raw = await res.text();
           let json = {};
           try { json = raw ? JSON.parse(raw) : {}; } catch (e) { json = {}; }
           if (!res.ok) {
-            const message = json && json.error ? String(json.error) : (raw ? raw.slice(0, 180) : "Gemini server request failed.");
+            const message = json && json.error ? String(json.error) : (raw ? raw.slice(0, 180) : "AI server request failed.");
             if (/server not configured/i.test(message)) return "";
             throw new Error(message);
           }
           return json && json.reply ? String(json.reply) : "";
-        }
-
-        function extractGeminiText(json) {
-          if (!json || typeof json !== "object") return "";
-          if (Array.isArray(json.candidates)) {
-            return json.candidates
-              .map((candidate) => (((candidate || {}).content || {}).parts || [])
-                .map((part) => part && part.text ? part.text : "")
-                .join(""))
-              .filter(Boolean)
-              .join("\n");
-          }
-          return "";
-        }
-
-        function explainEmptyGeminiResponse(json) {
-          const candidate = json && Array.isArray(json.candidates) && json.candidates[0];
-          const reason = candidate && candidate.finishReason;
-          if (reason === "SAFETY") return "- Gemini blocked this reply for **safety**. Try asking it in a simpler way.";
-          if (reason === "MAX_TOKENS") return "- Gemini ran out of output space. Ask a **shorter question**.";
-          return "- Gemini answered, but Nova could not read the text. Try again in a few seconds.";
-        }
-
-        async function askBrowserGeminiWithModel(text, key, model) {
-          const prompt = "PDF library, supplement, water, and gym data as JSON:\n" +
-            JSON.stringify(novaData()) + "\n\nUser message:\n" + text;
-          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              "x-goog-api-key": key
-            },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: SYS }] },
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-              generationConfig: { maxOutputTokens: 1200, temperature: 0.3 }
-            })
-          });
-          const json = await res.json();
-          if (json.error) throw new Error(json.error.message || "Something went wrong. Check your Gemini key.");
-          return extractGeminiText(json) || explainEmptyGeminiResponse(json);
-        }
-
-        async function askBrowserGemini(text, key) {
-          let lastError = null;
-          for (const model of GEMINI_MODELS) {
-            try {
-              return await askBrowserGeminiWithModel(text, key, model);
-            } catch (error) {
-              lastError = error;
-              const message = error && error.message ? error.message : String(error);
-              if (!/high demand|overloaded|temporarily unavailable|try again later|503|unavailable/i.test(message)) throw error;
-            }
-          }
-          throw lastError || new Error("Gemini is temporarily unavailable. Try again later.");
         }
 
         async function ask(text) {
@@ -1644,15 +1563,11 @@
               detectedLanguage: detectLanguage(message),
               detectedAffect: detectAffect(message)
             });
-            let reply = "";
-            if (window.location.protocol === "http:" || window.location.protocol === "https:") {
-              reply = await askServer(enrichedMessage);
+            if (window.location.protocol !== "http:" && window.location.protocol !== "https:") {
+              throw new Error("Nova requires the app server. Run npm run dev and open the local URL.");
             }
-            if (!reply) {
-              const key = savedKey() || askForKey();
-              if (!key) throw new Error("Gemini API key is required for Nova when opening pdfs.html without a server.");
-              reply = await askBrowserGemini(enrichedMessage, key);
-            }
+            const reply = await askServer(enrichedMessage);
+            if (!reply) throw new Error("AI proxy is not configured on the server.");
             loading.innerHTML = md(reply);
           } catch (error) {
             loading.innerHTML = md("- " + (error && error.message ? error.message : "Could not reach Gemini."));

@@ -17,14 +17,48 @@ import { animateCountUp, animateRingOffset } from '../utils/animUtils.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { filterStrongestExercisePerMuscle } from '../domain/calculations.js';
 import { escapeActionHtml } from '../components/actionPanel.js';
+import { dailyHistoryWithin } from '../domain/dailyCycle.js';
 
 let activePeriod = '90'; // '7' | '30' | '90'
+
+function formatHistoryDate(date) {
+  try {
+    return new Intl.DateTimeFormat('ar-JO', { weekday: 'short', day: 'numeric', month: 'short' })
+      .format(new Date(`${date}T12:00:00`));
+  } catch {
+    return date;
+  }
+}
+
+function renderDailyHistoryItem(day) {
+  const calories = Number(day.calories) || 0;
+  const protein = Number(day.protein) || 0;
+  const water = Number(day.consumedWaterLiters) || 0;
+  const targetCalories = Number(day.targetCalories) || 0;
+  const targetWater = Number(day.targetWaterLiters) || 0;
+  return `
+    <div style="padding: 13px; border-radius: 13px; border: 1px solid rgba(85,247,165,0.16); background: rgba(85,247,165,0.035); display: flex; flex-direction: column; gap: 9px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <strong style="color:#FFFFFF; font-size:.9rem;">${escapeHtml(formatHistoryDate(day.date))}</strong>
+        <span style="color:#7E998A; font:700 .72rem monospace;">${escapeHtml(day.date)}</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; font-size:.78rem;">
+        <span style="color:#B8C0BC;">🔥 السعرات: <b style="color:#55F7A5;">${calories.toLocaleString('en-US')}</b>${targetCalories ? ` / ${targetCalories.toLocaleString('en-US')}` : ''}</span>
+        <span style="color:#B8C0BC;">🥩 البروتين: <b style="color:#FFFFFF;">${protein}غ</b></span>
+        <span style="color:#B8C0BC;">💧 الماء: <b style="color:#38BDF8;">${water} لتر</b>${targetWater ? ` / ${targetWater}` : ''}</span>
+        <span style="color:#B8C0BC;">🍽️ الوجبات: <b style="color:#FFFFFF;">${Number(day.mealCount) || 0}</b></span>
+        <span style="color:#B8C0BC;">💊 المكملات: <b style="color:#FFFFFF;">${Number(day.supplementsTaken) || 0}/${Number(day.supplementsTotal) || 0}</b></span>
+        <span style="color:#B8C0BC;">🏋️ التمرين: <b style="color:${day.workoutCompleted ? '#55F7A5' : '#8C9992'};">${day.workoutCompleted ? 'مكتمل ✓' : 'غير مكتمل'}</b></span>
+      </div>
+    </div>`;
+}
 
 export function renderProgressReportView() {
   const state = store.getState();
   const report = state.progressReport || {};
   const user = state.userProfile || {};
   const workoutHistory = store.getWorkoutHistory() || [];
+  const dailyHistory = dailyHistoryWithin(state.dailyHistory, Number(activePeriod));
 
   const currentWeight = user.currentWeight || report.currentDay?.weight || 118;
   const currentWaist = report.currentDay?.waistCm || 108;
@@ -317,6 +351,22 @@ export function renderProgressReportView() {
         <p style="font-size: 0.92rem; color: #B8C0BC; line-height: 1.6; margin: 0;">
           ${smartInsight}
         </p>
+      </div>
+
+      <!-- سجل ملخصات الأيام المغلقة -->
+      <div class="neon-card" style="padding: 20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; border-bottom:1px solid rgba(85,247,165,.2); padding-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px; color:#FFFFFF; font-weight:800; font-size:1.02rem;">
+            ${neonIcon('calendar', 18)}
+            <span>سجل الأيام السابقة</span>
+          </div>
+          <span style="font:700 .76rem monospace; color:#55F7A5;">${dailyHistory.length} يوم</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          ${dailyHistory.length
+            ? dailyHistory.map(renderDailyHistoryItem).join('')
+            : '<div style="text-align:center; color:#8C9992; padding:16px; font-size:.86rem;">سيظهر ملخص اليوم هنا تلقائياً عند بداية اليوم التالي.</div>'}
+        </div>
       </div>
 
       <!-- بطاقة سجل تاريخ التمارين والتدريب (Workout History) -->

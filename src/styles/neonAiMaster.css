@@ -631,3 +631,75 @@
     font-size: 0.88rem;
   }
 }
+
+/* ==========================================================================
+   بطاقة تأكيد واختيار تصنيف الوجبة التفاعلية (Interactive Meal Confirm Card)
+   ========================================================================== */
+.ai-meal-confirm-card {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 16px;
+  background: rgba(4, 18, 10, 0.95);
+  border: 1px solid rgba(0, 255, 156, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 255, 156, 0.04);
+  text-align: right;
+  animation: resultSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-meal-confirm-card .ai-meal-chip {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 156, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cde0d5;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.ai-meal-confirm-card .ai-meal-chip:hover {
+  border-color: rgba(0, 255, 156, 0.65);
+  background: rgba(0, 255, 156, 0.12);
+  color: #00FF9C;
+}
+
+.ai-meal-confirm-card .ai-meal-chip.active {
+  background: rgba(0, 255, 156, 0.22);
+  border-color: #00FF9C;
+  color: #00FF9C;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(0, 255, 156, 0.3);
+}
+
+.ai-meal-confirm-card .ai-chip-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  font-size: 0.82rem;
+  line-height: 1;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.ai-meal-confirm-card .ai-chip-delete-btn:hover {
+  opacity: 1;
+  background: rgba(255, 80, 80, 0.35);
+  color: #ff6666;
+}
+/* Shared persisted results, also used by the AI drawer. */
+.neon-persisted-card { padding: 14px; margin: 12px 0; border: 1px solid #00ff9c55; border-radius: 14px; background: #07120e; color: #eefcf5; overflow-wrap: anywhere; }
+.neon-persisted-card p { margin: 7px 0; }
+.neon-persisted-card select { padding: 10px; margin: 8px; color: #00ff9c; background: #060b09; border: 1px solid #00ff9c88; border-radius: 8px; }
+.neon-persisted-card button { margin: 5px; min-height: 44px; }
+.neon-persisted-card pre { white-space: pre-wrap; max-width: 100%; }

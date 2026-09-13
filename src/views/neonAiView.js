@@ -1,3 +1,4 @@
+import { renderNeonResult } from '../components/neonResultCards.js';
 /**
  * NEON COACH - واجهة NEON AI المحدثة (AI Action Agent Master View)
  * تصميم Minimal, Premium, Dark, Neon Green فائق التطور
@@ -11,6 +12,7 @@ import { aiService } from '../services/aiService.js';
 import { store } from '../state/store.js';
 import { neonActionAgent } from '../services/neonActionAgent.js';
 import { neonSoundService } from '../services/neonSoundService.js';
+import { notificationService } from '../services/notificationService.js';
 import '../styles/neonAiMaster.css';
 
 export function renderNeonAiView() {
@@ -19,12 +21,12 @@ export function renderNeonAiView() {
 
   return `
     <div class="neon-ai-master-container">
-      
+
       <!-- =================================================================
            1. VOICE RECORDING AREA (Taskmaster Voice Orb + Directional Waveform)
            ================================================================= -->
       <section id="neon-ai-voice-card" class="neon-ai-voice-stage" aria-label="منطقة التسجيل الصوتي">
-        
+
         <!-- الدائرة النيون المتوهجة الأيقونية (Taskmaster Glowing Breathing Orb) -->
         <div class="start-circle-wrapper" id="neon-ai-orb-wrapper" role="button" tabindex="0" title="انقر للتحدث مع نيون" aria-label="بدء التسجيل الصوتي">
           <div class="start-circle" id="neon-ai-start-circle"></div>
@@ -78,16 +80,16 @@ export function renderNeonAiView() {
         <button type="submit" id="neon-ai-send-btn" class="neon-ai-send-btn">
           <span>إرسال ›</span>
         </button>
-        <input 
-          type="text" 
-          id="neon-ai-text-input" 
-          class="neon-ai-text-field" 
-          maxlength="4000" 
-          placeholder="اكتب سؤالك أو ما أكلت أو تمرينك..." 
-          autocomplete="off" 
+        <input
+          type="text"
+          id="neon-ai-text-input"
+          class="neon-ai-text-field"
+          maxlength="4000"
+          placeholder="اكتب سؤالك أو ما أكلت أو تمرينك..."
+          autocomplete="off"
           aria-label="أدخل طلبك لـ NEON AI"
         />
-        <button type="button" id="neon-ai-settings-toggle" class="neon-ai-settings-toggle" title="إعدادات المفتاح" aria-label="الإعدادات">
+        <button hidden type="button" id="neon-ai-settings-toggle" class="neon-ai-settings-toggle" title="الإعدادات" aria-label="الإعدادات">
           <span>•••</span>
         </button>
       </form>
@@ -106,11 +108,11 @@ export function renderNeonAiView() {
           <div style="font-size: 0.78rem; color: #7E998A; line-height: 1.4; margin-top: 4px;">
             (اختياري فقط) إذا كنت ترغب بتجاوز المفتاح السحابي واستخدام مفتاح شخصي خاص بك:
           </div>
-          <input 
-            type="password" 
-            id="neon-ai-gemini-key-input" 
-            value="${currentKey}" 
-            placeholder="مفتاح شخصي اختياري (متروك فارغاً افتراضياً)" 
+          <input
+            type="password"
+            id="neon-ai-gemini-key-input"
+            value="${currentKey}"
+            placeholder="مفتاح شخصي اختياري (متروك فارغاً افتراضياً)"
             style="padding: 10px 14px; background: #010603; border: 1px solid rgba(0,255,156,0.3); border-radius: 12px; color: #fff; font-size: 0.88rem; outline: none;"
           />
           <select id="neon-ai-model-select" style="padding: 10px 14px; background: #010603; border: 1px solid rgba(0,255,156,0.3); border-radius: 12px; color: #fff; font-size: 0.85rem; outline: none;">
@@ -139,7 +141,7 @@ export function bindNeonAiViewEvents() {
   const voiceSub = document.getElementById('neon-ai-voice-sub');
   const timerEl = document.getElementById('neon-ai-timer');
   const transcriptEl = document.getElementById('neon-ai-transcript');
-  
+
   const resultCard = document.getElementById('neon-ai-result-card');
   const resultTimeEl = document.getElementById('neon-ai-result-time');
   const resultBodyEl = document.getElementById('neon-ai-result-body');
@@ -236,11 +238,11 @@ export function bindNeonAiViewEvents() {
       if (isListening) {
         // حركة باتجاه واحد متصلة (من اليسار لليمين) بدون أي تقاطع أو خطين يدخلان في بعض
         const directionalWave = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(i * 0.22 - wavePhase));
-        
+
         // ربط ناعم مع الترددات الصوتية
         const freqIndex = Math.min(currentFreqData.length - 1, Math.floor((i / totalBars) * currentFreqData.length));
         const freqVal = (currentFreqData[freqIndex] || 0) / 255;
-        
+
         const voiceIntensity = freqVal * 0.68 + smoothedVolume * 0.32;
         targetH = Math.max(2, (2 + voiceIntensity * directionalWave * maxBarHeight * 1.12) * envelope);
       } else if (isProcessing) {
@@ -366,16 +368,8 @@ export function bindNeonAiViewEvents() {
   // 5. بدء وإيقاف جلسة الصوت الحقيقية
   async function toggleVoiceSession() {
     if (isListening) {
-      const textToRun = (neonActionAgent.currentUtteranceText || neonActionAgent.lastInterimText || '').trim();
       neonActionAgent.stopVoiceSession();
-      if (textToRun) {
-        neonActionAgent.currentUtteranceText = '';
-        neonActionAgent.lastInterimText = '';
-        setVoiceState('processing');
-        await neonActionAgent.handleUserUtterance(textToRun, { isVoice: true });
-      } else {
-        setVoiceState('idle');
-      }
+      setVoiceState('idle');
       return;
     }
 
@@ -387,7 +381,7 @@ export function bindNeonAiViewEvents() {
 
     // تهيئة الصوت وتشغيل نغمة التأكيد المباشرة مع تفاعل المستخدم
     neonSoundService.initializeAudio();
-    neonSoundService.playAcknowledgement();
+
 
     try {
       setVoiceState('listening');
@@ -445,20 +439,22 @@ export function bindNeonAiViewEvents() {
       }
     } else if (eventType === 'success') {
       setVoiceState('idle');
-      renderSuccessResult(data);
+      renderNeonResult(resultBodyEl, { ...data, status: 'success' }); showResultCard();
     } else if (eventType === 'clarification') {
       setVoiceState('idle');
-      renderClarificationResult(data.reply);
+      renderNeonResult(resultBodyEl, { ...data, status: 'clarification' }); showResultCard();
     } else if (eventType === 'error') {
       setVoiceState('idle');
-      displayResultError(data.error || 'تعذر معالجة الطلب');
+      renderNeonResult(resultBodyEl, { status: 'error', reply: data.error || 'تعذر معالجة الطلب' }); showResultCard();
     }
   });
+
+  neonActionAgent.restore().then(r => { if (isRunning && r?.clarification) { renderNeonResult(resultBodyEl, { ...r, status: 'clarification' }); showResultCard(); } });
 
   // 7. المعالجة الموحدة للأوامر (Voice + Text)
   async function handleUnifiedInput(rawText) {
     const text = (rawText || '').trim();
-    if (!text) return;
+    if (!text || sendBtn?.disabled) return;
 
     setVoiceState('processing');
     if (chatInput) chatInput.value = '';
@@ -468,18 +464,6 @@ export function bindNeonAiViewEvents() {
       // تمرير isVoice: false لكتم صوت النظام بالكامل ومنع أي نغمات صوتية عند الكتابة
       const response = await neonActionAgent.handleUserUtterance(text, { isVoice: false });
 
-      if (!response) {
-        // إذا لم يكن إجراءً، تجربة الإجابة الذكية
-        const state = store.getState();
-        const fallbackReply = await aiService.chatWithCoach(text, {
-          userProfile: state.userProfile,
-          today: state.today,
-          loggedMeals: state.loggedMeals || []
-        }, []);
-
-        setVoiceState('idle');
-        renderGeneralAnswerResult(fallbackReply.reply || 'تم استلام استفسارك.');
-      }
     } catch (err) {
       console.error('Unified execution error:', err);
       setVoiceState('idle');
@@ -508,6 +492,226 @@ export function bindNeonAiViewEvents() {
     if (resultTimeEl) resultTimeEl.textContent = `الآن · ${timeStr}`;
 
     setTimeout(() => resizeCanvas(), 100);
+  }
+
+  function getInitialMealCategory(detectedTitle = '') {
+    const t = (detectedTitle || '').toLowerCase();
+    if (t.includes('فطور') || t.includes('إفطار') || t.includes('افطار')) return 'فطور';
+    if (t.includes('غداء') || t.includes('غدا')) return 'غداء';
+    if (t.includes('عشاء') || t.includes('عشا')) return 'عشاء';
+    if (t.includes('سناك') || t.includes('خفيفة')) return 'سناك';
+
+    const customNames = typeof store.getCustomMealNames === 'function' ? store.getCustomMealNames() : [];
+    const matchedCustom = customNames.find(c => t.includes(c.toLowerCase()));
+    if (matchedCustom) return matchedCustom;
+
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'فطور';
+    if (hour >= 12 && hour < 18) return 'غداء';
+    if (hour >= 18 && hour < 24) return 'عشاء';
+    return 'سناك';
+  }
+
+  function renderMealConfirmationCard(container, mealInfo = {}) {
+    if (!container) return;
+
+    const cals = Number(mealInfo.cals ?? mealInfo.totalCalories ?? mealInfo.calories ?? 0);
+    const prot = Math.round(Number(mealInfo.prot ?? mealInfo.totalProtein ?? mealInfo.protein ?? 0) * 10) / 10;
+    const carbs = Math.round(Number(mealInfo.carbs ?? mealInfo.totalCarbs ?? mealInfo.carbs ?? 0) * 10) / 10;
+    const fats = Math.round(Number(mealInfo.fats ?? mealInfo.totalFats ?? mealInfo.fats ?? 0) * 10) / 10;
+    const items = mealInfo.items || [];
+    const itemsDetail = items.map(i => `${i.nameAr || i.foodName || 'صنف'} (${i.grams || 100}غ)`).join(' + ') || 'وجبة محسوبة بالذكاء الاصطناعي';
+    const targetMealId = mealInfo.mealId;
+
+    const initialCategory = getInitialMealCategory(mealInfo.detectedTitle || '');
+
+    const defaultCategories = ['فطور', 'غداء', 'عشاء', 'سناك'];
+    const customSavedNames = typeof store.getCustomMealNames === 'function' ? store.getCustomMealNames() : [];
+
+    const defaultChipsHtml = defaultCategories.map(cat => `
+      <button type="button" class="ai-meal-chip ${cat === initialCategory ? 'active' : ''}" data-cat="${cat}">
+        ${cat}
+      </button>
+    `).join('');
+
+    const customChipsHtml = customSavedNames.map(cat => `
+      <div class="ai-meal-chip ${cat === initialCategory ? 'active' : ''}" data-cat="${cat}">
+        <span>${cat}</span>
+        <span class="ai-chip-delete-btn" data-del-cat="${cat}" title="حذف من الذاكرة">&times;</span>
+      </div>
+    `).join('');
+
+    const actionCard = document.createElement('div');
+    actionCard.className = 'ai-meal-confirm-card';
+    actionCard.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <span style="font-size: 1.25rem;">🍽️</span>
+        <strong style="font-size: 0.92rem; color: #55F7A5;">هل تريد إضافة هذه الوجبة إلى سجل وجباتك اليوم؟</strong>
+      </div>
+      <div style="font-size: 0.88rem; color: #FFFFFF; font-weight: 700; margin-bottom: 6px; line-height: 1.4;">
+        ${itemsDetail}
+      </div>
+      <div style="font-size: 0.8rem; color: #d0ded6; margin-bottom: 12px; line-height: 1.5; background: rgba(0,0,0,0.35); padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(85,247,165,0.15);">
+        <span style="color: #55F7A5; font-weight: 800;">${cals}</span> سعرة |
+        <span style="color: #55F7A5; font-weight: 800;">${prot}غ</span> بروتين |
+        <span style="color: #55F7A5; font-weight: 800;">${carbs}غ</span> كارب |
+        <span style="color: #55F7A5; font-weight: 800;">${fats}غ</span> دهون
+      </div>
+
+      <!-- شريط اختيار اسم وتصنيف الوجبة (فطور، غداء، عشاء، سناك، أو اسم مخصص محفوظ) -->
+      <div class="ai-meal-name-picker" style="margin-bottom: 12px; padding: 10px; background: rgba(0,0,0,0.45); border-radius: 10px; border: 1px dashed rgba(85,247,165,0.25);">
+        <div style="font-size: 0.76rem; color: #a4b5ac; margin-bottom: 7px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+          <span>🏷️ اختر تصنيف / اسم الوجبة:</span>
+          <span class="ai-selected-meal-name-badge" style="color: #55F7A5; font-weight: 800;">${initialCategory}</span>
+        </div>
+        <div class="ai-meal-chips-list" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+          ${defaultChipsHtml}
+          ${customChipsHtml}
+          <button type="button" class="ai-meal-chip ai-chip-other" data-cat="__other__">
+            ✏️ أخرى
+          </button>
+        </div>
+        <div class="ai-custom-meal-input-wrapper" style="display: none; margin-top: 8px;">
+          <input type="text" class="ai-custom-meal-input" placeholder="اكتب اسم الوجبة المخصص (مثل: سناك بعد التمرين)..." style="width: 100%; box-sizing: border-box; padding: 8px 12px; background: rgba(0,0,0,0.7); border: 1px solid #55F7A5; border-radius: 8px; color: #FFFFFF; font-size: 0.84rem; outline: none;">
+        </div>
+      </div>
+
+      <div class="ai-meal-btns-row" style="display: flex; gap: 8px;">
+        <button type="button" class="btn btn-primary ai-add-meal-confirm-btn" style="flex: 1; padding: 9px 16px; font-size: 0.85rem; font-weight: 800; border-radius: 8px; background: #00FF9C; color: #020704; border: none; cursor: pointer; box-shadow: 0 2px 10px rgba(0,255,156,0.25);">
+          ✓ نعم، أضفها لوجباتي
+        </button>
+        <button type="button" class="btn ai-add-meal-cancel-btn" style="padding: 9px 16px; font-size: 0.85rem; background: rgba(255,255,255,0.06); color: #8fa097; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; cursor: pointer;">
+          لا
+        </button>
+      </div>
+      <div class="ai-meal-status-feedback" style="display: none; font-size: 0.84rem; padding-top: 6px; line-height: 1.5;"></div>
+    `;
+
+    let selectedMealName = initialCategory;
+    const chipsContainer = actionCard.querySelector('.ai-meal-chips-list');
+    const customInputWrapper = actionCard.querySelector('.ai-custom-meal-input-wrapper');
+    const customInput = actionCard.querySelector('.ai-custom-meal-input');
+    const nameBadge = actionCard.querySelector('.ai-selected-meal-name-badge');
+
+    chipsContainer?.addEventListener('click', (e) => {
+      // حذف اسم مخصص من الذاكرة
+      const delBtn = e.target.closest('.ai-chip-delete-btn');
+      if (delBtn) {
+        e.stopPropagation();
+        const nameToDel = delBtn.getAttribute('data-del-cat');
+        if (nameToDel && store.deleteCustomMealName) {
+          store.deleteCustomMealName(nameToDel);
+          const chipElem = delBtn.closest('.ai-meal-chip');
+          const wasActive = chipElem.classList.contains('active');
+          chipElem.remove();
+          if (wasActive) {
+            const firstChip = chipsContainer.querySelector('.ai-meal-chip[data-cat="فطور"]');
+            if (firstChip) {
+              firstChip.classList.add('active');
+              selectedMealName = 'فطور';
+              if (nameBadge) nameBadge.textContent = selectedMealName;
+            }
+          }
+        }
+        return;
+      }
+
+      const chip = e.target.closest('.ai-meal-chip');
+      if (!chip) return;
+
+      chipsContainer.querySelectorAll('.ai-meal-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      const cat = chip.getAttribute('data-cat');
+      if (cat === '__other__') {
+        selectedMealName = '__other__';
+        if (customInputWrapper) customInputWrapper.style.display = 'block';
+        if (customInput) customInput.focus();
+        if (nameBadge) nameBadge.textContent = (customInput?.value || '').trim() || 'أخرى (اكتب الاسم)';
+      } else {
+        selectedMealName = cat;
+        if (customInputWrapper) customInputWrapper.style.display = 'none';
+        if (nameBadge) nameBadge.textContent = selectedMealName;
+      }
+    });
+
+    customInput?.addEventListener('input', () => {
+      const val = customInput.value.trim();
+      if (nameBadge && selectedMealName === '__other__') {
+        nameBadge.textContent = val || 'أخرى (اكتب الاسم)';
+      }
+    });
+
+    const confirmBtn = actionCard.querySelector('.ai-add-meal-confirm-btn');
+    const cancelBtn = actionCard.querySelector('.ai-add-meal-cancel-btn');
+    const btnsRow = actionCard.querySelector('.ai-meal-btns-row');
+    const feedbackEl = actionCard.querySelector('.ai-meal-status-feedback');
+    const pickerBox = actionCard.querySelector('.ai-meal-name-picker');
+
+    confirmBtn?.addEventListener('click', () => {
+      let finalTitle = selectedMealName;
+      if (selectedMealName === '__other__') {
+        const customVal = customInput ? customInput.value.trim() : '';
+        if (customVal) {
+          finalTitle = customVal;
+          if (store.saveCustomMealName) {
+            store.saveCustomMealName(customVal);
+          }
+        } else {
+          finalTitle = 'وجبة إضافية';
+        }
+      }
+
+      // تحديث أو إضافة الوجبة في الـ Store
+      const currentMeals = store.getState().loggedMeals || [];
+      const existingMeal = targetMealId ? currentMeals.find(m => m.id === targetMealId) : null;
+      if (existingMeal) {
+        existingMeal.titleAr = finalTitle;
+        existingMeal.mealType = finalTitle;
+        store.recalculateDailyNutrition();
+        store.saveState();
+      } else {
+        store.logMeal({
+          titleAr: finalTitle,
+          calories: cals,
+          protein: prot,
+          carbs: carbs,
+          fats: fats,
+          items: items || []
+        });
+      }
+
+      const updatedState = store.getState();
+      const remCals = Math.max(0, (updatedState.today?.targetCalories || 0) - (updatedState.today?.consumedCalories || 0));
+
+      btnsRow.style.display = 'none';
+      if (pickerBox) pickerBox.style.display = 'none';
+      feedbackEl.style.display = 'block';
+      feedbackEl.style.color = '#55F7A5';
+      feedbackEl.innerHTML = `✅ <strong>تمت إضافة (${finalTitle}) بنجاح إلى سجل التغذية!</strong><br>تم خصم السعرات من هدفك. المستهلك اليوم: <strong style="color:#FFFFFF;">${updatedState.today?.consumedCalories || 0}</strong> سعرة (المتبقي: <strong style="color:#FFFFFF;">${remCals}</strong> سعرة).`;
+
+      notificationService.showToast(`تمت إضافة (${finalTitle}) لسجل اليوم وتحديث السعرات! 🥗`, 'success');
+
+
+      window.dispatchEvent(new CustomEvent('neon:state-updated', { detail: { updatedState } }));
+      window.dispatchEvent(new CustomEvent('neon:action-executed', { detail: { tool: 'logMeal', title: finalTitle, calories: cals } }));
+    });
+
+    cancelBtn?.addEventListener('click', () => {
+      if (targetMealId) {
+        store.state.loggedMeals = (store.state.loggedMeals || []).filter(m => m.id !== targetMealId);
+        store.recalculateDailyNutrition();
+        store.saveState();
+        window.dispatchEvent(new CustomEvent('neon:state-updated', { detail: { updatedState: store.getState() } }));
+      }
+      btnsRow.style.display = 'none';
+      if (pickerBox) pickerBox.style.display = 'none';
+      feedbackEl.style.display = 'block';
+      feedbackEl.style.color = '#8fa097';
+      feedbackEl.textContent = 'تم التخطي — لم تتم إضافة الوجبة للسجل.';
+    });
+
+    container.appendChild(actionCard);
   }
 
   function renderSuccessResult(data) {
@@ -544,32 +748,33 @@ export function bindNeonAiViewEvents() {
     if (actions.length > 1) {
       let rowsHtml = '<div class="neon-ai-multi-actions">';
       actions.forEach(act => {
+        const args = act.arguments || act.args || {};
         let label = 'إجراء';
         let val = '';
         if (act.tool === 'completeWorkout') {
           label = 'تمرين';
-          val = `${act.arguments.title || 'إكمال التمرين'} ✓`;
+          val = `${args.title || 'إكمال التمرين'} ✓`;
         } else if (act.tool.includes('Workout')) {
           label = 'تمرين';
-          val = `${act.arguments.exercise || 'تمرين'} · ${act.arguments.weightKg}كغ × ${act.arguments.reps} × ${act.arguments.sets || 1}`;
+          val = `${args.exercise || 'تمرين'} · ${args.weightKg}كغ × ${args.reps} × ${args.sets || 1}`;
         } else if (act.tool.includes('Water')) {
           label = 'ماء';
-          val = `+${act.arguments.milliliters} مل`;
+          val = `+${args.milliliters} مل`;
         } else if (act.tool.includes('Weight')) {
           label = 'وزن';
-          val = `${act.arguments.weightKg} كغ`;
+          val = `${args.weightKg} كغ`;
         } else if (act.tool.includes('Meal')) {
           label = 'تغذية';
-          val = `${act.arguments.items?.map(i => i.nameAr).join(' + ') || 'وجبة'}`;
+          val = `${args.items?.map(i => i.nameAr).join(' + ') || 'وجبة'}`;
         } else if (act.tool.includes('Supplement')) {
           label = 'مكمل';
-          val = `${act.arguments.supplement || 'مكمل'} ✓`;
+          val = `${args.supplement || 'مكمل'} ✓`;
         } else if (act.tool.includes('Shopping')) {
           label = 'مشتريات';
-          val = `${(act.arguments.names || [act.arguments.name || '']).join(' و ')}`;
+          val = `${(args.names || [args.name || '']).join(' و ')}`;
         } else if (act.tool === 'prioritize_today') {
           label = 'أولويات';
-          val = `تقديم ${act.arguments.priority || 'التمرين'}`;
+          val = `تقديم ${args.priority || 'التمرين'}`;
         }
         rowsHtml += `
           <div class="neon-ai-action-row">
@@ -587,13 +792,35 @@ export function bindNeonAiViewEvents() {
         ${rowsHtml}
         <div class="neon-ai-action-footer-note">تم الحفظ والمزامنة الفورية في كافة السجلات</div>
       `;
+
+      if (mealAction) {
+        const mealArgs = mealAction.arguments || mealAction.args || {};
+        const mItems = mealArgs.items || [];
+        const mCals = mItems.reduce((s, i) => s + (Number(i.calories) || 0), 0);
+        const mProt = Math.round(mItems.reduce((s, i) => s + (Number(i.protein) || 0), 0) * 10) / 10;
+        const mCarbs = Math.round(mItems.reduce((s, i) => s + (Number(i.carbs) || 0), 0) * 10) / 10;
+        const mFats = Math.round(mItems.reduce((s, i) => s + (Number(i.fats) || 0), 0) * 10) / 10;
+        const mRecordId = data.results?.find(r => r.tool === 'logMeal')?.recordId || data.results?.find(r => r.tool === 'logMeal')?.record?.id;
+
+        renderMealConfirmationCard(resultBodyEl, {
+          mealId: mRecordId,
+          items: mItems,
+          cals: mCals,
+          prot: mProt,
+          carbs: mCarbs,
+          fats: mFats,
+          detectedTitle: mealArgs.mealType || transcriptEl?.textContent || ''
+        });
+      }
+
       showResultCard();
       return;
     }
 
     // إنهاء التمرين
     if (completeWorkoutAction) {
-      const title = completeWorkoutAction.arguments.title || 'جلسة تدريبية';
+      const args = completeWorkoutAction.arguments || completeWorkoutAction.args || {};
+      const title = args.title || 'جلسة تدريبية';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
           <span>🏆 تم إنهاء تمرين اليوم</span>
@@ -608,10 +835,11 @@ export function bindNeonAiViewEvents() {
 
     // تمرين مفرد مع فحص PR
     if (workoutAction) {
-      const ex = workoutAction.arguments.exercise || 'تمرين';
-      const w = workoutAction.arguments.weightKg || 0;
-      const r = workoutAction.arguments.reps || 8;
-      const s = workoutAction.arguments.sets || 1;
+      const args = workoutAction.arguments || workoutAction.args || {};
+      const ex = args.exercise || 'تمرين';
+      const w = args.weightKg || 0;
+      const r = args.reps || 8;
+      const s = args.sets || 1;
       const isPr = (data.results?.[0]?.summaryText || '').includes('PR') || (data.results?.[0]?.summaryText || '').includes('🏆');
 
       resultBodyEl.innerHTML = `
@@ -628,7 +856,8 @@ export function bindNeonAiViewEvents() {
 
     // ماء مفرد
     if (waterAction) {
-      const ml = waterAction.arguments.milliliters || 0;
+      const args = waterAction.arguments || waterAction.args || {};
+      const ml = args.milliliters || 0;
       const todayWater = store.getState().today.consumedWaterLiters || 0;
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge">
@@ -644,7 +873,8 @@ export function bindNeonAiViewEvents() {
 
     // وزن مفرد
     if (weightAction) {
-      const wt = weightAction.arguments.weightKg || 0;
+      const args = weightAction.arguments || weightAction.args || {};
+      const wt = args.weightKg || 0;
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge">
           <span>✓ تم تحديث الوزن</span>
@@ -658,25 +888,32 @@ export function bindNeonAiViewEvents() {
 
     // وجبة غذائية
     if (mealAction) {
-      const items = mealAction.arguments.items || [];
-      const name = items.map(i => `${i.nameAr} (${i.grams}غ)`).join(' + ') || 'وجبة غذائية';
-      const cals = items.reduce((s, i) => s + (i.calories || 0), 0);
-      const prot = items.reduce((s, i) => s + (i.protein || 0), 0);
-      resultBodyEl.innerHTML = `
-        <div class="neon-ai-action-badge">
-          <span>✓ تم تسجيل الوجبة</span>
-        </div>
-        <div class="neon-ai-action-subject">${name}</div>
-        <div class="neon-ai-action-metric">${cals} سعرة · ${prot}غ بروتين</div>
-        <div class="neon-ai-action-footer-note">تم الخصم مباشرة من السعرات والماكروز في تاب اليوم</div>
-      `;
+      const args = mealAction.arguments || mealAction.args || {};
+      const items = args.items || [];
+      const cals = items.reduce((s, i) => s + (Number(i.calories) || 0), 0);
+      const prot = Math.round(items.reduce((s, i) => s + (Number(i.protein) || 0), 0) * 10) / 10;
+      const carbs = Math.round(items.reduce((s, i) => s + (Number(i.carbs) || 0), 0) * 10) / 10;
+      const fats = Math.round(items.reduce((s, i) => s + (Number(i.fats) || 0), 0) * 10) / 10;
+      const recordId = data.results?.find(r => r.tool === 'logMeal')?.recordId || data.results?.find(r => r.tool === 'logMeal')?.record?.id;
+
+      resultBodyEl.innerHTML = '';
+      renderMealConfirmationCard(resultBodyEl, {
+        mealId: recordId,
+        items,
+        cals,
+        prot,
+        carbs,
+        fats,
+        detectedTitle: args.mealType || transcriptEl?.textContent || chatInput?.value || ''
+      });
       showResultCard();
       return;
     }
 
     // مكمل غذائي
     if (suppAction) {
-      const supp = suppAction.arguments.supplement || 'المكمل';
+      const args = suppAction.arguments || suppAction.args || {};
+      const supp = args.supplement || 'المكمل';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
           <span>💊 تم تسجيل المكمل</span>
@@ -691,7 +928,8 @@ export function bindNeonAiViewEvents() {
 
     // إضافة للمشتريات
     if (shopAddAction) {
-      const names = shopAddAction.arguments.names || (shopAddAction.arguments.name ? [shopAddAction.arguments.name] : []);
+      const args = shopAddAction.arguments || shopAddAction.args || {};
+      const names = args.names || (args.name ? [args.name] : []);
       const listStr = names.join(' و ') || 'أصناف التسوق';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(56,189,248,0.15); color: #38BDF8; border-color: rgba(56,189,248,0.3);">
@@ -707,7 +945,8 @@ export function bindNeonAiViewEvents() {
 
     // حذف من المشتريات
     if (shopRemAction) {
-      const name = shopRemAction.arguments.name || 'العنصر';
+      const args = shopRemAction.arguments || shopRemAction.args || {};
+      const name = args.name || 'العنصر';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(255,107,107,0.15); color: #FF6B6B; border-color: rgba(255,107,107,0.3);">
           <span>🗑️ حذف من المشتريات</span>
@@ -723,7 +962,8 @@ export function bindNeonAiViewEvents() {
     // أولوية اليوم
     if (prioAction) {
       const labelsAr = { workout: 'التمرين', nutrition: 'التغذية', water: 'الماء', supplements: 'المكملات' };
-      const rawKind = prioAction.arguments.priority || prioAction.arguments.kind || 'workout';
+      const args = prioAction.arguments || prioAction.args || {};
+      const rawKind = args.priority || args.kind || 'workout';
       const label = labelsAr[rawKind] || 'التمرين';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(255,215,0,0.15); color: #FFD700; border-color: rgba(255,215,0,0.3);">
@@ -822,28 +1062,77 @@ export function bindNeonAiViewEvents() {
     showResultCard();
   }
 
-  function renderGeneralAnswerResult(replyText) {
+  function renderGeneralAnswerResult(replyText, mealsDataOrSingle = null) {
     if (!resultBodyEl) return;
     resultBodyEl.innerHTML = `
       <div class="neon-ai-action-badge">
         <span>✓ إجابة NEON AI</span>
       </div>
-      <div class="neon-ai-action-metric" style="font-size: 1.15rem; color: #FFFFFF; line-height: 1.6; text-align: center; max-width: 800px;">
+      <div class="neon-ai-action-metric" style="font-size: 1.05rem; color: #FFFFFF; line-height: 1.6; text-align: right; max-width: 800px; margin-bottom: 10px;">
         ${replyText}
       </div>
     `;
+
+    const mealsList = Array.isArray(mealsDataOrSingle)
+      ? mealsDataOrSingle.filter(m => m && (m.totalCalories > 0 || m.calories > 0 || m.items?.length > 0))
+      : (mealsDataOrSingle && (mealsDataOrSingle.totalCalories > 0 || mealsDataOrSingle.items?.length > 0) ? [mealsDataOrSingle] : []);
+
+    if (mealsList.length > 0) {
+      const meal = mealsList[0];
+      renderMealConfirmationCard(resultBodyEl, {
+        items: meal.items || [],
+        cals: meal.totalCalories ?? meal.calories ?? 0,
+        prot: meal.totalProtein ?? meal.protein ?? 0,
+        carbs: meal.totalCarbs ?? meal.carbs ?? 0,
+        fats: meal.totalFats ?? meal.fats ?? 0,
+        detectedTitle: meal.titleAr || ''
+      });
+    }
+
     showResultCard();
   }
 
-  function renderClarificationResult(questionText) {
+  function renderClarificationResult(data) {
     if (!resultBodyEl) return;
+    const questionText = typeof data === 'string' ? data : (data?.reply || data?.question || 'يرجى توضيح التفاصيل الناقصة لإكمال طلبك.');
+    const options = (data && Array.isArray(data.options)) ? data.options : (data?.cards?.[0]?.options || []);
+
+    let chipsHtml = '';
+    if (options.length > 0) {
+      chipsHtml = `
+        <div class="neon-ai-clarification-chips" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px;">
+          ${options.map(opt => `
+            <button type="button" class="neon-ai-choice-chip" data-choice="${opt}" style="background: rgba(0, 255, 156, 0.08); border: 1px solid rgba(0, 255, 156, 0.35); color: #00FF9C; padding: 7px 16px; border-radius: 20px; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">
+              ${opt}
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    resultCard?.classList.remove('is-empty');
+    resultCard?.classList.add('animate-in', 'has-action');
+    voiceCard?.classList.add('compact');
+
     resultBodyEl.innerHTML = `
-      <div class="neon-ai-clarification-box">
-        <div class="neon-ai-clarification-text">❓ ${questionText}</div>
-        <div class="neon-ai-action-footer-note">تحدث الآن بالإجابة أو اكتبها في الأسفل</div>
+      <div class="neon-ai-clarification-box" style="text-align: center; padding: 10px 4px;">
+        <div class="neon-ai-clarification-text" style="font-size: 1.12rem; font-weight: 700; color: #FFFFFF; line-height: 1.5;">❓ ${questionText}</div>
+        ${chipsHtml}
+        <div class="neon-ai-action-footer-note" style="margin-top: 12px; color: #7E998A;">تحدث بالإجابة، انقر على أحد الخيارات، أو اكتب في الأسفل</div>
       </div>
     `;
     showResultCard();
+
+    // ربط نقرات خيارات التوضيح (Choice Chips)
+    resultBodyEl.querySelectorAll('.neon-ai-choice-chip').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const choice = e.currentTarget.getAttribute('data-choice');
+        if (choice) {
+          handleUnifiedInput(choice);
+        }
+      });
+    });
+
     // تفعيل الاستماع الصوتي فوراً لمساعدة المستخدم بالرد
     setTimeout(() => {
       if (!isListening) toggleVoiceSession();

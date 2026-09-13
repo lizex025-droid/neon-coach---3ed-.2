@@ -9,7 +9,7 @@
  * ?? ???? ??? (HTMLAudioElement Fallback) ??? ??????? ??? ??? ?????????? ??????? ?? ??? ???? ?? ???.
  */
 
-export const NEON_ACK_SOUND_URL = 'https://fqwjcacuxsumqpmdsfxc.supabase.co/storage/v1/object/sign/AUDIO/computerbeep_8%20-%20acknolwedgement.mp3?token=eyJraWQiOiJhNTYxNDMyYS0yZTVmLTQwMGEtODNiNi1mNTkyODJmMTNiYmIiLCJhbGciOiJIUzUxMiJ9.eyJ1cmwiOiJBVURJTy9jb21wdXRlcmJlZXBfOCAtIGFja25vbHdlZGdlbWVudC5tcDMiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg5MTc3NDU2LCJleHAiOjMzNjU5Nzc0NTZ9.GU9xS5quHX-CICaMIcngsriccA0stqDEBQ2R3pGQWK2GRZ3DLYg2qvKy7Xny698DV08D5zVvb_Hs7mg6HEovxA';
+export const NEON_ACK_SOUND_URL = '/neon-ack.wav';
 
 export const NEON_SOUND_CONFIG = {
   url: NEON_ACK_SOUND_URL,

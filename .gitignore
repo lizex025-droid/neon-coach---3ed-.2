@@ -4,3 +4,6 @@ dist/
 .env.local
 .env.*.local
 scratch/
+*.checkpoints.json
+.agent_checkpoints.json
+.test_langgraph_checkpoints.json

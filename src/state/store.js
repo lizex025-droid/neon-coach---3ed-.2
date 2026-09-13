@@ -7,6 +7,7 @@ import { EMPTY_INITIAL_STATE } from './demoData.js';
 import { calculateAge, calculateNutritionTargets, filterStrongestExercisePerMuscle } from '../domain/calculations.js';
 import { syncService } from '../services/syncService.js';
 import { executeActionTools, shoppingItemsFor, localDate } from '../domain/actionAgent.js';
+import { rolloverDailyState } from '../domain/dailyCycle.js';
 
 const STORAGE_KEY = 'neon_coach_app_state_v1';
 
@@ -15,7 +16,42 @@ class Store {
     this.state = this.loadState();
     this.listeners = new Set();
     syncService.setStore(this);
+    const rolledOver = this.ensureCurrentDay({ notify: false });
     this.initDailyStackSync();
+    if (rolledOver) this.saveState({ notify: false });
+    this.startDailyRolloverMonitor();
+  }
+
+  ensureCurrentDay({ now = new Date(), notify = true } = {}) {
+    const result = rolloverDailyState(this.state, now);
+    if (!result.changed) return false;
+    this.state = result.state;
+    this.saveState({ notify });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('neon:day-rollover', {
+        detail: { date: this.state.today.date, archivedDate: result.archived?.date || null }
+      }));
+    }
+    return true;
+  }
+
+  startDailyRolloverMonitor() {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const schedule = () => {
+      if (this._dailyRolloverTimer) window.clearTimeout(this._dailyRolloverTimer);
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 100);
+      this._dailyRolloverTimer = window.setTimeout(() => {
+        this.ensureCurrentDay();
+        schedule();
+      }, Math.max(250, nextMidnight.getTime() - now.getTime()));
+    };
+    window.addEventListener('focus', () => this.ensureCurrentDay());
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') this.ensureCurrentDay();
+    });
+    schedule();
   }
 
   initDailyStackSync() {
@@ -78,15 +114,18 @@ class Store {
   }
 
   getState() {
+    this.ensureCurrentDay({ notify: false });
     return this.state;
   }
 
   setState(partialState, { notify = true } = {}) {
     if (!partialState || typeof partialState !== 'object') return;
+    this.ensureCurrentDay({ notify: false });
     this.state = {
       ...this.state,
       ...partialState
     };
+    this.ensureCurrentDay({ notify: false });
     this.saveState({ notify });
   }
 
@@ -101,6 +140,7 @@ class Store {
       throw new Error('بيانات النسخة الاحتياطية غير صالحة');
     }
     this.state = newState;
+    this.ensureCurrentDay({ notify: false });
     this.saveState();
   }
 
@@ -194,6 +234,7 @@ class Store {
 
   // --- تتبع شرب الماء ---
   addWaterCup(amountMl = 250) {
+    this.ensureCurrentDay({ notify: false });
     const currentLiters = this.state.today.consumedWaterLiters || 0;
     const newLiters = Math.round((currentLiters + (amountMl / 1000)) * 10) / 10;
     this.state.today.consumedWaterLiters = newLiters;
@@ -208,6 +249,7 @@ class Store {
   }
 
   undoWaterCup(amountMl = 250) {
+    this.ensureCurrentDay({ notify: false });
     const currentLiters = this.state.today.consumedWaterLiters || 0;
     if (currentLiters <= 0 && (!this.state.today.consumedGlasses || this.state.today.consumedGlasses <= 0)) return;
     const newLiters = Math.max(0, Math.round((currentLiters - (amountMl / 1000)) * 10) / 10);
@@ -219,6 +261,7 @@ class Store {
 
   // --- تتبع المكملات القديم والتوافق ---
   toggleSupplement(suppId, timeOfDay = 'morning') {
+    this.ensureCurrentDay({ notify: false });
     const supp = this.state.supplementsSchedule.find(s => s.id === suppId);
     if (supp && supp.schedule && supp.schedule[timeOfDay]) {
       const isTaken = !supp.schedule[timeOfDay].taken;
@@ -230,12 +273,7 @@ class Store {
 
   // --- إدارة مكملات Daily Stack المتقدمة (من supplments.html) ---
   getActiveDate() {
-    const now = new Date();
-    if (now.getHours() < 6) now.setDate(now.getDate() - 1);
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return localDate();
   }
 
   getDailyStackItems() {
@@ -309,6 +347,7 @@ class Store {
   }
 
   toggleDailyStackTaken(itemId) {
+    this.ensureCurrentDay({ notify: false });
     const taken = this.getDailyStackTaken();
     if (taken[itemId]) {
       delete taken[itemId];
@@ -432,18 +471,21 @@ class Store {
 
   // --- تتبع الطاقة اليومية (1-5) ---
   setEnergyLevel(level) {
+    this.ensureCurrentDay({ notify: false });
     this.state.today.energyLevel = Math.max(1, Math.min(5, level));
     this.saveState();
   }
 
   // --- إدارة جلسة التمرين النشطة ---
   startWorkoutSession() {
+    this.ensureCurrentDay({ notify: false });
     this.state.today.workoutStatus = 'in_progress';
     this.state.activeWorkoutSession.startedAtTimestamp = Date.now() - (this.state.activeWorkoutSession.elapsedSeconds * 1000);
     this.saveState();
   }
 
   updateWorkoutSet(setIndex, field, value) {
+    this.ensureCurrentDay({ notify: false });
     const exercise = this.state.activeWorkoutSession.currentExercise;
     if (exercise && exercise.sets[setIndex]) {
       exercise.sets[setIndex][field] = value;
@@ -452,6 +494,7 @@ class Store {
   }
 
   toggleSetCompletion(setIndex) {
+    this.ensureCurrentDay({ notify: false });
     const exercise = this.state.activeWorkoutSession.currentExercise;
     if (exercise && exercise.sets[setIndex]) {
       exercise.sets[setIndex].completed = !exercise.sets[setIndex].completed;
@@ -460,6 +503,7 @@ class Store {
   }
 
   addWorkoutSet() {
+    this.ensureCurrentDay({ notify: false });
     const exercise = this.state.activeWorkoutSession.currentExercise;
     if (exercise) {
       const lastSet = exercise.sets[exercise.sets.length - 1] || { weight: 70, reps: 10, rpe: 8 };
@@ -475,6 +519,7 @@ class Store {
   }
 
   logWorkoutPain(location, severity, note) {
+    this.ensureCurrentDay({ notify: false });
     this.state.activeWorkoutSession.painReports.push({
       timestamp: new Date().toISOString(),
       location,
@@ -485,6 +530,7 @@ class Store {
   }
 
   finishWorkoutSession(customData = null) {
+    this.ensureCurrentDay({ notify: false });
     if (this.state.today.workoutStatus === 'completed' && !customData) return; // منع إنهاء الجلسة مرتين
     this.state.today.workoutStatus = 'completed';
     this.state.today.isWorkoutCompleted = true;
@@ -637,6 +683,7 @@ class Store {
 
   // --- تسجيل الوجبات وتحديث المجاميع ---
   logMeal(meal) {
+    this.ensureCurrentDay({ notify: false });
     const newLog = {
       id: 'log-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
       date: localDate(),
@@ -668,7 +715,9 @@ class Store {
     return newLog;
   }
 
-  updateLoggedMeal(logId, updatedData) {
+  async updateLoggedMeal(logId, updatedData) {
+    const userId = this.state.auth?.user?.id;
+    if (userId) await syncService.persistManualMeal(userId, logId, updatedData);
     const index = this.state.loggedMeals.findIndex(m => m.id === logId);
     if (index !== -1) {
       this.state.loggedMeals[index] = { ...this.state.loggedMeals[index], ...updatedData };
@@ -677,7 +726,9 @@ class Store {
     }
   }
 
-  deleteLoggedMeal(logId) {
+  async deleteLoggedMeal(logId) {
+    const userId = this.state.auth?.user?.id;
+    if (userId) await syncService.persistManualMeal(userId, logId);
     this.state.loggedMeals = this.state.loggedMeals.filter(m => m.id !== logId);
     this.recalculateDailyNutrition();
     this.saveState();
@@ -787,6 +838,7 @@ class Store {
   }
 
   executeAgentTools(tools) {
+    this.ensureCurrentDay({ notify: false });
     const context = this.getActionContext();
     const result = executeActionTools(context, tools);
     if (!result.changed) return result;

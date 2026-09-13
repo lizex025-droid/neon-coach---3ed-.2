@@ -1,3 +1,5 @@
+import { neonActionAgent } from '../services/neonActionAgent.js';
+import { renderNeonResult } from './neonResultCards.js';
 /**
  * NEON COACH - الزر العائم ونافذة المحادثة الذكية للذكاء الاصطناعي (AI Coach Drawer)
  * يدعم: أحدث نماذج Google Gemini (2.0 Flash / Pro) و OpenAI وذاكرة المحادثة المتعددة
@@ -26,7 +28,7 @@ export function renderAiDrawer() {
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
-            <button id="ai-settings-toggle-btn" class="btn-icon" style="width: 36px; height: 36px; font-size: 1.05rem;" title="إعدادات نموذج الذكاء ومفتاح API" aria-label="الإعدادات">
+            <button hidden id="ai-settings-toggle-btn" class="btn-icon" style="width: 36px; height: 36px; font-size: 1.05rem;" title="إعدادات نموذج الذكاء ومفتاح API" aria-label="الإعدادات">
               ⚙️
             </button>
             <button id="ai-modal-close-btn" class="btn-icon" style="width: 36px; height: 36px;" aria-label="إغلاق">
@@ -277,11 +279,13 @@ export function bindAiDrawerEvents() {
     });
   });
 
+  neonActionAgent.restore().then(r => { if (!r || !messagesContainer.isConnected) return; for (const m of r.messages || []) appendMessage(m.content, m.role === 'user' ? 'user' : 'ai'); if (r.clarification) { const card = document.createElement('div'); messagesContainer.appendChild(card); renderNeonResult(card, { ...r, status: 'clarification' }); } });
+
   // إرسال رسالة للمحادثة
   chatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = chatInput.value.trim();
-    if (!text) return;
+    if (!text || neonActionAgent.busy) return;
 
     // إضافة رسالة المستخدم للواجهة ولذاكرة المحادثة
     appendMessage(text, 'user');
@@ -296,29 +300,11 @@ export function bindAiDrawerEvents() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     try {
-      const state = store.getState();
-      const dailyStackItems = typeof store.getDailyStackItems === 'function' ? store.getDailyStackItems() : [];
-      const dailyStackTaken = typeof store.getDailyStackTaken === 'function' ? store.getDailyStackTaken() : {};
-      const context = {
-        userProfile: state.userProfile,
-        today: state.today,
-        loggedMeals: state.loggedMeals || [],
-        mealPlan: state.mealPlan,
-        activeWorkoutSession: state.activeWorkoutSession,
-        workoutSchedule: state.workoutSchedule,
-        fortyDay: state.fortyDay,
-        weeklyCheckin: state.weeklyCheckin,
-        progressReport: state.progressReport,
-        dailyStackItems,
-        dailyStackTaken,
-        workout: state.workout
-      };
-
-      const response = await aiService.chatWithCoach(text, context, chatHistory);
+      const response = await neonActionAgent.handleUserUtterance(text, { isVoice: false });
       typingElem.remove();
 
       // حفظ الرد بذاكرة المحادثة
-      const replyText = response.reply || 'تم استلام استفسارك بنجاح.';
+      const replyText = response.reply || response.error || 'تعذر تأكيد النتيجة.';
       chatHistory.push({ sender: 'ai', text: replyText });
 
       // تقليم تاريخ المحادثة لمنع التضخم
@@ -326,10 +312,10 @@ export function bindAiDrawerEvents() {
         chatHistory.splice(0, chatHistory.length - 20);
       }
 
-      appendMessage(replyText, 'ai', response.mealsData || (response.mealData ? [response.mealData] : null));
+      const result = document.createElement('div'); result.className = 'chat-bubble ai'; messagesContainer.appendChild(result); renderNeonResult(result, response);
     } catch (err) {
       typingElem.remove();
-      appendMessage('عذراً يا بطل! حدث خطأ مؤقت في الاتصال. يمكنك إعادة السؤال أو التحقق من مفتاح API من زر الإعدادات ⚙️.', 'ai');
+      appendMessage('تعذر الاتصال بالخادم. لم يتم تأكيد الحفظ. أعد محاولة نفس الطلب.', 'ai');
     }
   });
 
@@ -356,7 +342,7 @@ export function bindAiDrawerEvents() {
     bubble.className = `chat-bubble ${sender}`;
 
     if (sender === 'ai') {
-      bubble.innerHTML = formatAiResponse(msgText);
+      bubble.textContent = msgText;
 
       const mealsList = Array.isArray(mealsDataOrSingle)
         ? mealsDataOrSingle.filter(m => m && (m.totalCalories > 0 || m.calories > 0 || m.items?.length > 0))
@@ -735,4 +721,3 @@ export function bindAiDrawerEvents() {
     }
   }
 }
-

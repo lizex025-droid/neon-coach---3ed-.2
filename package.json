@@ -4,16 +4,28 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode neon",
     "build": "vite build",
-    "test": "node --test tests/neonActionAgent.test.js tests/neonSoundFeedback.test.js tests/actionVoice.test.js tests/supplementsAndWater.test.js tests/calculations.test.js tests/calorieEngine.test.js tests/nutrition.test.js tests/nutritionSearch.test.js tests/planner.test.js"
+    "test": "node --test tests/aiProxy.test.js tests/dailyCycle.test.js tests/neonBackend.test.js tests/neonDispatcher.test.js tests/neonActionAgent.test.js tests/neonSoundFeedback.test.js tests/actionVoice.test.js tests/supplementsAndWater.test.js tests/calculations.test.js tests/calorieEngine.test.js tests/nutrition.test.js tests/nutritionSearch.test.js tests/planner.test.js",
+    "test:provider": "node --env-file=.env.local scripts/test-neon-provider.mjs",
+    "test:browser": "node scripts/verify-neon-browser.mjs",
+    "db:neon": "node --env-file=.env.local --env-file=.env.neon.local scripts/setup-neon-local.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.12"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@playwright/test": "1.63.0",
     "@supabase/supabase-js": "^2.116.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.2.11",
+    "@langchain/langgraph": "^1.4.15",
+    "@langchain/langgraph-checkpoint-postgres": "1.0.5",
+    "pg": "8.23.0",
+    "zod": "4.6.2"
   }
 }

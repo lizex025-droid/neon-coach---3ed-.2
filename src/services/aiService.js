@@ -15,23 +15,8 @@ const memoryStorage = {
 };
 
 // قراءة المفاتيح المحفوظة محلياً أو من متغيرات البيئة
-function getGeminiKey() {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const custom = window.localStorage.getItem('neon_gemini_api_key');
-    if (custom && custom.trim()) return custom.trim();
-  }
-  if (memoryStorage.neon_gemini_api_key) return memoryStorage.neon_gemini_api_key;
-  return (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) || '';
-}
-
-function getOpenAIKey() {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const custom = window.localStorage.getItem('neon_openai_api_key');
-    if (custom && custom.trim()) return custom.trim();
-  }
-  if (memoryStorage.neon_openai_api_key) return memoryStorage.neon_openai_api_key;
-  return (typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENAI_API_KEY) || '';
-}
+function getGeminiKey() { return ''; }
+function getOpenAIKey() { return ''; }
 
 function getSelectedModel() {
   if (typeof window !== 'undefined' && window.localStorage) {
@@ -322,17 +307,8 @@ ${weeklyCheckin.sleepHours ? `- متابعة النوم: متوسط ${weeklyChec
 }
 
 export const aiService = {
-  getProviderName() {
-    const geminiKey = getGeminiKey();
-    const openaiKey = getOpenAIKey();
-    if (geminiKey) return 'Google Gemini (مفتاح مخصص) 🟢';
-    if (openaiKey) return 'OpenAI GPT-4o mini 🟢';
-    return 'Google Gemini 3.6 Flash (سحابي محمي مدمج) 🟢';
-  },
-
-  isLiveProvider() {
-    return true;
-  },
+  getProviderName() { return 'NEON · AI Proxy'; },
+  isLiveProvider() { return false; },
 
   getActiveModel() {
     return getSelectedModel();
@@ -351,28 +327,7 @@ export const aiService = {
     return '';
   },
 
-  setCustomApiKey(provider, key) {
-    const cleanKey = (key || '').trim();
-    if (provider === 'gemini') {
-      memoryStorage.neon_gemini_api_key = cleanKey;
-      if (typeof window !== 'undefined' && window.localStorage) {
-        if (cleanKey) {
-          window.localStorage.setItem('neon_gemini_api_key', cleanKey);
-        } else {
-          window.localStorage.removeItem('neon_gemini_api_key');
-        }
-      }
-    } else if (provider === 'openai') {
-      memoryStorage.neon_openai_api_key = cleanKey;
-      if (typeof window !== 'undefined' && window.localStorage) {
-        if (cleanKey) {
-          window.localStorage.setItem('neon_openai_api_key', cleanKey);
-        } else {
-          window.localStorage.removeItem('neon_openai_api_key');
-        }
-      }
-    }
-  },
+  setCustomApiKey() { throw new Error('Configure GEMINI_API_KEY on the backend only.'); },
 
   /**
    * 1. تحليل وجبة طعام من نص عربي (parse_meal)
@@ -487,180 +442,41 @@ export const aiService = {
     if (!rawMsg) return { success: false, reply: 'تفضل بسؤالك يا بطل!', isAiGenerated: false };
     const lower = rawMsg.toLowerCase();
 
-    const geminiKey = getGeminiKey();
-    const openaiKey = getOpenAIKey();
-    const activeModel = getSelectedModel();
     const userContextStr = formatUserContext(context);
 
-    // 1) استدعاء خادم Gemini السحابي المحمي (Server-Side Protected Gemini)
-    // يعمل تلقائياً لجميع المستخدمين بدون الحاجة لإدخال أي مفتاح وبحماية كاملة
-    if (!geminiKey) {
-      try {
-        const serverResp = await fetch('/api/gemini', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: rawMsg,
-            dashboardData: {
-              userContext: userContextStr,
-              chatHistory: (chatHistory || []).slice(-6)
-            }
-          })
-        });
+    // جميع مفاتيح المزودات تبقى على الخادم. الواجهة ترسل البيانات الآمنة فقط.
+    try {
+      const serverResp = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'auto',
+          message: rawMsg,
+          dashboardData: { userContext: userContextStr },
+          chatHistory: (chatHistory || []).slice(-10)
+        })
+      });
 
-        if (serverResp.ok) {
-          const data = await serverResp.json();
-          if (data && data.reply) {
-            const extracted = extractMealsFromAiReply(data.reply, rawMsg);
-            return {
-              success: true,
-              reply: extracted.cleanReply,
-              mealData: extracted.mealData,
-              mealsData: extracted.mealsData,
-              isAiGenerated: true,
-              provider: `Google Gemini (${data.model || 'gemini-3.6-flash'}) 🟢`
-            };
-          }
+      if (serverResp.ok) {
+        const data = await serverResp.json();
+        if (data && data.reply) {
+          const extracted = extractMealsFromAiReply(data.reply, rawMsg);
+          const providerName = data.provider === 'openai' ? 'OpenAI' : 'Google Gemini';
+          return {
+            success: true,
+            reply: extracted.cleanReply,
+            mealData: extracted.mealData,
+            mealsData: extracted.mealsData,
+            isAiGenerated: true,
+            provider: `${providerName} (${data.model || 'server default'}) 🟢`
+          };
         }
-      } catch (err) {
-        console.warn('تعذر استدعاء خادم Gemini السحابي، سيتم الانتقال للبديل:', err);
       }
+    } catch (err) {
+      console.warn('تعذر استدعاء AI Proxy، سيتم استخدام الرد المحلي:', err);
     }
 
-    // 2) استدعاء نموذج Google Gemini المباشر في حال أدخل المستخدم مفتاحاً خاصاً به
-    if (geminiKey) {
-      try {
-        const contents = [];
-
-        // تحويل سجل المحادثة السابق لتنسيق Gemini مع ضمان سلامة الأدوار والبدء بـ user
-        if (Array.isArray(chatHistory) && chatHistory.length > 0) {
-          const validHistory = chatHistory.filter(m => m && m.text && m.sender !== 'system').slice(-12);
-          for (const msg of validHistory) {
-            const role = msg.sender === 'user' ? 'user' : 'model';
-            if (contents.length === 0 && role === 'model') {
-              continue;
-            }
-            if (contents.length > 0 && contents[contents.length - 1].role === role) {
-              contents[contents.length - 1].parts[0].text += '\n' + msg.text;
-            } else {
-              contents.push({
-                role: role,
-                parts: [{ text: msg.text }]
-              });
-            }
-          }
-        }
-
-        // إضافة رسالة المستخدم الحالية
-        if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
-          contents[contents.length - 1].parts[0].text += '\n' + rawMsg;
-        } else {
-          contents.push({
-            role: 'user',
-            parts: [{ text: rawMsg }]
-          });
-        }
-
-        const targetModel = activeModel.includes('1.5-pro') ? 'gemini-1.5-pro' : 'gemini-3.6-flash';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${geminiKey}`;
-
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [
-                { text: `${MASTER_COACH_SYSTEM_INSTRUCTION}\n\n[بيانات المتدرب الحالية]:\n${userContextStr}` }
-              ]
-            },
-            contents: contents,
-            generationConfig: {
-              temperature: 0.7,
-              topP: 0.95,
-              maxOutputTokens: 1600
-            }
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (replyText) {
-            const extracted = extractMealsFromAiReply(replyText, rawMsg);
-            return {
-              success: true,
-              reply: extracted.cleanReply,
-              mealData: extracted.mealData,
-              mealsData: extracted.mealsData,
-              isAiGenerated: true,
-              provider: `Google Gemini (${targetModel})`
-            };
-          }
-        } else {
-          const errData = await response.json().catch(() => ({}));
-          console.warn('Gemini API Error:', errData?.error?.message || response.statusText);
-        }
-      } catch (err) {
-        console.warn('تعذر استدعاء Google Gemini API، سيتم استخدام الرد العلمي الذكي المحلي:', err);
-      }
-    }
-
-    // 3) استدعاء OpenAI كخيار إضافي
-    if (openaiKey) {
-      try {
-        const messages = [
-          {
-            role: 'system',
-            content: `${MASTER_COACH_SYSTEM_INSTRUCTION}\n\n[بيانات المتدرب الحالية]:\n${userContextStr}`
-          }
-        ];
-
-        if (Array.isArray(chatHistory) && chatHistory.length > 0) {
-          chatHistory.slice(-8).forEach(msg => {
-            messages.push({
-              role: msg.sender === 'user' ? 'user' : 'assistant',
-              content: msg.text
-            });
-          });
-        }
-
-        messages.push({ role: 'user', content: rawMsg });
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openaiKey}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: messages,
-            temperature: 0.7,
-            max_tokens: 1400
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const replyText = data?.choices?.[0]?.message?.content;
-          if (replyText) {
-            const extracted = extractMealsFromAiReply(replyText, rawMsg);
-            return {
-              success: true,
-              reply: extracted.cleanReply,
-              mealData: extracted.mealData,
-              mealsData: extracted.mealsData,
-              isAiGenerated: true,
-              provider: 'OpenAI GPT-4o mini'
-            };
-          }
-        }
-      } catch (err) {
-        console.warn('تعذر استدعاء OpenAI API:', err);
-      }
-    }
-
-    // 3) المحاكي الرياضي والعلمي المحلي الفائق (Deterministic Offline Master Coach)
+    // المحاكي الرياضي والعلمي المحلي (Deterministic Offline Master Coach)
     // يعمل بدقة عالية في حال عدم إدخال مفتاح API أو عدم توفر اتصال بالإنترنت
     await new Promise(resolve => setTimeout(resolve, 350));
     // 0) تذكر واسترجاع ما دار في المحادثات السابقة

@@ -5,6 +5,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
+import { localDate } from '../domain/actionAgent.js';
 
 let storeInstance = null;
 
@@ -32,93 +33,14 @@ class SyncService {
     try {
       this.isSyncing = true;
       const store = this.getStore();
-
-      // 1. جلب البروفايل
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profile && store) {
-        store.setUserProfile({
-          name: profile.name || '',
-          email: profile.email || '',
-          age: profile.age || 25,
-          gender: profile.gender || 'male',
-          height: profile.height || 178,
-          currentWeight: profile.current_weight || 75,
-          targetWeight: profile.target_weight || 80,
-          goal: profile.fitness_goal || 'fat_loss',
-          weeklyLossPercent: profile.weekly_loss_percent !== undefined && profile.weekly_loss_percent !== null ? Number(profile.weekly_loss_percent) : 0.0075,
-          weeklyLossKg: profile.weekly_loss_kg !== undefined && profile.weekly_loss_kg !== null ? Number(profile.weekly_loss_kg) : 0.53,
-          dailyCalorieDeficit: profile.daily_calorie_deficit !== undefined && profile.daily_calorie_deficit !== null ? Number(profile.daily_calorie_deficit) : 578,
-          requestedCalories: profile.requested_calories !== undefined && profile.requested_calories !== null ? Number(profile.requested_calories) : (profile.target_calories || 1822),
-          estimatedGoalWeeks: profile.estimated_goal_weeks !== undefined && profile.estimated_goal_weeks !== null ? Number(profile.estimated_goal_weeks) : 10,
-          weightLossRiskLevel: profile.weight_loss_risk_level || 'optimal',
-          activityLevel: profile.activity_level || 'light',
-          workoutDaysCount: profile.training_days_per_week || 4,
-          equipment: profile.equipment || 'gym',
-          injuries: profile.injuries || [],
-          allergens: profile.allergies || [],
-          likedFoods: profile.liked_foods || [],
-          dislikedFoods: profile.disliked_foods || [],
-          targetCalories: profile.target_calories || 2400,
-          targetProtein: profile.target_protein || 180,
-          targetCarbs: profile.target_carbs || 250,
-          targetFats: profile.target_fats || 65,
-          targetWaterLiters: profile.target_water_liters || 2.5,
-          targetGlasses: profile.target_glasses || 10,
-          onboardingCompleted: !!profile.onboarding_completed,
-          onboarding_completed: !!profile.onboarding_completed,
-        });
-      }
-
-      // 2. جلب وجبات اليوم
-      const todayStr = new Date().toISOString().split('T')[0];
-      const { data: meals } = await supabase
-        .from('meal_logs')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('date', todayStr);
-
-      if (meals && meals.length > 0 && store) {
-        const totalCals = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
-        const totalP = meals.reduce((sum, m) => sum + (Number(m.protein) || 0), 0);
-        const totalC = meals.reduce((sum, m) => sum + (Number(m.carbs) || 0), 0);
-        const totalF = meals.reduce((sum, m) => sum + (Number(m.fats) || 0), 0);
-
-        store.setState({
-          today: {
-            ...store.getState().today,
-            consumedCalories: totalCals,
-            consumedProtein: Math.round(totalP),
-            consumedCarbs: Math.round(totalC),
-            consumedFats: Math.round(totalF),
-          },
-          loggedMeals: meals,
-        });
-      }
-
-      // 3. جلب سجل الماء لليوم
-      const { data: water } = await supabase
-        .from('water_logs')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('date', todayStr)
-        .maybeSingle();
-
-      if (water && store) {
-        store.setState({
-          today: {
-            ...store.getState().today,
-            consumedGlasses: water.consumed_glasses || 0,
-            consumedWaterLiters: Number(((water.consumed_ml || 0) / 1000).toFixed(2)),
-          },
-        });
-      }
-
+      // The authenticated backend snapshot includes weight, empty/deleted resources,
+      // profile timezone and current totals; never overwrite it with stale local state.
+      const { restoreNeonConversation } = await import('./submitNeonCommand.js');
+      const restored = await restoreNeonConversation();
+      if (restored.status === 'error') throw new Error(restored.reply);
+      store?.notify();
       return { success: true };
+
     } catch (err) {
       console.warn('تعذر استكمال المزامنة السحابية:', err);
       return { success: false, error: err.message };
@@ -184,7 +106,7 @@ class SyncService {
         .from('meal_logs')
         .insert({
           user_id: userId,
-          date: meal.date || new Date().toISOString().split('T')[0],
+          date: meal.date || localDate(),
           meal_type: meal.meal_type || 'meal',
           name: meal.name,
           calories: meal.calories,
@@ -201,13 +123,23 @@ class SyncService {
     }
   }
 
+  async persistManualMeal(userId, id, update = null) {
+    if (!isSupabaseConfigured() || !userId) throw new Error('سجّل الدخول لحفظ تعديل الوجبة.');
+    const query = update ? supabase.from('meal_logs').update({ name: update.titleAr, calories: update.calories, protein: update.protein, carbs: update.carbs, fats: update.fats, items: update.items }) : supabase.from('meal_logs').delete();
+    const { data, error } = await query.eq('user_id', userId).eq('id', id).select('id');
+    if (error || data?.length !== 1) throw new Error('تعذر حفظ تعديل الوجبة في الحساب.');
+    const { data: readback, error: readError } = await supabase.from('meal_logs').select('*').eq('user_id', userId).eq('id', id).maybeSingle();
+    if (readError || (update ? !readback : !!readback)) throw new Error('تعذر تأكيد نتيجة تعديل الوجبة.');
+    return readback;
+  }
+
   /**
    * مزامنة استهلاك الماء اليومي
    */
   async syncWaterLog(userId, consumedMl, glassesCount, targetGlasses = 10) {
     if (!isSupabaseConfigured() || !userId) return null;
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDate();
       const { data, error } = await supabase
         .from('water_logs')
         .upsert({
@@ -238,7 +170,7 @@ class SyncService {
           user_id: userId,
           workout_title: workout.title || 'جلسة تدريبية',
           program_type: workout.programType || 'forty_days',
-          date: workout.date || new Date().toISOString().split('T')[0],
+          date: workout.date || localDate(),
           duration_minutes: workout.durationMinutes || 50,
           total_volume_kg: workout.totalVolumeKg || 0,
           rpe: workout.rpe || null,
@@ -264,7 +196,7 @@ class SyncService {
         .from('inbody_records')
         .insert({
           user_id: userId,
-          date: record.date || new Date().toISOString().split('T')[0],
+          date: record.date || localDate(),
           weight: record.weight,
           body_fat_pct: record.bodyFatPct || null,
           muscle_mass_kg: record.muscleMassKg || null,
@@ -293,7 +225,7 @@ class SyncService {
   async syncEnergyLog(userId, energyLevel, sleepHours = null, mood = '') {
     if (!isSupabaseConfigured() || !userId) return null;
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDate();
       const { data, error } = await supabase
         .from('daily_energy_logs')
         .upsert({

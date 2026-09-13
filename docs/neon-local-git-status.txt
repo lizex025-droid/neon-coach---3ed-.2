@@ -1,0 +1,40 @@
+﻿ M .env.example
+ M .gitignore
+ M README.md
+ M api/action-agent.js
+ M api/gemini.js
+ M package-lock.json
+ M package.json
+ M public/pdfs.html
+ M src/components/aiDrawer.js
+ M src/components/voice/neonVoiceOverlay.js
+ M src/router/router.js
+ M src/services/aiService.js
+ M src/services/neonActionAgent.js
+ M src/services/supabaseClient.js
+ M src/services/syncService.js
+ M src/services/voice/neonSoundService.js
+ M src/services/voice/sttAdapter.js
+ M src/state/store.js
+ M src/styles/neonAiMaster.css
+ M src/views/neonAiView.js
+ M src/views/nutritionView.js
+ M tests/neonSoundFeedback.test.js
+ M vite.config.js
+?? .env.neon.example
+?? api/ai.js
+?? api/langgraph/
+?? docs/neon-local-execution-report.md
+?? public/neon-ack.wav
+?? scripts/
+?? src/components/neonResultCards.js
+?? src/services/neonCommandAgent.js
+?? src/services/submitNeonCommand.js
+?? supabase/.gitignore
+?? supabase/config.toml
+?? supabase/migrations/20260912215423_neon_agent_execution.sql
+?? tests/aiProxy.test.js
+?? tests/helpers/
+?? tests/langgraphAgent.test.js
+?? tests/neonBackend.test.js
+?? tests/neonDispatcher.test.js
