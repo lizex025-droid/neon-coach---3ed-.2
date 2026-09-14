@@ -23,6 +23,7 @@ import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
 import { renderAuthView, bindAuthViewEvents } from '../views/authView.js';
+import { authService } from '../services/authService.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
 import { updateVoiceTriggerVisibility } from '../components/voice/voiceTriggerBtn.js';
 
@@ -72,6 +73,7 @@ export class Router {
   }
 
   async init() {
+    await authService.whenAuthReady();
     this.checkInitialAccess();
   }
 
@@ -79,17 +81,22 @@ export class Router {
     const hash = window.location.hash || '';
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
+    const isAuthenticated = authService.isAuthenticated();
     const rawHash = hash.replace(/^#\/?/, '').split('?')[0];
 
-    // توجيه تلقائي: البدء بشاشة الأسئلة (الاستبيان) بدون طلب تسجيل الدخول إطلاقاً
+    // المستخدم الجديد يبدأ بالأسئلة، ثم يُطلب منه حفظ الخطة داخل حساب حقيقي.
     if (!hasCompletedOnboarding) {
       if (rawHash !== 'questionnaire' && rawHash !== 'auth') {
         window.location.hash = '#questionnaire';
         return;
       }
+    } else if (!isAuthenticated) {
+      if (rawHash !== 'auth') {
+        window.location.hash = '#auth?from=plan';
+        return;
+      }
     } else {
-      // إذا كان قد أكمل الاستبيان ودخل بدون مسار محدد أو حاول طلب صفحة المصادقة
-      if (!rawHash) {
+      if (!rawHash || rawHash === 'auth') {
         window.location.hash = '#today';
         return;
       }
@@ -105,6 +112,18 @@ export class Router {
 
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
+    const isAuthenticated = authService.isAuthenticated();
+
+    // بعد تجهيز الخطة لا يمكن دخول التطبيق قبل تسجيل الدخول أو إنشاء الحساب.
+    if (hasCompletedOnboarding && !isAuthenticated && routeKey !== 'auth') {
+      window.location.hash = '#auth?from=plan';
+      return;
+    }
+
+    if (hasCompletedOnboarding && isAuthenticated && routeKey === 'auth') {
+      window.location.hash = '#today';
+      return;
+    }
 
     // توجيه المستخدم الجديد إلى شاشة الأسئلة
     if (!hasCompletedOnboarding && routeKey !== 'questionnaire' && routeKey !== 'auth') {

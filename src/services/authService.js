@@ -11,6 +11,7 @@
 
 import { store } from '../state/store.js';
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
+import { syncService } from './syncService.js';
 
 const SESSION_STORAGE_KEY = 'neon_auth_session_v1';
 const PASSWORD_MIN_LENGTH = 12;
@@ -81,9 +82,25 @@ class AuthService {
   async syncSessionFromSupabase(session) {
     const user = session.user;
     const provider = user.app_metadata?.provider || 'email';
+    const localState = store.getState();
+    const localProfile = localState?.userProfile || {};
+    const hasPendingPlan = !!localState?.onboardingAuthPending
+      && !!(localProfile.onboardingCompleted || localProfile.onboarding_completed);
+    const pendingProfile = hasPendingPlan ? {
+      ...localProfile,
+      name: localProfile.name || user.user_metadata?.full_name || user.user_metadata?.name,
+      email: user.email || localProfile.email || '',
+      onboardingCompleted: true,
+      onboarding_completed: true
+    } : null;
+
+    // الخطة أُنشئت قبل الحساب: اربطها بالمستخدم أولاً حتى لا تستبدلها مزامنة حساب فارغ.
+    if (pendingProfile) {
+      await syncService.syncProfile(user.id, pendingProfile);
+    }
 
     // فحص هل أكمل المستخدم استبيان الخطة في جدول profiles
-    let onboardingCompleted = false;
+    let onboardingCompleted = hasPendingPlan;
     let profileData = null;
     try {
       const { data } = await supabase
@@ -118,7 +135,7 @@ class AuthService {
     };
 
     this.saveSession(sessionObj);
-    store.loginUser(userObj, provider, session.access_token);
+    store.loginUser(userObj, provider, session.access_token, { loadRemote: false });
 
     if (profileData) {
       store.setUserProfile({
@@ -146,7 +163,15 @@ class AuthService {
         onboardingCompleted: onboardingCompleted,
         onboarding_completed: onboardingCompleted
       });
+    } else if (pendingProfile) {
+      store.setUserProfile(pendingProfile);
     }
+
+    if (hasPendingPlan) {
+      store.setState({ onboardingAuthPending: false }, { notify: false });
+    }
+
+    syncService.loadUserData(user.id);
 
     if (typeof window !== 'undefined') {
       const targetHash = !onboardingCompleted ? '#questionnaire' : '#today';
@@ -362,7 +387,7 @@ class AuthService {
           user: userObj, 
           token: data.session.access_token,
           isNewUser: true, 
-          onboardingCompleted: false 
+          onboardingCompleted: !!userObj?.onboardingCompleted
         };
       }
 

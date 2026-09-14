@@ -87,13 +87,39 @@ try {
   await page.locator('#create-my-plan-btn').waitFor();
   await page.locator('#create-my-plan-btn').click();
   await page.locator('#plan-gen-overlay').waitFor({ state: 'visible' });
-  await page.waitForFunction(() => location.hash === '#today', null, { timeout: 20000 });
-  const selectedStack = await page.evaluate(async () => {
+  await page.waitForFunction(() => location.hash === '#auth?from=plan', null, { timeout: 20000 });
+  await page.locator('#auth-form').waitFor();
+  await page.getByText('خطتك جاهزة — أنشئ حسابك لحفظها وفتح صفحة اليوم').waitFor();
+  const pendingPlan = await page.evaluate(async () => {
     const { store } = await import('/src/state/store.js');
-    return store.getDailyStackItems().map(item => item.name);
+    return {
+      pending: store.getState().onboardingAuthPending,
+      completed: store.getState().userProfile.onboardingCompleted,
+      selectedStack: store.getDailyStackItems().map(item => item.name),
+    };
   });
-  assert.ok(selectedStack.some(name => name.includes('Whey protein')), 'Selected whey supplement was not saved');
-  assert.ok(selectedStack.some(name => name.includes('Magnesium')), 'Searched magnesium supplement was not saved');
+  assert.equal(pendingPlan.pending, true, 'Completed plan was not marked as awaiting authentication');
+  assert.equal(pendingPlan.completed, true, 'Completed plan was lost before authentication');
+  assert.ok(pendingPlan.selectedStack.some(name => name.includes('Whey protein')), 'Selected whey supplement was not saved');
+  assert.ok(pendingPlan.selectedStack.some(name => name.includes('Magnesium')), 'Searched magnesium supplement was not saved');
+
+  // Direct access remains blocked until a real account session exists.
+  await page.evaluate(() => { location.hash = '#today'; });
+  await page.waitForFunction(() => location.hash === '#auth?from=plan');
+
+  // Complete the remainder of this UI test with a synthetic authenticated browser session.
+  await page.evaluate(async () => {
+    const { authService } = await import('/src/services/authService.js');
+    const { store } = await import('/src/state/store.js');
+    const user = { id: 'browser-auth-user', name: 'Browser Test', email: 'browser@example.test' };
+    authService.saveSession({ token: 'browser-supabase-session', provider: 'email', user });
+    store.setState({
+      onboardingAuthPending: false,
+      auth: { isAuthenticated: true, user, provider: 'email', token: 'browser-supabase-session' },
+    }, { notify: false });
+    location.hash = '#today';
+  });
+  await page.waitForFunction(() => location.hash === '#today');
   await page.locator('.app-bottom-nav').waitFor();
 
   const routes = ['nutrition', 'neon-ai', 'progress', 'profile', 'today'];
@@ -255,6 +281,7 @@ try {
     foodAllergyControlsRemoved: true,
     supplementSearchVerified: true,
     planLoadingVerified: true,
+    postPlanAuthVerified: true,
     editableMealDraftVerified: true,
     splashSafetyVerified: true,
     workoutNavigationVerified: true,

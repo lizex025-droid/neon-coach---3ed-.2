@@ -28,6 +28,7 @@ import {
 } from '../domain/calculations.js';
 import { generateTrainingPlan } from '../domain/planner.js';
 import { syncService } from '../services/syncService.js';
+import { authService } from '../services/authService.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { searchFoods } from '../data/foods.js';
@@ -1636,11 +1637,15 @@ export function bindQuestionnaireEvents() {
       setStepState(step3, 'completed');
 
       startedAt = Date.now();
-      showStage(step4, 'حفظ الحساب وتجهيز صفحة اليوم ومزامنة الخطة...', 95);
+      const hasAuthenticatedAccount = authService.isAuthenticated();
+      showStage(step4, hasAuthenticatedAccount
+        ? 'حفظ الحساب وتجهيز صفحة اليوم ومزامنة الخطة...'
+        : 'حفظ الخطة وتجهيز صفحة إنشاء الحساب...', 95);
       store.setUserProfile(fullProfile);
       store.setDailyStackItems(selectedStackItems);
 
       const state = store.getState();
+      state.onboardingAuthPending = !hasAuthenticatedAccount;
       Object.assign(state.today, {
         targetCalories: targets.targetCalories,
         targetProtein: targets.protein,
@@ -1658,7 +1663,7 @@ export function bindQuestionnaireEvents() {
       });
       store.saveState();
 
-      const userId = state?.auth?.user?.id;
+      const userId = hasAuthenticatedAccount ? authService.getCurrentUser()?.id : null;
       if (userId) {
         try {
           await syncService.syncProfile(userId, fullProfile);
@@ -1672,12 +1677,14 @@ export function bindQuestionnaireEvents() {
       if (percentLabel) percentLabel.textContent = '100%';
       if (progressBar) progressBar.style.width = '100%';
       if (coreIcon) coreIcon.textContent = '';
-      if (actionLabel) actionLabel.textContent = 'اكتملت خطتك بنجاح! جاري فتح صفحة اليوم...';
+      if (actionLabel) actionLabel.textContent = hasAuthenticatedAccount
+        ? 'اكتملت خطتك بنجاح! جاري فتح صفحة اليوم...'
+        : 'اكتملت خطتك بنجاح! جاري فتح صفحة إنشاء الحساب...';
       notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}!`, 'success');
       await sleep(450);
       currentStep = 1;
       showWelcomeScreen = true;
-      window.location.hash = '#today';
+      window.location.hash = hasAuthenticatedAccount ? '#today' : '#auth?from=plan';
     } catch (error) {
       console.error('Plan generation failed:', error);
       if (actionLabel) actionLabel.textContent = 'تعذر إكمال إنشاء الحساب. أعد المحاولة.';

@@ -12,6 +12,7 @@ const INITIAL_LOCAL_DATE = `${initialDate.getFullYear()}-${String(initialDate.ge
 
 export const EMPTY_INITIAL_STATE = {
   currentRole: 'client', // 'client' or 'coach'
+  onboardingAuthPending: false,
 
   // حالة المصادقة المحلية — بدون الحاجة لتسجيل دخول
   auth: {

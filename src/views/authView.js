@@ -16,6 +16,8 @@ let currentMode = 'signup'; // 'signup' | 'login' - إنشاء حساب إجبا
 
 export function renderAuthView() {
   const isLogin = currentMode === 'login';
+  const isPlanReady = typeof window !== 'undefined'
+    && new URLSearchParams((window.location.hash.split('?')[1] || '')).get('from') === 'plan';
 
   return `
     <div class="auth-page-container">
@@ -29,7 +31,7 @@ export function renderAuthView() {
         NEON COACH
       </h1>
       <p style="font-size: 0.95rem; color: #B8C0BC; margin-bottom: 24px; font-weight: 600;">
-        أنشئ حسابك لبدء خطتك الشخصية
+        ${isPlanReady ? 'خطتك جاهزة — أنشئ حسابك لحفظها وفتح صفحة اليوم' : 'أنشئ حسابك لبدء خطتك الشخصية'}
       </p>
 
       <!-- بطاقة المصادقة الرئيسية -->
@@ -150,7 +152,7 @@ export function renderAuthView() {
 
           <!-- زر الإجراء الأساسي -->
           <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 6px; border-radius: 18px; font-size: 1.05rem; font-weight: 900; box-shadow: 0 4px 18px rgba(85,247,165,0.35);">
-            <span>${isLogin ? 'تسجيل الدخول ' : 'إنشاء الحساب والبدء '}</span>
+            <span>${isLogin ? 'تسجيل الدخول ' : (isPlanReady ? 'إنشاء الحساب وحفظ الخطة ' : 'إنشاء الحساب والبدء ')}</span>
           </button>
 
           <!-- إشعار إلزامية الحساب -->
@@ -397,9 +399,12 @@ export function bindAuthViewEvents() {
           return;
         }
         const userName = res.user?.name || name || 'بطل';
-        notificationService.showToast(`أهلاً بك يا ${userName}! لنبدأ بجمع بيانات خطتك التدريبية والغذائية `, 'success');
+        const nextHash = res.onboardingCompleted ? '#today' : '#questionnaire';
+        notificationService.showToast(res.onboardingCompleted
+          ? `أهلاً بك يا ${userName}! تم حفظ خطتك في حسابك بنجاح `
+          : `أهلاً بك يا ${userName}! لنبدأ بجمع بيانات خطتك التدريبية والغذائية `, 'success');
         setTimeout(() => {
-          window.location.hash = '#questionnaire';
+          window.location.hash = nextHash;
         }, 350);
       } else {
         notificationService.showToast(res.error || 'فشل إنشاء الحساب', 'error');

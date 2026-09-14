@@ -165,7 +165,7 @@ class Store {
     }
   }
 
-  loginUser(userObj, provider = 'email', token = null) {
+  loginUser(userObj, provider = 'email', token = null, { loadRemote = true } = {}) {
     if (!this.state.auth) {
       this.state.auth = {};
     }
@@ -187,7 +187,7 @@ class Store {
     this.saveState();
     this.notify();
 
-    if (userObj?.id) {
+    if (loadRemote && userObj?.id) {
       syncService.loadUserData(userObj.id);
     }
   }
