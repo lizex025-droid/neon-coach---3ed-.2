@@ -144,15 +144,20 @@ function buildUrl(file) {
   return `${baseUrl}/${cleanPrefix}${encodedParts}`;
 }
 
-const files = resolveFiles();
-const links = files.map(buildUrl);
-
 const args = process.argv.slice(2);
+const filterArg = args.find(a => !a.startsWith('--'));
+
+let targetFiles = resolveFiles();
+if (filterArg) {
+  targetFiles = targetFiles.filter(f => f.includes(filterArg));
+}
+const links = targetFiles.map(buildUrl);
+
 if (args.includes('--json')) {
   console.log(JSON.stringify(links, null, 2));
 } else if (args.includes('--map')) {
   const map = {};
-  for (const file of files) {
+  for (const file of targetFiles) {
     const [group, name] = file.split('/');
     if (!map[group]) map[group] = [];
     map[group].push({ name, url: buildUrl(file) });
