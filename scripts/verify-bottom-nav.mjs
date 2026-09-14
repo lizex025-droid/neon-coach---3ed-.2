@@ -215,7 +215,11 @@ try {
 
   await page.locator('#forty-finish-btn').click();
   await page.locator('#forty-summary-modal').waitFor({ state: 'visible' });
-  await page.getByText(/أحسنت، أنهيت التمرين/).waitFor();
+  await page.getByRole('heading', { name: 'أحسنت!' }).waitFor();
+  assert.equal(await page.locator('.summary-stars').textContent(), '★ ★ ★', 'Workout completion stars are missing');
+  assert.equal(await page.locator('.summary-stats .summary-stat').count(), 6, 'Workout completion stats are incomplete');
+  assert.equal(await page.locator('.summary-exercise-row').count(), 1, 'Workout completion exercise details are incomplete');
+  assert.equal(await page.locator('.summary-top-actions button').count(), 2, 'Workout completion close/share actions are incomplete');
   const workoutHistoryCount = await page.evaluate(async () => (await import('/src/state/store.js')).store.getWorkoutHistory().length);
   assert.ok(workoutHistoryCount >= 1, 'Finished workout did not reach the central progress history');
   await page.locator('#forty-summary-modal [data-close-modal]').click();

@@ -195,7 +195,7 @@ class FortyDayWorkoutService {
       const best = played.reduce((winner, set) => Number(set.kg || 0) > Number(winner.kg || 0) ? set : winner, played[0]);
       const volume = played.reduce((sum, set) => sum + Number(set.kg || 0) * Number(set.reps || 0), 0);
       const previousBest = Math.max(0, ...(tracker.history || []).map(row => Number(row.bestKg || row.weight || 0)));
-      const isPersonalRecord = Number(best.kg || 0) > previousBest;
+      const isPersonalRecord = Boolean(Number(best.kg || 0) && previousBest > 0 && Number(best.kg || 0) > previousBest);
       if (isPersonalRecord) personalRecords += 1;
       totalSets += played.length;
       totalReps += played.reduce((sum, set) => sum + Number(set.reps || 0), 0);

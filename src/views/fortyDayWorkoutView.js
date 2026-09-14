@@ -71,7 +71,15 @@ export function renderFortyDayWorkoutView() {
 
       <div class="forty-modal" id="forty-image-modal" aria-hidden="true"><div class="forty-modal-sheet image-sheet"><button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button><img id="forty-image-preview" alt="صورة التمرين"></div></div>
       <div class="forty-modal" id="forty-detail-modal" aria-hidden="true"><div class="forty-modal-sheet" id="forty-detail-sheet"></div></div>
-      <div class="forty-modal" id="forty-summary-modal" aria-hidden="true"><div class="forty-modal-sheet summary-sheet"><div class="forty-modal-top"><button type="button" data-close-modal>إغلاق</button><button type="button" id="forty-share-summary">مشاركة</button></div><div id="forty-summary-content"></div></div></div>
+      <div class="workout-summary-modal" id="forty-summary-modal" aria-hidden="true">
+        <section class="workout-summary-sheet" role="dialog" aria-modal="true" aria-label="Workout summary">
+          <div class="summary-top-actions">
+            <button type="button" data-close-modal aria-label="إغلاق الملخص">×</button>
+            <button type="button" id="forty-share-summary" aria-label="مشاركة الملخص">↗</button>
+          </div>
+          <div id="forty-summary-content"></div>
+        </section>
+      </div>
     </div>
   `;
 }
@@ -128,9 +136,9 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
   const exercise = getFortyDay(dayKey).exercises[exerciseIndex];
   const tracker = fortyDayWorkoutService.getTracker(dayKey, exerciseIndex);
   const history = filterHistory(tracker.history || [], range);
-  const maxWeight = Math.max(25, Math.ceil(Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0))) / 25) * 25);
+  const maxWeight = Math.min(500, Math.max(25, Math.ceil(Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0))) / 25) * 25));
   const points = history.map((row, index) => {
-    const x = history.length === 1 ? 50 : (index / (history.length - 1)) * 100;
+    const x = ((index + 1) / history.length) * 100;
     const y = 100 - (Math.min(maxWeight, Number(row.bestKg || row.weight || 0)) / maxWeight) * 100;
     return { x, y, weight: Number(row.bestKg || row.weight || 0), date: row.date || '-' };
   });
@@ -143,7 +151,7 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
     : [{ date: row.date, round: row.sets || '-', reps: row.bestReps || row.reps || '-', weight: row.bestKg || row.weight || '-' }]);
   return `
     <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
-    <span class="forty-modal-kicker">HISTORY</span><h2 class="forty-modal-title">${renderExerciseTitle(exercise.title, true)}</h2>
+    <span class="forty-modal-kicker">HISTORY</span><h2 class="forty-modal-title">${renderExerciseTitle(exercise.title)}</h2>
     <div class="forty-history-ranges" data-history-index="${exerciseIndex}">
       ${['W', 'M', '3M', '6M', 'Y', 'ALL'].map(item => `<button type="button" data-action="history-range" data-index="${exerciseIndex}" data-range="${item}" class="${item === range ? 'is-active' : ''}">${item}</button>`).join('')}
     </div>
@@ -151,18 +159,21 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
       <div class="forty-history-scale"><span>${maxWeight}</span><span>${Math.round(maxWeight / 2)}</span><span>0</span></div>
       <div class="forty-history-plot">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Weight history chart">
+          <defs><marker id="fortyHistoryArrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" class="forty-history-arrow"/></marker></defs>
           <line x1="0" y1="0" x2="100" y2="0"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="100" x2="100" y2="100"/>
-          ${points.length ? `<polyline points="${points.map(point => `${point.x},${point.y}`).join(' ')}"/>` : ''}
+          <line x1="0" y1="0" x2="0" y2="100" class="forty-history-hover-line" hidden/>
+          ${points.length ? `<polyline points="0,100 ${points.map(point => `${point.x},${point.y}`).join(' ')}" marker-end="url(#fortyHistoryArrow)"/>` : ''}
         </svg>
         ${points.map(point => `<span class="forty-history-dot" style="left:${point.x}%;top:${point.y}%" title="${escapeHtml(point.date)} · ${point.weight} kg"></span>`).join('')}
-        <strong>${history.length ? `${roundCount} saved rounds · best ${bestWeight} kg` : 'No saved rounds yet'}</strong>
+        <div class="forty-history-hover-tip" hidden></div>
+        <strong>${history.length ? `${roundCount} rounds · best ${bestWeight} kg` : 'No saved rounds yet'}</strong>
       </div>
     </div>
     <div class="forty-history-summary">
-      <div><small>TOTAL VOLUME</small><b>${totalVolume ? `${Math.round(totalVolume)} kg` : '-'}</b></div>
-      <div><small>BEST</small><b>${bestWeight ? `${bestWeight} kg` : '-'}</b></div>
-      <div><small>CURRENT LOGGED</small><b>${loggedSets}/${tracker.targetSets}</b></div>
       <div><small>ROUNDS</small><b>${roundCount}</b></div>
+      <div><small>CURRENT LOGGED</small><b>${loggedSets}/${tracker.targetSets}</b></div>
+      <div><small>BEST</small><b>${bestWeight ? `${bestWeight} kg` : '-'}</b></div>
+      <div><small>TOTAL VOLUME</small><b>${totalVolume ? `${Math.round(totalVolume)} kg` : '-'}</b></div>
     </div>
     <div class="forty-history-table">
       <div class="forty-history-head"><span>DATE</span><span>ROUND</span><span>REPS</span><span>WEIGHT</span></div>
@@ -171,12 +182,43 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
   `;
 }
 
+function bindHistoryHover(sheet, dayKey, exerciseIndex, range) {
+  const chart = sheet?.querySelector('.forty-history-plot svg');
+  const line = chart?.querySelector('.forty-history-hover-line');
+  const tip = sheet?.querySelector('.forty-history-hover-tip');
+  const history = filterHistory(fortyDayWorkoutService.getTracker(dayKey, exerciseIndex)?.history || [], range);
+  const maxWeight = Math.min(500, Math.max(25, Math.ceil(Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0))) / 25) * 25));
+  const points = history.map((row, index) => ({
+    x: ((index + 1) / history.length) * 100,
+    y: 100 - (Math.min(maxWeight, Number(row.bestKg || row.weight || 0)) / maxWeight) * 100,
+    date: row.date || '-',
+    sets: Array.isArray(row.rounds) ? row.rounds.length : row.sets || '-',
+    reps: row.bestReps || row.reps || '-',
+    weight: row.bestKg || row.weight || 0
+  }));
+  if (!chart || !line || !tip || !points.length) return;
+  const hide = () => { line.setAttribute('hidden', ''); tip.hidden = true; };
+  chart.addEventListener('mouseleave', hide);
+  chart.addEventListener('mousemove', event => {
+    const rect = chart.getBoundingClientRect();
+    const mouseX = ((event.clientX - rect.left) / rect.width) * 100;
+    const nearest = points.reduce((best, point) => Math.abs(point.x - mouseX) < Math.abs(best.x - mouseX) ? point : best, points[0]);
+    line.removeAttribute('hidden');
+    line.setAttribute('x1', nearest.x);
+    line.setAttribute('x2', nearest.x);
+    tip.hidden = false;
+    tip.innerHTML = `<strong>${escapeHtml(nearest.date)}</strong><span>Rounds: ${escapeHtml(nearest.sets)}</span><span>Reps: ${escapeHtml(nearest.reps)}</span><span>Weight: ${escapeHtml(nearest.weight)} kg</span>`;
+    tip.style.left = `${Math.min(Math.max((nearest.x / 100) * rect.width, 84), rect.width - 84)}px`;
+    tip.style.top = `${Math.max((nearest.y / 100) * rect.height - 14, 18)}px`;
+  });
+}
+
 function renderTuneModal(dayKey, exerciseIndex) {
   const exercise = getFortyDay(dayKey).exercises[exerciseIndex];
   const tracker = fortyDayWorkoutService.getTracker(dayKey, exerciseIndex);
   return `
     <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
-    <span class="forty-modal-kicker">${escapeHtml(getFortyDay(dayKey).short)} · TUNE</span><h2 class="forty-modal-title">${renderExerciseTitle(exercise.title, true)}</h2>
+    <span class="forty-modal-kicker">${escapeHtml(getFortyDay(dayKey).short)} · TUNE</span><h2 class="forty-modal-title">${renderExerciseTitle(exercise.title)}</h2>
     <div class="forty-tune-form">
       <label class="forty-tune-row"><span>WEIGHT</span><span class="forty-tune-control"><input id="forty-tune-weight" type="number" min="0" max="1000" step="0.5" value="${tracker.weight}" placeholder="0"><small>kg</small></span></label>
       <div class="forty-tune-row"><span>SETS</span><span class="forty-tune-control"><button type="button" data-action="tune-step" data-target="forty-tune-sets" data-delta="-1">−</button><input id="forty-tune-sets" type="number" min="1" max="8" value="${tracker.targetSets}"><button type="button" data-action="tune-step" data-target="forty-tune-sets" data-delta="1">+</button></span></div>
@@ -188,11 +230,35 @@ function renderTuneModal(dayKey, exerciseIndex) {
 }
 
 function renderSummary(summary) {
-  const rows = summary.exercises.length ? summary.exercises.map(exercise => `<div class="forty-summary-exercise"><strong>${escapeHtml(exercise.title)}</strong><span>${escapeHtml(exercise.bestSet)}</span></div>`).join('') : '<p class="forty-empty">لم يتم إدخال جولات مكتملة في هذه الجلسة.</p>';
+  const formatBestSet = exercise => exercise.bestKg > 0 ? `${exercise.bestKg} kg × ${exercise.bestReps || '-'}` : `${exercise.bestReps || exercise.reps || '-'} reps`;
+  const rows = summary.exercises.length ? summary.exercises.map(exercise => `
+    <div class="summary-exercise-row">
+      <b>${exercise.sets} × ${escapeHtml(exercise.title)}${exercise.isPersonalRecord ? ' ' : ''}</b>
+      <span>${formatBestSet(exercise)}</span>
+    </div>
+  `).join('') : '<div class="summary-empty">لم يتم إدخال جولات في هذه الجلسة.</div>';
   return `
-    <span class="forty-modal-kicker">WORKOUT COMPLETE</span><h2>أحسنت، أنهيت التمرين</h2><p>${escapeHtml(summary.title)} · ${escapeHtml(summary.dateLabel)}</p>
-    <div class="forty-summary-stats"><div><strong>${formatDuration(summary.durationSeconds)}</strong><small>المدة</small></div><div><strong>${summary.totalVolume}</strong><small>الحجم كغ</small></div><div><strong>${summary.exercises.length}</strong><small>التمارين</small></div><div><strong>${summary.totalSets}</strong><small>الجولات</small></div><div><strong>${summary.totalReps}</strong><small>التكرارات</small></div><div><strong>${summary.personalRecords}</strong><small>أرقام جديدة</small></div></div>
-    <div class="forty-summary-exercises">${rows}</div>
+    <div class="summary-stars">★ ★ ★</div>
+    <header class="summary-hero">
+      <h2>أحسنت!</h2>
+      <p>أنهيت تمرين ${FORTY_DAY_PROGRAM.title} رقم ${summary.workoutNumber}</p>
+    </header>
+    <div class="summary-card">
+      <div class="summary-card-head">
+        <strong>${FORTY_DAY_PROGRAM.title}</strong>
+        <span>${escapeHtml(summary.dateLabel)}</span>
+      </div>
+      <div class="summary-stats">
+        <div class="summary-stat"><b>◷ ${formatDuration(summary.durationSeconds)}</b><small>المدة</small></div>
+        <div class="summary-stat"><b>${summary.totalVolume} kg</b><small>الحجم</small></div>
+        <div class="summary-stat"><b>${summary.exercises.length}</b><small>التمارين</small></div>
+        <div class="summary-stat"><b>${summary.totalSets}</b><small>الجولات</small></div>
+        <div class="summary-stat"><b>${summary.totalReps}</b><small>التكرارات</small></div>
+        <div class="summary-stat"><b> ${summary.personalRecords}</b><small>PRs</small></div>
+      </div>
+      <div class="summary-exercise-head"><span>التمرين</span><span>أفضل جولة</span></div>
+      ${rows}
+    </div>
   `;
 }
 
@@ -208,7 +274,7 @@ export function bindFortyDayWorkoutEvents() {
   let latestSummary = null;
 
   const openModal = modal => { modal?.classList.add('is-open'); modal?.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; };
-  const closeModals = () => { root.querySelectorAll('.forty-modal').forEach(modal => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }); document.body.style.overflow = ''; };
+  const closeModals = () => { root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }); document.body.style.overflow = ''; };
   const renderActiveDay = () => {
     dayContent.innerHTML = renderDay(activeDay);
     root.querySelectorAll('[data-day]').forEach(button => button.classList.toggle('is-active', button.dataset.day === activeDay));
@@ -261,8 +327,8 @@ export function bindFortyDayWorkoutEvents() {
     if (button.dataset.action === 'add-set') { fortyDayWorkoutService.addSet(activeDay, index); renderActiveDay(); return; }
     if (button.dataset.action === 'reset') { fortyDayWorkoutService.resetExercise(activeDay, index); renderActiveDay(); return; }
     if (button.dataset.action === 'image') { const exercise = getFortyDay(activeDay).exercises[index]; const preview = document.getElementById('forty-image-preview'); if (preview) { preview.src = exercise.image; preview.alt = exercise.title; } openModal(imageModal); return; }
-    if (button.dataset.action === 'history') { detailSheet.innerHTML = renderHistoryModal(activeDay, index); openModal(detailModal); return; }
-    if (button.dataset.action === 'history-range') { detailSheet.innerHTML = renderHistoryModal(activeDay, index, button.dataset.range || 'ALL'); return; }
+    if (button.dataset.action === 'history') { detailSheet.innerHTML = renderHistoryModal(activeDay, index); bindHistoryHover(detailSheet, activeDay, index, 'ALL'); openModal(detailModal); return; }
+    if (button.dataset.action === 'history-range') { const range = button.dataset.range || 'ALL'; detailSheet.innerHTML = renderHistoryModal(activeDay, index, range); bindHistoryHover(detailSheet, activeDay, index, range); return; }
     if (button.dataset.action === 'tune') { detailSheet.innerHTML = renderTuneModal(activeDay, index); openModal(detailModal); return; }
     if (button.dataset.action === 'tune-step') {
       const input = document.getElementById(button.dataset.target);
@@ -289,7 +355,7 @@ export function bindFortyDayWorkoutEvents() {
     if (button.id === 'forty-scroll-top') window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  root.querySelectorAll('.forty-modal').forEach(modal => modal.addEventListener('click', event => { if (event.target === modal) closeModals(); }));
+  root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => modal.addEventListener('click', event => { if (event.target === modal) closeModals(); }));
   const onKeyDown = event => { if (event.key === 'Escape') closeModals(); };
   const onScroll = () => document.getElementById('forty-scroll-top')?.classList.toggle('is-visible', window.scrollY > 500);
   document.addEventListener('keydown', onKeyDown);
