@@ -432,12 +432,18 @@ function renderWelcomeScreenHTML() {
         NEON COACH
       </h1>
 
-      <!-- زر البدء الكبير -->
-      <div style="width: 100%; max-width: 440px; margin-top: 42px;">
+      <!-- زر البدء الكبير ورابط تسجيل الدخول للمشتركين السابقين -->
+      <div style="width: 100%; max-width: 440px; margin-top: 36px; display: flex; flex-direction: column; gap: 12px;">
         <button type="button" id="q-welcome-start-btn" class="btn btn-primary btn-lg btn-block" style="border-radius: 24px; font-size: 1.18rem; font-weight: 900; padding: 16px 24px; box-shadow: 0 4px 30px rgba(85, 247, 165, 0.45); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; border: none; transition: transform 0.2s ease, box-shadow 0.2s ease;">
           <span>ابدأ تخصيص خطتك الآن</span>
         </button>
-        <p style="font-size: 0.78rem; color: #8C9992; margin: 12px 0 0; text-align: center;">
+
+        <a href="#auth?mode=login" id="q-welcome-login-link" style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #55F7A5; font-size: 0.95rem; font-weight: 700; text-decoration: none; padding: 12px 18px; border-radius: 18px; border: 1px solid rgba(85, 247, 165, 0.25); background: rgba(5, 15, 10, 0.6); transition: all 0.2s ease;">
+          <span>لديك حساب بالفعل؟ تسجيل الدخول</span>
+          <span>←</span>
+        </a>
+
+        <p style="font-size: 0.78rem; color: #8C9992; margin: 4px 0 0; text-align: center;">
            يستغرق الاستبيان دقيقتين فقط • يمكنك تعديل أي إجابة لاحقاً
         </p>
       </div>

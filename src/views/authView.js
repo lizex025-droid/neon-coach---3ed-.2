@@ -12,9 +12,16 @@
 import { authService } from '../services/authService.js';
 import { notificationService } from '../services/notificationService.js';
 
-let currentMode = 'signup'; // 'signup' | 'login' - إنشاء حساب إجباري للبدء
+let currentMode = 'signup'; // 'signup' | 'login'
 
 export function renderAuthView() {
+  if (typeof window !== 'undefined') {
+    const hashParams = new URLSearchParams((window.location.hash.split('?')[1] || ''));
+    const modeParam = hashParams.get('mode');
+    if (modeParam === 'login' || modeParam === 'signup') {
+      currentMode = modeParam;
+    }
+  }
   const isLogin = currentMode === 'login';
   const isPlanReady = typeof window !== 'undefined'
     && new URLSearchParams((window.location.hash.split('?')[1] || '')).get('from') === 'plan';
@@ -110,7 +117,7 @@ export function renderAuthView() {
 
           <!-- حقل كلمة المرور -->
           <div class="input-with-icon">
-            <input type="password" id="auth-password" placeholder="كلمة المرور (12 خانة على الأقل)" required style="padding-inline-start: 46px; padding-inline-end: 44px; border-radius: 16px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.95rem;">
+            <input type="password" id="auth-password" placeholder="كلمة المرور (6 خانات على الأقل)" required minlength="6" style="padding-inline-start: 46px; padding-inline-end: 44px; border-radius: 16px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.95rem;">
             <span class="input-icon" style="color: #55F7A5;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </span>
@@ -223,7 +230,7 @@ export function renderAuthView() {
 
             <div class="form-group">
               <label class="form-label" style="font-size: 0.84rem; color: #B8C0BC;">كلمة المرور (لحماية وتأمين حسابك):</label>
-              <input type="password" id="social-pass-input" placeholder="12 خانة على الأقل" required minlength="12" class="stack-field" style="border-radius: 12px; direction: ltr; text-align: left;">
+              <input type="password" id="social-pass-input" placeholder="6 خانات على الأقل" required minlength="6" class="stack-field" style="border-radius: 12px; direction: ltr; text-align: left;">
             </div>
 
             <button type="submit" id="social-submit-btn" class="btn btn-primary btn-block" style="border-radius: 14px; margin-top: 6px; font-weight: 800; font-size: 1rem;">
@@ -303,15 +310,27 @@ export function bindAuthViewEvents() {
     }
   });
 
-  // 2. فتح نافذة التسجيل بحساب Apple
-  appleBtn?.addEventListener('click', () => {
-    activeSocialProvider = 'apple';
-    if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Apple ID';
-    if (socialModalIcon) socialModalIcon.textContent = '';
-    if (socialModalDesc) socialModalDesc.textContent = 'أدخل عنوان Apple ID لربط حسابك وتخصيص خطتك التدريبية فورياً:';
-    if (socialEmailInput) socialEmailInput.placeholder = 'name@icloud.com';
-    if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Apple ID ';
-    socialModal?.classList.add('open');
+  // 2. تسجيل الدخول بحساب Apple مع بديل ذكي
+  appleBtn?.addEventListener('click', async () => {
+    setButtonLoading(appleBtn, true, 'جاري الاتصال بـ Apple...');
+    try {
+      const res = await authService.loginWithApple();
+      if (res && res.redirecting) return;
+      if (res && !res.success) {
+        activeSocialProvider = 'apple';
+        if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Apple ID';
+        if (socialModalIcon) socialModalIcon.textContent = '';
+        if (socialModalDesc) socialModalDesc.textContent = 'أدخل عنوان Apple ID لربط حسابك وتخصيص خطتك التدريبية فورياً:';
+        if (socialEmailInput) socialEmailInput.placeholder = 'name@icloud.com';
+        if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Apple ID ';
+        socialModal?.classList.add('open');
+      }
+    } catch (e) {
+      activeSocialProvider = 'apple';
+      socialModal?.classList.add('open');
+    } finally {
+      setButtonLoading(appleBtn, false);
+    }
   });
 
   // 3. تسجيل الدخول بحساب Facebook الرسمي

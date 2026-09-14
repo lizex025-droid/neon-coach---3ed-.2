@@ -14,7 +14,12 @@ import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 import { syncService } from './syncService.js';
 
 const SESSION_STORAGE_KEY = 'neon_auth_session_v1';
-const PASSWORD_MIN_LENGTH = 12;
+const PASSWORD_MIN_LENGTH = 6;
+
+function getOAuthRedirectUrl() {
+  if (typeof window === 'undefined') return 'https://neon-coach-murex.vercel.app';
+  return window.location.origin;
+}
 
 class AuthService {
   constructor() {
@@ -279,7 +284,7 @@ class AuthService {
       return { success: false, error: 'يرجى إدخال كلمة المرور' };
     }
     if (trimmedPass.length < PASSWORD_MIN_LENGTH) {
-      return { success: false, error: `كلمة المرور يجب أن لا تقل عن ${PASSWORD_MIN_LENGTH} حرفاً أو رقماً` };
+      return { success: false, error: `كلمة المرور يجب أن لا تقل عن ${PASSWORD_MIN_LENGTH} أحرف أو أرقام` };
     }
 
     if (!isSupabaseConfigured()) {
@@ -343,7 +348,7 @@ class AuthService {
       return { success: false, error: 'يرجى إدخال كلمة المرور' };
     }
     if (trimmedPass.length < PASSWORD_MIN_LENGTH) {
-      return { success: false, error: `كلمة المرور يجب أن لا تقل عن ${PASSWORD_MIN_LENGTH} حرفاً أو رقماً` };
+      return { success: false, error: `كلمة المرور يجب أن لا تقل عن ${PASSWORD_MIN_LENGTH} أحرف أو أرقام` };
     }
 
     if (!isSupabaseConfigured()) {
@@ -413,9 +418,7 @@ class AuthService {
     }
 
     try {
-      const redirectTo = typeof window !== 'undefined'
-        ? (window.location.hostname === 'localhost' ? window.location.origin : 'https://neon-coach-murex.vercel.app')
-        : 'https://neon-coach-murex.vercel.app';
+      const redirectTo = getOAuthRedirectUrl();
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -450,9 +453,7 @@ class AuthService {
     }
 
     try {
-      const redirectTo = typeof window !== 'undefined'
-        ? (window.location.hostname === 'localhost' ? window.location.origin : 'https://neon-coach-murex.vercel.app')
-        : 'https://neon-coach-murex.vercel.app';
+      const redirectTo = getOAuthRedirectUrl();
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
@@ -480,9 +481,7 @@ class AuthService {
     }
 
     try {
-      const redirectTo = typeof window !== 'undefined'
-        ? (window.location.hostname === 'localhost' ? window.location.origin : 'https://neon-coach-murex.vercel.app')
-        : 'https://neon-coach-murex.vercel.app';
+      const redirectTo = getOAuthRedirectUrl();
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
@@ -523,9 +522,13 @@ class AuthService {
         ? window.location.origin + window.location.pathname
         : 'https://neon-coach-murex.vercel.app';
 
-      await supabase.auth.resetPasswordForEmail(trimmedEmail, { redirectTo });
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, { redirectTo });
+      if (error) {
+        return { success: false, error: error.message || 'تعذر إرسال رابط استعادة كلمة المرور' };
+      }
     } catch (err) {
       console.warn('Supabase resetPassword warning:', err);
+      return { success: false, error: 'حدث خطأ أثناء محاولة إرسال الرابط. يرجى المحاولة لاحقاً.' };
     }
 
     return {
