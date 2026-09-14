@@ -52,6 +52,19 @@ try {
     'Measurement mascot is still visible',
   );
 
+  // Projection calculations remain active, but their summary cards must stay out of the UI.
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('.goal-card[data-goal="fat_loss"]').waitFor();
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('.weekly-loss-rates-grid').waitFor();
+  assert.equal(await page.locator('#fat-loss-summary-box').count(), 0, 'Fat-loss projection card is still visible');
+
+  await page.locator('#q-back-step-btn').click();
+  await page.locator('.goal-card[data-goal="muscle_gain"]').click();
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('.weekly-gain-rates-grid').waitFor();
+  assert.equal(await page.locator('#weight-gain-summary-box').count(), 0, 'Weight-gain projection card is still visible');
+
   await page.evaluate(async () => {
     const { store } = await import('/src/state/store.js');
     store.setState({
@@ -129,6 +142,7 @@ try {
     welcomeScreenVerified: true,
     stockEmojiVerified: true,
     measurementMascotRemoved: true,
+    projectionCardsRemoved: true,
     splashSafetyVerified: true,
     workoutNavigationVerified: true,
     errors,

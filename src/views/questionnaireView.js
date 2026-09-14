@@ -823,11 +823,6 @@ function renderStepContent(step) {
           }).join('')}
         </div>
 
-        <!-- صندوق الملخص التفاعلي المصغر -->
-        <div id="fat-loss-summary-box" style="margin-bottom: 20px;">
-          ${renderFatLossSummaryHTML(formData)}
-        </div>
-
         <!-- مودال التأكيد لمعدل 2% EXTREME -->
         <div id="extreme-loss-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(6px);">
           <div class="neon-card" style="max-width: 440px; width: 100%; border: 1.5px solid #F59E0B; box-shadow: 0 0 25px rgba(245,158,11,0.25); padding: 24px; border-radius: 20px; background: #121A16;">
@@ -964,11 +959,6 @@ function renderStepContent(step) {
               </div>
             `;
           }).join('')}
-        </div>
-
-        <!-- صندوق الملخص التفاعلي المصغر -->
-        <div id="weight-gain-summary-box" style="margin-bottom: 20px;">
-          ${renderWeightGainSummaryHTML(formData)}
         </div>
 
         <!-- مودال التأكيد لمعدل 2% EXTREME BULK -->
@@ -1988,10 +1978,6 @@ export function bindQuestionnaireEvents() {
     const extremeCancelBtn = document.getElementById('extreme-cancel-btn');
 
     const updateFatLossSummary = () => {
-      const box = document.getElementById('fat-loss-summary-box');
-      if (box) {
-        box.innerHTML = renderFatLossSummaryHTML(formData);
-      }
       const w = Number(formData.weight) || 70;
       const h = Number(formData.height) || 175;
       const age = Number(formData.age) || 18;
@@ -2225,10 +2211,6 @@ export function bindQuestionnaireEvents() {
     const extremeCancelBtn = document.getElementById('extreme-gain-cancel-btn');
 
     const updateWeightGainSummary = () => {
-      const box = document.getElementById('weight-gain-summary-box');
-      if (box) {
-        box.innerHTML = renderWeightGainSummaryHTML(formData);
-      }
       const w = Number(formData.weight) || 70;
       const h = Number(formData.height) || 175;
       const age = Number(formData.age) || 18;
