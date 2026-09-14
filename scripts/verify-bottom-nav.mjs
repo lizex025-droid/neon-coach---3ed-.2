@@ -65,6 +65,10 @@ try {
   await page.locator('.weekly-gain-rates-grid').waitFor();
   assert.equal(await page.locator('#weight-gain-summary-box').count(), 0, 'Weight-gain projection card is still visible');
 
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('#q-liked-foods-input').waitFor();
+  assert.equal(await page.locator('input[name="q-allergens"]').count(), 0, 'Food-allergy controls are still visible');
+
   await page.evaluate(async () => {
     const { store } = await import('/src/state/store.js');
     store.setState({
@@ -143,6 +147,7 @@ try {
     stockEmojiVerified: true,
     measurementMascotRemoved: true,
     projectionCardsRemoved: true,
+    foodAllergyControlsRemoved: true,
     splashSafetyVerified: true,
     workoutNavigationVerified: true,
     errors,

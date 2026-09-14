@@ -1118,18 +1118,6 @@ function renderStepContent(step) {
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" style="font-weight: 700; color: #FFFFFF; margin-bottom: 10px; display: block;">حساسيات غذائية مؤكدة (يتم استبعادها تماماً):</label>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
-            ${['لاكتوز / ألبان', 'جلوتين / قمح', 'مكسرات', 'بيض', 'مأكولات بحرية'].map(all => `
-              <label class="badge badge-neon" style="cursor: pointer; padding: 8px 14px; font-size: 0.85rem; user-select: none;">
-                <input type="checkbox" name="q-allergens" value="${all}" ${formData.allergens.includes(all) ? 'checked' : ''} style="width: auto; margin-inline-end: 6px; accent-color: #55F7A5;">
-                ${all}
-              </label>
-            `).join('')}
-          </div>
-        </div>
-
         <button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 24px; border-radius: 22px;">
           متابعة
         </button>
@@ -2799,8 +2787,6 @@ export function bindQuestionnaireEvents() {
         }
         dislikedInput.value = '';
       }
-      const checkedAllergens = Array.from(document.querySelectorAll('input[name="q-allergens"]:checked')).map(el => el.value);
-      formData.allergens = checkedAllergens;
     } else if (currentStepKey === STEP_KEYS.HEALTH) {
       const sleep = Number(document.getElementById('q-sleep')?.value);
       if (sleep > 0) formData.sleepHours = sleep;
