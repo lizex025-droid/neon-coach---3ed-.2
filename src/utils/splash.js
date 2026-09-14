@@ -3,8 +3,39 @@
  * تظهر فور الضغط على زر التدريب أو عند تحميل صفحات التمرين
  */
 
-export function showNeonSplash(customTitle = 'جاري تجهيز تمرين الـ 40 يوماً...') {
+const SPLASH_SAFETY_TIMEOUT_MS = 8000;
+let splashSafetyTimer = null;
+let splashRemovalTimer = null;
+
+function clearSplashTimers() {
+  if (splashSafetyTimer) clearTimeout(splashSafetyTimer);
+  if (splashRemovalTimer) clearTimeout(splashRemovalTimer);
+  splashSafetyTimer = null;
+  splashRemovalTimer = null;
+}
+
+function armSplashSafetyTimer(timeoutMs = SPLASH_SAFETY_TIMEOUT_MS) {
+  if (splashSafetyTimer) clearTimeout(splashSafetyTimer);
+  splashSafetyTimer = setTimeout(() => hideNeonSplash(), timeoutMs);
+}
+
+function removeSplashImmediately() {
+  clearSplashTimers();
+  if (typeof document === 'undefined') return;
+  document.getElementById('neon-app-splash')?.remove();
+}
+
+export function showNeonSplash(customTitle = 'جاري تجهيز تمرين الـ 40 يوماً...', options = {}) {
   if (typeof document === 'undefined') return null;
+
+  const timeoutMs = Number.isFinite(options.safetyTimeoutMs)
+    ? Math.max(0, options.safetyTimeoutMs)
+    : SPLASH_SAFETY_TIMEOUT_MS;
+
+  if (splashRemovalTimer) {
+    clearTimeout(splashRemovalTimer);
+    splashRemovalTimer = null;
+  }
 
   let splash = document.getElementById('neon-app-splash');
 
@@ -14,6 +45,7 @@ export function showNeonSplash(customTitle = 'جاري تجهيز تمرين ا�
     if (catBox) catBox.classList.remove('is-loaded');
     const titleEl = document.getElementById('splash-status-text');
     if (titleEl) titleEl.textContent = customTitle;
+    armSplashSafetyTimer(timeoutMs);
     return splash;
   }
 
@@ -60,11 +92,16 @@ export function showNeonSplash(customTitle = 'جاري تجهيز تمرين ا�
   `;
 
   document.body.appendChild(splash);
+  armSplashSafetyTimer(timeoutMs);
   return splash;
 }
 
 export function hideNeonSplash() {
   if (typeof document === 'undefined') return;
+  if (splashSafetyTimer) {
+    clearTimeout(splashSafetyTimer);
+    splashSafetyTimer = null;
+  }
   const splash = document.getElementById('neon-app-splash');
   if (!splash) return;
 
@@ -72,8 +109,10 @@ export function hideNeonSplash() {
   if (catBox) catBox.classList.add('is-loaded');
 
   splash.classList.add('splash-hide');
-  setTimeout(() => {
+  if (splashRemovalTimer) clearTimeout(splashRemovalTimer);
+  splashRemovalTimer = setTimeout(() => {
     if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+    splashRemovalTimer = null;
   }, 160);
 }
 
@@ -91,12 +130,7 @@ export function setupTrainingLoadingInterceptors() {
   }, { capture: true });
 
   // صمام أمان عند الرجوع بالمتصفح
-  window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-      const splash = document.getElementById('neon-app-splash');
-      if (splash) splash.remove();
-    }
-  });
+  window.addEventListener('pageshow', removeSplashImmediately);
 
   if (!window.dismissNeonSplash) {
     window.dismissNeonSplash = hideNeonSplash;

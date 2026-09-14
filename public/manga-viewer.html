@@ -1187,6 +1187,16 @@
         <div id="splash-status-text">جاري تجهيز تمرين الـ 40 يوماً...</div>
       </div>
     </div>
+    <script>
+      // Fallback in case the workout bootstrap fails before its normal splash cleanup.
+      setTimeout(function () {
+        var staleSplash = document.getElementById('neon-app-splash');
+        if (staleSplash) {
+          staleSplash.classList.add('splash-hide');
+          setTimeout(function () { staleSplash.remove(); }, 460);
+        }
+      }, 8000);
+    </script>
     <div id="vt-backdrop" aria-hidden="true">
       <div class="wb-atmosphere"></div>
       <div class="wb-mist"></div>
@@ -3618,6 +3628,8 @@
         justify-content: center;
         box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
         box-sizing: border-box;
+        isolation: isolate;
+        pointer-events: auto;
       }
       .nav-container {
         width: 100%;
@@ -3645,6 +3657,9 @@
         transition: all 0.2s ease;
         cursor: pointer;
         text-decoration: none;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
       }
       .nav-item span {
         white-space: nowrap;
