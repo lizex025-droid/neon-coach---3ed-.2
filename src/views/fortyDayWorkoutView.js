@@ -8,6 +8,20 @@ const formatDuration = totalSeconds => {
   const seconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
   return [Math.floor(seconds / 3600), Math.floor((seconds % 3600) / 60), seconds % 60].map(value => String(value).padStart(2, '0')).join(':');
 };
+const formatRest = totalSeconds => {
+  const seconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+};
+const splitExerciseTitle = title => {
+  const [arabic = '', english = ''] = String(title || '').split('|').map(part => part.trim());
+  return { arabic, english: english || arabic };
+};
+const renderExerciseTitle = (title, englishFirst = false) => {
+  const { arabic, english } = splitExerciseTitle(title);
+  const arabicPart = `<span class="forty-title-ar" dir="rtl">${escapeHtml(arabic)}</span>`;
+  const englishPart = `<em>${escapeHtml(english)}</em>`;
+  return englishFirst ? `${englishPart}<span class="forty-title-slash">/</span>${arabicPart}` : `${arabicPart}<span class="forty-title-slash">/</span>${englishPart}`;
+};
 const hasCompletedSet = snapshot => (snapshot.session?.touchedExerciseIds || []).some(id => snapshot.trackers?.[id]?.sets?.some(set => set.done && (set.kg !== '' || set.reps !== '')));
 
 export function renderFortyDayWorkoutView() {
@@ -41,7 +55,7 @@ export function renderFortyDayWorkoutView() {
 
       <section class="forty-days-section">
         <div class="forty-section-heading"><div><span>خطة الأسبوع</span><h2>اختر يوم التمرين</h2></div><p>6 أيام Push / Pull / Legs ثم يوم راحة</p></div>
-        <div class="forty-day-tabs" id="forty-day-tabs" dir="ltr">
+        <div class="forty-day-tabs" id="forty-day-tabs">
           ${FORTY_DAY_DAYS.map(day => `<button type="button" class="forty-day-tab tone-${day.tone} ${day.key === snapshot.activeDay ? 'is-active' : ''}" data-day="${day.key}">${day.short}</button>`).join('')}
         </div>
       </section>
@@ -80,36 +94,80 @@ function renderExerciseCard(day, exercise, exerciseIndex) {
     <article class="forty-exercise-card ${completed ? 'is-completed' : ''}" data-exercise-card="${exerciseIndex}">
       <div class="forty-exercise-head">
         <span class="forty-exercise-number">${exercise.number}</span>
-        <div><h3>${escapeHtml(exercise.title)}</h3>${exercise.alternative ? `<p>بديل: ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
+        <div><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
         <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" aria-label="عرض صورة التمرين">i</button>
       </div>
-      <div class="forty-target-row"><span>${tracker.targetSets} جولات</span><span>${escapeHtml(tracker.targetReps || exercise.reps || 'حسب قدرتك')}</span><span>راحة ${tracker.rest}ث</span></div>
-      <div class="forty-card-actions"><button type="button" data-action="history" data-index="${exerciseIndex}">السجل</button><button type="button" data-action="tune" data-index="${exerciseIndex}">تخصيص</button></div>
+      <div class="forty-card-actions"><button type="button" data-action="history" data-index="${exerciseIndex}">history</button><button type="button" data-action="tune" data-index="${exerciseIndex}">tune</button></div>
       <div class="forty-sets" role="table" aria-label="جولات ${escapeHtml(exercise.title)}">
-        <div class="forty-set-head" role="row"><span>الجولة</span><span>الوزن</span><span>التكرار</span><span>تم</span></div>
         ${tracker.sets.map((set, setIndex) => `
           <div class="forty-set-row ${set.done ? 'is-done' : ''}" role="row">
             <span class="forty-set-number">${setIndex + 1}</span>
-            <label><input type="number" min="0" max="1000" step="0.5" value="${set.kg}" placeholder="0" data-field="kg" data-index="${exerciseIndex}" data-set="${setIndex}" ${set.done ? 'disabled' : ''}><small>كغ</small></label>
-            <label><input type="number" min="0" max="1000" step="1" value="${set.reps}" placeholder="0" data-field="reps" data-index="${exerciseIndex}" data-set="${setIndex}" ${set.done ? 'disabled' : ''}><small>عدة</small></label>
+            <label><input aria-label="Weight in kilograms" type="number" min="0" max="1000" step="0.5" value="${set.kg}" placeholder="kg" data-field="kg" data-index="${exerciseIndex}" data-set="${setIndex}" ${set.done ? 'disabled' : ''}><small>kg</small></label>
+            <span class="forty-set-multiply">×</span>
+            <label><input aria-label="Repetitions" type="number" min="0" max="1000" step="1" value="${set.reps}" placeholder="reps" data-field="reps" data-index="${exerciseIndex}" data-set="${setIndex}" ${set.done ? 'disabled' : ''}><small>reps</small></label>
             <button type="button" class="forty-done-btn ${set.done ? 'is-done' : ''}" data-action="toggle-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="${set.done ? 'إلغاء إكمال الجولة' : 'إكمال الجولة'}">✓</button>
           </div>
         `).join('')}
       </div>
-      <div class="forty-tracker-actions"><button type="button" data-action="add-set" data-index="${exerciseIndex}">إضافة جولة</button><button type="button" data-action="reset" data-index="${exerciseIndex}">إعادة ضبط التمرين</button></div>
+      <div class="forty-tracker-actions"><button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button><button type="button" data-action="reset" data-index="${exerciseIndex}">Reset This Exercise</button></div>
     </article>
   `;
 }
 
-function renderHistoryModal(dayKey, exerciseIndex) {
+const rangeDays = { W: 7, M: 30, '3M': 90, '6M': 180, Y: 365 };
+const filterHistory = (history, range) => {
+  if (range === 'ALL') return history;
+  const cutoff = Date.now() - (rangeDays[range] || 0) * 86400000;
+  return history.filter(row => {
+    const timestamp = new Date(row.isoDate || row.date || 0).getTime();
+    return Number.isFinite(timestamp) && timestamp >= cutoff;
+  });
+};
+
+function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
   const exercise = getFortyDay(dayKey).exercises[exerciseIndex];
   const tracker = fortyDayWorkoutService.getTracker(dayKey, exerciseIndex);
-  const history = tracker.history || [];
-  const maxWeight = Math.max(1, ...history.map(row => Number(row.bestKg || row.weight || 0)));
+  const history = filterHistory(tracker.history || [], range);
+  const maxWeight = Math.max(25, Math.ceil(Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0))) / 25) * 25);
+  const points = history.map((row, index) => {
+    const x = history.length === 1 ? 50 : (index / (history.length - 1)) * 100;
+    const y = 100 - (Math.min(maxWeight, Number(row.bestKg || row.weight || 0)) / maxWeight) * 100;
+    return { x, y, weight: Number(row.bestKg || row.weight || 0), date: row.date || '-' };
+  });
+  const totalVolume = history.reduce((sum, row) => sum + Number(row.volume || (Number(row.weight || 0) * Number(row.reps || 0) * Number(row.sets || 0))), 0);
+  const bestWeight = Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0)));
+  const roundCount = history.reduce((sum, row) => sum + (Array.isArray(row.rounds) ? row.rounds.length : Number(row.sets || 0)), 0);
+  const loggedSets = tracker.sets.filter(set => set.kg !== '' && set.reps !== '').length;
+  const tableRows = history.slice().reverse().flatMap(row => Array.isArray(row.rounds) && row.rounds.length
+    ? row.rounds.map(round => ({ date: row.date, round: round.round, reps: round.reps, weight: round.kg }))
+    : [{ date: row.date, round: row.sets || '-', reps: row.bestReps || row.reps || '-', weight: row.bestKg || row.weight || '-' }]);
   return `
     <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
-    <span class="forty-modal-kicker">تاريخ الأداء</span><h2>${escapeHtml(exercise.title)}</h2>
-    ${history.length ? `<div class="forty-history-chart">${history.slice(-12).map(row => `<div title="${escapeHtml(row.date)} — ${row.bestKg || row.weight || 0} كغ"><span style="height:${Math.max(8, (Number(row.bestKg || row.weight || 0) / maxWeight) * 100)}%"></span><small>${escapeHtml(row.date)}</small></div>`).join('')}</div><div class="forty-history-list">${history.slice().reverse().map(row => `<div><strong>${escapeHtml(row.date)}</strong><span>${row.sets} جولات · ${row.bestKg || row.weight || 0} كغ × ${row.bestReps || row.reps || 0}</span></div>`).join('')}</div>` : '<p class="forty-empty">لا يوجد سجل لهذا التمرين بعد. أكمل الجلسة ليظهر تطورك هنا.</p>'}
+    <span class="forty-modal-kicker">HISTORY</span><h2 class="forty-modal-title">${renderExerciseTitle(exercise.title, true)}</h2>
+    <div class="forty-history-ranges" data-history-index="${exerciseIndex}">
+      ${['W', 'M', '3M', '6M', 'Y', 'ALL'].map(item => `<button type="button" data-action="history-range" data-index="${exerciseIndex}" data-range="${item}" class="${item === range ? 'is-active' : ''}">${item}</button>`).join('')}
+    </div>
+    <div class="forty-history-graph">
+      <div class="forty-history-scale"><span>${maxWeight}</span><span>${Math.round(maxWeight / 2)}</span><span>0</span></div>
+      <div class="forty-history-plot">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Weight history chart">
+          <line x1="0" y1="0" x2="100" y2="0"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="100" x2="100" y2="100"/>
+          ${points.length ? `<polyline points="${points.map(point => `${point.x},${point.y}`).join(' ')}"/>` : ''}
+        </svg>
+        ${points.map(point => `<span class="forty-history-dot" style="left:${point.x}%;top:${point.y}%" title="${escapeHtml(point.date)} · ${point.weight} kg"></span>`).join('')}
+        <strong>${history.length ? `${roundCount} saved rounds · best ${bestWeight} kg` : 'No saved rounds yet'}</strong>
+      </div>
+    </div>
+    <div class="forty-history-summary">
+      <div><small>TOTAL VOLUME</small><b>${totalVolume ? `${Math.round(totalVolume)} kg` : '-'}</b></div>
+      <div><small>BEST</small><b>${bestWeight ? `${bestWeight} kg` : '-'}</b></div>
+      <div><small>CURRENT LOGGED</small><b>${loggedSets}/${tracker.targetSets}</b></div>
+      <div><small>ROUNDS</small><b>${roundCount}</b></div>
+    </div>
+    <div class="forty-history-table">
+      <div class="forty-history-head"><span>DATE</span><span>ROUND</span><span>REPS</span><span>WEIGHT</span></div>
+      ${tableRows.length ? tableRows.map(row => `<div class="forty-history-row"><span>${escapeHtml(row.date || '-')}</span><span>${escapeHtml(row.round)}</span><span>${escapeHtml(row.reps)}</span><span>${row.weight === '-' ? '-' : `${escapeHtml(row.weight)} kg`}</span></div>`).join('') : '<div class="forty-history-empty">No rounds in this range.</div>'}
+    </div>
   `;
 }
 
@@ -118,14 +176,14 @@ function renderTuneModal(dayKey, exerciseIndex) {
   const tracker = fortyDayWorkoutService.getTracker(dayKey, exerciseIndex);
   return `
     <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
-    <span class="forty-modal-kicker">تخصيص التمرين</span><h2>${escapeHtml(exercise.title)}</h2>
+    <span class="forty-modal-kicker">${escapeHtml(getFortyDay(dayKey).short)} · TUNE</span><h2 class="forty-modal-title">${renderExerciseTitle(exercise.title, true)}</h2>
     <div class="forty-tune-form">
-      <label>عدد الجولات<input id="forty-tune-sets" type="number" min="1" max="8" value="${tracker.targetSets}"></label>
-      <label>التكرارات المستهدفة<input id="forty-tune-reps" type="text" value="${escapeHtml(tracker.targetReps || exercise.reps)}" placeholder="8-12"></label>
-      <label>الوزن الافتراضي (كغ)<input id="forty-tune-weight" type="number" min="0" max="1000" step="0.5" value="${tracker.weight}"></label>
-      <label>الراحة بالثواني<input id="forty-tune-rest" type="number" min="0" max="600" value="${tracker.rest}"></label>
+      <label class="forty-tune-row"><span>WEIGHT</span><span class="forty-tune-control"><input id="forty-tune-weight" type="number" min="0" max="1000" step="0.5" value="${tracker.weight}" placeholder="0"><small>kg</small></span></label>
+      <div class="forty-tune-row"><span>SETS</span><span class="forty-tune-control"><button type="button" data-action="tune-step" data-target="forty-tune-sets" data-delta="-1">−</button><input id="forty-tune-sets" type="number" min="1" max="8" value="${tracker.targetSets}"><button type="button" data-action="tune-step" data-target="forty-tune-sets" data-delta="1">+</button></span></div>
+      <label class="forty-tune-row"><span>REPS</span><span class="forty-tune-control"><input id="forty-tune-reps" type="text" value="${escapeHtml(tracker.targetReps || exercise.reps)}" placeholder="8-12"></span></label>
+      <div class="forty-tune-row"><span>REST</span><span class="forty-tune-control"><button type="button" data-action="tune-rest" data-delta="-15">−</button><input id="forty-tune-rest" type="hidden" value="${tracker.rest}"><b id="forty-tune-rest-display">${formatRest(tracker.rest)}</b><button type="button" data-action="tune-rest" data-delta="15">+</button></span></div>
     </div>
-    <button type="button" class="btn btn-primary btn-block" data-action="save-tune" data-index="${exerciseIndex}">حفظ التخصيص</button>
+    <div class="forty-tune-actions"><button type="button" data-close-modal>cancel</button><button type="button" class="is-primary" data-action="save-tune" data-index="${exerciseIndex}">save</button></div>
   `;
 }
 
@@ -204,7 +262,22 @@ export function bindFortyDayWorkoutEvents() {
     if (button.dataset.action === 'reset') { fortyDayWorkoutService.resetExercise(activeDay, index); renderActiveDay(); return; }
     if (button.dataset.action === 'image') { const exercise = getFortyDay(activeDay).exercises[index]; const preview = document.getElementById('forty-image-preview'); if (preview) { preview.src = exercise.image; preview.alt = exercise.title; } openModal(imageModal); return; }
     if (button.dataset.action === 'history') { detailSheet.innerHTML = renderHistoryModal(activeDay, index); openModal(detailModal); return; }
+    if (button.dataset.action === 'history-range') { detailSheet.innerHTML = renderHistoryModal(activeDay, index, button.dataset.range || 'ALL'); return; }
     if (button.dataset.action === 'tune') { detailSheet.innerHTML = renderTuneModal(activeDay, index); openModal(detailModal); return; }
+    if (button.dataset.action === 'tune-step') {
+      const input = document.getElementById(button.dataset.target);
+      if (!input) return;
+      input.value = Math.max(Number(input.min) || 1, Math.min(Number(input.max) || 8, Number(input.value || 0) + Number(button.dataset.delta || 0)));
+      return;
+    }
+    if (button.dataset.action === 'tune-rest') {
+      const input = document.getElementById('forty-tune-rest');
+      const display = document.getElementById('forty-tune-rest-display');
+      if (!input || !display) return;
+      input.value = Math.max(0, Math.min(600, Number(input.value || 0) + Number(button.dataset.delta || 0)));
+      display.textContent = formatRest(input.value);
+      return;
+    }
     if (button.dataset.action === 'save-tune') { fortyDayWorkoutService.tuneExercise(activeDay, index, { targetSets: document.getElementById('forty-tune-sets')?.value, targetReps: document.getElementById('forty-tune-reps')?.value, weight: document.getElementById('forty-tune-weight')?.value, rest: document.getElementById('forty-tune-rest')?.value }); closeModals(); renderActiveDay(); return; }
     if (button.dataset.action === 'rest-add') { fortyDayWorkoutService.adjustRest(30); updateTimers(); return; }
     if (button.dataset.action === 'rest-skip') { fortyDayWorkoutService.skipRest(); updateTimers(); return; }

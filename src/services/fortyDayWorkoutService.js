@@ -200,7 +200,17 @@ class FortyDayWorkoutService {
       totalSets += played.length;
       totalReps += played.reduce((sum, set) => sum + Number(set.reps || 0), 0);
       totalVolume += volume;
-      const record = { isoDate: new Date(finishedAt).toISOString(), date: new Date(finishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), sets: played.length, reps: Number(best.reps || 0), weight: Number(best.kg || 0), bestKg: Number(best.kg || 0), bestReps: Number(best.reps || 0), volume };
+      const record = {
+        isoDate: new Date(finishedAt).toISOString(),
+        date: new Date(finishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        sets: played.length,
+        reps: Number(best.reps || 0),
+        weight: Number(best.kg || 0),
+        bestKg: Number(best.kg || 0),
+        bestReps: Number(best.reps || 0),
+        volume,
+        rounds: played.map((set, index) => ({ round: index + 1, kg: Number(set.kg || 0), reps: Number(set.reps || 0) }))
+      };
       tracker.history = [...(tracker.history || []), record].slice(-100);
       tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet(tracker.weight, targetReps(tracker.targetReps)));
       exercises.push({ title: exercise.title, nameAr: exercise.title, sets: played.length, setsCount: played.length, bestKg: record.bestKg, bestReps: record.bestReps, bestSet: record.bestKg ? `${record.bestKg} كغ × ${record.bestReps || '-'} تكرار` : `${record.bestReps || '-'} تكرار`, volume, isPersonalRecord });

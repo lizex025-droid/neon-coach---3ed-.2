@@ -199,11 +199,18 @@ try {
   await page.locator('#forty-image-modal').waitFor({ state: 'visible' });
   await page.locator('#forty-image-modal [data-close-modal]').click();
   await page.locator('.forty-exercise-card').first().locator('[data-action="tune"]').click();
+  await page.locator('[data-action="tune-step"][data-delta="1"]').click();
+  assert.equal(await page.locator('#forty-tune-sets').inputValue(), '4', 'Tune set stepper did not increment');
+  await page.locator('[data-action="tune-rest"][data-delta="15"]').click();
+  assert.equal(await page.locator('#forty-tune-rest-display').textContent(), '2:45', 'Tune rest stepper did not increment');
   await page.locator('#forty-tune-sets').fill('4');
   await page.locator('[data-action="save-tune"]').click();
   assert.equal(await page.locator('.forty-exercise-card').first().locator('.forty-set-row').count(), 4, 'Exercise tuning did not update sets');
   await page.locator('.forty-exercise-card').first().locator('[data-action="history"]').click();
-  await page.getByText(/لا يوجد سجل لهذا التمرين/).waitFor();
+  assert.equal(await page.locator('.forty-history-ranges button').count(), 6, 'History range filters are incomplete');
+  await page.locator('[data-action="history-range"][data-range="W"]').click();
+  await page.getByText(/No saved rounds yet/).waitFor();
+  assert.equal(await page.locator('.forty-history-summary > div').count(), 4, 'History summary stats are incomplete');
   await page.locator('#forty-detail-modal [data-close-modal]').click();
 
   await page.locator('#forty-finish-btn').click();
@@ -212,6 +219,10 @@ try {
   const workoutHistoryCount = await page.evaluate(async () => (await import('/src/state/store.js')).store.getWorkoutHistory().length);
   assert.ok(workoutHistoryCount >= 1, 'Finished workout did not reach the central progress history');
   await page.locator('#forty-summary-modal [data-close-modal]').click();
+  await page.locator('.forty-exercise-card').first().locator('[data-action="history"]').click();
+  assert.equal(await page.locator('.forty-history-row').count(), 1, 'Completed workout round did not reach exercise history');
+  assert.match(await page.locator('.forty-history-row').first().innerText(), /60 kg/, 'Exercise history lost the completed weight');
+  await page.locator('#forty-detail-modal [data-close-modal]').click();
 
   const workoutProgressTab = page.locator('[data-nav="progress"]');
   const workoutTabBox = await workoutProgressTab.boundingBox();
