@@ -173,12 +173,45 @@ try {
   await nutritionTab.tap();
   await page.waitForFunction(() => location.hash === '#nutrition');
 
-  // The workout reader owns a separate copy of the bottom bar.
-  await page.goto(`http://127.0.0.1:${port}/40-days-workout.html?book=fortyDay`, {
-    waitUntil: 'domcontentloaded',
-  });
+  // The complete 40-day workout now runs inside the SPA instead of a standalone HTML reader.
+  await page.evaluate(() => { location.hash = 'workout'; });
+  await page.locator('#forty-workout-root').waitFor();
   await page.locator('.app-bottom-nav').waitFor();
   await page.locator('#neon-app-splash').waitFor({ state: 'detached', timeout: 10000 });
+  assert.equal(new URL(page.url()).pathname.includes('40-days-workout.html'), false, 'Workout left the SPA');
+  assert.equal(await page.locator('.forty-day-tab').count(), 7, '40-day week tabs are incomplete');
+  assert.equal(await page.locator('.forty-exercise-card').count(), 7, 'Push A exercises are incomplete');
+  await page.locator('[data-day="pullA"]').click();
+  assert.equal(await page.locator('.forty-exercise-card').count(), 6, 'Pull A exercises are incomplete');
+  await page.locator('[data-day="pushA"]').click();
+
+  await page.locator('#forty-start-btn').click();
+  const firstSet = page.locator('.forty-exercise-card').first().locator('.forty-set-row').first();
+  await firstSet.locator('input[data-field="kg"]').fill('60');
+  await firstSet.locator('input[data-field="reps"]').fill('10');
+  await firstSet.locator('[data-action="toggle-set"]').click();
+  await page.locator('#forty-rest-bar').waitFor({ state: 'visible' });
+  await page.locator('[data-action="rest-add"]').click();
+  await page.locator('[data-action="rest-skip"]').click();
+  await page.locator('#forty-rest-bar').waitFor({ state: 'hidden' });
+
+  await page.locator('.forty-exercise-card').first().locator('[data-action="image"]').click();
+  await page.locator('#forty-image-modal').waitFor({ state: 'visible' });
+  await page.locator('#forty-image-modal [data-close-modal]').click();
+  await page.locator('.forty-exercise-card').first().locator('[data-action="tune"]').click();
+  await page.locator('#forty-tune-sets').fill('4');
+  await page.locator('[data-action="save-tune"]').click();
+  assert.equal(await page.locator('.forty-exercise-card').first().locator('.forty-set-row').count(), 4, 'Exercise tuning did not update sets');
+  await page.locator('.forty-exercise-card').first().locator('[data-action="history"]').click();
+  await page.getByText(/لا يوجد سجل لهذا التمرين/).waitFor();
+  await page.locator('#forty-detail-modal [data-close-modal]').click();
+
+  await page.locator('#forty-finish-btn').click();
+  await page.locator('#forty-summary-modal').waitFor({ state: 'visible' });
+  await page.getByText(/أحسنت، أنهيت التمرين/).waitFor();
+  const workoutHistoryCount = await page.evaluate(async () => (await import('/src/state/store.js')).store.getWorkoutHistory().length);
+  assert.ok(workoutHistoryCount >= 1, 'Finished workout did not reach the central progress history');
+  await page.locator('#forty-summary-modal [data-close-modal]').click();
 
   const workoutProgressTab = page.locator('[data-nav="progress"]');
   const workoutTabBox = await workoutProgressTab.boundingBox();
@@ -191,7 +224,7 @@ try {
   });
   assert.equal(workoutHit, 'progress', 'Workout bottom tab is intercepted');
   await workoutProgressTab.tap();
-  await page.waitForFunction(() => location.pathname.endsWith('/index.html') && location.hash === '#progress');
+  await page.waitForFunction(() => location.hash === '#progress');
 
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({
@@ -208,6 +241,7 @@ try {
     editableMealDraftVerified: true,
     splashSafetyVerified: true,
     workoutNavigationVerified: true,
+    integratedFortyDayWorkoutVerified: true,
     errors,
   }));
 } catch (error) {

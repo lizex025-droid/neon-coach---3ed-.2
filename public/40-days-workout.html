@@ -27,28 +27,9 @@
     </style>
   </head>
   <body>
-    <p id="fortyDayLoading">جاري تحميل تمرين الـ40 يوم…</p>
+    <p id="fortyDayLoading">جاري فتح تمرين الـ40 يوم داخل NEON COACH…</p>
     <script>
-      (async () => {
-        const pageUrl = new URL(location.href);
-        pageUrl.searchParams.set("book", "fortyDay");
-        history.replaceState(null, "", pageUrl);
-
-        try {
-          const response = await fetch("./manga-viewer.html");
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const viewerHtml = await response.text();
-          document.open();
-          document.write(viewerHtml);
-          document.close();
-        } catch (error) {
-          const loading = document.getElementById("fortyDayLoading");
-          if (loading) {
-            loading.innerHTML = 'تعذر تحميل الصفحة. <a href="./manga-viewer.html?book=fortyDay">فتح تمرين الـ40 يوم</a>';
-          }
-          console.error(error);
-        }
-      })();
+      location.replace('./index.html#workout');
     </script>
   </body>
 </html>

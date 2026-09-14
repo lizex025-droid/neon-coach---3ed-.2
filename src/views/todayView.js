@@ -197,7 +197,7 @@ export function renderTodayView() {
             </div>
           </div>
 
-          <a href="./40-days-workout.html?book=fortyDay" id="start-workout-btn" class="btn btn-primary btn-lg" style="border-radius: 20px; font-size: 1.1rem; width: 100%; margin-top: 4px;">
+          <a href="#workout" id="start-workout-btn" class="btn btn-primary btn-lg" style="border-radius: 20px; font-size: 1.1rem; width: 100%; margin-top: 4px;">
             ابدأ التمرين ▶
           </a>
 

@@ -8,7 +8,7 @@ export function renderBottomNav(currentRoute) {
     { id: 'today', hash: '#today', label: 'اليوم', icon: 'home' },
     { id: 'nutrition', hash: '#nutrition', label: 'التغذية', icon: 'nutrition' },
     { id: 'neon-ai', hash: '#neon-ai', label: 'neon ai', icon: 'ai' },
-    { id: 'workout', hash: './40-days-workout.html?book=fortyDay', label: 'التدريب', icon: 'dumbbell' },
+    { id: 'workout', hash: '#workout', label: 'التدريب', icon: 'dumbbell' },
     { id: 'progress', hash: '#progress', label: 'التقدم', icon: 'chart' },
     { id: 'profile', hash: '#profile', label: 'حسابي', icon: 'user' }
   ];

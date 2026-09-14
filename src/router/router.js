@@ -9,7 +9,7 @@ import { renderAiDrawer, bindAiDrawerEvents } from '../components/aiDrawer.js';
 
 import { renderQuestionnaireView, bindQuestionnaireEvents } from '../views/questionnaireView.js';
 import { renderTodayView, bindTodayViewEvents } from '../views/todayView.js';
-import { renderWorkoutListView, bindWorkoutListEvents } from '../views/workoutListView.js';
+import { renderFortyDayWorkoutView, bindFortyDayWorkoutEvents } from '../views/fortyDayWorkoutView.js';
 import { renderWorkoutSessionView, bindWorkoutSessionEvents } from '../views/workoutSessionView.js';
 import { renderNutritionView, bindNutritionEvents } from '../views/nutritionView.js';
 import { renderMealLogView, bindMealLogEvents } from '../views/mealLogView.js';
@@ -30,7 +30,7 @@ export const ROUTES = {
   auth: { render: renderAuthView, bind: bindAuthViewEvents, showNav: false, showHeader: false },
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
   today: { render: renderTodayView, bind: bindTodayViewEvents, showNav: true, showHeader: true },
-  workout: { render: renderWorkoutListView, bind: bindWorkoutListEvents, showNav: true, showHeader: true },
+  workout: { render: renderFortyDayWorkoutView, bind: bindFortyDayWorkoutEvents, showNav: true, showHeader: true },
   'workout-session': { render: renderWorkoutSessionView, bind: bindWorkoutSessionEvents, showNav: false, showHeader: false },
   nutrition: { render: renderNutritionView, bind: bindNutritionEvents, showNav: true, showHeader: true },
   'neon-ai': { render: renderNeonAiView, bind: bindNeonAiViewEvents, showNav: true, showHeader: true },
@@ -112,9 +112,9 @@ export class Router {
       return;
     }
 
-    // إبعاد المستخدم عن مسار المصادقة أو مسار الـ 40 يوم المحذوف
+    // دعم الرابط القديم داخل موجه التطبيق دون فتح صفحة HTML مستقلة
     if (routeKey === 'forty-day') {
-      window.location.hash = hasCompletedOnboarding ? '#today' : '#questionnaire';
+      window.location.hash = hasCompletedOnboarding ? '#workout' : '#questionnaire';
       return;
     }
 
@@ -183,7 +183,7 @@ export class Router {
 
   refreshCurrentView() {
     // Keep the active command/card and drawer mounted while the store is refreshed.
-    if (this.currentRoute === 'neon-ai') return;
+    if (this.currentRoute === 'neon-ai' || this.currentRoute === 'workout') return;
     // تنظيف أي نوافذ منبثقة ملحقة بـ body مباشرة قبل إعادة الرسم
     document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
 
