@@ -44,6 +44,14 @@ try {
   assert.ok(welcomeAudit.titleOffset !== null && welcomeAudit.titleOffset <= 1, 'NEON COACH title is not centered');
   assert.ok(welcomeAudit.logoOffset !== null && welcomeAudit.logoOffset <= 1, 'NEON COACH logo is not centered');
 
+  await page.locator('#q-welcome-start-btn').click();
+  await page.getByRole('heading', { name: 'قياسات الجسم' }).waitFor();
+  assert.equal(
+    await page.locator('img[src*="neon-cat-scale"]').count(),
+    0,
+    'Measurement mascot is still visible',
+  );
+
   await page.evaluate(async () => {
     const { store } = await import('/src/state/store.js');
     store.setState({
@@ -120,6 +128,7 @@ try {
     routes,
     welcomeScreenVerified: true,
     stockEmojiVerified: true,
+    measurementMascotRemoved: true,
     splashSafetyVerified: true,
     workoutNavigationVerified: true,
     errors,

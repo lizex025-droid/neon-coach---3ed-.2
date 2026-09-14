@@ -562,11 +562,6 @@ function renderStepContent(step) {
           <p style="font-size: 0.9rem; color: #B8C0BC;">Body Measurements لحساب احتياجك بدقة</p>
         </div>
 
-        <!-- رسمة القط على الميزان مطابقة للمرجع -->
-        <div style="width: 150px; height: 150px; margin: 0 auto 16px; filter: drop-shadow(0 0 16px rgba(85, 247, 165, 0.3));">
-          <img src="./icons/neon-cat-scale.svg" alt="Cat on scale" style="width: 100%; height: 100%;">
-        </div>
-
         <!-- الاسم الشخصي -->
         <div class="neon-card" style="padding: 12px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
           <span style="color: #B8C0BC; font-weight: 700; font-size: 0.95rem;">الاسم الأول</span>
