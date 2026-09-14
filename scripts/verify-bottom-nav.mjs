@@ -69,13 +69,31 @@ try {
   await page.locator('#q-liked-foods-input').waitFor();
   assert.equal(await page.locator('input[name="q-allergens"]').count(), 0, 'Food-allergy controls are still visible');
 
-  await page.evaluate(async () => {
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('#q-sleep').waitFor();
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('#q-workout-days').waitFor();
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('#q-supplements-input').waitFor();
+  assert.equal(await page.locator('input[type="checkbox"]').count(), 0, 'Old supplement checkboxes are still visible');
+  assert.equal(await page.locator('#pills-selected-supplements .food-tag-pill').count(), 3, 'Default supplement pills are missing');
+  await page.locator('.supplement-rec-chip[data-supplement="Whey protein"]').click();
+  await page.locator('#q-supplements-input').fill('مغنيسيوم');
+  await page.locator('#dropdown-supplements .food-autocomplete-item').first().waitFor();
+  await page.locator('#dropdown-supplements .food-autocomplete-item').first().click();
+  assert.equal(await page.locator('#pills-selected-supplements .food-tag-pill').count(), 5, 'Supplement search did not add a pill');
+
+  await page.locator('#q-next-step-btn').click();
+  await page.locator('#create-my-plan-btn').waitFor();
+  await page.locator('#create-my-plan-btn').click();
+  await page.locator('#plan-gen-overlay').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => location.hash === '#today', null, { timeout: 20000 });
+  const selectedStack = await page.evaluate(async () => {
     const { store } = await import('/src/state/store.js');
-    store.setState({
-      userProfile: { ...store.getState().userProfile, onboardingCompleted: true },
-    });
-    location.hash = 'today';
+    return store.getDailyStackItems().map(item => item.name);
   });
+  assert.ok(selectedStack.some(name => name.includes('Whey protein')), 'Selected whey supplement was not saved');
+  assert.ok(selectedStack.some(name => name.includes('Magnesium')), 'Searched magnesium supplement was not saved');
   await page.locator('.app-bottom-nav').waitFor();
 
   const routes = ['nutrition', 'neon-ai', 'progress', 'profile', 'today'];
@@ -106,6 +124,43 @@ try {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     }
   }
+
+  // Meal speech result must stay editable until explicit confirmation, then reach Nutrition state.
+  await page.evaluate(() => { location.hash = 'neon-ai'; });
+  await page.locator('#neon-ai-result-body').waitFor({ state: 'attached' });
+  await page.evaluate(async () => {
+    const { renderNeonResult } = await import('/src/components/neonResultCards.js');
+    const body = document.getElementById('neon-ai-result-body');
+    document.getElementById('neon-ai-result-card')?.classList.remove('is-empty');
+    renderNeonResult(body, {
+      status: 'clarification',
+      reply: 'راجع الوجبة قبل الحفظ.',
+      cards: [{
+        id: 'local-browser-test', type: 'meal_draft', local: true,
+        question: 'هل تود إضافة الوجبة التي ذكرتها؟',
+        meals: [{ mealType: 'lunch', items: [
+          { nameAr: 'صدر دجاج مشوي', nameEn: 'Grilled Chicken Breast', grams: 250, state: 'cooked', calories: 412.5, protein: 77.5, carbs: 0, fats: 9 },
+          { nameAr: 'بطاطا مسلوقة', nameEn: 'Boiled Potatoes', grams: 150, state: 'cooked', calories: 130.5, protein: 2.9, carbs: 30, fats: 0.2 }
+        ] }]
+      }]
+    });
+  });
+  await page.getByText('هل تود إضافة الوجبة التي ذكرتها؟').waitFor();
+  assert.equal(await page.locator('.meal-draft-item').count(), 2, 'Meal items are not fully displayed');
+  await page.locator('.meal-draft-item').first().locator('input[type="number"]').fill('200');
+  await page.locator('.meal-draft-item').first().getByRole('button', { name: 'تعديل' }).click();
+  await page.locator('.meal-draft-item').nth(1).getByRole('button', { name: 'حذف' }).click();
+  await page.getByLabel('بحث عن صنف لإضافته').fill('بطاطا');
+  await page.locator('.meal-food-suggestion').first().getByRole('button', { name: 'إضافة' }).click();
+  await page.getByRole('button', { name: 'إضافة إلى التغذية' }).click();
+  await page.getByText(/تمت إضافة غداء إلى سجل التغذية/).waitFor();
+  const savedMeal = await page.evaluate(async () => {
+    const { store } = await import('/src/state/store.js');
+    return store.getState().loggedMeals.at(-1);
+  });
+  assert.equal(savedMeal.titleAr, 'غداء');
+  assert.equal(savedMeal.items.length, 2);
+  assert.equal(savedMeal.items[0].grams, 200);
 
   // A failed/aborted page transition must never leave an invisible click blocker.
   await page.evaluate(async () => {
@@ -148,6 +203,9 @@ try {
     measurementMascotRemoved: true,
     projectionCardsRemoved: true,
     foodAllergyControlsRemoved: true,
+    supplementSearchVerified: true,
+    planLoadingVerified: true,
+    editableMealDraftVerified: true,
     splashSafetyVerified: true,
     workoutNavigationVerified: true,
     errors,

@@ -5,7 +5,16 @@ export const commandSchema = z.object({
   requestId: z.uuid(), threadId: z.uuid(), text: z.string().trim().max(limits.message).default(''),
   inputSource: z.enum(['text', 'voice']).default('text'),
   clarificationId: z.uuid().optional(),
-  confirmation: z.object({ pendingId: z.uuid(), accept: z.boolean(), mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack', 'other']).optional() }).strict().optional(),
+  confirmation: z.object({
+    pendingId: z.uuid(),
+    accept: z.boolean(),
+    mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack', 'other']).optional(),
+    items: z.array(z.object({
+      foodName: z.string().trim().min(1).max(200),
+      grams: z.number().positive().max(5000),
+      basis: z.enum(['raw', 'cooked'])
+    }).strict()).min(1).max(20).optional()
+  }).strict().optional(),
   restore: z.boolean().optional()
 }).strict().refine(v => v.text || v.confirmation || v.restore, 'A message is required');
 

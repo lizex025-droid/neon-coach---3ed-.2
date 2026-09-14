@@ -62,10 +62,21 @@ test('isolated PostgreSQL: writes, readback, idempotency, meal confirmation and 
   assert.equal((await env.db.query('SELECT count(*)::int AS n FROM meal_logs')).rows[0].n, 0);
   const restored = await meals('', { restore: true }); assert.equal(restored.clarification.id, draft.clarification.id);
   const confirmationId = randomUUID();
-  const saved = await meals('', { requestId: confirmationId, confirmation: { pendingId: draft.clarification.id, accept: true, mealType: 'lunch' } });
+  const confirmation = {
+    pendingId: draft.clarification.id,
+    accept: true,
+    mealType: 'lunch',
+    items: [
+      { foodName: 'Grilled Chicken Breast', grams: 250, basis: 'cooked' },
+      { foodName: 'Boiled Potatoes', grams: 150, basis: 'cooked' }
+    ]
+  };
+  const saved = await meals('', { requestId: confirmationId, confirmation });
   assert.equal(saved.status, 'success', JSON.stringify(saved)); assert.equal(saved.results[0].data.items.length, 2);
+  assert.deepEqual(saved.results[0].data.items.map(item => item.grams), [250, 150]);
+  assert.match(saved.results[0].data.items[1].nameEn, /Potato/i);
   assert.ok(saved.results[0].data.protein >= 60);
-  await meals('', { requestId: confirmationId, confirmation: { pendingId: draft.clarification.id, accept: true, mealType: 'lunch' } });
+  await meals('', { requestId: confirmationId, confirmation });
   assert.equal((await env.db.query('SELECT count(*)::int AS n FROM meal_logs')).rows[0].n, 1);
   const edit = runner(env, { model: async () => plan('updateMeal', { recordId: saved.results[0].recordId, itemIndex: 0, grams: 150 }) });
   const edited = await edit('Change chicken to 150 g'); assert.equal(edited.results[0].data.items[1].grams, 150); assert.equal(edited.results[0].data.items[0].grams, 150);

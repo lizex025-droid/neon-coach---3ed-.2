@@ -11,6 +11,11 @@ import { Router } from './router/router.js';
 import { setupTrainingLoadingInterceptors } from './utils/splash.js';
 import { initNeonParticles } from './utils/particles.js';
 import { initGlobalVoiceTrigger } from './components/voice/voiceTriggerBtn.js';
+import { inject } from '@vercel/analytics';
+import { injectSpeedInsights } from '@vercel/speed-insights';
+
+inject({ mode: import.meta.env.PROD ? 'production' : 'development' });
+injectSpeedInsights({ debug: import.meta.env.DEV });
 
 // تشغيل خلفية الجسيمات والنقاط الخضراء النيونية الطائرة
 initNeonParticles();
@@ -90,4 +95,3 @@ window.addEventListener('beforeinstallprompt', (e) => {
   deferredPrompt = e;
   console.log('التطبيق جاهز للتثبيت كـ PWA.');
 });
-

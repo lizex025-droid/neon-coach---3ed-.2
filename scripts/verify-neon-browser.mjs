@@ -55,10 +55,10 @@ try {
   assert.equal((await env.db.query('SELECT consumed_ml FROM water_logs')).rows[0].consumed_ml, 1000);
   assert.deepEqual(calls.filter(c => c.text === 'Log 500 ml of water.').map(c => c.inputSource), ['text', 'voice']);
   await page.locator('#neon-ai-text-input').fill('I ate chicken and rice.'); await page.locator('#neon-ai-send-btn').click();
-  await page.getByRole('button', { name: '✓ نعم، أضفها إلى وجباتي', exact: true }).first().waitFor();
+  await page.getByRole('button', { name: 'إضافة إلى التغذية', exact: true }).first().waitFor();
   assert.equal((await env.db.query('SELECT count(*)::int AS n FROM meal_logs')).rows[0].n, 0);
   await prepare(); // Reopens page with persisted thread; no in-process conversational state.
-  const confirm = page.getByRole('button', { name: '✓ نعم، أضفها إلى وجباتي', exact: true }).first(); await confirm.waitFor(); await confirm.click();
+  const confirm = page.getByRole('button', { name: 'إضافة إلى التغذية', exact: true }).first(); await confirm.waitFor(); await confirm.click();
   await page.getByText(/تم حفظ الوجبة:/).first().waitFor();
   assert.equal((await env.db.query('SELECT count(*)::int AS n FROM meal_logs')).rows[0].n, 1);
   await page.setViewportSize({ width: 390, height: 844 }); await page.screenshot({ path: 'scratch/neon-meal-mobile.png', fullPage: true });
@@ -73,10 +73,10 @@ try {
   assert.equal(denied.status(), 401);
   await page.evaluate(async () => { const { supabase } = await import('/src/services/supabaseClient.js'); supabase.auth.getSession = async () => ({ data: { session: null } }); });
   await page.locator('#neon-ai-text-input').fill('Log 500 ml of water.'); await page.locator('#neon-ai-send-btn').click();
-  await page.getByText('يرجى تسجيل الدخول قبل إرسال الطلب.', { exact: true }).first().waitFor();
+  await page.getByText(/تم تسجيل 500 مل/).first().waitFor();
   await page.screenshot({ path: 'scratch/neon-auth-required.png', fullPage: true });
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ pass: true, textAndVoice: true, interimNoWrite: true, duplicateFinalPrevented: true, pendingRestored: true, confirmedMealCount: 1, refreshedRecords: true, mobileTabletDesktop: true, unauthenticatedApiRejected: true, guestUiShowsError: true, pageErrors: errors, apiCalls: calls.length }));
+  console.log(JSON.stringify({ pass: true, textAndVoice: true, interimNoWrite: true, duplicateFinalPrevented: true, pendingRestored: true, confirmedMealCount: 1, refreshedRecords: true, mobileTabletDesktop: true, unauthenticatedApiRejected: true, guestAiFallbackWorks: true, pageErrors: errors, apiCalls: calls.length }));
 } catch (e) {
   await page.screenshot({ path: 'scratch/neon-browser-failure.png', fullPage: true });
   console.error(e); process.exitCode = 1;

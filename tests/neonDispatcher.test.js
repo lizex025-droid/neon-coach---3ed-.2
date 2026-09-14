@@ -58,3 +58,20 @@ test('AI chat remains available when the authenticated action backend is unavail
   assert.equal(calls[0].history.length, 0);
   assert.equal(calls[1].history.length, 2);
 });
+
+test('AI fallback returns an editable meal draft instead of raw meal markdown', async () => {
+  const dispatch = createAiFallbackDispatch({
+    actionDispatch: async () => { throw new Error('No cloud session'); },
+    chat: async () => ({
+      success: true,
+      reply: '**raw meal result**',
+      mealsData: [{ titleAr: 'غداء', items: [{ nameAr: 'صدر دجاج', grams: 250, calories: 412, protein: 77.5, carbs: 0, fats: 9 }] }]
+    }),
+  });
+  const result = await dispatch({ requestId: 'request-meal', text: 'أكلت 250 غرام صدر دجاج' });
+  assert.equal(result.status, 'clarification');
+  assert.equal(result.cards[0].type, 'meal_draft');
+  assert.equal(result.cards[0].local, true);
+  assert.match(result.cards[0].question, /هل تود إضافة الوجبة/);
+  assert.doesNotMatch(result.reply, /raw meal result/);
+});

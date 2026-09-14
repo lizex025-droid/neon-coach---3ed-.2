@@ -32,7 +32,16 @@ export function buildExecutionGraph({ repo, authenticate, model = understandWith
       if (s.confirmation) {
         if (!s.pending || s.pending.kind !== 'meal' || s.pending.id !== s.confirmation.pendingId) throw new AgentError('STALE_CONFIRMATION', 'انتهت صلاحية هذه البطاقة. افتح الطلب الحالي.', 'validateActions', 409);
         if (!s.confirmation.accept) return { pending: null, plan: { intent: 'cancel', reply: 'تم إلغاء المسودة دون حفظ وجبة.' }, actions: [] };
-        return { plan: { intent: 'write' }, actions: s.pending.actions.map(a => a.tool === 'addMeal' ? { ...a, args: { ...a.args, mealType: s.confirmation.mealType || a.args.mealType || 'other' } } : a), pending: null };
+        let mealIndex = 0;
+        return { plan: { intent: 'write' }, actions: s.pending.actions.map(a => {
+          if (a.tool !== 'addMeal') return a;
+          const isFirstMeal = mealIndex++ === 0;
+          return { ...a, args: {
+            ...a.args,
+            mealType: s.confirmation.mealType || a.args.mealType || 'other',
+            ...(isFirstMeal && s.confirmation.items ? { items: s.confirmation.items } : {})
+          } };
+        }), pending: null };
       }
       const plan = planSchema.parse(await model(s, { signal })); trace(s, 'intentDetected');
       if (s.clarificationId && s.clarificationId !== s.pending?.id) throw new AgentError('STALE_CLARIFICATION', 'هذا الرد مرتبط بطلب قديم.', 'understandRequest', 409);

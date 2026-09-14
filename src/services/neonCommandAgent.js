@@ -37,13 +37,24 @@ export function createAiFallbackDispatch({
     history.push({ sender: 'user', text }, { sender: 'ai', text: result.reply });
     if (history.length > 20) history.splice(0, history.length - 20);
 
+    const meals = Array.isArray(result.mealsData)
+      ? result.mealsData
+      : result.mealData ? [result.mealData] : [];
+    const hasMealDraft = meals.some(meal => Array.isArray(meal?.items) && meal.items.length);
+
     return {
       requestId: command.requestId,
-      status: 'success',
-      reply: result.reply,
+      status: hasMealDraft ? 'clarification' : 'success',
+      reply: hasMealDraft ? 'راجع مكونات الوجبة والماكروز قبل إضافتها إلى سجل التغذية.' : result.reply,
       actions: [],
       results: [],
-      cards: [],
+      cards: hasMealDraft ? [{
+        id: `local-${command.requestId}`,
+        type: 'meal_draft',
+        local: true,
+        question: 'هل تود إضافة الوجبة التي ذكرتها؟',
+        meals
+      }] : [],
       changedResources: [],
       clarification: null,
       provider: result.provider,
@@ -103,7 +114,9 @@ export class NeonCommandAgent {
     if (voice && this.spokenReplies && r.reply) this.tts.speak(r.reply, { lang: this.lang });
     commandTrace(r, 'responseRendered'); return r;
   }
-  confirm(pendingId, accept, mealType) { return this.handleUserUtterance('', { confirmation: { pendingId, accept, mealType } }); }
+  confirm(pendingId, accept, mealType, items) {
+    return this.handleUserUtterance('', { confirmation: { pendingId, accept, mealType, ...(items?.length ? { items } : {}) } });
+  }
   async restore() { try { return await restoreNeonConversation(); } catch { return null; } }
   async retry() { try { return this.present(await retryNeonCommand()); } catch (e) { this._setState('error', { error: e.message }); } }
   undo() { return this.handleUserUtterance('Undo my last action'); }

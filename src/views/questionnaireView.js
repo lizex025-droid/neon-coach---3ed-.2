@@ -31,6 +31,14 @@ import { syncService } from '../services/syncService.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { searchFoods } from '../data/foods.js';
+import { SUPPLEMENT_DB, searchSupplementsDb } from '../data/supplementsDb.js';
+
+const QUICK_SUPPLEMENT_NAMES = [
+  'Creatine monohydrate',
+  'Omega-3 (Fish oil)',
+  'Vitamin D3',
+  'Whey protein'
+];
 
 let currentStep = 1;
 let showWelcomeScreen = true;
@@ -123,6 +131,7 @@ let formData = {
   likedFoods: [],
   dislikedFoods: [],
   allergens: [],
+  supplements: QUICK_SUPPLEMENT_NAMES.slice(0, 3),
   injuries: [],
   workoutDaysCount: 4,
   equipment: 'gym',
@@ -494,6 +503,9 @@ export function renderQuestionnaireView() {
   }
   if (profile?.goal) {
     formData.goal = profile.goal;
+  }
+  if (Array.isArray(profile?.supplements)) {
+    formData.supplements = [...profile.supplements];
   }
 
   const activeSteps = getActiveSteps();
@@ -1208,20 +1220,25 @@ function renderStepContent(step) {
         </div>
 
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px;">
-          <div style="font-weight: 700; color: #FFFFFF; margin-bottom: 10px;">المكملات التي تستخدمها حالياً:</div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <label style="display: flex; align-items: center; gap: 10px; color: #B8C0BC;">
-              <input type="checkbox" checked style="width: auto;"> كرياتين مونوهيدرات
-            </label>
-            <label style="display: flex; align-items: center; gap: 10px; color: #B8C0BC;">
-              <input type="checkbox" checked style="width: auto;"> أوميغا 3 (زيت سمك)
-            </label>
-            <label style="display: flex; align-items: center; gap: 10px; color: #B8C0BC;">
-              <input type="checkbox" checked style="width: auto;"> فيتامين D3
-            </label>
-            <label style="display: flex; align-items: center; gap: 10px; color: #B8C0BC;">
-              <input type="checkbox" style="width: auto;"> واي بروتين (Whey Protein)
-            </label>
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px;">
+            <div style="font-weight: 700; color: #FFFFFF;">المكملات التي تستخدمها حالياً:</div>
+            <span class="supplements-count-badge" style="color:#55F7A5;font-size:.82rem;"></span>
+          </div>
+          <div id="box-selected-supplements" class="food-tags-box supplement-tags-box">
+            <div id="pills-selected-supplements" class="food-tags-pills"></div>
+            <input id="q-supplements-input" class="food-tag-input" autocomplete="off" placeholder="اكتب أول حرف للبحث وإضافة المكمل..." aria-label="ابحث عن مكمل">
+            <div id="dropdown-supplements" class="food-autocomplete-dropdown" style="display:none;"></div>
+          </div>
+          <div class="food-recommendations-wrapper" style="margin-top:14px;">
+            <div style="font-weight:700;color:#55F7A5;margin-bottom:10px;">اختيارات شائعة (اضغط للإضافة الفورية):</div>
+            <div id="supplement-rec-chips" class="food-rec-chips-grid">
+              ${QUICK_SUPPLEMENT_NAMES.map(name => {
+                const supplement = SUPPLEMENT_DB.find(item => item.name === name);
+                return `<button type="button" class="food-rec-chip supplement-rec-chip" data-supplement="${name}">
+                  <span class="chip-status">+</span><span>${supplement?.nameAr || name}</span>
+                </button>`;
+              }).join('')}
+            </div>
           </div>
         </div>
 
@@ -1423,6 +1440,8 @@ export function bindQuestionnaireEvents() {
     initWeeklyGainRateEvents();
   } else if (currentStepKey === STEP_KEYS.NUTRITION) {
     initNutritionStepEvents();
+  } else if (currentStepKey === STEP_KEYS.SUPPLEMENTS) {
+    initSupplementsStepEvents();
   }
 
   // التقدم للخطوة التالية
@@ -1528,9 +1547,8 @@ export function bindQuestionnaireEvents() {
     const step3 = document.getElementById('plan-step-3');
     const step4 = document.getElementById('plan-step-4');
 
-    if (overlay) {
-      overlay.style.display = 'flex';
-    }
+    if (overlay) overlay.style.display = 'flex';
+    createPlanBtn.disabled = true;
 
     const setStepState = (stepEl, state) => {
       if (!stepEl) return;
@@ -1546,51 +1564,40 @@ export function bindQuestionnaireEvents() {
       }
     };
 
-    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const finishAfterMinimum = async (startedAt, minimumMs = 320) => {
+      await sleep(Math.max(0, minimumMs - (Date.now() - startedAt)));
+    };
+    const showStage = (step, label, percent) => {
+      if (coreIcon) coreIcon.textContent = '';
+      if (actionLabel) actionLabel.textContent = label;
+      if (percentLabel) percentLabel.textContent = `${percent}%`;
+      if (progressBar) progressBar.style.width = `${percent}%`;
+      setStepState(step, 'active');
+      try { navigator.vibrate?.(30); } catch (_) {}
+    };
 
-    // المرحلة 1: حساب السعرات والأيض
-    if (coreIcon) coreIcon.textContent = '';
-    if (actionLabel) actionLabel.textContent = 'حساب معدل الحرق اليومي (BMR) وضبط العجز...';
-    if (percentLabel) percentLabel.textContent = '25%';
-    if (progressBar) progressBar.style.width = '25%';
-    setStepState(step1, 'active');
-    try { navigator.vibrate?.(30); } catch (_) {}
-    await sleep(650);
-    setStepState(step1, 'completed');
+    try {
+      // كل مرحلة تنتهي فقط بعد اكتمال العمل الحقيقي الخاص بها.
+      let startedAt = Date.now();
+      showStage(step1, 'حساب معدل الحرق اليومي (BMR) وضبط العجز...', 25);
+      const targets = calculateNutritionTargets(formData);
+      await finishAfterMinimum(startedAt);
+      setStepState(step1, 'completed');
 
-    // المرحلة 2: الماكروز واستبعاد الحساسيات وتضمين الأطعمة المفضلة
-    if (coreIcon) coreIcon.textContent = '';
-    if (actionLabel) actionLabel.textContent = 'توزيع الماكروز والبروتين واستبعاد الحساسيات...';
-    if (percentLabel) percentLabel.textContent = '55%';
-    if (progressBar) progressBar.style.width = '55%';
-    setStepState(step2, 'active');
-    try { navigator.vibrate?.(30); } catch (_) {}
-    await sleep(700);
-    setStepState(step2, 'completed');
-
-    // المرحلة 3: جدول التمارين لعدد الأيام المحددة
-    if (coreIcon) coreIcon.textContent = '';
-    if (actionLabel) actionLabel.textContent = `هندسة جدول التمارين لـ ${formData.workoutDaysCount || 4} أيام وتفصيل العضلات...`;
-    if (percentLabel) percentLabel.textContent = '80%';
-    if (progressBar) progressBar.style.width = '80%';
-    setStepState(step3, 'active');
-    try { navigator.vibrate?.(30); } catch (_) {}
-    await sleep(750);
-    setStepState(step3, 'completed');
-
-    // المرحلة 4: أهداف الترطيب والمزامنة السحابية
-    if (coreIcon) coreIcon.textContent = '';
-    if (actionLabel) actionLabel.textContent = 'تجهيز أهداف الترطيب اليومي ومزامنة الخطة...';
-    if (percentLabel) percentLabel.textContent = '100%';
-    if (progressBar) progressBar.style.width = '100%';
-    setStepState(step4, 'active');
-    try { navigator.vibrate?.(40); } catch (_) {}
-
-    // توليد الخطة وحفظها في التخزين المركزي
-    const targets = calculateNutritionTargets(formData);
-    const trainingPlan = generateTrainingPlan(formData);
-
-    const fullProfile = {
+      startedAt = Date.now();
+      showStage(step2, 'توزيع الماكروز والبروتين وتجهيز المكملات المختارة...', 55);
+      const selectedStackItems = (formData.supplements || [])
+        .map(name => SUPPLEMENT_DB.find(item => item.name === name))
+        .filter(Boolean)
+        .map(item => ({
+          id: `item_${item.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`,
+          name: item.displayName,
+          dose: item.dose,
+          window: item.window,
+          note: item.note
+        }));
+      const fullProfile = {
       ...formData,
       currentWeight: formData.weight,
       startWeight: formData.weight,
@@ -1618,50 +1625,66 @@ export function bindQuestionnaireEvents() {
       targetGlasses: targets.waterGlasses,
       onboardingCompleted: true,
       onboarding_completed: true
-    };
+      };
+      await finishAfterMinimum(startedAt);
+      setStepState(step2, 'completed');
 
-    store.setUserProfile(fullProfile);
+      startedAt = Date.now();
+      showStage(step3, `هندسة جدول التمارين لـ ${formData.workoutDaysCount || 4} أيام وتفصيل العضلات...`, 80);
+      const trainingPlan = generateTrainingPlan(formData);
+      await finishAfterMinimum(startedAt);
+      setStepState(step3, 'completed');
 
-    // تحديث أهداف اليوم وإعادة تعيين المستهلك للعميل الجديد
-    store.getState().today.targetCalories = targets.targetCalories;
-    store.getState().today.targetProtein = targets.protein;
-    store.getState().today.targetCarbs = targets.carbs;
-    store.getState().today.targetFats = targets.fats;
-    store.getState().today.targetWaterLiters = Number((targets.waterMl / 1000).toFixed(1));
-    store.getState().today.targetGlasses = targets.waterGlasses;
-    store.getState().today.consumedCalories = 0;
-    store.getState().today.consumedProtein = 0;
-    store.getState().today.consumedCarbs = 0;
-    store.getState().today.consumedFats = 0;
-    store.getState().today.meals = [];
-    store.getState().today.waterGlasses = 0;
-    store.getState().today.waterMl = 0;
-    store.saveState();
+      startedAt = Date.now();
+      showStage(step4, 'حفظ الحساب وتجهيز صفحة اليوم ومزامنة الخطة...', 95);
+      store.setUserProfile(fullProfile);
+      store.setDailyStackItems(selectedStackItems);
 
-    // حفظ في قاعدة بيانات Supabase إذا كان هناك مستخدم
-    const userId = store.getState()?.auth?.user?.id;
-    if (userId) {
-      try {
-        await syncService.syncProfile(userId, fullProfile);
-        await syncService.syncWaterLog(userId, 0, 0, targets.waterGlasses);
-      } catch (syncErr) {
-        console.warn('Sync warning upon plan creation:', syncErr);
+      const state = store.getState();
+      Object.assign(state.today, {
+        targetCalories: targets.targetCalories,
+        targetProtein: targets.protein,
+        targetCarbs: targets.carbs,
+        targetFats: targets.fats,
+        targetWaterLiters: Number((targets.waterMl / 1000).toFixed(1)),
+        targetGlasses: targets.waterGlasses,
+        consumedCalories: 0,
+        consumedProtein: 0,
+        consumedCarbs: 0,
+        consumedFats: 0,
+        meals: [],
+        waterGlasses: 0,
+        waterMl: 0
+      });
+      store.saveState();
+
+      const userId = state?.auth?.user?.id;
+      if (userId) {
+        try {
+          await syncService.syncProfile(userId, fullProfile);
+          await syncService.syncWaterLog(userId, 0, 0, targets.waterGlasses);
+        } catch (syncErr) {
+          console.warn('Sync warning upon plan creation:', syncErr);
+        }
       }
-    }
-
-    await sleep(400);
-    setStepState(step4, 'completed');
-    if (coreIcon) coreIcon.textContent = '';
-    if (actionLabel) actionLabel.textContent = 'اكتملت خطتك بنجاح! جاري الدخول للبرنامج...';
-
-    notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}! `, 'success');
-
-    // الانتقال للوحة اليوم بسلاسة
-    setTimeout(() => {
+      await finishAfterMinimum(startedAt, 400);
+      setStepState(step4, 'completed');
+      if (percentLabel) percentLabel.textContent = '100%';
+      if (progressBar) progressBar.style.width = '100%';
+      if (coreIcon) coreIcon.textContent = '';
+      if (actionLabel) actionLabel.textContent = 'اكتملت خطتك بنجاح! جاري فتح صفحة اليوم...';
+      notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}!`, 'success');
+      await sleep(450);
       currentStep = 1;
       showWelcomeScreen = true;
       window.location.hash = '#today';
-    }, 650);
+    } catch (error) {
+      console.error('Plan generation failed:', error);
+      if (actionLabel) actionLabel.textContent = 'تعذر إكمال إنشاء الحساب. أعد المحاولة.';
+      if (percentLabel) percentLabel.textContent = 'خطأ';
+      createPlanBtn.disabled = false;
+      notificationService.showToast('تعذر إنشاء الخطة. لم يتم نقلك قبل اكتمال الحفظ.', 'error');
+    }
   });
 
   function initStep1HorizontalPickers() {
@@ -2424,6 +2447,126 @@ export function bindQuestionnaireEvents() {
       });
       updateWeightGainSummary();
     });
+  }
+
+  function initSupplementsStepEvents() {
+    const box = document.getElementById('box-selected-supplements');
+    const pills = document.getElementById('pills-selected-supplements');
+    const input = document.getElementById('q-supplements-input');
+    const dropdown = document.getElementById('dropdown-supplements');
+    const chips = document.getElementById('supplement-rec-chips');
+    const badge = document.querySelector('.supplements-count-badge');
+    if (!box || !pills || !input || !dropdown) return;
+
+    if (!Array.isArray(formData.supplements)) formData.supplements = [];
+    let highlightedIndex = -1;
+
+    const closeDropdown = () => {
+      dropdown.replaceChildren();
+      dropdown.style.display = 'none';
+      highlightedIndex = -1;
+    };
+
+    const supplementByName = name => SUPPLEMENT_DB.find(item => item.name === name);
+
+    const renderSelected = () => {
+      pills.replaceChildren();
+      for (const name of formData.supplements) {
+        const supplement = supplementByName(name);
+        if (!supplement) continue;
+        const pill = document.createElement('span');
+        pill.className = 'food-tag-pill';
+        const label = document.createElement('span');
+        label.textContent = supplement.nameAr || supplement.name;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'food-tag-remove';
+        remove.title = 'حذف';
+        remove.setAttribute('aria-label', `حذف ${label.textContent}`);
+        remove.textContent = '×';
+        remove.onclick = () => {
+          formData.supplements = formData.supplements.filter(item => item !== name);
+          renderSelected();
+        };
+        pill.append(label, remove);
+        pills.append(pill);
+      }
+
+      if (badge) badge.textContent = formData.supplements.length ? `${formData.supplements.length} مكمل مختار` : '';
+      input.placeholder = formData.supplements.length ? '+ أضف مكملًا آخر...' : 'اكتب أول حرف للبحث وإضافة المكمل...';
+      chips?.querySelectorAll('.supplement-rec-chip').forEach(chip => {
+        const selected = formData.supplements.includes(chip.dataset.supplement);
+        chip.classList.toggle('selected', selected);
+        chip.setAttribute('aria-pressed', String(selected));
+        const status = chip.querySelector('.chip-status');
+        if (status) status.textContent = selected ? '✓' : '+';
+      });
+    };
+
+    const addSupplement = name => {
+      if (!supplementByName(name) || formData.supplements.includes(name)) return;
+      formData.supplements.push(name);
+      input.value = '';
+      closeDropdown();
+      renderSelected();
+      input.focus();
+    };
+
+    const showResults = results => {
+      dropdown.replaceChildren();
+      highlightedIndex = -1;
+      for (const supplement of results.filter(item => !formData.supplements.includes(item.name))) {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'food-autocomplete-item';
+        option.innerHTML = `<span><strong></strong><small style="display:block;color:#8C9992;margin-top:3px;"></small></span>`;
+        option.querySelector('strong').textContent = `${supplement.nameAr} — ${supplement.name}`;
+        option.querySelector('small').textContent = `${supplement.dose} · ${supplement.note}`;
+        option.onmousedown = event => {
+          event.preventDefault();
+          addSupplement(supplement.name);
+        };
+        dropdown.append(option);
+      }
+      dropdown.style.display = dropdown.children.length ? 'block' : 'none';
+    };
+
+    input.addEventListener('input', () => {
+      const query = input.value.trim();
+      if (!query) return closeDropdown();
+      showResults(searchSupplementsDb(query));
+    });
+    input.addEventListener('keydown', event => {
+      const options = [...dropdown.querySelectorAll('.food-autocomplete-item')];
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (!options.length) return;
+        highlightedIndex = event.key === 'ArrowDown'
+          ? (highlightedIndex + 1) % options.length
+          : (highlightedIndex - 1 + options.length) % options.length;
+        options.forEach((option, index) => option.classList.toggle('highlighted', index === highlightedIndex));
+      } else if (event.key === 'Enter' && highlightedIndex >= 0) {
+        event.preventDefault();
+        options[highlightedIndex]?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      } else if (event.key === 'Escape') {
+        closeDropdown();
+      }
+    });
+    chips?.querySelectorAll('.supplement-rec-chip').forEach(chip => {
+      chip.onclick = () => {
+        const name = chip.dataset.supplement;
+        if (formData.supplements.includes(name)) {
+          formData.supplements = formData.supplements.filter(item => item !== name);
+          renderSelected();
+        } else {
+          addSupplement(name);
+        }
+      };
+    });
+    document.addEventListener('click', event => {
+      if (!box.contains(event.target)) closeDropdown();
+    }, { once: true });
+    renderSelected();
   }
 
   function initNutritionStepEvents() {

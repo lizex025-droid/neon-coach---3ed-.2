@@ -65,6 +65,7 @@ export const EMPTY_INITIAL_STATE = {
     allergens: [],
     likedFoods: [],
     dislikedFoods: [],
+    supplements: ['Creatine monohydrate', 'Omega-3 (Fish oil)', 'Vitamin D3'],
     supplementsBudget: 'medium',
     registeredAt: null
   },
