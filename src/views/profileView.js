@@ -44,7 +44,7 @@ export function renderProfileView() {
         <div style="flex: 1; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <h2 id="display-name" style="font-size: 1.15rem; font-weight: 800; color: #FFFFFF; margin: 0;">${profile.name || 'متدرب نيون'}</h2>
-            <span class="badge badge-neon" style="font-size: 0.68rem; padding: 2px 8px;">ملف شخصي محلي 📱</span>
+            <span class="badge badge-neon" style="font-size: 0.68rem; padding: 2px 8px;">ملف شخصي محلي </span>
           </div>
           ${profile.email ? `<div id="display-email" style="font-size: 0.8rem; color: #B8C0BC; margin-top: 2px; font-family: monospace;">${profile.email}</div>` : ''}
         </div>
@@ -120,10 +120,10 @@ export function renderProfileView() {
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">الهدف الأساسي</label>
             <select id="setting-goal" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem;">
-              <option value="fat_loss" ${goal === 'fat_loss' ? 'selected' : ''}>حرق دهون وتنشيف 🔥</option>
-              <option value="muscle_gain" ${goal === 'muscle_gain' ? 'selected' : ''}>بناء عضلات 💪</option>
-              <option value="recomp" ${goal === 'recomp' ? 'selected' : ''}>حرق دهون وبناء عضلات معاً ⚡</option>
-              <option value="maintenance" ${goal === 'maintenance' ? 'selected' : ''}>المحافظة على الوزن واللياقة ⚖️</option>
+              <option value="fat_loss" ${goal === 'fat_loss' ? 'selected' : ''}>حرق دهون وتنشيف </option>
+              <option value="muscle_gain" ${goal === 'muscle_gain' ? 'selected' : ''}>بناء عضلات </option>
+              <option value="recomp" ${goal === 'recomp' ? 'selected' : ''}>حرق دهون وبناء عضلات معاً </option>
+              <option value="maintenance" ${goal === 'maintenance' ? 'selected' : ''}>المحافظة على الوزن واللياقة </option>
             </select>
           </div>
 
@@ -162,7 +162,7 @@ export function renderProfileView() {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 8px;">
           <span style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem;">التغذية والماء</span>
           <button id="btn-recalculate-simple" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 8px;">
-            ⚡ احتساب تلقائي
+             احتساب تلقائي
           </button>
         </div>
 
@@ -193,16 +193,16 @@ export function renderProfileView() {
 
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <button id="export-data-json-btn" class="btn btn-secondary" style="flex: 1; min-width: 130px; padding: 9px; font-size: 0.82rem; border-radius: 10px;">
-            <span>تصدير نسخة</span> 💾
+            <span>تصدير نسخة</span>
           </button>
 
           <button id="import-data-json-btn" class="btn btn-secondary" style="flex: 1; min-width: 130px; padding: 9px; font-size: 0.82rem; border-radius: 10px;">
-            <span>استيراد نسخة</span> 📥
+            <span>استيراد نسخة</span>
           </button>
           <input type="file" id="import-data-json-file" accept=".json" style="display: none;" />
 
           <button id="restart-questionnaire-btn" class="btn btn-secondary" style="width: 100%; padding: 10px; font-size: 0.84rem; border-radius: 10px; margin-top: 4px; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-weight: 700;">
-            <span>إعادة تحديد الخطة والأسئلة</span> 🔄
+            <span>إعادة تحديد الخطة والأسئلة</span>
           </button>
 
           <button id="reset-app-data-btn" class="btn btn-danger" style="width: 100%; padding: 9px; font-size: 0.8rem; border-radius: 10px; margin-top: 2px; display: flex; align-items: center; justify-content: center; gap: 6px;">
@@ -277,7 +277,7 @@ export function bindProfileEvents() {
     if (calsInput) calsInput.value = targets.targetCalories;
     if (waterInput) waterInput.value = (Math.round((targets.targetWaterMl / 1000) * 10) / 10).toFixed(1);
 
-    notificationService.showToast('تم احتساب السعرات والماء بنجاح ⚡', 'success');
+    notificationService.showToast('تم احتساب السعرات والماء بنجاح ', 'success');
   });
 
   // زر حفظ التغييرات
@@ -328,7 +328,7 @@ export function bindProfileEvents() {
     const emailDisplay = document.getElementById('display-email');
     if (emailDisplay) emailDisplay.textContent = email;
 
-    notificationService.showToast('تم حفظ التغييرات بنجاح 💚', 'success');
+    notificationService.showToast('تم حفظ التغييرات بنجاح ', 'success');
   });
 
   // تصدير نسخة احتياطية
@@ -340,7 +340,7 @@ export function bindProfileEvents() {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
-    notificationService.showToast('تم تصدير النسخة الاحتياطية 💾', 'success');
+    notificationService.showToast('تم تصدير النسخة الاحتياطية ', 'success');
   });
 
   // استيراد نسخة احتياطية
@@ -363,7 +363,7 @@ export function bindProfileEvents() {
           throw new Error('الملف غير صالح');
         }
         store.restoreState(parsed);
-        notificationService.showToast('تمت استعادة البيانات بنجاح 🚀', 'success');
+        notificationService.showToast('تمت استعادة البيانات بنجاح ', 'success');
         setTimeout(() => window.location.reload(), 500);
       } catch (err) {
         alert('فشل استيراد الملف: ' + (err.message || 'الملف غير صالح'));

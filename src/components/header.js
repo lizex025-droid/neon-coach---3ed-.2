@@ -40,7 +40,7 @@ export function bindHeaderEvents() {
   const notifBtn = document.getElementById('header-notif-btn');
   if (notifBtn) {
     notifBtn.addEventListener('click', () => {
-      notificationService.showToast('🔔 تذكير: استمر على أدائك الممتاز اليوم واشرب كفايتك من الماء!', 'info');
+      notificationService.showToast(' تذكير: استمر على أدائك الممتاز اليوم واشرب كفايتك من الماء!', 'info');
     });
   }
 }

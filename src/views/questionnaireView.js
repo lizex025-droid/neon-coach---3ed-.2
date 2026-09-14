@@ -139,58 +139,58 @@ let formData = {
  */
 export const POPULAR_ARAB_RECOMMENDED_FOODS = [
   // بروتينات ولحوم (Proteins)
-  { name: 'صدر دجاج', icon: '🍗', category: 'protein', popular: true },
-  { name: 'لحم عجل قليل الدهن', icon: '🥩', category: 'protein', popular: true },
-  { name: 'سمك مشوي', icon: '🐟', category: 'protein', popular: true },
-  { name: 'بيض مسلوق', icon: '🍳', category: 'protein', popular: true },
-  { name: 'تونة بالماء', icon: '🥫', category: 'protein', popular: true },
-  { name: 'سلمون', icon: '🍣', category: 'protein', popular: false },
-  { name: 'جبنة قريش', icon: '🧀', category: 'protein', popular: false },
-  { name: 'جبنة حلوم لايت', icon: '🧀', category: 'protein', popular: false },
+  { name: 'صدر دجاج', icon: '', category: 'protein', popular: true },
+  { name: 'لحم عجل قليل الدهن', icon: '', category: 'protein', popular: true },
+  { name: 'سمك مشوي', icon: '', category: 'protein', popular: true },
+  { name: 'بيض مسلوق', icon: '', category: 'protein', popular: true },
+  { name: 'تونة بالماء', icon: '', category: 'protein', popular: true },
+  { name: 'سلمون', icon: '', category: 'protein', popular: false },
+  { name: 'جبنة قريش', icon: '', category: 'protein', popular: false },
+  { name: 'جبنة حلوم لايت', icon: '', category: 'protein', popular: false },
 
   // نشويات وطاقة (Carbs)
-  { name: 'أرز أبيض', icon: '🍚', category: 'carbs', popular: true },
-  { name: 'أرز بسمتي', icon: '🍚', category: 'carbs', popular: false },
-  { name: 'بطاطا مشوية', icon: '🥔', category: 'carbs', popular: true },
-  { name: 'بطاطا مسلوقة', icon: '🥔', category: 'carbs', popular: false },
-  { name: 'بطاطا حلوة', icon: '🍠', category: 'carbs', popular: true },
-  { name: 'شوفان', icon: '🥣', category: 'carbs', popular: true },
-  { name: 'خبز قمح كامل', icon: '🍞', category: 'carbs', popular: false },
-  { name: 'معكرونة مسلوقة', icon: '🍝', category: 'carbs', popular: false },
-  { name: 'برغل وفريكة', icon: '🌾', category: 'carbs', popular: false },
+  { name: 'أرز أبيض', icon: '', category: 'carbs', popular: true },
+  { name: 'أرز بسمتي', icon: '', category: 'carbs', popular: false },
+  { name: 'بطاطا مشوية', icon: '', category: 'carbs', popular: true },
+  { name: 'بطاطا مسلوقة', icon: '', category: 'carbs', popular: false },
+  { name: 'بطاطا حلوة', icon: '', category: 'carbs', popular: true },
+  { name: 'شوفان', icon: '', category: 'carbs', popular: true },
+  { name: 'خبز قمح كامل', icon: '', category: 'carbs', popular: false },
+  { name: 'معكرونة مسلوقة', icon: '', category: 'carbs', popular: false },
+  { name: 'برغل وفريكة', icon: '', category: 'carbs', popular: false },
 
   // خضروات وسلطات (Veggies)
-  { name: 'خس', icon: '🥬', category: 'veggies', popular: true },
-  { name: 'خيار', icon: '🥒', category: 'veggies', popular: true },
-  { name: 'طماطم', icon: '🍅', category: 'veggies', popular: true },
-  { name: 'بروكلي', icon: '🥦', category: 'veggies', popular: true },
-  { name: 'جرجير', icon: '🌿', category: 'veggies', popular: true },
-  { name: 'سبانخ', icon: '🍃', category: 'veggies', popular: false },
-  { name: 'خضار مشكلة', icon: '🥕', category: 'veggies', popular: false },
-  { name: 'كوسا وفاصوليا', icon: '🫛', category: 'veggies', popular: false },
+  { name: 'خس', icon: '', category: 'veggies', popular: true },
+  { name: 'خيار', icon: '', category: 'veggies', popular: true },
+  { name: 'طماطم', icon: '', category: 'veggies', popular: true },
+  { name: 'بروكلي', icon: '', category: 'veggies', popular: true },
+  { name: 'جرجير', icon: '', category: 'veggies', popular: true },
+  { name: 'سبانخ', icon: '', category: 'veggies', popular: false },
+  { name: 'خضار مشكلة', icon: '', category: 'veggies', popular: false },
+  { name: 'كوسا وفاصوليا', icon: '', category: 'veggies', popular: false },
 
   // فواكه وسناكات وصحي (Fruits & Healthy Snacks)
-  { name: 'تمر', icon: '🌴', category: 'fruits', popular: true },
-  { name: 'موز', icon: '🍌', category: 'fruits', popular: true },
-  { name: 'تفاح', icon: '🍎', category: 'fruits', popular: false },
-  { name: 'فراولة', icon: '🍓', category: 'fruits', popular: false },
-  { name: 'زيت زيتون', icon: '🫒', category: 'fruits', popular: true },
-  { name: 'زبادي يوناني', icon: '🥛', category: 'fruits', popular: true },
-  { name: 'زبدة فول سوداني', icon: '🥜', category: 'fruits', popular: false },
-  { name: 'مكسرات نية', icon: '🌰', category: 'fruits', popular: false },
-  { name: 'حمص حب', icon: '🫘', category: 'fruits', popular: false }
+  { name: 'تمر', icon: '', category: 'fruits', popular: true },
+  { name: 'موز', icon: '', category: 'fruits', popular: true },
+  { name: 'تفاح', icon: '', category: 'fruits', popular: false },
+  { name: 'فراولة', icon: '', category: 'fruits', popular: false },
+  { name: 'زيت زيتون', icon: '', category: 'fruits', popular: true },
+  { name: 'زبادي يوناني', icon: '', category: 'fruits', popular: true },
+  { name: 'زبدة فول سوداني', icon: '', category: 'fruits', popular: false },
+  { name: 'مكسرات نية', icon: '', category: 'fruits', popular: false },
+  { name: 'حمص حب', icon: '', category: 'fruits', popular: false }
 ];
 
 export const COMMON_DISLIKED_SUGGESTIONS = [
-  { name: 'سمك ومأكولات بحرية', icon: '🐟' },
-  { name: 'تونة', icon: '🥫' },
-  { name: 'كبدة', icon: '🥩' },
-  { name: 'باذنجان', icon: '🍆' },
-  { name: 'بامية', icon: '🫛' },
-  { name: 'بروكلي', icon: '🥦' },
-  { name: 'شوفان', icon: '🥣' },
-  { name: 'بيض مسلوق', icon: '🍳' },
-  { name: 'حليب وألبان', icon: '🥛' }
+  { name: 'سمك ومأكولات بحرية', icon: '' },
+  { name: 'تونة', icon: '' },
+  { name: 'كبدة', icon: '' },
+  { name: 'باذنجان', icon: '' },
+  { name: 'بامية', icon: '' },
+  { name: 'بروكلي', icon: '' },
+  { name: 'شوفان', icon: '' },
+  { name: 'بيض مسلوق', icon: '' },
+  { name: 'حليب وألبان', icon: '' }
 ];
 
 let activeMeasurementDrawer = 'age'; // الدرج المفتوح أولاً هو العمر مش الوزن كما طلب المستخدم
@@ -226,7 +226,7 @@ function renderFatLossSummaryHTML(data) {
     <div class="neon-card" style="padding: 16px; border-radius: 16px; background: rgba(14, 22, 18, 0.7); border: 1px solid rgba(85,247,165,0.25);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 8px;">
         <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
-          <span>🎯</span>
+          <span></span>
           <span>هدفك المتوقع</span>
         </div>
         <div class="badge ${option.safety.badgeClass}" style="padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem;">
@@ -267,13 +267,13 @@ function renderFatLossSummaryHTML(data) {
 
       ${isTargetInvalid ? `
         <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #FCA5A5; margin-bottom: 8px; text-align: center;">
-          ⚠️ الوزن المستهدف (${target} كغ) يجب أن يكون أقل من وزنك الحالي (${weight} كغ) لحساب مدة الوصول.
+           الوزن المستهدف (${target} كغ) يجب أن يكون أقل من وزنك الحالي (${weight} كغ) لحساب مدة الوصول.
         </div>
       ` : ''}
 
       ${option.safety.warningMessages.length > 0 ? `
         <div style="background: rgba(245, 158, 11, 0.09); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #FBBF24; margin-bottom: 8px; line-height: 1.4;">
-          ${option.safety.warningMessages.map(msg => `<div>⚠️ ${msg}</div>`).join('')}
+          ${option.safety.warningMessages.map(msg => `<div> ${msg}</div>`).join('')}
         </div>
       ` : ''}
 
@@ -314,7 +314,7 @@ function renderWeightGainSummaryHTML(data) {
     <div class="neon-card" style="padding: 16px; border-radius: 16px; background: rgba(14, 22, 18, 0.7); border: 1px solid rgba(85,247,165,0.25);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 8px;">
         <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
-          <span>🎯</span>
+          <span></span>
           <span>هدفك المتوقع لبناء الكتلة</span>
         </div>
         <div class="badge ${option.safety.badgeClass}" style="padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem;">
@@ -355,13 +355,13 @@ function renderWeightGainSummaryHTML(data) {
 
       ${isTargetInvalid ? `
         <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #FCA5A5; margin-bottom: 8px; text-align: center;">
-          ⚠️ الوزن المستهدف (${target} كغ) يجب أن يكون أكبر من وزنك الحالي (${weight} كغ) لحساب مدة الوصول.
+           الوزن المستهدف (${target} كغ) يجب أن يكون أكبر من وزنك الحالي (${weight} كغ) لحساب مدة الوصول.
         </div>
       ` : ''}
 
       ${option.safety.warningMessages.length > 0 ? `
         <div style="background: rgba(245, 158, 11, 0.09); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 8px 12px; font-size: 0.76rem; color: #FBBF24; margin-bottom: 8px; line-height: 1.4;">
-          ${option.safety.warningMessages.map(msg => `<div>⚠️ ${msg}</div>`).join('')}
+          ${option.safety.warningMessages.map(msg => `<div> ${msg}</div>`).join('')}
         </div>
       ` : ''}
 
@@ -398,14 +398,6 @@ function renderWelcomeScreenHTML() {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-7px); }
         }
-        .welcome-feature-card {
-          transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .welcome-feature-card:hover {
-          transform: translateY(-2px);
-          border-color: rgba(85, 247, 165, 0.45) !important;
-          box-shadow: 0 4px 20px rgba(85, 247, 165, 0.18);
-        }
       </style>
 
       <!-- شعار نيون في المنتصف بالنص مع هالة ضوئية وحلقات سايبر بصرية فاخرة -->
@@ -430,54 +422,13 @@ function renderWelcomeScreenHTML() {
         NEON COACH
       </h1>
 
-      <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 18px; border-radius: 999px; background: rgba(85, 247, 165, 0.12); border: 1px solid rgba(85, 247, 165, 0.35); color: #55F7A5; font-size: 0.84rem; font-weight: 800; margin-bottom: 22px; box-shadow: 0 0 14px rgba(85, 247, 165, 0.18);">
-        <span>⚡</span>
-        <span>كوتشك الرياضي الذكي بالذكاء الاصطناعي</span>
-      </div>
-
-      <!-- نص الترحيب -->
-      <h2 style="font-size: 1.35rem; font-weight: 800; color: #FFFFFF; margin: 0 0 10px; line-height: 1.4;">
-        أهلاً بك في رحلتك الجديدة! 🚀
-      </h2>
-      <p style="font-size: 0.94rem; color: #B8C0BC; line-height: 1.65; margin: 0 0 26px; max-width: 440px;">
-        سنقوم الآن بتخصيص خطتك الكاملة للتغذية والتمارين في دقائق بسيطة، بدقة علمية محسوبة خصيصاً لجسمك، أهدافك، ونمط حياتك.
-      </p>
-
-      <!-- بطاقات المميزات الترحيبية الثلاثة -->
-      <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 440px; margin-bottom: 30px; text-align: right;">
-        <div class="welcome-feature-card" style="display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-radius: 18px; background: rgba(14, 22, 18, 0.75); border: 1px solid rgba(85, 247, 165, 0.22); backdrop-filter: blur(10px);">
-          <div style="font-size: 1.45rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(85, 247, 165, 0.14); border-radius: 13px; flex-shrink: 0; box-shadow: 0 0 12px rgba(85, 247, 165, 0.2);">🎯</div>
-          <div>
-            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.94rem;">حسابات سعرات وماكروز دقيقة</div>
-            <div style="font-size: 0.78rem; color: #9CA3AF; margin-top: 3px;">حساب معدل الأيض وعجز أو فائض السعرات لبناء العضلات أو حرق الدهون</div>
-          </div>
-        </div>
-
-        <div class="welcome-feature-card" style="display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-radius: 18px; background: rgba(14, 22, 18, 0.75); border: 1px solid rgba(85, 247, 165, 0.22); backdrop-filter: blur(10px);">
-          <div style="font-size: 1.45rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(85, 247, 165, 0.14); border-radius: 13px; flex-shrink: 0; box-shadow: 0 0 12px rgba(85, 247, 165, 0.2);">🏋️</div>
-          <div>
-            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.94rem;">جدول تمارين مهندس لأيامك</div>
-            <div style="font-size: 0.78rem; color: #9CA3AF; margin-top: 3px;">يتكيف مع عدد أيامك ومعداتك مع استبعاد أي تمارين تسبب لك ألماً</div>
-          </div>
-        </div>
-
-        <div class="welcome-feature-card" style="display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-radius: 18px; background: rgba(14, 22, 18, 0.75); border: 1px solid rgba(85, 247, 165, 0.22); backdrop-filter: blur(10px);">
-          <div style="font-size: 1.45rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(85, 247, 165, 0.14); border-radius: 13px; flex-shrink: 0; box-shadow: 0 0 12px rgba(85, 247, 165, 0.2);">🤖</div>
-          <div>
-            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.94rem;">مساعد صوتي ذكي (NEON AI)</div>
-            <div style="font-size: 0.78rem; color: #9CA3AF; margin-top: 3px;">تحدث معه بصوتك ليسجل وجباتك، ماءك، وتمارينك تلقائياً وبكل دقة</div>
-          </div>
-        </div>
-      </div>
-
       <!-- زر البدء الكبير -->
-      <div style="width: 100%; max-width: 440px;">
+      <div style="width: 100%; max-width: 440px; margin-top: 42px;">
         <button type="button" id="q-welcome-start-btn" class="btn btn-primary btn-lg btn-block" style="border-radius: 24px; font-size: 1.18rem; font-weight: 900; padding: 16px 24px; box-shadow: 0 4px 30px rgba(85, 247, 165, 0.45); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; border: none; transition: transform 0.2s ease, box-shadow 0.2s ease;">
           <span>ابدأ تخصيص خطتك الآن</span>
-          <span style="font-size: 1.35rem;">⚡</span>
         </button>
         <p style="font-size: 0.78rem; color: #8C9992; margin: 12px 0 0; text-align: center;">
-          ⏱️ يستغرق الاستبيان دقيقتين فقط • يمكنك تعديل أي إجابة لاحقاً
+           يستغرق الاستبيان دقيقتين فقط • يمكنك تعديل أي إجابة لاحقاً
         </p>
       </div>
     </div>
@@ -592,7 +543,7 @@ function renderHorizontalPickerHTML(id, min, max, step, currentVal, unit) {
       <!-- أزرار التقديم والتأخير السريعة ومؤشر التمرير -->
       <div class="picker-nudge-bar">
         <button type="button" class="picker-nudge-btn picker-nudge-prev" data-target="${id}" aria-label="تقليل">❮</button>
-        <span class="picker-hint-text">اسحب لليمين أو اليسار للتغيير ↔️</span>
+        <span class="picker-hint-text">اسحب لليمين أو اليسار للتغيير </span>
         <button type="button" class="picker-nudge-btn picker-nudge-next" data-target="${id}" aria-label="زيادة">❯</button>
       </div>
     </div>
@@ -805,7 +756,7 @@ function renderStepContent(step) {
         <div class="neon-card maintenance-highlight-card" style="padding: 14px 16px; border-radius: 16px; margin-bottom: 18px; text-align: center;">
           <div style="font-size: 0.8rem; color: #B8C0BC; margin-bottom: 4px;">تقدير مبني على بيانات جسمك ومستوى النشاط</div>
           <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px; flex-wrap: wrap;">
-            <span style="font-size: 1.25rem; font-weight: 900; color: #55F7A5;">🔥 سعرات الثبات: ${Math.round(rawTdee).toLocaleString('en-US')} سعرة / يوم</span>
+            <span style="font-size: 1.25rem; font-weight: 900; color: #55F7A5;"> سعرات الثبات: ${Math.round(rawTdee).toLocaleString('en-US')} سعرة / يوم</span>
             <span style="font-size: 0.88rem; color: #9CA3AF;">(BMR: ${Math.round(rawBmr).toLocaleString('en-US')} سعرة / يوم)</span>
           </div>
           <div style="font-size: 0.72rem; color: #6B7280; margin-top: 4px;">
@@ -836,19 +787,19 @@ function renderStepContent(step) {
 
                 ${opt.isRecommended ? `
                   <div style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #55F7A5; color: #0D1512; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; white-space: nowrap; box-shadow: 0 0 10px rgba(85,247,165,0.4);">
-                    موصى به ⭐
+                    موصى به
                   </div>
                 ` : ''}
 
                 ${isExtreme ? `
                   <div style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F59E0B; color: #000; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; white-space: nowrap;">
-                    EXTREME ⚠️
+                    EXTREME
                   </div>
                 ` : ''}
 
                 ${isDisabled ? `
                   <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(239, 68, 68, 0.85); color: #FFF; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 10px; white-space: nowrap;">
-                    غير متاح دون 18 عاماً 🛡️
+                    غير متاح دون 18 عاماً
                   </div>
                 ` : ''}
 
@@ -886,7 +837,7 @@ function renderStepContent(step) {
         <div id="extreme-loss-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(6px);">
           <div class="neon-card" style="max-width: 440px; width: 100%; border: 1.5px solid #F59E0B; box-shadow: 0 0 25px rgba(245,158,11,0.25); padding: 24px; border-radius: 20px; background: #121A16;">
             <div style="text-align: center; margin-bottom: 16px;">
-              <div style="font-size: 2.2rem; margin-bottom: 6px;">⚠️</div>
+              <div style="font-size: 2.2rem; margin-bottom: 6px;"></div>
               <h3 style="font-size: 1.25rem; color: #FBBF24; font-weight: 800; margin-bottom: 6px;">تأكيد هدف النزول الشديد (EXTREME)</h3>
               <p style="font-size: 0.85rem; color: #D1D5DB; line-height: 1.5;">
                 لقد اخترت معدل نزول أسبوعي <strong>2.0%</strong> من وزن جسمك. هذا المعدل يمثل عجزاً حرارياً قاسياً قد يؤدي لخسارة عضلية أو بطء في الأيض ويتطلب انضباطاً ومراقبة مستمرة.
@@ -948,7 +899,7 @@ function renderStepContent(step) {
         <div class="neon-card maintenance-highlight-card" style="padding: 14px 16px; border-radius: 16px; margin-bottom: 18px; text-align: center;">
           <div style="font-size: 0.8rem; color: #B8C0BC; margin-bottom: 4px;">تقدير مبني على بيانات جسمك ومستوى النشاط</div>
           <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px; flex-wrap: wrap;">
-            <span style="font-size: 1.25rem; font-weight: 900; color: #55F7A5;">🔥 سعرات الثبات: ${Math.round(rawTdee).toLocaleString('en-US')} سعرة / يوم</span>
+            <span style="font-size: 1.25rem; font-weight: 900; color: #55F7A5;"> سعرات الثبات: ${Math.round(rawTdee).toLocaleString('en-US')} سعرة / يوم</span>
             <span style="font-size: 0.88rem; color: #9CA3AF;">(BMR: ${Math.round(rawBmr).toLocaleString('en-US')} سعرة / يوم)</span>
           </div>
           <div style="font-size: 0.72rem; color: #6B7280; margin-top: 4px;">
@@ -979,19 +930,19 @@ function renderStepContent(step) {
 
                 ${opt.isRecommended ? `
                   <div style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #55F7A5; color: #0D1512; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; white-space: nowrap; box-shadow: 0 0 10px rgba(85,247,165,0.4);">
-                    موصى به ⭐
+                    موصى به
                   </div>
                 ` : ''}
 
                 ${isExtreme ? `
                   <div style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F59E0B; color: #000; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; white-space: nowrap;">
-                    EXTREME ⚠️
+                    EXTREME
                   </div>
                 ` : ''}
 
                 ${isDisabled ? `
                   <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(239, 68, 68, 0.85); color: #FFF; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 10px; white-space: nowrap;">
-                    غير متاح دون 18 عاماً 🛡️
+                    غير متاح دون 18 عاماً
                   </div>
                 ` : ''}
 
@@ -1029,7 +980,7 @@ function renderStepContent(step) {
         <div id="extreme-gain-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(6px);">
           <div class="neon-card" style="max-width: 440px; width: 100%; border: 1.5px solid #F59E0B; box-shadow: 0 0 25px rgba(245,158,11,0.25); padding: 24px; border-radius: 20px; background: #121A16;">
             <div style="text-align: center; margin-bottom: 16px;">
-              <div style="font-size: 2.2rem; margin-bottom: 6px;">⚠️</div>
+              <div style="font-size: 2.2rem; margin-bottom: 6px;"></div>
               <h3 style="font-size: 1.25rem; color: #FBBF24; font-weight: 800; margin-bottom: 6px;">تأكيد هدف التضخيم الأقصى (EXTREME BULK)</h3>
               <p style="font-size: 0.85rem; color: #D1D5DB; line-height: 1.5;">
                 لقد اخترت معدل زيادة أسبوعي <strong>2.0%</strong> من وزن جسمك. هذا المعدل يمثل فائضاً حرارياً هائلاً قد يؤدي لاكتساب دهون سريعة إذا لم يقترن بتدريب مقاومة مكثف وانضباط مستمر.
@@ -1074,7 +1025,7 @@ function renderStepContent(step) {
         <div class="form-group" style="margin-bottom: 22px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label class="form-label" style="font-weight: 700; color: #55F7A5; margin: 0; display: flex; align-items: center; gap: 6px; font-size: 0.95rem;">
-              <span>🥗</span>
+              <span></span>
               <span>أطعمة تحبها (اختر من المقترحات أو ابحث):</span>
             </label>
             <span class="liked-foods-count-badge" style="font-size: 0.74rem; color: #55F7A5; font-weight: 700;">
@@ -1099,7 +1050,7 @@ function renderStepContent(step) {
           <div class="food-recommendations-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <span style="font-size: 0.78rem; color: #55F7A5; font-weight: 800; display: flex; align-items: center; gap: 5px;">
-                <span>✨</span>
+                <span></span>
                 <span>أطعمة شائعة ومحبوبة (اضغط للإضافة الفورية):</span>
               </span>
             </div>
@@ -1107,15 +1058,15 @@ function renderStepContent(step) {
             <!-- تصنيفات الأطعمة المقترحة (3 تبويبات مدمجة ومضغوطة) -->
             <div class="food-rec-category-tabs" data-type="liked">
               <button type="button" class="rec-cat-tab active" data-cat="protein">
-                <span class="tab-emoji">🍗</span>
+                <span class="tab-emoji"></span>
                 <span class="tab-label">بروتينات ولحوم</span>
               </button>
               <button type="button" class="rec-cat-tab" data-cat="carbs">
-                <span class="tab-emoji">🍚</span>
+                <span class="tab-emoji"></span>
                 <span class="tab-label">نشويات وطاقة</span>
               </button>
               <button type="button" class="rec-cat-tab" data-cat="produce">
-                <span class="tab-emoji">🥗</span>
+                <span class="tab-emoji"></span>
                 <span class="tab-label">خضار وفواكه وسلطات</span>
               </button>
             </div>
@@ -1140,7 +1091,7 @@ function renderStepContent(step) {
         <div class="form-group" style="margin-bottom: 22px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label class="form-label" style="font-weight: 700; color: #F87171; margin: 0; display: flex; align-items: center; gap: 6px; font-size: 0.95rem;">
-              <span>🚫</span>
+              <span></span>
               <span>أطعمة لا تحبها (يتم استبعادها من خطتك):</span>
             </label>
             <span class="disliked-foods-count-badge" style="font-size: 0.74rem; color: #F87171; font-weight: 700;">
@@ -1164,7 +1115,7 @@ function renderStepContent(step) {
           <!-- اقتراحات استبعاد سريعة -->
           <div class="food-recommendations-wrapper" style="border-color: rgba(248,113,113,0.18);">
             <div style="font-size: 0.78rem; color: #F87171; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
-              <span>⚡</span>
+              <span></span>
               <span>استبعاد سريع لأصناف لا يفضلها البعض:</span>
             </div>
             <div class="food-rec-chips-grid" id="disliked-food-rec-chips">
@@ -1396,13 +1347,13 @@ function renderStepContent(step) {
               <div class="plan-gen-ring-pulse"></div>
               <div class="plan-gen-ring-spin"></div>
               <div class="plan-gen-core">
-                <span id="plan-gen-core-icon">⚡</span>
+                <span id="plan-gen-core-icon"></span>
               </div>
             </div>
 
             <div>
               <h3 style="color: #FFFFFF; font-size: 1.3rem; font-weight: 900; margin: 0 0 6px;">
-                جاري هندسة خطتك الشخصية 🚀
+                جاري هندسة خطتك الشخصية
               </h3>
               <p style="color: #8C9992; font-size: 0.82rem; margin: 0; line-height: 1.4;">
                 محرك الذكاء الاصطناعي يقوم بحساب السعرات والتمارين المناسبة لجسمك
@@ -1614,7 +1565,7 @@ export function bindQuestionnaireEvents() {
       if (state === 'active') {
         stepEl.classList.add('active');
         const icon = stepEl.querySelector('.step-icon');
-        if (icon) icon.innerHTML = `<span style="animation: spin 1.2s infinite linear; display: inline-block;">⚙️</span>`;
+        if (icon) icon.innerHTML = `<span style="animation: spin 1.2s infinite linear; display: inline-block;"></span>`;
       } else if (state === 'completed') {
         stepEl.classList.add('completed');
         const icon = stepEl.querySelector('.step-icon');
@@ -1625,7 +1576,7 @@ export function bindQuestionnaireEvents() {
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     // المرحلة 1: حساب السعرات والأيض
-    if (coreIcon) coreIcon.textContent = '⚡';
+    if (coreIcon) coreIcon.textContent = '';
     if (actionLabel) actionLabel.textContent = 'حساب معدل الحرق اليومي (BMR) وضبط العجز...';
     if (percentLabel) percentLabel.textContent = '25%';
     if (progressBar) progressBar.style.width = '25%';
@@ -1635,7 +1586,7 @@ export function bindQuestionnaireEvents() {
     setStepState(step1, 'completed');
 
     // المرحلة 2: الماكروز واستبعاد الحساسيات وتضمين الأطعمة المفضلة
-    if (coreIcon) coreIcon.textContent = '🥗';
+    if (coreIcon) coreIcon.textContent = '';
     if (actionLabel) actionLabel.textContent = 'توزيع الماكروز والبروتين واستبعاد الحساسيات...';
     if (percentLabel) percentLabel.textContent = '55%';
     if (progressBar) progressBar.style.width = '55%';
@@ -1645,7 +1596,7 @@ export function bindQuestionnaireEvents() {
     setStepState(step2, 'completed');
 
     // المرحلة 3: جدول التمارين لعدد الأيام المحددة
-    if (coreIcon) coreIcon.textContent = '🏋️';
+    if (coreIcon) coreIcon.textContent = '';
     if (actionLabel) actionLabel.textContent = `هندسة جدول التمارين لـ ${formData.workoutDaysCount || 4} أيام وتفصيل العضلات...`;
     if (percentLabel) percentLabel.textContent = '80%';
     if (progressBar) progressBar.style.width = '80%';
@@ -1655,7 +1606,7 @@ export function bindQuestionnaireEvents() {
     setStepState(step3, 'completed');
 
     // المرحلة 4: أهداف الترطيب والمزامنة السحابية
-    if (coreIcon) coreIcon.textContent = '💧';
+    if (coreIcon) coreIcon.textContent = '';
     if (actionLabel) actionLabel.textContent = 'تجهيز أهداف الترطيب اليومي ومزامنة الخطة...';
     if (percentLabel) percentLabel.textContent = '100%';
     if (progressBar) progressBar.style.width = '100%';
@@ -1727,10 +1678,10 @@ export function bindQuestionnaireEvents() {
 
     await sleep(400);
     setStepState(step4, 'completed');
-    if (coreIcon) coreIcon.textContent = '🚀';
+    if (coreIcon) coreIcon.textContent = '';
     if (actionLabel) actionLabel.textContent = 'اكتملت خطتك بنجاح! جاري الدخول للبرنامج...';
 
-    notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}! 🚀`, 'success');
+    notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}! `, 'success');
 
     // الانتقال للوحة اليوم بسلاسة
     setTimeout(() => {
@@ -2133,7 +2084,7 @@ export function bindQuestionnaireEvents() {
     document.querySelectorAll('.rate-card').forEach(rc => {
       const handleSelect = () => {
         if (rc.classList.contains('disabled') || rc.dataset.disabled === 'true') {
-          notificationService.showToast('هذا الخيار غير متاح لمن هم دون 18 عاماً للحفاظ على النمو الصحي 🛡️', 'warning');
+          notificationService.showToast('هذا الخيار غير متاح لمن هم دون 18 عاماً للحفاظ على النمو الصحي ', 'warning');
           return;
         }
 
@@ -2216,7 +2167,7 @@ export function bindQuestionnaireEvents() {
     extremeAcceptBtn?.addEventListener('click', () => {
       extremeConfirmed = true;
       hideExtremeModal();
-      notificationService.showToast('تم تأكيد اختيار معدل النزول الشديد ⚠️', 'info');
+      notificationService.showToast('تم تأكيد اختيار معدل النزول الشديد ', 'info');
     });
 
     extremeCancelBtn?.addEventListener('click', () => {
@@ -2370,7 +2321,7 @@ export function bindQuestionnaireEvents() {
     document.querySelectorAll('.weekly-gain-rates-grid .rate-card').forEach(rc => {
       const handleSelect = () => {
         if (rc.classList.contains('disabled') || rc.dataset.disabled === 'true') {
-          notificationService.showToast('هذا الخيار غير متاح لمن هم دون 18 عاماً للحفاظ على النمو الصحي 🛡️', 'warning');
+          notificationService.showToast('هذا الخيار غير متاح لمن هم دون 18 عاماً للحفاظ على النمو الصحي ', 'warning');
           return;
         }
 
@@ -2454,7 +2405,7 @@ export function bindQuestionnaireEvents() {
     extremeAcceptBtn?.addEventListener('click', () => {
       extremeGainConfirmed = true;
       hideExtremeModal();
-      notificationService.showToast('تم تأكيد اختيار معدل التضخيم الأقصى ⚠️', 'info');
+      notificationService.showToast('تم تأكيد اختيار معدل التضخيم الأقصى ', 'info');
     });
 
     extremeCancelBtn?.addEventListener('click', () => {
@@ -2596,7 +2547,7 @@ export function bindQuestionnaireEvents() {
         let html = items.map((item, idx) => `
           <div class="food-autocomplete-item" data-index="${idx}" data-name="${item}">
             <span style="display: inline-flex; align-items: center; gap: 8px;">
-              <span style="font-size: 0.95rem;">${isLiked ? '🟢' : '🔴'}</span>
+              <span style="font-size: 0.95rem;">${isLiked ? '' : ''}</span>
               <span>${item}</span>
             </span>
           </div>
@@ -2608,7 +2559,7 @@ export function bindQuestionnaireEvents() {
           html += `
             <div class="food-autocomplete-item custom-food" data-custom="true" data-name="${query}">
               <span style="display: inline-flex; align-items: center; gap: 8px;">
-                <span>➕</span>
+                <span></span>
                 <span>إضافة "<strong>${query}</strong>" كأكلة مخصصة</span>
               </span>
             </div>

@@ -30,7 +30,7 @@ export function renderWorkoutSessionView() {
           </h1>
         </div>
         <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-          🔥
+
         </div>
       </div>
 
@@ -40,7 +40,7 @@ export function renderWorkoutSessionView() {
         <!-- الوقت المنقضي -->
         <div class="neon-card" style="padding: 16px; text-align: center;">
           <div style="font-size: 0.82rem; color: #B8C0BC; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
-            <span>⏱️</span>
+            <span></span>
             <span>الوقت المنقضي</span>
           </div>
           <div id="session-elapsed-timer" style="font-size: 1.6rem; font-weight: 900; color: #55F7A5; font-family: monospace; letter-spacing: 1px;">
@@ -51,7 +51,7 @@ export function renderWorkoutSessionView() {
         <!-- التقدم -->
         <div class="neon-card" style="padding: 16px; text-align: center;">
           <div style="font-size: 0.82rem; color: #B8C0BC; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
-            <span>🏋️</span>
+            <span></span>
             <span>التقدم</span>
           </div>
           <div style="font-size: 1.6rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">
@@ -76,13 +76,13 @@ export function renderWorkoutSessionView() {
 
           <!-- رسم توضيحي للتمرين -->
           <div style="width: 52px; height: 52px; border-radius: var(--radius-md); background: rgba(85,247,165,0.08); border: var(--border-neon); display: flex; align-items: center; justify-content: center; font-size: 1.6rem;">
-            🏋️‍♂️
+
           </div>
         </div>
 
         <!-- شارة الأداء السابق -->
         <div class="badge badge-neon" style="margin-bottom: 18px; padding: 6px 12px; font-family: monospace;">
-          <span>🕒 السابق:</span>
+          <span> السابق:</span>
           <span>${currentEx.previousBest}</span>
         </div>
 
@@ -122,7 +122,7 @@ export function renderWorkoutSessionView() {
 
         <!-- زر إضافة مجموعة -->
         <button id="add-set-btn" class="btn btn-secondary btn-block" style="border-style: dashed; border-radius: 14px; margin-top: 8px;">
-          ➕ إضافة مجموعة
+           إضافة مجموعة
         </button>
 
       </div>
@@ -130,7 +130,7 @@ export function renderWorkoutSessionView() {
       <!-- مؤقت الراحة التنازلي التفاعلي (مطابق للصورة 64E97D80) -->
       <div class="neon-card" style="padding: 18px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
         <div style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #B8C0BC; font-weight: 600;">
-          <span>⏱️</span>
+          <span></span>
           <span>الراحة</span>
         </div>
 
@@ -153,10 +153,10 @@ export function renderWorkoutSessionView() {
         </div>
       </div>
 
-      <!-- زر أشعر بألم ⚠️ (مطابق للصورة 64E97D80) -->
+      <!-- زر أشعر بألم  (مطابق للصورة 64E97D80) -->
       <button id="pain-alert-btn" class="btn btn-danger btn-block" style="border-radius: 16px; padding: 14px; font-weight: 700; font-size: 0.95rem;">
         <span>أشعر بألم</span>
-        <span>⚠️</span>
+        <span></span>
       </button>
 
       <!-- زر إنهاء التمرين (مطابق للصورة 64E97D80) -->
@@ -169,7 +169,7 @@ export function renderWorkoutSessionView() {
       <div id="pain-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 90vh; padding: 20px; border-radius: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: #FF4D4D; font-size: 1.2rem;">⚠️ توثيق الألم أثناء التمرين</h3>
+            <h3 style="color: #FF4D4D; font-size: 1.2rem;"> توثيق الألم أثناء التمرين</h3>
             <button id="close-pain-modal-btn" class="btn-icon">✕</button>
           </div>
           <p style="font-size: 0.88rem; color: #B8C0BC; margin-bottom: 14px;">
@@ -239,7 +239,7 @@ export function bindWorkoutSessionEvents() {
     restSecRemaining = sec;
     updateRestDisplay(sec);
   }, () => {
-    notificationService.showToast('انتهت فترة الراحة! حان وقت المجموعة التالية 🏋️', 'info');
+    notificationService.showToast('انتهت فترة الراحة! حان وقت المجموعة التالية ', 'info');
   });
 
   // تخطي الراحة
@@ -323,7 +323,7 @@ export function bindWorkoutSessionEvents() {
     timerService.stopSessionTimer();
     timerService.stopRestTimer();
     store.finishWorkoutSession();
-    alert('عاش يا بطل! تم إنهاء التمرين بنجاح وحفظ الحجم التدريبي الكامل في سجلك الرياضي 🏆');
+    alert('عاش يا بطل! تم إنهاء التمرين بنجاح وحفظ الحجم التدريبي الكامل في سجلك الرياضي ');
     window.location.hash = '#today';
   });
 }

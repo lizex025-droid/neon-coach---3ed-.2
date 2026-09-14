@@ -53,7 +53,7 @@ export const notificationService = {
 
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<span>${type === 'error' ? '⚠️' : '✨'}</span> <span>${message}</span>`;
+    toast.innerHTML = `<span>${type === 'error' ? '' : ''}</span> <span>${message}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {

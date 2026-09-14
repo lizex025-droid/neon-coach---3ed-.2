@@ -1231,7 +1231,7 @@
 
       <div class="header-actions">
         <a class="header-btn-icon" href="./index.html#forty-day" title="خريطة تحدي الـ 40 يوماً" aria-label="التقويم">
-          📅
+
         </a>
         <button type="button" class="header-btn-icon" id="backBtn" title="العودة لشاشة اليوم" aria-label="العودة">
           ✕
@@ -2247,7 +2247,7 @@
       function buildHasmShareText(summary) {
         const lines = summary.exercises.map((exercise) => `${exercise.sets} × ${exercise.title} — ${formatBestSet(exercise)}`);
         return [
-          `تمرين ${programTitle} رقم ${summary.workoutNumber} ✅`,
+          `تمرين ${programTitle} رقم ${summary.workoutNumber} `,
           summary.dateLabel,
           `المدة: ${formatWorkoutDuration(summary.durationSeconds)}`,
           `الحجم: ${summary.totalVolume} kg · الجولات: ${summary.totalSets} · التكرارات: ${summary.totalReps}`,
@@ -2261,7 +2261,7 @@
         const exerciseRows = summary.exercises.length
           ? summary.exercises.map((exercise) => `
               <div class="summary-exercise-row">
-                <b>${exercise.sets} × ${exercise.title}${exercise.isPersonalRecord ? " 🏆" : ""}</b>
+                <b>${exercise.sets} × ${exercise.title}${exercise.isPersonalRecord ? " " : ""}</b>
                 <span>${formatBestSet(exercise)}</span>
               </div>
             `).join("")
@@ -2284,7 +2284,7 @@
               <div class="summary-stat"><b>${summary.exercises.length}</b><small>التمارين</small></div>
               <div class="summary-stat"><b>${summary.totalSets}</b><small>الجولات</small></div>
               <div class="summary-stat"><b>${summary.totalReps}</b><small>التكرارات</small></div>
-              <div class="summary-stat"><b>🏆 ${summary.personalRecords}</b><small>PRs</small></div>
+              <div class="summary-stat"><b> ${summary.personalRecords}</b><small>PRs</small></div>
             </div>
             <div class="summary-exercise-head"><span>التمرين</span><span>أفضل جولة</span></div>
             ${exerciseRows}

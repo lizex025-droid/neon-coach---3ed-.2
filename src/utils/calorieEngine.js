@@ -97,7 +97,7 @@ export const WEEKLY_LOSS_OPTIONS = [
     label: 'معتدل (موصى به)',
     speedCategory: 'recommended',
     description: 'المعدل الذهبي: أفضل توازن بين سرعة النزول والحفاظ على العضلات',
-    tag: 'موصى به ⭐',
+    tag: 'موصى به ',
     isRecommended: true,
     riskLevel: 'optimal',
     requiresConfirmation: false
@@ -122,7 +122,7 @@ export const WEEKLY_LOSS_OPTIONS = [
     label: 'سريع جداً',
     speedCategory: 'aggressive',
     description: 'عجز قاسٍ، يحتاج تركيزاً كبيراً على البروتين ولفترات محددة',
-    tag: 'تحدي 🔥',
+    tag: 'تحدي ',
     isAggressive: true,
     riskLevel: 'aggressive',
     requiresConfirmation: false
@@ -135,7 +135,7 @@ export const WEEKLY_LOSS_OPTIONS = [
     label: 'أقصى نزول (EXTREME)',
     speedCategory: 'extreme',
     description: 'أقصى معدل نزول — عجز شديد جداً قد يؤثر على الكتلة العضلية أو النشاط ويتطلب إقراراً',
-    tag: 'EXTREME ⚠️',
+    tag: 'EXTREME ',
     isExtreme: true,
     riskLevel: 'extreme',
     requiresConfirmation: true
@@ -154,7 +154,7 @@ export const WEEKLY_GAIN_OPTIONS = [
     label: 'بطيء ونقي (Lean Bulk)',
     speedCategory: 'gentle',
     description: 'بناء عضلي نقي بأقل زيادة دهون ممكنة، أسهل في الهضم وأكثر استدامة',
-    tag: 'نقي ومستدام 🛡️',
+    tag: 'نقي ومستدام ',
     riskLevel: 'mild',
     requiresConfirmation: false
   },
@@ -166,7 +166,7 @@ export const WEEKLY_GAIN_OPTIONS = [
     label: 'معتدل (موصى به)',
     speedCategory: 'recommended',
     description: 'المعدل الذهبي للبناء العضلي: تضخيم ممتاز وتطور ملحوظ في القوة مع دهون دنيا',
-    tag: 'موصى به ⭐',
+    tag: 'موصى به ',
     isRecommended: true,
     riskLevel: 'optimal',
     requiresConfirmation: false
@@ -179,7 +179,7 @@ export const WEEKLY_GAIN_OPTIONS = [
     label: 'نشط (Steady Bulk)',
     speedCategory: 'steady',
     description: 'زيادة سريعة ونشطة، مثالية للأجسام النحيفة أو من يجد صعوبة في زيادة الوزن',
-    tag: 'نشط 🚀',
+    tag: 'نشط ',
     riskLevel: 'normal',
     requiresConfirmation: false
   },
@@ -191,7 +191,7 @@ export const WEEKLY_GAIN_OPTIONS = [
     label: 'سريع (Hardgainer)',
     speedCategory: 'fast',
     description: 'زيادة وزن قوية وسريعة للأجسام سريعة الحرق، تتطلب وجبات عالية الكثافة وسعرات فائضة',
-    tag: 'سريع ⚡',
+    tag: 'سريع ',
     riskLevel: 'fast',
     requiresConfirmation: false
   },
@@ -203,7 +203,7 @@ export const WEEKLY_GAIN_OPTIONS = [
     label: 'سريع جداً (Aggressive)',
     speedCategory: 'aggressive',
     description: 'تضخيم مكثف وفائض حراري كبير لزيادة سريعة للوزن، قد يصاحبه زيادة في نسبة الدهون',
-    tag: 'تحدي تضخيم 🔥',
+    tag: 'تحدي تضخيم ',
     isAggressive: true,
     riskLevel: 'aggressive',
     requiresConfirmation: false
@@ -216,7 +216,7 @@ export const WEEKLY_GAIN_OPTIONS = [
     label: 'أقصى زيادة (EXTREME BULK)',
     speedCategory: 'extreme',
     description: 'أقصى معدل زيادة وزن — فائض سعري ضخم جداً يتطلب تدريباً شاقاً لتوجيه الطاقة نحو العضلات',
-    tag: 'EXTREME ⚠️',
+    tag: 'EXTREME ',
     isExtreme: true,
     riskLevel: 'extreme',
     requiresConfirmation: true
@@ -356,16 +356,16 @@ export function evaluateCalorieTarget({
   }
 
   let safetyLevel = 'optimal';
-  let badgeText = 'ضمن حدود الحساب الحالية ✅';
+  let badgeText = 'ضمن حدود الحساب الحالية ';
   let badgeClass = 'badge-optimal';
 
   if (isExtreme || (isBelowMinimum && dailyDeficit > 800)) {
     safetyLevel = 'extreme';
-    badgeText = 'هدف شديد ⚠️';
+    badgeText = 'هدف شديد ';
     badgeClass = 'badge-extreme';
   } else if (isBelowMinimum || isDeficitOver1000) {
     safetyLevel = 'caution';
-    badgeText = 'يتطلب حذرًا ⚠️';
+    badgeText = 'يتطلب حذرًا ';
     badgeClass = 'badge-warning';
   } else if (weeklyRate >= 0.015) {
     safetyLevel = 'aggressive';
@@ -373,7 +373,7 @@ export function evaluateCalorieTarget({
     badgeClass = 'badge-aggressive';
   } else if (weeklyRate <= 0.0025) {
     safetyLevel = 'mild';
-    badgeText = 'نزول هادئ ومستدام ✅';
+    badgeText = 'نزول هادئ ومستدام ';
     badgeClass = 'badge-mild';
   }
 
@@ -556,24 +556,24 @@ export function evaluateGainCalorieTarget({
   }
 
   let safetyLevel = 'optimal';
-  let badgeText = 'ضمن حدود النمو المتوازن ✅';
+  let badgeText = 'ضمن حدود النمو المتوازن ';
   let badgeClass = 'badge-optimal';
 
   if (isExtreme || (isSurplusOver1000 && weeklyRate >= 0.015)) {
     safetyLevel = 'extreme';
-    badgeText = 'تضخيم مكثف ⚠️';
+    badgeText = 'تضخيم مكثف ';
     badgeClass = 'badge-extreme';
   } else if (isSurplusOver1000) {
     safetyLevel = 'caution';
-    badgeText = 'يتطلب تمرين شاق ⚠️';
+    badgeText = 'يتطلب تمرين شاق ';
     badgeClass = 'badge-warning';
   } else if (weeklyRate >= 0.01) {
     safetyLevel = 'fast';
-    badgeText = 'زيادة نشطة وسريعة ⚡';
+    badgeText = 'زيادة نشطة وسريعة ';
     badgeClass = 'badge-aggressive';
   } else if (weeklyRate <= 0.0025) {
     safetyLevel = 'mild';
-    badgeText = 'زيادة نقية ومستدامة ✅';
+    badgeText = 'زيادة نقية ومستدامة ';
     badgeClass = 'badge-mild';
   }
 

@@ -103,7 +103,7 @@ export function renderWaterSuppsView() {
 
         <!-- نموذج إضافة مكمل جديد الذكي باللغتين مع الإكمال والجرعة التلقائية -->
         <div class="stack-form-wrap" style="margin-top: 20px;">
-          <div class="stack-form-title">➕ إضافة مكمل إلى الخطة (Add Supplement)</div>
+          <div class="stack-form-title"> إضافة مكمل إلى الخطة (Add Supplement)</div>
           <div style="font-size: 0.8rem; color: #8C9992; margin-bottom: 10px;">
             اكتب أول أحرف من المكمل (عربي أو إنجليزي) وستظهر لك المقترحات والجرعة المناسبة تلقائياً:
           </div>
@@ -170,7 +170,7 @@ export function bindWaterSuppsEvents() {
             data-dose="${escapeHtml(s.dose)}" 
             data-window="${escapeHtml(s.window || 'anytime')}" 
             data-note="${escapeHtml(s.note || '')}">
-            <span class="ac-icon">${s.icon || '💊'}</span>
+            <span class="ac-icon">${s.icon || ''}</span>
             <div class="ac-body">
               <div class="ac-name" style="font-weight: 800; color: #FFFFFF;">${escapeHtml(fullDisplay)}</div>
               <div class="ac-meta">
@@ -210,7 +210,7 @@ export function bindWaterSuppsEvents() {
     const windowKey = winSelect?.value || 'anytime';
     if (!name) return;
     store.addDailyStackItem(name, dose, windowKey, pendingNote);
-    notificationService.showToast(`تمت إضافة ${name} بنجاح 💊`, 'success');
+    notificationService.showToast(`تمت إضافة ${name} بنجاح `, 'success');
     refreshView();
   };
 

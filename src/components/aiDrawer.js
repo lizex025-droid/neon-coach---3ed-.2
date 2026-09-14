@@ -29,7 +29,7 @@ export function renderAiDrawer() {
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
             <button hidden id="ai-settings-toggle-btn" class="btn-icon" style="width: 36px; height: 36px; font-size: 1.05rem;" title="إعدادات نموذج الذكاء ومفتاح API" aria-label="الإعدادات">
-              ⚙️
+
             </button>
             <button id="ai-modal-close-btn" class="btn-icon" style="width: 36px; height: 36px;" aria-label="إغلاق">
               ✕
@@ -40,7 +40,7 @@ export function renderAiDrawer() {
         <!-- لوحة إعدادات المفتاح والنموذج (قابلة للفتح/الإغلاق) -->
         <div id="ai-settings-panel" style="display: none; padding: 14px 16px; background: #06140b; border-bottom: 1px solid rgba(85,247,165,0.25);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-size: 0.82rem; font-weight: 700; color: #55F7A5;">⚙️ إعدادات المحرك الذكي (AI Engine)</span>
+            <span style="font-size: 0.82rem; font-weight: 700; color: #55F7A5;"> إعدادات المحرك الذكي (AI Engine)</span>
             <button type="button" id="ai-settings-close-btn" style="background: none; border: none; color: #8fa097; font-size: 0.85rem; cursor: pointer;">إغلاق ✕</button>
           </div>
           <div style="font-size: 0.75rem; color: #b2c2ba; margin-bottom: 10px; line-height: 1.4;">
@@ -70,17 +70,17 @@ export function renderAiDrawer() {
           <div class="chat-bubble ai">
             مرحباً يا بطل! أنا كوتش نيون (NEON AI Master Coach) — مدربك الشخصي وأخصائي التغذية الذكي المعتمد.
             <div style="height: 6px;"></div>
-            جاهز للإجابة باحترافية كاملة عن تمارينك، الماكروز، التكنيك، التدرج بالأوزان، المكملات، أو خطتك لليوم! 🚀
+            جاهز للإجابة باحترافية كاملة عن تمارينك، الماكروز، التكنيك، التدرج بالأوزان، المكملات، أو خطتك لليوم!
           </div>
         </div>
 
         <!-- أسئلة سريعة مقترحة -->
         <div style="display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; background: #040a07; scrollbar-width: none;">
-          <button class="badge badge-neon quick-prompt" data-prompt="ما هو تمرين اليوم بالتفصيل وكيف أطبقه؟">🏋️ تمرين اليوم</button>
-          <button class="badge badge-neon quick-prompt" data-prompt="كم متبقي لي من السعرات والبروتين اليوم وكيف أكملهم؟">🥗 متبقي الماكروز</button>
-          <button class="badge badge-neon quick-prompt" data-prompt="أشعر بألم في مفصل الكتف أثناء البنش، ما التعديل الآمن؟">⚠️ نصيحة لألم الكتف</button>
-          <button class="badge badge-neon quick-prompt" data-prompt="ما هي أفضل استراتيجية للتدرج بالأوزان (Progressive Overload)؟">📈 التدرج بالأوزان</button>
-          <button class="badge badge-neon quick-prompt" data-prompt="ما رأيك العلمي في الكرياتين والبروتين وكيف أتناولهم؟">💊 المكملات الفعالة</button>
+          <button class="badge badge-neon quick-prompt" data-prompt="ما هو تمرين اليوم بالتفصيل وكيف أطبقه؟"> تمرين اليوم</button>
+          <button class="badge badge-neon quick-prompt" data-prompt="كم متبقي لي من السعرات والبروتين اليوم وكيف أكملهم؟"> متبقي الماكروز</button>
+          <button class="badge badge-neon quick-prompt" data-prompt="أشعر بألم في مفصل الكتف أثناء البنش، ما التعديل الآمن؟"> نصيحة لألم الكتف</button>
+          <button class="badge badge-neon quick-prompt" data-prompt="ما هي أفضل استراتيجية للتدرج بالأوزان (Progressive Overload)؟"> التدرج بالأوزان</button>
+          <button class="badge badge-neon quick-prompt" data-prompt="ما رأيك العلمي في الكرياتين والبروتين وكيف أتناولهم؟"> المكملات الفعالة</button>
         </div>
 
         <form id="ai-chat-form" class="ai-modal-input-area">
@@ -233,7 +233,7 @@ export function bindAiDrawerEvents() {
       }
       updateProviderDisplay();
       if (keyStatusMsg) {
-        keyStatusMsg.textContent = '✅ تم حفظ المفتاح بنجاح! المدرب جاهز الآن بقوة Gemini الكاملة.';
+        keyStatusMsg.textContent = ' تم حفظ المفتاح بنجاح! المدرب جاهز الآن بقوة Gemini الكاملة.';
         keyStatusMsg.style.color = '#55F7A5';
       }
       setTimeout(() => {
@@ -379,7 +379,7 @@ export function bindAiDrawerEvents() {
         actionCard.style.cssText = 'margin-top: 12px; padding: 14px; background: rgba(6,20,13,0.92); border: 1px solid rgba(85,247,165,0.35); border-radius: 12px; box-shadow: 0 4px 18px rgba(0,0,0,0.4);';
         actionCard.innerHTML = `
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="font-size: 1.15rem;">🍽️</span>
+            <span style="font-size: 1.15rem;"></span>
             <strong style="font-size: 0.86rem; color: #55F7A5;">هل تريد إضافة هذه الوجبة إلى سجل وجباتك اليوم؟</strong>
           </div>
           <div style="font-size: 0.77rem; color: #d0ded6; margin-bottom: 10px; line-height: 1.45;">
@@ -392,14 +392,14 @@ export function bindAiDrawerEvents() {
           <!-- شريط اختيار اسم وتصنيف الوجبة (فطور، غداء، عشاء، سناك، أو اسم مخصص محفوظ) -->
           <div class="ai-meal-name-picker" style="margin-bottom: 12px; padding: 10px; background: rgba(0,0,0,0.45); border-radius: 10px; border: 1px dashed rgba(85,247,165,0.25);">
             <div style="font-size: 0.75rem; color: #a4b5ac; margin-bottom: 7px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
-              <span>🏷️ اختر تصنيف / اسم الوجبة:</span>
+              <span> اختر تصنيف / اسم الوجبة:</span>
               <span class="ai-selected-meal-name-badge" style="color: #55F7A5; font-weight: 800;">${initialCategory}</span>
             </div>
             <div class="ai-meal-chips-list" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
               ${defaultChipsHtml}
               ${customChipsHtml}
               <button type="button" class="ai-meal-chip ai-chip-other" data-cat="__other__">
-                ✏️ أخرى
+                 أخرى
               </button>
             </div>
             <div class="ai-custom-meal-input-wrapper" style="display: none; margin-top: 8px;">
@@ -509,9 +509,9 @@ export function bindAiDrawerEvents() {
           if (pickerBox) pickerBox.style.display = 'none';
           feedbackEl.style.display = 'block';
           feedbackEl.style.color = '#55F7A5';
-          feedbackEl.innerHTML = `✅ <strong>تمت إضافة (${finalTitle}) بنجاح إلى سجل التغذية!</strong><br>تم خصم السعرات من هدفك. المستهلك اليوم: <strong style="color:#FFFFFF;">${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong style="color:#FFFFFF;">${remCals}</strong> سعرة).`;
+          feedbackEl.innerHTML = ` <strong>تمت إضافة (${finalTitle}) بنجاح إلى سجل التغذية!</strong><br>تم خصم السعرات من هدفك. المستهلك اليوم: <strong style="color:#FFFFFF;">${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong style="color:#FFFFFF;">${remCals}</strong> سعرة).`;
 
-          notificationService.showToast(`تمت إضافة (${finalTitle}) لسجل اليوم وتحديث السعرات! 🥗`, 'success');
+          notificationService.showToast(`تمت إضافة (${finalTitle}) لسجل اليوم وتحديث السعرات! `, 'success');
           chatHistory.push({ sender: 'system', text: `قام المتدرب بإضافة (${finalTitle}: ${cals} سعرة) لسجل اليوم وتحديث السعرات.` });
         });
 
@@ -552,7 +552,7 @@ export function bindAiDrawerEvents() {
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                   <select class="ai-meal-row-select" data-idx="${idx}" style="background: rgba(0,0,0,0.65); border: 1px solid rgba(85,247,165,0.35); color: #55F7A5; border-radius: 6px; font-size: 0.74rem; font-weight: 700; padding: 3px 6px; outline: none; cursor: pointer;">
                     ${optionsHtml}
-                    <option value="__other__">✏️ أخرى...</option>
+                    <option value="__other__"> أخرى...</option>
                   </select>
                 </div>
                 <div style="font-size: 0.72rem; color: #a4b5ac; margin-top: 3px;">
@@ -570,7 +570,7 @@ export function bindAiDrawerEvents() {
 
         actionCard.innerHTML = `
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="font-size: 1.15rem;">🍽️</span>
+            <span style="font-size: 1.15rem;"></span>
             <strong style="font-size: 0.86rem; color: #55F7A5;">تم حساب ${mealsList.length} وجبات — هل تريد إضافتها إلى التغذية؟</strong>
           </div>
           <div style="font-size: 0.75rem; color: #b8c8be; margin-bottom: 8px;">
@@ -635,7 +635,7 @@ export function bindAiDrawerEvents() {
             });
 
             addedIndices.add(idx);
-            singleBtn.textContent = '✅ تمت الإضافة';
+            singleBtn.textContent = ' تمت الإضافة';
             singleBtn.style.background = 'rgba(85,247,165,0.3)';
             singleBtn.style.color = '#FFFFFF';
             singleBtn.disabled = true;
@@ -645,12 +645,12 @@ export function bindAiDrawerEvents() {
 
             feedbackEl.style.display = 'block';
             feedbackEl.style.color = '#55F7A5';
-            feedbackEl.innerHTML = `✅ تمت إضافة (${chosenTitle}). المستهلك: <strong>${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong>${remCals}</strong> سعرة).`;
-            notificationService.showToast(`تمت إضافة (${chosenTitle}) وخصم سعراتها! 🥗`, 'success');
+            feedbackEl.innerHTML = ` تمت إضافة (${chosenTitle}). المستهلك: <strong>${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong>${remCals}</strong> سعرة).`;
+            notificationService.showToast(`تمت إضافة (${chosenTitle}) وخصم سعراتها! `, 'success');
 
             if (addedIndices.size === mealsList.length) {
               btnsRow.style.display = 'none';
-              feedbackEl.innerHTML = `✅ <strong>تمت إضافة جميع الوجبات (${mealsList.length}) بنجاح!</strong><br>المستهلك اليوم: <strong>${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong>${remCals}</strong> سعرة).`;
+              feedbackEl.innerHTML = ` <strong>تمت إضافة جميع الوجبات (${mealsList.length}) بنجاح!</strong><br>المستهلك اليوم: <strong>${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong>${remCals}</strong> سعرة).`;
             }
           });
         });
@@ -680,13 +680,13 @@ export function bindAiDrawerEvents() {
 
           btnsRow.style.display = 'none';
           actionCard.querySelectorAll('.btn-add-individual-meal').forEach(btn => {
-            btn.textContent = '✅ تمت الإضافة';
+            btn.textContent = ' تمت الإضافة';
             btn.disabled = true;
           });
           feedbackEl.style.display = 'block';
           feedbackEl.style.color = '#55F7A5';
-          feedbackEl.innerHTML = `✅ <strong>تمت إضافة جميع الوجبات (${countAdded} وجبات) بنجاح إلى سجل التغذية!</strong><br>المستهلك اليوم: <strong style="color:#FFFFFF;">${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong style="color:#FFFFFF;">${remCals}</strong> سعرة).`;
-          notificationService.showToast(`تمت إضافة ${countAdded} وجبات وتحديث السعرات بالكامل! 🏆`, 'success');
+          feedbackEl.innerHTML = ` <strong>تمت إضافة جميع الوجبات (${countAdded} وجبات) بنجاح إلى سجل التغذية!</strong><br>المستهلك اليوم: <strong style="color:#FFFFFF;">${updatedState.today.consumedCalories}</strong> سعرة (المتبقي: <strong style="color:#FFFFFF;">${remCals}</strong> سعرة).`;
+          notificationService.showToast(`تمت إضافة ${countAdded} وجبات وتحديث السعرات بالكامل! `, 'success');
         });
 
         cancelBtn?.addEventListener('click', () => {

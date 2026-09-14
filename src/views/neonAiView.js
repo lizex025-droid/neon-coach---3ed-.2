@@ -102,7 +102,7 @@ export function renderNeonAiView() {
             <button type="button" id="neon-ai-settings-close-btn" style="background: none; border: none; color: #7E998A; font-size: 1.1rem; cursor: pointer;">✕</button>
           </div>
           <div style="font-size: 0.84rem; color: #00FF9C; line-height: 1.5; background: rgba(0,255,156,0.06); border: 1px solid rgba(0,255,156,0.25); border-radius: 12px; padding: 12px 14px;">
-            🔒 <strong>الذكاء الاصطناعي مفعّل ومحمي تلقائياً:</strong><br>
+             <strong>الذكاء الاصطناعي مفعّل ومحمي تلقائياً:</strong><br>
             <span style="color: #c0d8cc; font-size: 0.82rem;">نظام NEON AI متصل بمحرك Google Gemini السحابي المحمي المدمج في الخادم — لا يُطلب من المستخدمين إدخال أي مفتاح.</span>
           </div>
           <div style="font-size: 0.78rem; color: #7E998A; line-height: 1.4; margin-top: 4px;">
@@ -172,7 +172,7 @@ export function bindNeonAiViewEvents() {
   // تنبيه استباقي خفيف إذا كان المستخدم على هاتف محمول/آيفون برابط غير مشفر (HTTP)
   const isSecureInitial = typeof window !== 'undefined' && (window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   if (!isSecureInitial && window.location.protocol === 'http:' && voiceSub) {
-    voiceSub.innerHTML = `🔒 <span style="color: #00F2FE;">للآيفون:</span> انقر هنا للانتقال للرابط الآمن <code>https://</code> لتفعيل المايك`;
+    voiceSub.innerHTML = ` <span style="color: #00F2FE;">للآيفون:</span> انقر هنا للانتقال للرابط الآمن <code>https://</code> لتفعيل المايك`;
   }
 
   // 2. إعداد الـ Canvas والـ Waveform الانسيابي باتجاه واحد وبسرعة هادئة ومريحة
@@ -348,7 +348,7 @@ export function bindNeonAiViewEvents() {
 
     resultBodyEl.innerHTML = `
       <div class="neon-ai-action-badge" style="background: rgba(0, 242, 254, 0.12); color: #00F2FE; border: 1px solid rgba(0, 242, 254, 0.3);">
-        <span>🔒 لتشغيل المايكروفون على الآيفون</span>
+        <span> لتشغيل المايكروفون على الآيفون</span>
       </div>
       <div class="neon-ai-action-subject" style="font-size: 1.05rem; line-height: 1.5; color: #fff; margin: 8px 0 10px;">
         متصفح Safari على iPhone يمنع إظهار إذن المايكروفون عبر روابط HTTP العادية. انقر بالأسفل للانتقال للرابط الآمن:
@@ -358,7 +358,7 @@ export function bindNeonAiViewEvents() {
         <span style="font-size: 1.15rem;">↗</span>
       </a>
       <div style="background: rgba(255, 255, 255, 0.04); border: 1px dashed rgba(0, 242, 254, 0.3); border-radius: 10px; padding: 10px 12px; font-size: 0.82rem; color: #94A3B8; line-height: 1.55; text-align: right;">
-        <strong style="color: #00FF9C;">📌 خطوة واحدة بسيطة عند فتح الرابط:</strong><br>
+        <strong style="color: #00FF9C;"> خطوة واحدة بسيطة عند فتح الرابط:</strong><br>
         اضغط على <strong>"إظهار التفاصيل (Show Details)"</strong> ثم <strong>"زيارة هذا الموقع الإلكتروني (visit this website)"</strong>، وبعدها سيطلب منك سفاري إذن المايكروفون وتضغط <strong>[سماح / Allow]</strong> فوراً!
       </div>
     `;
@@ -545,7 +545,7 @@ export function bindNeonAiViewEvents() {
     actionCard.className = 'ai-meal-confirm-card';
     actionCard.innerHTML = `
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-        <span style="font-size: 1.25rem;">🍽️</span>
+        <span style="font-size: 1.25rem;"></span>
         <strong style="font-size: 0.92rem; color: #55F7A5;">هل تريد إضافة هذه الوجبة إلى سجل وجباتك اليوم؟</strong>
       </div>
       <div style="font-size: 0.88rem; color: #FFFFFF; font-weight: 700; margin-bottom: 6px; line-height: 1.4;">
@@ -561,14 +561,14 @@ export function bindNeonAiViewEvents() {
       <!-- شريط اختيار اسم وتصنيف الوجبة (فطور، غداء، عشاء، سناك، أو اسم مخصص محفوظ) -->
       <div class="ai-meal-name-picker" style="margin-bottom: 12px; padding: 10px; background: rgba(0,0,0,0.45); border-radius: 10px; border: 1px dashed rgba(85,247,165,0.25);">
         <div style="font-size: 0.76rem; color: #a4b5ac; margin-bottom: 7px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
-          <span>🏷️ اختر تصنيف / اسم الوجبة:</span>
+          <span> اختر تصنيف / اسم الوجبة:</span>
           <span class="ai-selected-meal-name-badge" style="color: #55F7A5; font-weight: 800;">${initialCategory}</span>
         </div>
         <div class="ai-meal-chips-list" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
           ${defaultChipsHtml}
           ${customChipsHtml}
           <button type="button" class="ai-meal-chip ai-chip-other" data-cat="__other__">
-            ✏️ أخرى
+             أخرى
           </button>
         </div>
         <div class="ai-custom-meal-input-wrapper" style="display: none; margin-top: 8px;">
@@ -688,9 +688,9 @@ export function bindNeonAiViewEvents() {
       if (pickerBox) pickerBox.style.display = 'none';
       feedbackEl.style.display = 'block';
       feedbackEl.style.color = '#55F7A5';
-      feedbackEl.innerHTML = `✅ <strong>تمت إضافة (${finalTitle}) بنجاح إلى سجل التغذية!</strong><br>تم خصم السعرات من هدفك. المستهلك اليوم: <strong style="color:#FFFFFF;">${updatedState.today?.consumedCalories || 0}</strong> سعرة (المتبقي: <strong style="color:#FFFFFF;">${remCals}</strong> سعرة).`;
+      feedbackEl.innerHTML = ` <strong>تمت إضافة (${finalTitle}) بنجاح إلى سجل التغذية!</strong><br>تم خصم السعرات من هدفك. المستهلك اليوم: <strong style="color:#FFFFFF;">${updatedState.today?.consumedCalories || 0}</strong> سعرة (المتبقي: <strong style="color:#FFFFFF;">${remCals}</strong> سعرة).`;
 
-      notificationService.showToast(`تمت إضافة (${finalTitle}) لسجل اليوم وتحديث السعرات! 🥗`, 'success');
+      notificationService.showToast(`تمت إضافة (${finalTitle}) لسجل اليوم وتحديث السعرات! `, 'success');
 
 
       window.dispatchEvent(new CustomEvent('neon:state-updated', { detail: { updatedState } }));
@@ -823,7 +823,7 @@ export function bindNeonAiViewEvents() {
       const title = args.title || 'جلسة تدريبية';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
-          <span>🏆 تم إنهاء تمرين اليوم</span>
+          <span> تم إنهاء تمرين اليوم</span>
         </div>
         <div class="neon-ai-action-subject">${title}</div>
         <div class="neon-ai-action-metric">تم تسجيله كمكتمل في سجل تاريخ التمارين واليوم ✓</div>
@@ -840,11 +840,11 @@ export function bindNeonAiViewEvents() {
       const w = args.weightKg || 0;
       const r = args.reps || 8;
       const s = args.sets || 1;
-      const isPr = (data.results?.[0]?.summaryText || '').includes('PR') || (data.results?.[0]?.summaryText || '').includes('🏆');
+      const isPr = (data.results?.[0]?.summaryText || '').includes('PR') || (data.results?.[0]?.summaryText || '').includes('');
 
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="${isPr ? 'background: rgba(255,215,0,0.15); color: #FFD700; border-color: rgba(255,215,0,0.3);' : ''}">
-          <span>${isPr ? '🏆 رقم قياسي جديد (PR)!' : '✓ تم تسجيل التمرين'}</span>
+          <span>${isPr ? ' رقم قياسي جديد (PR)!' : '✓ تم تسجيل التمرين'}</span>
         </div>
         <div class="neon-ai-action-subject">${ex}</div>
         <div class="neon-ai-action-metric">${w} كيلو × ${r} عدات ${s > 1 ? `× ${s} جولات` : ''}</div>
@@ -916,7 +916,7 @@ export function bindNeonAiViewEvents() {
       const supp = args.supplement || 'المكمل';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
-          <span>💊 تم تسجيل المكمل</span>
+          <span> تم تسجيل المكمل</span>
         </div>
         <div class="neon-ai-action-subject">${supp}</div>
         <div class="neon-ai-action-metric">تم تأكيد تناوله اليوم بنجاح ✓</div>
@@ -933,7 +933,7 @@ export function bindNeonAiViewEvents() {
       const listStr = names.join(' و ') || 'أصناف التسوق';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(56,189,248,0.15); color: #38BDF8; border-color: rgba(56,189,248,0.3);">
-          <span>🛒 قائمة المشتريات</span>
+          <span> قائمة المشتريات</span>
         </div>
         <div class="neon-ai-action-subject">${listStr}</div>
         <div class="neon-ai-action-metric">تمت الإضافة إلى قائمة التسوق بنجاح ✓</div>
@@ -949,7 +949,7 @@ export function bindNeonAiViewEvents() {
       const name = args.name || 'العنصر';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(255,107,107,0.15); color: #FF6B6B; border-color: rgba(255,107,107,0.3);">
-          <span>🗑️ حذف من المشتريات</span>
+          <span> حذف من المشتريات</span>
         </div>
         <div class="neon-ai-action-subject">${name}</div>
         <div class="neon-ai-action-metric">تمت إزالته من قائمة التسوق ✓</div>
@@ -967,7 +967,7 @@ export function bindNeonAiViewEvents() {
       const label = labelsAr[rawKind] || 'التمرين';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(255,215,0,0.15); color: #FFD700; border-color: rgba(255,215,0,0.3);">
-          <span>⭐ إعادة ترتيب الأولويات</span>
+          <span> إعادة ترتيب الأولويات</span>
         </div>
         <div class="neon-ai-action-subject">${label} هو الأولوية الأولى</div>
         <div class="neon-ai-action-metric">تم رفع بطاقة ${label} لأعلى الصفحة في تاب اليوم ✓</div>
@@ -982,7 +982,7 @@ export function bindNeonAiViewEvents() {
       const rep = data.reply || (results[0]?.summaryText) || 'معلومات الماكروز';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
-          <span>🍗 استعلام البروتين</span>
+          <span> استعلام البروتين</span>
         </div>
         <div class="neon-ai-action-subject" style="font-size: 1.15rem; line-height: 1.5;">${rep}</div>
         <div class="neon-ai-action-footer-note">استناداً إلى أهدافك والوجبات المسجلة اليوم</div>
@@ -996,7 +996,7 @@ export function bindNeonAiViewEvents() {
       const rep = data.reply || (results[0]?.summaryText) || 'ملخص اليوم';
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(85,247,165,0.15); color: #55F7A5; border-color: rgba(85,247,165,0.3);">
-          <span>📋 ملخص يومك الشامل</span>
+          <span> ملخص يومك الشامل</span>
         </div>
         <div class="neon-ai-action-subject" style="font-size: 1.05rem; line-height: 1.6; font-weight: 600;">${rep}</div>
         <div class="neon-ai-action-footer-note">كافة بياناتك متزامنة ومحدثة في لوحة التحكم</div>
@@ -1009,7 +1009,7 @@ export function bindNeonAiViewEvents() {
     if (stopVoiceAction) {
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(255,107,107,0.15); color: #FF6B6B; border-color: rgba(255,107,107,0.3);">
-          <span>🛑 إيقاف الاستماع</span>
+          <span> إيقاف الاستماع</span>
         </div>
         <div class="neon-ai-action-subject">أوقفت الاستماع الصوتي</div>
         <div class="neon-ai-action-metric">الميكروفون مغلق الآن ✓</div>
@@ -1041,7 +1041,7 @@ export function bindNeonAiViewEvents() {
 
       resultBodyEl.innerHTML = `
         <div class="neon-ai-action-badge" style="background: rgba(0,229,255,0.15); color: #00E5FF; border-color: rgba(0,229,255,0.3);">
-          <span>🔍 نتيجة البحث والمعلومات</span>
+          <span> نتيجة البحث والمعلومات</span>
         </div>
         <div style="font-size: 1.02rem; font-weight: 500; color: #F0F6FC; line-height: 1.7; text-align: right; margin-top: 10px; max-width: 750px; padding: 0 8px; width: 100%;">
           ${formatted}
@@ -1116,7 +1116,7 @@ export function bindNeonAiViewEvents() {
 
     resultBodyEl.innerHTML = `
       <div class="neon-ai-clarification-box" style="text-align: center; padding: 10px 4px;">
-        <div class="neon-ai-clarification-text" style="font-size: 1.12rem; font-weight: 700; color: #FFFFFF; line-height: 1.5;">❓ ${questionText}</div>
+        <div class="neon-ai-clarification-text" style="font-size: 1.12rem; font-weight: 700; color: #FFFFFF; line-height: 1.5;"> ${questionText}</div>
         ${chipsHtml}
         <div class="neon-ai-action-footer-note" style="margin-top: 12px; color: #7E998A;">تحدث بالإجابة، انقر على أحد الخيارات، أو اكتب في الأسفل</div>
       </div>
@@ -1143,7 +1143,7 @@ export function bindNeonAiViewEvents() {
     if (!resultBodyEl) return;
     resultCard?.classList.add('has-error');
     resultBodyEl.innerHTML = `
-      <div style="color: #FF5555; font-weight: 800; font-size: 1.1rem; margin-bottom: 4px;">⚠️ ${errorMessage}</div>
+      <div style="color: #FF5555; font-weight: 800; font-size: 1.1rem; margin-bottom: 4px;"> ${errorMessage}</div>
       <button type="button" id="neon-ai-retry-btn" class="neon-ai-undo-btn" style="border-color: rgba(255,85,85,0.4); color: #FFAAAA; margin-top: 8px;">
         إعادة المحاولة
       </button>
@@ -1192,7 +1192,7 @@ export function bindNeonAiViewEvents() {
       aiService.setCustomApiKey('gemini', k);
       if (modelSelect) aiService.setActiveModel(modelSelect.value);
       if (keyStatus) {
-        keyStatus.textContent = '✅ تم حفظ المفتاح بنجاح!';
+        keyStatus.textContent = ' تم حفظ المفتاح بنجاح!';
         keyStatus.style.color = '#00FF9C';
       }
       setTimeout(() => settingsModal?.classList.remove('is-open'), 1200);

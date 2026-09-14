@@ -24,6 +24,26 @@ page.on('console', message => {
 
 try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' });
+  const welcome = page.locator('.welcome-screen-container');
+  await welcome.waitFor();
+  const welcomeAudit = await welcome.evaluate(element => {
+    const title = [...element.querySelectorAll('h1')].find(node => node.textContent.trim() === 'NEON COACH');
+    const logo = element.querySelector('img[alt="NEON COACH"]');
+    const titleBox = title?.getBoundingClientRect();
+    const logoBox = logo?.getBoundingClientRect();
+    const stockEmoji = /[\u{1F000}-\u{1FAFF}]|\p{Extended_Pictographic}\uFE0F|\p{Emoji_Presentation}/u;
+    return {
+      hasRemovedCopy: /كوتشك الرياضي|أهلاً بك في رحلتك|حسابات سعرات|جدول تمارين مهندس|مساعد صوتي ذكي/.test(element.innerText),
+      hasStockEmoji: stockEmoji.test(element.innerText),
+      titleOffset: titleBox ? Math.abs((titleBox.left + titleBox.width / 2) - innerWidth / 2) : null,
+      logoOffset: logoBox ? Math.abs((logoBox.left + logoBox.width / 2) - innerWidth / 2) : null,
+    };
+  });
+  assert.equal(welcomeAudit.hasRemovedCopy, false, 'Removed welcome copy is still visible');
+  assert.equal(welcomeAudit.hasStockEmoji, false, 'Stock emoji is still visible on the welcome screen');
+  assert.ok(welcomeAudit.titleOffset !== null && welcomeAudit.titleOffset <= 1, 'NEON COACH title is not centered');
+  assert.ok(welcomeAudit.logoOffset !== null && welcomeAudit.logoOffset <= 1, 'NEON COACH logo is not centered');
+
   await page.evaluate(async () => {
     const { store } = await import('/src/state/store.js');
     store.setState({
@@ -53,6 +73,11 @@ try {
       assert.equal(hit.nav, route, `Tap for ${route} is intercepted by ${JSON.stringify(hit)}`);
       await tab.tap();
       await page.waitForFunction(expected => location.hash === `#${expected}`, route);
+      const visibleEmoji = await page.evaluate(() => {
+        const stockEmoji = /[\u{1F000}-\u{1FAFF}]|\p{Extended_Pictographic}\uFE0F|\p{Emoji_Presentation}/u;
+        return stockEmoji.test(document.body.innerText);
+      });
+      assert.equal(visibleEmoji, false, `Stock emoji is visible on ${route}`);
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     }
   }
@@ -93,6 +118,8 @@ try {
     pass: true,
     taps: checks.length + 1,
     routes,
+    welcomeScreenVerified: true,
+    stockEmojiVerified: true,
     splashSafetyVerified: true,
     workoutNavigationVerified: true,
     errors,

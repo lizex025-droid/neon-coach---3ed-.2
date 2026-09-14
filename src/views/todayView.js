@@ -22,13 +22,13 @@ export function renderTodayView() {
   const suppsTotalCount = state.supplementsSchedule.length;
   const suppsPct = calculatePercentage(suppsTakenCount, suppsTotalCount);
 
-  let waterHelperMsg = 'ابدأ يومك بكوب ماء لإنعاش جسمك وعضلاتك 💧';
+  let waterHelperMsg = 'ابدأ يومك بكوب ماء لإنعاش جسمك وعضلاتك ';
   if (waterPct >= 100) {
-    waterHelperMsg = '🎉 رائع! حققت هدفك اليومي للترطيب الكامل بنجاح.';
+    waterHelperMsg = ' رائع! حققت هدفك اليومي للترطيب الكامل بنجاح.';
   } else if (waterPct >= 70) {
-    waterHelperMsg = '⚡ اقتربت جداً من هدفك اليومي! استمر في الشرب.';
+    waterHelperMsg = ' اقتربت جداً من هدفك اليومي! استمر في الشرب.';
   } else if (waterPct >= 30) {
-    waterHelperMsg = '💧 ممتاز! أنت في المسار الصحيح للمحافظة على ترطيبك.';
+    waterHelperMsg = ' ممتاز! أنت في المسار الصحيح للمحافظة على ترطيبك.';
   }
 
   // حساب محيط الدائرة للـ SVG Ring (r = 45 => circumference = 2 * PI * 45 ≈ 282.743)
@@ -46,7 +46,7 @@ export function renderTodayView() {
   const isFirst = (k) => today.priorityFocus && actionOrder[0] === k;
   const priorityBadge = (lbl) => `
     <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(85, 247, 165, 0.15); border: 1px solid rgba(85, 247, 165, 0.35); color: #55F7A5; font-size: 0.76rem; font-weight: 800; align-self: flex-start; margin-bottom: 2px;">
-      <span>⭐ أولوية اليوم الأولى (${lbl})</span>
+      <span> أولوية اليوم الأولى (${lbl})</span>
     </div>
   `;
 
@@ -255,10 +255,10 @@ export function renderTodayView() {
         <!-- أزرار تسجيل الماء السريعة (+ كوب، + زجاجة، - تراجع) -->
         <div style="display: grid; grid-template-columns: 1fr 1fr 48px; gap: 8px;">
           <button id="today-add-water-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 8px; font-size: 0.86rem; color: #38BDF8; border-color: rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; gap: 6px;" title="إضافة كوب ماء 250 مل">
-            <span>➕ كوب (+250 مل)</span>
+            <span> كوب (+250 مل)</span>
           </button>
           <button id="today-add-bottle-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 8px; font-size: 0.86rem; color: #38BDF8; border-color: rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; gap: 6px;" title="إضافة زجاجة ماء 500 مل">
-            <span>🍾 زجاجة (+500 مل)</span>
+            <span> زجاجة (+500 مل)</span>
           </button>
           <button id="today-undo-water-btn" class="btn btn-secondary" style="border-radius: 12px; padding: 10px 0; font-size: 1.1rem; color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3); display: flex; align-items: center; justify-content: center;" title="تراجع عن كوب (-250 مل)" ${today.consumedGlasses <= 0 ? 'disabled' : ''}>
             <span>−</span>
@@ -325,11 +325,11 @@ export function renderTodayView() {
 
         <div class="energy-selector">
           ${[
-            { level: 5, icon: '😄', label: 'ممتاز' },
-            { level: 4, icon: '🙂', label: 'جيد' },
-            { level: 3, icon: '😐', label: 'متوسط' },
-            { level: 2, icon: '🙁', label: 'منخفض' },
-            { level: 1, icon: '😫', label: 'مرهق' }
+            { level: 5, icon: '', label: 'ممتاز' },
+            { level: 4, icon: '', label: 'جيد' },
+            { level: 3, icon: '', label: 'متوسط' },
+            { level: 2, icon: '', label: 'منخفض' },
+            { level: 1, icon: '', label: 'مرهق' }
           ].map(item => `
             <button class="energy-btn ${today.energyLevel === item.level ? 'selected' : ''}" data-energy="${item.level}">
               <span class="energy-icon">${item.icon}</span>

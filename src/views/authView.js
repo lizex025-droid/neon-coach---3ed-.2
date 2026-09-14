@@ -29,7 +29,7 @@ export function renderAuthView() {
         NEON COACH
       </h1>
       <p style="font-size: 0.95rem; color: #B8C0BC; margin-bottom: 24px; font-weight: 600;">
-        أنشئ حسابك لبدء خطتك الشخصية ⚡
+        أنشئ حسابك لبدء خطتك الشخصية
       </p>
 
       <!-- بطاقة المصادقة الرئيسية -->
@@ -38,11 +38,11 @@ export function renderAuthView() {
         <!-- تبويبات التبديل بين إنشاء حساب وتسجيل الدخول -->
         <div class="auth-tabs" role="tablist">
           <button type="button" id="tab-signup" class="auth-tab-btn ${!isLogin ? 'active' : ''}" role="tab" aria-selected="${!isLogin}">
-            <span>✨</span>
+            <span></span>
             <span>إنشاء حساب</span>
           </button>
           <button type="button" id="tab-login" class="auth-tab-btn ${isLogin ? 'active' : ''}" role="tab" aria-selected="${isLogin}">
-            <span>🔑</span>
+            <span></span>
             <span>تسجيل الدخول</span>
           </button>
         </div>
@@ -113,7 +113,7 @@ export function renderAuthView() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </span>
             <button type="button" id="toggle-password-btn" class="input-action" aria-label="إظهار كلمة المرور" style="background: transparent; border: none; cursor: pointer; color: #8C9992; font-size: 1.1rem; padding: 4px;">
-              👁️
+
             </button>
           </div>
 
@@ -125,7 +125,7 @@ export function renderAuthView() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
               </span>
               <button type="button" id="toggle-confirm-password-btn" class="input-action" aria-label="إظهار تأكيد كلمة المرور" style="background: transparent; border: none; cursor: pointer; color: #8C9992; font-size: 1.1rem; padding: 4px;">
-                👁️
+
               </button>
             </div>
           ` : ''}
@@ -150,12 +150,12 @@ export function renderAuthView() {
 
           <!-- زر الإجراء الأساسي -->
           <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 6px; border-radius: 18px; font-size: 1.05rem; font-weight: 900; box-shadow: 0 4px 18px rgba(85,247,165,0.35);">
-            <span>${isLogin ? 'تسجيل الدخول 🚀' : 'إنشاء الحساب والبدء ✨'}</span>
+            <span>${isLogin ? 'تسجيل الدخول ' : 'إنشاء الحساب والبدء '}</span>
           </button>
 
           <!-- إشعار إلزامية الحساب -->
           <div style="margin-top: 6px; text-align: center; font-size: 0.82rem; color: #8C9992;">
-            <span>🔒 يلزم إنشاء حساب شخصي لحفظ خطتك وتتبع تقدمك بأمان</span>
+            <span> يلزم إنشاء حساب شخصي لحفظ خطتك وتتبع تقدمك بأمان</span>
           </div>
 
         </form>
@@ -174,7 +174,7 @@ export function renderAuthView() {
       <div id="forgot-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 24px; border-radius: 24px; max-width: 420px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h3 style="color: #55F7A5; font-size: 1.15rem; margin: 0;">🔑 استعادة كلمة المرور</h3>
+            <h3 style="color: #55F7A5; font-size: 1.15rem; margin: 0;"> استعادة كلمة المرور</h3>
             <button id="close-forgot-modal-btn" class="btn-icon">✕</button>
           </div>
           <p style="font-size: 0.86rem; color: #B8C0BC; line-height: 1.5; margin-bottom: 16px;">
@@ -185,7 +185,7 @@ export function renderAuthView() {
           </div>
           <div style="display: flex; gap: 10px;">
             <button id="send-forgot-btn" class="btn btn-primary btn-block" style="border-radius: 12px;">
-              إرسال الرابط ✉️
+              إرسال الرابط
             </button>
           </div>
         </div>
@@ -198,7 +198,7 @@ export function renderAuthView() {
         <div class="ai-modal-panel" style="height: auto; max-height: 88vh; padding: 24px; border-radius: 24px; max-width: 420px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="social-modal-icon" style="font-size: 1.3rem;">🌐</span>
+              <span id="social-modal-icon" style="font-size: 1.3rem;"></span>
               <h3 id="social-modal-title" style="color: #55F7A5; font-size: 1.15rem; margin: 0;">المتابعة بحساب Google</h3>
             </div>
             <button id="close-social-modal-btn" class="btn-icon">✕</button>
@@ -225,7 +225,7 @@ export function renderAuthView() {
             </div>
 
             <button type="submit" id="social-submit-btn" class="btn btn-primary btn-block" style="border-radius: 14px; margin-top: 6px; font-weight: 800; font-size: 1rem;">
-              <span id="social-submit-text">تسجيل وبدء الخطة 🚀</span>
+              <span id="social-submit-text">تسجيل وبدء الخطة </span>
             </button>
           </form>
         </div>
@@ -287,10 +287,10 @@ export function bindAuthViewEvents() {
       if (res && !res.success) {
         activeSocialProvider = 'google';
         if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Google';
-        if (socialModalIcon) socialModalIcon.textContent = '🌐';
+        if (socialModalIcon) socialModalIcon.textContent = '';
         if (socialModalDesc) socialModalDesc.textContent = 'أدخل بريدك على Google لربط حسابك وتخصيص خطتك التدريبية فورياً:';
         if (socialEmailInput) socialEmailInput.placeholder = 'name@gmail.com';
-        if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Google 🚀';
+        if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Google ';
         socialModal?.classList.add('open');
       }
     } catch (e) {
@@ -305,10 +305,10 @@ export function bindAuthViewEvents() {
   appleBtn?.addEventListener('click', () => {
     activeSocialProvider = 'apple';
     if (socialModalTitle) socialModalTitle.textContent = 'المتابعة بحساب Apple ID';
-    if (socialModalIcon) socialModalIcon.textContent = '🍏';
+    if (socialModalIcon) socialModalIcon.textContent = '';
     if (socialModalDesc) socialModalDesc.textContent = 'أدخل عنوان Apple ID لربط حسابك وتخصيص خطتك التدريبية فورياً:';
     if (socialEmailInput) socialEmailInput.placeholder = 'name@icloud.com';
-    if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Apple ID ✨';
+    if (socialSubmitText) socialSubmitText.textContent = 'تسجيل وبدء خطتي مع Apple ID ';
     socialModal?.classList.add('open');
   });
 
@@ -360,7 +360,7 @@ export function bindAuthViewEvents() {
     if (res.success) {
       socialModal?.classList.remove('open');
       const userName = res.user?.name || name || 'بطل';
-      const providerLabel = activeSocialProvider === 'apple' ? 'Apple ID 🍏' : 'Google 🌐';
+      const providerLabel = activeSocialProvider === 'apple' ? 'Apple ID ' : 'Google ';
       notificationService.showToast(`أهلاً بك يا ${userName}! تم ربط حسابك عبر ${providerLabel} بنجاح`, 'success');
       setTimeout(() => {
         window.location.hash = res.onboardingCompleted ? '#today' : '#questionnaire';
@@ -397,7 +397,7 @@ export function bindAuthViewEvents() {
           return;
         }
         const userName = res.user?.name || name || 'بطل';
-        notificationService.showToast(`أهلاً بك يا ${userName}! لنبدأ بجمع بيانات خطتك التدريبية والغذائية 📋✨`, 'success');
+        notificationService.showToast(`أهلاً بك يا ${userName}! لنبدأ بجمع بيانات خطتك التدريبية والغذائية `, 'success');
         setTimeout(() => {
           window.location.hash = '#questionnaire';
         }, 350);
@@ -414,8 +414,8 @@ export function bindAuthViewEvents() {
         const nextHash = res.onboardingCompleted ? '#today' : '#questionnaire';
         const userName = res.user?.name || (email ? email.split('@')[0] : 'بطل');
         const msg = res.onboardingCompleted
-          ? `مرحباً بعودتك ${userName} 💚`
-          : `أهلاً بك ${userName}! لنستكمل بيانات خطتك التدريبية والغذائية 📋✨`;
+          ? `مرحباً بعودتك ${userName} `
+          : `أهلاً بك ${userName}! لنستكمل بيانات خطتك التدريبية والغذائية `;
         notificationService.showToast(msg, 'success');
         setTimeout(() => {
           window.location.hash = nextHash;
@@ -468,10 +468,10 @@ function setupPasswordToggle(btnId, inputId) {
   btn?.addEventListener('click', () => {
     if (input.type === 'password') {
       input.type = 'text';
-      btn.textContent = '🙈';
+      btn.textContent = '';
     } else {
       input.type = 'password';
-      btn.textContent = '👁️';
+      btn.textContent = '';
     }
   });
 }
@@ -481,7 +481,7 @@ function setButtonLoading(btn, isLoading, loadingText = '') {
   if (isLoading) {
     btn.dataset.originalHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<span>⏳</span> <span>${loadingText || 'جاري المعالجة...'}</span>`;
+    btn.innerHTML = `<span></span> <span>${loadingText || 'جاري المعالجة...'}</span>`;
     btn.style.opacity = '0.75';
     btn.style.pointerEvents = 'none';
   } else {

@@ -20,7 +20,7 @@ export function renderActionPanel() {
   return `<section class="action-agent neon-card" aria-labelledby="action-agent-title">
     <div class="action-heading"><div><h2 id="action-agent-title">NEON ACTION AGENT</h2><p>احكي لنيون. سجلاتك تتحدث قدامك.</p></div><span class="action-badge">متصل بسجلاتك</span></div>
     <div id="action-live-summary"></div>
-    <button type="button" id="action-open-voice-overlay" class="neon-voice-main-btn" style="width: 100%; margin: 10px 0 14px; justify-content: center; font-size: 1.05rem;">🎙️ TAP TO TALK / تفعيل الميكروفون</button>
+    <button type="button" id="action-open-voice-overlay" class="neon-voice-main-btn" style="width: 100%; margin: 10px 0 14px; justify-content: center; font-size: 1.05rem;"> TAP TO TALK / تفعيل الميكروفون</button>
     <div class="action-shortcuts"><button type="button" data-action-prompt="زود كاسة مي">+ كاسة مي</button><button type="button" data-action-prompt="شو باقيلي بروتين؟">باقي البروتين</button><button type="button" data-action-prompt="شو عندي اليوم؟">ملخص اليوم</button><button type="button" id="action-undo" data-action-prompt="رجع آخر شغلة عملتها">تراجع</button></div>
     <div class="action-voice-options"><label><input id="action-wake" type="checkbox"> انتظر «يا نيون»</label><label><input id="action-speak" type="checkbox"> رد صوتي</label><label>لغة الصوت <select id="action-language" aria-label="لغة الصوت"><option value="ar-JO">العربية</option><option value="en-US">English</option></select></label></div>
     <p id="action-voice-status" role="status">الميكروفون متوقف — اضغطه لبدء المحادثة الصوتية.</p>

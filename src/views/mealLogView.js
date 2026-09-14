@@ -89,7 +89,7 @@ export function renderMealLogView() {
           سجل الوجبات
         </h1>
         <button id="meallog-chat-btn" class="btn-icon" aria-label="المحادثة" title="المساعد الذكي">
-          💬
+
         </button>
       </div>
 
@@ -176,12 +176,12 @@ export function renderMealLogView() {
         <div style="margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; flex-wrap: wrap;">
             <label for="food-search-input" style="font-size: 0.82rem; color: #55F7A5; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-              <span>🔍</span>
+              <span></span>
               <span>ابحث وأضف صنفًا للوجبة</span>
             </label>
             <div style="display: flex; align-items: center; gap: 6px;">
               <button type="button" id="meallog-open-custom-food-btn" class="btn btn-outline-neon btn-sm" style="font-size: 0.74rem; padding: 3px 10px; border-radius: 10px; border-color: rgba(85,247,165,0.4); color: #55F7A5; background: rgba(85,247,165,0.08); display: inline-flex; align-items: center; gap: 4px;" title="إضافة أو تعديل أكلة في قاعدة البيانات">
-                <span>🥗 أكلاتي المخصصة / إضافة</span>
+                <span> أكلاتي المخصصة / إضافة</span>
               </button>
               <span class="badge" style="background: rgba(85,247,165,0.12); color: #55F7A5; border: 1px solid rgba(85,247,165,0.3); font-size: 0.72rem; padding: 2px 8px;">
                 ${IMPORTED_FOOD_COUNT} صنف
@@ -364,7 +364,7 @@ export function bindMealLogEvents() {
       targetIdx = activeDraft.items.length - 1;
     }
     recalcDraft(activeDraft);
-    const msg = isCount ? `تمت إضافة ${food.name || food.nameAr} بالعدد إلى الوجبة 🍳` : `تمت إضافة ${food.name || food.nameAr} إلى الوجبة 🥗`;
+    const msg = isCount ? `تمت إضافة ${food.name || food.nameAr} بالعدد إلى الوجبة ` : `تمت إضافة ${food.name || food.nameAr} إلى الوجبة `;
     notificationService.showToast(msg, 'success');
     refreshMealLogView(targetIdx);
   };
@@ -423,10 +423,10 @@ export function bindMealLogEvents() {
           <div>لم نجد صنفًا مطابقًا لـ "<span style="color: #FFFFFF; font-weight: 700;">${escapeHtml(q)}</span>"</div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
             <button type="button" id="search-empty-add-custom-btn" class="btn btn-primary btn-sm" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 12px;">
-              ➕ أضف "${escapeHtml(q)}" يدوياً لقاعدة البيانات
+               أضف "${escapeHtml(q)}" يدوياً لقاعدة البيانات
             </button>
             <button type="button" id="search-empty-manage-custom-btn" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px;">
-              📋 إدارة أكلاتي
+               إدارة أكلاتي
             </button>
           </div>
         </div>
@@ -459,7 +459,7 @@ export function bindMealLogEvents() {
           </button>
           ${f.isCustom ? `
             <button type="button" class="edit-custom-food-search-btn" data-custom-id="${f.id}" title="تعديل أو حذف الصنف من قاعدة البيانات" style="background: #07100D; border: 1px solid rgba(85,247,165,0.25); border-radius: 12px; color: #55F7A5; padding: 9px 10px; font-size: 0.82rem; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;">
-              <span>✏️</span>
+              <span></span>
               <span style="font-size: 0.72rem; font-weight: 700;">تعديل</span>
             </button>
           ` : ''}
@@ -470,10 +470,10 @@ export function bindMealLogEvents() {
         <span style="font-size: 0.76rem; color: #8C9992;">الصنف غير موجود أو تريد إدارة أكلاتك؟</span>
         <div style="display: flex; gap: 6px;">
           <button type="button" id="search-footer-manage-custom-btn" class="btn btn-secondary btn-sm" style="font-size: 0.74rem; padding: 4px 8px; border-radius: 10px;">
-            📋 أكلاتي
+             أكلاتي
           </button>
           <button type="button" id="search-footer-add-custom-btn" class="btn btn-outline-neon btn-sm" style="font-size: 0.74rem; padding: 4px 10px; border-radius: 10px;">
-            ➕ أضف صنفاً
+             أضف صنفاً
           </button>
         </div>
       </div>
@@ -618,7 +618,7 @@ export function bindMealLogEvents() {
 
   // التسجيل الصوتي
   micBtn?.addEventListener('click', () => {
-    notificationService.showToast('جاري الاستماع... تحدث باللغة العربية الآن 🎙️', 'info');
+    notificationService.showToast('جاري الاستماع... تحدث باللغة العربية الآن ', 'info');
     speechService.startListening(
       (transcript) => {
         if (textInput) textInput.value = transcript;
@@ -634,7 +634,7 @@ export function bindMealLogEvents() {
   photoInput?.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    notificationService.showToast('جاري فحص صورة الوجبة وتقدير المكونات 📸...', 'info');
+    notificationService.showToast('جاري فحص صورة الوجبة وتقدير المكونات ...', 'info');
     const photoResult = await aiService.analyzeFoodPhoto(file);
     if (photoResult.success) {
       activeDraft = {
@@ -659,7 +659,7 @@ export function bindMealLogEvents() {
     }
     recalcDraft(activeDraft);
     store.logMeal(activeDraft);
-    notificationService.showToast('تم حفظ الوجبة وتحديث مجاميع اليوم بنجاح! 🏆', 'success');
+    notificationService.showToast('تم حفظ الوجبة وتحديث مجاميع اليوم بنجاح! ', 'success');
     activeDraft = {
       titleAr: 'وجبة جديدة',
       calories: 0,

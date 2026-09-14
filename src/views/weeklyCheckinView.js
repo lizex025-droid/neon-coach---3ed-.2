@@ -69,7 +69,7 @@ export function renderWeeklyCheckinView() {
         
         <!-- التوتر -->
         <div class="neon-card" style="padding: 14px 8px; text-align: center;">
-          <div style="font-size: 0.78rem; color: #B8C0BC; margin-bottom: 4px;">🧠 التوتر</div>
+          <div style="font-size: 0.78rem; color: #B8C0BC; margin-bottom: 4px;"> التوتر</div>
           <div style="color: #55F7A5; font-size: 0.9rem; margin-bottom: 2px;">★★☆☆☆</div>
           <div style="font-weight: 800; font-size: 0.85rem; color: #FFFFFF; font-family: monospace;">2 / 5</div>
         </div>
@@ -108,7 +108,7 @@ export function renderWeeklyCheckinView() {
 
         <!-- النوم -->
         <div class="neon-card" style="padding: 14px 8px; text-align: center;">
-          <div style="font-size: 0.78rem; color: #B8C0BC; margin-bottom: 4px;">🌙 النوم</div>
+          <div style="font-size: 0.78rem; color: #B8C0BC; margin-bottom: 4px;"> النوم</div>
           <div style="font-weight: 900; font-size: 1.4rem; color: #FFFFFF; font-family: monospace;">
             ${checkin.sleepHours}
           </div>
@@ -224,7 +224,7 @@ export function bindWeeklyCheckinEvents() {
           return;
         }
         const angle = input.getAttribute('data-angle');
-        notificationService.showToast(`تم رفع صورة التقدم (${angle}) بنجاح وتشفيرها محلياً 🔒`, 'success');
+        notificationService.showToast(`تم رفع صورة التقدم (${angle}) بنجاح وتشفيرها محلياً `, 'success');
       }
     });
   });
@@ -233,7 +233,7 @@ export function bindWeeklyCheckinEvents() {
   document.getElementById('submit-checkin-btn')?.addEventListener('click', () => {
     const notes = document.getElementById('checkin-notes')?.value;
     store.submitWeeklyCheckin({ userNotes: notes });
-    alert('تم حفظ المتابعة الأسبوعية بنجاح! 🏆\nيمكنك الآن مراجعة تقرير التقدم أو متابعة تمرينك.');
+    alert('تم حفظ المتابعة الأسبوعية بنجاح! \nيمكنك الآن مراجعة تقرير التقدم أو متابعة تمرينك.');
     window.location.hash = '#progress';
   });
 }

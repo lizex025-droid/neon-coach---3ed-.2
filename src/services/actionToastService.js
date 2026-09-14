@@ -13,7 +13,7 @@ export function showActionToast({ module, title, details, routeHash }) {
   toast.className = 'neon-action-toast';
 
   toast.innerHTML = `
-    <div style="font-size: 1.4rem;">⚡</div>
+    <div style="font-size: 1.4rem;"></div>
     <div class="neon-action-toast-body">
       <span class="neon-action-toast-tag">${module.toUpperCase()} UPDATED</span>
       <span class="neon-action-toast-text">${details || title}</span>

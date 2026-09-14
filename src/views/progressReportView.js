@@ -43,12 +43,12 @@ function renderDailyHistoryItem(day) {
         <span style="color:#7E998A; font:700 .72rem monospace;">${escapeHtml(day.date)}</span>
       </div>
       <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; font-size:.78rem;">
-        <span style="color:#B8C0BC;">🔥 السعرات: <b style="color:#55F7A5;">${calories.toLocaleString('en-US')}</b>${targetCalories ? ` / ${targetCalories.toLocaleString('en-US')}` : ''}</span>
-        <span style="color:#B8C0BC;">🥩 البروتين: <b style="color:#FFFFFF;">${protein}غ</b></span>
-        <span style="color:#B8C0BC;">💧 الماء: <b style="color:#38BDF8;">${water} لتر</b>${targetWater ? ` / ${targetWater}` : ''}</span>
-        <span style="color:#B8C0BC;">🍽️ الوجبات: <b style="color:#FFFFFF;">${Number(day.mealCount) || 0}</b></span>
-        <span style="color:#B8C0BC;">💊 المكملات: <b style="color:#FFFFFF;">${Number(day.supplementsTaken) || 0}/${Number(day.supplementsTotal) || 0}</b></span>
-        <span style="color:#B8C0BC;">🏋️ التمرين: <b style="color:${day.workoutCompleted ? '#55F7A5' : '#8C9992'};">${day.workoutCompleted ? 'مكتمل ✓' : 'غير مكتمل'}</b></span>
+        <span style="color:#B8C0BC;"> السعرات: <b style="color:#55F7A5;">${calories.toLocaleString('en-US')}</b>${targetCalories ? ` / ${targetCalories.toLocaleString('en-US')}` : ''}</span>
+        <span style="color:#B8C0BC;"> البروتين: <b style="color:#FFFFFF;">${protein}غ</b></span>
+        <span style="color:#B8C0BC;"> الماء: <b style="color:#38BDF8;">${water} لتر</b>${targetWater ? ` / ${targetWater}` : ''}</span>
+        <span style="color:#B8C0BC;"> الوجبات: <b style="color:#FFFFFF;">${Number(day.mealCount) || 0}</b></span>
+        <span style="color:#B8C0BC;"> المكملات: <b style="color:#FFFFFF;">${Number(day.supplementsTaken) || 0}/${Number(day.supplementsTotal) || 0}</b></span>
+        <span style="color:#B8C0BC;"> التمرين: <b style="color:${day.workoutCompleted ? '#55F7A5' : '#8C9992'};">${day.workoutCompleted ? 'مكتمل ✓' : 'غير مكتمل'}</b></span>
       </div>
     </div>`;
 }
@@ -142,7 +142,7 @@ export function renderProgressReportView() {
             </div>
             <div style="font-size: 1rem; font-weight: 800; color: #55F7A5; margin: 2px 0;">كغ</div>
             <div style="font-size: 0.74rem; padding: 2px 8px; border-radius: 999px; background: rgba(85,247,165,0.15); color: #55F7A5; display: inline-block;">
-              ${periodData.weightChange <= 0 ? '📉 خسارة وزن ممتازة' : '📈 زيادة وزن'}
+              ${periodData.weightChange <= 0 ? ' خسارة وزن ممتازة' : ' زيادة وزن'}
             </div>
           </div>
 
@@ -391,7 +391,7 @@ export function renderProgressReportView() {
               <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
                 <div>
                   <div style="font-weight: 800; color: #FFFFFF; font-size: 0.98rem; display: flex; align-items: center; gap: 6px;">
-                    <span>⚡</span>
+                    <span></span>
                     <span>${escapeHtml(session.title || 'جلسة تدريب')}</span>
                   </div>
                   <div style="font-size: 0.78rem; color: #8C9992; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
@@ -400,8 +400,8 @@ export function renderProgressReportView() {
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.76rem; font-family: monospace;">
                   ${session.durationMinutes ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">${neonIcon('timer', 13)} ${session.durationMinutes} دقيقة</span>` : ''}
-                  ${session.totalVolumeKg ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;">⚖️ ${Number(session.totalVolumeKg).toLocaleString('ar-EG')} كغ حجم</span>` : ''}
-                  ${session.totalSets ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;">🔢 ${session.totalSets} جولات</span>` : ''}
+                  ${session.totalVolumeKg ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;"> ${Number(session.totalVolumeKg).toLocaleString('ar-EG')} كغ حجم</span>` : ''}
+                  ${session.totalSets ? `<span style="background: rgba(85,247,165,0.12); color: #55F7A5; padding: 3px 8px; border-radius: 8px;"> ${session.totalSets} جولات</span>` : ''}
                 </div>
               </div>
 
@@ -429,13 +429,13 @@ export function renderProgressReportView() {
         <!-- زر مشاركة التقرير -->
         <button id="share-report-btn" class="btn btn-secondary btn-lg no-print" style="border-radius: 20px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
           <span>مشاركة التقرير</span>
-          <span>📤</span>
+          <span></span>
         </button>
 
         <!-- زر حفظ PDF -->
         <button id="save-pdf-btn" class="btn btn-primary btn-lg no-print" style="border-radius: 20px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 8px;">
           <span>حفظ PDF</span>
-          <span>📄</span>
+          <span></span>
         </button>
 
       </div>
@@ -707,7 +707,7 @@ export function bindProgressReportEvents() {
 
   // حفظ PDF
   document.getElementById('save-pdf-btn')?.addEventListener('click', () => {
-    notificationService.showToast('جاري تجهيز تقرير التقدم للطباعة والحفظ بصيغة PDF 📄...', 'info');
+    notificationService.showToast('جاري تجهيز تقرير التقدم للطباعة والحفظ بصيغة PDF ...', 'info');
     setTimeout(() => {
       pdfService.exportReportToPdf();
     }, 400);
@@ -718,7 +718,7 @@ export function bindProgressReportEvents() {
     const reportData = store.getState().progressReport;
     const res = await pdfService.shareReport(reportData);
     if (res.method === 'clipboard') {
-      notificationService.showToast('تم نسخ ملخص إنجازك الرياضي للحافظة بنجاح! 📋', 'success');
+      notificationService.showToast('تم نسخ ملخص إنجازك الرياضي للحافظة بنجاح! ', 'success');
     }
   });
 }
@@ -824,15 +824,15 @@ function generateProgressInsight(weightChange, strengthChange, adherence) {
   const isAdherent = (adherence?.trainingPct || 0) >= 80 && (adherence?.nutritionPct || 0) >= 75;
 
   if (isLoss && isStronger) {
-    return '🔥 تحليل استثنائي: أنت في مرحلة بناء عضلات وخسارة دهون متزامنة (Body Recomposition)! نزول الوزن مع تصاعد أوزان التمرين يؤكد أن الخسارة دهون نقية مع الحفاظ التام على الكتلة العضلية. استمر على نفس توزيع الماكروز والترطيب.';
+    return ' تحليل استثنائي: أنت في مرحلة بناء عضلات وخسارة دهون متزامنة (Body Recomposition)! نزول الوزن مع تصاعد أوزان التمرين يؤكد أن الخسارة دهون نقية مع الحفاظ التام على الكتلة العضلية. استمر على نفس توزيع الماكروز والترطيب.';
   } else if (isLoss) {
-    return '📉 استجابة ممتازة: وزنك في هبوط صحي ومحيط الخصر ينكمش تدريجياً. احرص على تناول كامل احتياجك من البروتين اليومي والنوم الكافي لدعم الاستشفاء العضلي والحفاظ على مستويات طاقتك.';
+    return ' استجابة ممتازة: وزنك في هبوط صحي ومحيط الخصر ينكمش تدريجياً. احرص على تناول كامل احتياجك من البروتين اليومي والنوم الكافي لدعم الاستشفاء العضلي والحفاظ على مستويات طاقتك.';
   } else if (isStronger) {
-    return '💪 زيادة قوة ملحوظة: أوزانك في التمارين الأساسية في تصاعد مستمر، مما يشير لنمو عضلي حقيقي وتحسن في الجهاز العصبي. واصل تطبيق مبدأ زيادة الحمل التدريجي (Progressive Overload).';
+    return ' زيادة قوة ملحوظة: أوزانك في التمارين الأساسية في تصاعد مستمر، مما يشير لنمو عضلي حقيقي وتحسن في الجهاز العصبي. واصل تطبيق مبدأ زيادة الحمل التدريجي (Progressive Overload).';
   } else if (isAdherent) {
-    return '⚡ التزام رائع: معدل التزامك بالتمارين والتغذية مرتفع جداً. تذكر أن الجسم يمر بفترات احتباس سوائل طبيعية قبل أن ينعكس المجهود على الميزان. التزم بالعملية والنتائج قادمة حتماً!';
+    return ' التزام رائع: معدل التزامك بالتمارين والتغذية مرتفع جداً. تذكر أن الجسم يمر بفترات احتباس سوائل طبيعية قبل أن ينعكس المجهود على الميزان. التزم بالعملية والنتائج قادمة حتماً!';
   } else {
-    return '🎯 خطوة بخطوة: ركز على رفع نسبة الالتزام بشرب الماء وتسجيل وجباتك يومياً، فالاستمرارية اليومية البسيطة هي المفتاح الأهم لتحقيق أفضل تحول بدني مستدام.';
+    return ' خطوة بخطوة: ركز على رفع نسبة الالتزام بشرب الماء وتسجيل وجباتك يومياً، فالاستمرارية اليومية البسيطة هي المفتاح الأهم لتحقيق أفضل تحول بدني مستدام.';
   }
 }
 

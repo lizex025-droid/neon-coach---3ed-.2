@@ -432,7 +432,7 @@ export async function executeToolsNode(state) {
           tool,
           success: true,
           priority: kind,
-          summaryText: `تم تقديم ${labelsAr[kind] || kind} كأولوية أولى لليوم ⭐`
+          summaryText: `تم تقديم ${labelsAr[kind] || kind} كأولوية أولى لليوم `
         });
         break;
       }

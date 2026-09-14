@@ -6,22 +6,22 @@
 const SUPABASE_ICONS_CDN = 'https://fqwjcacuxsumqpmdsfxc.supabase.co/storage/v1/object/public/app-icons';
 
 export const NEON_ICONS = {
-  flame: `${SUPABASE_ICONS_CDN}/neon-flame.png`,      // 🔥 سعرات / طاقة / حرق
-  dumbbell: `${SUPABASE_ICONS_CDN}/neon-dumbbell.png`,// 🏋️ تمرين / أثقال / جيم
-  calendar: `${SUPABASE_ICONS_CDN}/neon-calendar.png`,// 📅 تقويم / جدول الـ 40 يوم / متابعة
-  bell: `${SUPABASE_ICONS_CDN}/neon-bell.png`,        // 🔔 إشعارات / تذكيرات
-  pencil: `${SUPABASE_ICONS_CDN}/neon-pencil.png`,    // ✏️ تعديل / تخصيص / تدوين
-  check: `${SUPABASE_ICONS_CDN}/neon-check.png`,      // ✅ تم / مكتمل / نجاح / حفظ
-  water: `${SUPABASE_ICONS_CDN}/neon-water.png`,      // 💧 ماء / ترطيب
-  plate: `${SUPABASE_ICONS_CDN}/neon-plate.png`,      // 🍽️ وجبة / تغذية / صحن
-  chart: `${SUPABASE_ICONS_CDN}/neon-chart.png`,      // 📊 إحصائيات / تقدم / تقرير
-  target: `${SUPABASE_ICONS_CDN}/neon-target.png`,    // 🎯 هدف / سعرات مستهدفة
-  timer: `${SUPABASE_ICONS_CDN}/neon-timer.png`,      // ⏱️ عداد / وقت راحة / مؤقت
-  bulb: `${SUPABASE_ICONS_CDN}/neon-bulb.png`,        // 💡 نصائح / أفكار / ذكاء
-  shield: `${SUPABASE_ICONS_CDN}/neon-shield.png`,    // 🛡️ أمان / خطة معتمدة / حماية
-  camera: `${SUPABASE_ICONS_CDN}/neon-camera.png`,    // 📷 صور / كاميرا / تقرير InBody
-  user: `${SUPABASE_ICONS_CDN}/neon-user.png`,        // 👤 حسابي / متدرب / ملف شخصي
-  alert: `${SUPABASE_ICONS_CDN}/neon-alert.png`       // ⚠️ تحذير / تنبيه / تجاوز
+  flame: `${SUPABASE_ICONS_CDN}/neon-flame.png`,      //  سعرات / طاقة / حرق
+  dumbbell: `${SUPABASE_ICONS_CDN}/neon-dumbbell.png`,//  تمرين / أثقال / جيم
+  calendar: `${SUPABASE_ICONS_CDN}/neon-calendar.png`,//  تقويم / جدول الـ 40 يوم / متابعة
+  bell: `${SUPABASE_ICONS_CDN}/neon-bell.png`,        //  إشعارات / تذكيرات
+  pencil: `${SUPABASE_ICONS_CDN}/neon-pencil.png`,    //  تعديل / تخصيص / تدوين
+  check: `${SUPABASE_ICONS_CDN}/neon-check.png`,      //  تم / مكتمل / نجاح / حفظ
+  water: `${SUPABASE_ICONS_CDN}/neon-water.png`,      //  ماء / ترطيب
+  plate: `${SUPABASE_ICONS_CDN}/neon-plate.png`,      //  وجبة / تغذية / صحن
+  chart: `${SUPABASE_ICONS_CDN}/neon-chart.png`,      //  إحصائيات / تقدم / تقرير
+  target: `${SUPABASE_ICONS_CDN}/neon-target.png`,    //  هدف / سعرات مستهدفة
+  timer: `${SUPABASE_ICONS_CDN}/neon-timer.png`,      //  عداد / وقت راحة / مؤقت
+  bulb: `${SUPABASE_ICONS_CDN}/neon-bulb.png`,        //  نصائح / أفكار / ذكاء
+  shield: `${SUPABASE_ICONS_CDN}/neon-shield.png`,    //  أمان / خطة معتمدة / حماية
+  camera: `${SUPABASE_ICONS_CDN}/neon-camera.png`,    //  صور / كاميرا / تقرير InBody
+  user: `${SUPABASE_ICONS_CDN}/neon-user.png`,        //  حسابي / متدرب / ملف شخصي
+  alert: `${SUPABASE_ICONS_CDN}/neon-alert.png`       //  تحذير / تنبيه / تجاوز
 };
 
 

@@ -21,13 +21,13 @@ export function renderCoachDashboardView() {
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div>
           <h1 style="font-size: 1.6rem; font-weight: 900; color: #FFFFFF; margin-bottom: 2px;">
-            لوحة المدرب 👔
+            لوحة المدرب
           </h1>
           <div style="font-size: 0.8rem; color: #55F7A5;">إدارة المتدربين والخطط المعتمدة</div>
         </div>
 
         <button id="exit-coach-mode-btn" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 12px;">
-          العودة لوضع المتدرب 🏋️
+          العودة لوضع المتدرب
         </button>
       </div>
 
@@ -52,7 +52,7 @@ export function renderCoachDashboardView() {
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  ${cl.painAlert ? '<span class="badge badge-danger">⚠️ ألم مفصل</span>' : ''}
+                  ${cl.painAlert ? '<span class="badge badge-danger"> ألم مفصل</span>' : ''}
                   ${cl.status === 'needs_review' ? '<span class="badge badge-demo">بانتظار المراجعة</span>' : ''}
                   <span style="color: #55F7A5; font-weight: 800; font-family: monospace; font-size: 0.9rem;">${cl.adherencePct}%</span>
                 </div>
@@ -75,7 +75,7 @@ export function renderCoachDashboardView() {
           </div>
 
           <button id="approve-plan-btn" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 12px;">
-            🛡️ اعتماد الخطة
+             اعتماد الخطة
           </button>
         </div>
 
@@ -137,10 +137,10 @@ function renderClientTabContent(tab, state) {
       return `
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <div style="font-weight: 700; color: #FFFFFF;">جدول الوجبات المعتمد:</div>
-          <div class="neon-card alt" style="padding: 10px;">🌅 الفطور: شوفان وتوت ولوز (420 سعرة)</div>
-          <div class="neon-card alt" style="padding: 10px;">☀️ الغداء: صدر دجاج 190غ + بطاطا 170غ + سلطة (489 سعرة)</div>
-          <div class="neon-card alt" style="padding: 10px;">🌙 العشاء: سلمون مشوي 150غ مع خضار (380 سعرة)</div>
-          <div class="neon-card alt" style="padding: 10px;">🍏 سناك: زبادي يوناني وتوت أزرق (131 سعرة)</div>
+          <div class="neon-card alt" style="padding: 10px;"> الفطور: شوفان وتوت ولوز (420 سعرة)</div>
+          <div class="neon-card alt" style="padding: 10px;"> الغداء: صدر دجاج 190غ + بطاطا 170غ + سلطة (489 سعرة)</div>
+          <div class="neon-card alt" style="padding: 10px;"> العشاء: سلمون مشوي 150غ مع خضار (380 سعرة)</div>
+          <div class="neon-card alt" style="padding: 10px;"> سناك: زبادي يوناني وتوت أزرق (131 سعرة)</div>
         </div>
       `;
 
@@ -198,6 +198,6 @@ export function bindCoachDashboardEvents() {
   // زر اعتماد الخطة من قبل المدرب
   document.getElementById('approve-plan-btn')?.addEventListener('click', () => {
     store.approveClientPlan(selectedClientId, 'تمت المراجعة والاعتماد — استمر على نفس توزيع السعرات والماكروز.');
-    notificationService.showToast('تم اعتماد الخطة رسمياً وإظهار شارة "معتمدة من المدرب" للمتدرب 🛡️', 'success');
+    notificationService.showToast('تم اعتماد الخطة رسمياً وإظهار شارة "معتمدة من المدرب" للمتدرب ', 'success');
   });
 }

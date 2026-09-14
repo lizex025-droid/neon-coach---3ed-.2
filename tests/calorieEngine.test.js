@@ -30,19 +30,19 @@ import {
 
 function assert(condition, message) {
   if (!condition) {
-    console.error(`❌ FAIL: ${message}`);
+    console.error(` FAIL: ${message}`);
     throw new Error(message);
   }
-  console.log(`✅ PASS: ${message}`);
+  console.log(` PASS: ${message}`);
 }
 
 function assertCloseTo(actual, expected, maxDiff = 0.05, message = '') {
   const diff = Math.abs(actual - expected);
   if (diff > maxDiff) {
-    console.error(`❌ FAIL: ${message} (expected ~${expected}, got ${actual}, diff ${diff})`);
+    console.error(` FAIL: ${message} (expected ~${expected}, got ${actual}, diff ${diff})`);
     throw new Error(`${message}: expected ~${expected}, got ${actual}`);
   }
-  console.log(`✅ PASS: ${message} (${actual} ≈ ${expected})`);
+  console.log(` PASS: ${message} (${actual} ≈ ${expected})`);
 }
 
 console.log('=== NEON COACH Calorie Engine Verification Tests ===\n');
@@ -256,6 +256,6 @@ assert(muscleGainTargets.targetCalories === 2841, `Target calories = 2841, got $
 const muscleSum = (muscleGainTargets.protein * 4) + (muscleGainTargets.carbs * 4) + (muscleGainTargets.fats * 9);
 assert(muscleSum === muscleGainTargets.targetCalories, `Muscle gain macro sum (${muscleSum}) strictly equals targetCalories (${muscleGainTargets.targetCalories})`);
 
-console.log('\n🎉 ALL 13 TEST SUITES PASSED SUCCESSFULLY!');
+console.log('\n ALL 13 TEST SUITES PASSED SUCCESSFULLY!');
 
 

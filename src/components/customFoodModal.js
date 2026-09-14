@@ -25,7 +25,7 @@ export function renderCustomFoodModal(modalId = 'custom-food-modal') {
         <!-- ترويسة النافذة -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 10px;">
           <h3 class="modal-header-title" style="color: #55F7A5; font-size: 1.2rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-            <span>🥗</span>
+            <span></span>
             <span class="header-title-text">إضافة وتعديل الأكلات بقاعدة البيانات</span>
           </h3>
           <button type="button" class="btn-icon close-custom-food-modal-btn" data-action="close" aria-label="إغلاق">✕</button>
@@ -34,10 +34,10 @@ export function renderCustomFoodModal(modalId = 'custom-food-modal') {
         <!-- أزرار التبديل: إضافة / تعديل | أكلاتي المحفوظة -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: rgba(5,13,9,0.8); border: 1px solid rgba(85,247,165,0.2); border-radius: 12px; padding: 4px; margin-bottom: 14px;">
           <button type="button" class="tab-btn custom-tab-form-btn" style="padding: 8px 10px; border-radius: 8px; border: none; background: #55F7A5; color: #020704; font-weight: 800; font-size: 0.82rem; cursor: pointer; transition: all 0.2s;">
-            ➕ إضافة / تعديل
+             إضافة / تعديل
           </button>
           <button type="button" class="tab-btn custom-tab-list-btn" style="padding: 8px 10px; border-radius: 8px; border: none; background: transparent; color: #B8C0BC; font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: all 0.2s;">
-            📋 أكلاتي المحفوظة (<span class="custom-foods-count-badge">0</span>)
+             أكلاتي المحفوظة (<span class="custom-foods-count-badge">0</span>)
           </button>
         </div>
 
@@ -47,11 +47,11 @@ export function renderCustomFoodModal(modalId = 'custom-food-modal') {
           <!-- شريط تنبيه وضع التعديل -->
           <div class="edit-mode-banner" style="display: none; background: rgba(85,247,165,0.12); border: 1px solid #55F7A5; border-radius: 12px; padding: 8px 12px; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <span>✏️</span>
+              <span></span>
               <span style="color: #55F7A5; font-size: 0.8rem; font-weight: 700;">جاري تعديل: <b class="editing-food-name-label" style="color: #FFFFFF;"></b></span>
             </div>
             <button type="button" class="cancel-edit-mode-btn" style="background: none; border: none; color: #8C9992; font-size: 0.76rem; cursor: pointer; text-decoration: underline;">
-              الرجوع للإضافة ↩️
+              الرجوع للإضافة
             </button>
           </div>
 
@@ -78,7 +78,7 @@ export function renderCustomFoodModal(modalId = 'custom-food-modal') {
                   السعرات الحرارية (لكل 100غ) <span style="color: #FF5555;">*</span>
                 </label>
                 <button type="button" class="calc-calories-from-macros-btn" style="background: none; border: none; color: #55F7A5; font-size: 0.74rem; cursor: pointer; text-decoration: underline; padding: 0;">
-                  احسبها من الماكروز ⚡
+                  احسبها من الماكروز
                 </button>
               </div>
               <input type="number" class="custom-food-calories-input" min="0" step="1" required placeholder="مثال: 165" style="width: 100%; border-radius: 12px; padding: 12px 14px; background: #030806; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-size: 1.15rem; font-family: monospace; font-weight: 900;">
@@ -121,7 +121,7 @@ export function renderCustomFoodModal(modalId = 'custom-food-modal') {
                 ${neonIcon('check', 16)}
               </button>
               <button type="button" class="btn btn-secondary delete-current-custom-food-btn" style="display: none; border-radius: 14px; padding: 12px 14px; color: #FF6B6B; border-color: rgba(255,107,107,0.35); align-items: center; gap: 4px;" title="حذف هذا الصنف نهائياً من قاعدة البيانات">
-                <span>🗑️ حذف</span>
+                <span> حذف</span>
               </button>
               <button type="button" class="btn btn-secondary cancel-custom-food-btn" data-action="close" style="border-radius: 14px; padding: 12px 16px;">
                 إلغاء
@@ -193,7 +193,7 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
     const sum = updateCalculatedCalories();
     if (calInput) {
       calInput.value = sum;
-      notificationService.showToast(`تم ضبط السعرات على ${sum} سعرة بناءً على الماكروز ⚖️`, 'info');
+      notificationService.showToast(`تم ضبط السعرات على ${sum} سعرة بناءً على الماكروز `, 'info');
     }
   });
 
@@ -209,11 +209,11 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
     if (!foods.length) {
       listItemsDiv.innerHTML = `
         <div style="padding: 28px 16px; text-align: center; color: #8C9992; font-size: 0.88rem; border: 1px dashed rgba(85,247,165,0.2); border-radius: 14px; background: rgba(5,13,9,0.4);">
-          <div style="font-size: 2.2rem; margin-bottom: 8px;">🍽️</div>
+          <div style="font-size: 2.2rem; margin-bottom: 8px;"></div>
           <div style="color: #FFFFFF; font-weight: 700; margin-bottom: 4px;">لم تقم بإضافة أكلات خاصة بعد</div>
           <p style="font-size: 0.8rem; color: #8C9992; margin: 0 0 12px;">أي أكلة تضيفها ستظهر هنا لتتمكن من تعديل أرقامها أو حذفها متى أردت.</p>
           <button type="button" class="btn btn-outline-neon btn-sm switch-to-create-sub-btn" style="border-radius: 10px; font-size: 0.78rem;">
-            ➕ أضف صنفك الأول
+             أضف صنفك الأول
           </button>
         </div>
       `;
@@ -239,10 +239,10 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
           <button type="button" class="btn btn-secondary edit-saved-food-btn" data-food-id="${f.id}" style="padding: 5px 10px; font-size: 0.78rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;" title="تعديل">
-            <span>✏️</span> <span>تعديل</span>
+            <span></span> <span>تعديل</span>
           </button>
           <button type="button" class="btn btn-secondary delete-saved-food-btn" data-food-id="${f.id}" style="padding: 5px 10px; font-size: 0.78rem; border-radius: 10px; color: #FF6B6B; border-color: rgba(255,107,107,0.3);" title="حذف">
-            <span>🗑️</span>
+            <span></span>
           </button>
         </div>
       </div>
@@ -266,7 +266,7 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
         const foodName = food?.name || food?.nameAr || 'هذا الصنف';
         if (confirm(`هل أنت متأكد من حذف "${foodName}" نهائياً من قاعدة البيانات؟`)) {
           deleteCustomFood(foodId);
-          notificationService.showToast(`تم حذف "${foodName}" من قاعدة البيانات بنجاح 🗑️`, 'info');
+          notificationService.showToast(`تم حذف "${foodName}" من قاعدة البيانات بنجاح `, 'info');
           renderList();
           if (editingIdInput && editingIdInput.value === foodId) {
             clearEditMode();
@@ -342,7 +342,7 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
     const foodName = food?.name || food?.nameAr || 'هذا الصنف';
     if (confirm(`هل أنت متأكد من حذف "${foodName}" نهائياً من قاعدة البيانات؟`)) {
       deleteCustomFood(foodId);
-      notificationService.showToast(`تم حذف "${foodName}" من قاعدة البيانات بنجاح 🗑️`, 'info');
+      notificationService.showToast(`تم حذف "${foodName}" من قاعدة البيانات بنجاح `, 'info');
       clearEditMode();
       updateCountBadge();
       closeModal();
@@ -457,7 +457,7 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
           servingSize: 100
         });
 
-        notificationService.showToast(`تم تعديل "${name}" في قاعدة البيانات بنجاح! ✅`, 'success');
+        notificationService.showToast(`تم تعديل "${name}" في قاعدة البيانات بنجاح! `, 'success');
         clearEditMode();
         closeModal();
 
@@ -475,7 +475,7 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
           servingSize: 100
         });
 
-        notificationService.showToast(`تمت إضافة "${name}" إلى قاعدة الأطعمة بنجاح! 🥗`, 'success');
+        notificationService.showToast(`تمت إضافة "${name}" إلى قاعدة الأطعمة بنجاح! `, 'success');
         closeModal();
 
         if (typeof onSaved === 'function') {

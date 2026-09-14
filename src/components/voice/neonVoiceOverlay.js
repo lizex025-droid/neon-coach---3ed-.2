@@ -92,7 +92,7 @@ export class NeonVoiceOverlay {
 
             <!-- إرشادات الإذن في حال الحظر من المتصفح -->
             <div id="neon-voice-perm-guide" class="neon-voice-perm-guide" style="display: none;">
-              <div class="perm-icon">🔒</div>
+              <div class="perm-icon"></div>
               <div class="perm-text">
                 <strong>مطلوب إذن المايكروفون في المتصفح</strong>
                 <p>يرجى النقر على أيقونة القفل أو المايكروفون في شريط عنوان المتصفح واختيار "سماح (Allow)" للمايك ثم إعادة النقر على الزر.</p>
@@ -116,7 +116,7 @@ export class NeonVoiceOverlay {
             <!-- صوت المستخدم المباشر (Voice Input) -->
             <div id="neon-voice-transcript-wrapper" class="neon-voice-box-wrapper transcript-box-wrapper">
               <div class="neon-voice-box-header">
-                <span class="neon-box-tag tag-voice">🎙️ صوتك المسموع (Voice Input)</span>
+                <span class="neon-box-tag tag-voice"> صوتك المسموع (Voice Input)</span>
               </div>
               <div id="neon-voice-transcript" class="neon-live-transcript-box">بانتظار كلامك... تحدث الآن بصوتك</div>
             </div>
@@ -124,7 +124,7 @@ export class NeonVoiceOverlay {
             <!-- رد المساعد المكتوب على الشاشة (Written Output on Screen) -->
             <div id="neon-voice-written-wrapper" class="neon-voice-box-wrapper written-reply-wrapper" style="display: none;">
               <div class="neon-voice-box-header">
-                <span class="neon-box-tag tag-reply">✍️ رد نيون المكتوب (Written Output)</span>
+                <span class="neon-box-tag tag-reply"> رد نيون المكتوب (Written Output)</span>
               </div>
               <div id="neon-voice-written-reply" class="neon-written-reply-box"></div>
             </div>
@@ -139,7 +139,7 @@ export class NeonVoiceOverlay {
         <div class="neon-voice-footer">
           <div class="neon-voice-btn-row">
             <button id="neon-voice-main-btn" class="neon-voice-main-btn">
-              <span>🎙️</span>
+              <span></span>
               <span id="neon-voice-main-btn-label">ACTIVATE MIC</span>
             </button>
             <button id="neon-voice-undo-btn" class="neon-voice-undo-btn" disabled>
@@ -150,11 +150,11 @@ export class NeonVoiceOverlay {
 
           <!-- اقتراحات سريعة -->
           <div class="neon-voice-chips">
-            <button class="neon-voice-chip" data-prompt="شربت نص لتر مي">💧 شربت نص لتر</button>
-            <button class="neon-voice-chip" data-prompt="وزني اليوم 78.4">⚖️ وزني 78.4</button>
-            <button class="neon-voice-chip" data-prompt="عملت بنش 80 كيلو 3 جولات 8 عدات">🏋️ بنش 80 كغ 3×8</button>
-            <button class="neon-voice-chip" data-prompt="أخذت الكرياتين">⚡ أخذت الكرياتين</button>
-            <button class="neon-voice-chip" data-prompt="شو باقيلي بروتين؟">🥩 باقي البروتين</button>
+            <button class="neon-voice-chip" data-prompt="شربت نص لتر مي"> شربت نص لتر</button>
+            <button class="neon-voice-chip" data-prompt="وزني اليوم 78.4"> وزني 78.4</button>
+            <button class="neon-voice-chip" data-prompt="عملت بنش 80 كيلو 3 جولات 8 عدات"> بنش 80 كغ 3×8</button>
+            <button class="neon-voice-chip" data-prompt="أخذت الكرياتين"> أخذت الكرياتين</button>
+            <button class="neon-voice-chip" data-prompt="شو باقيلي بروتين؟"> باقي البروتين</button>
           </div>
         </div>
       </div>
@@ -356,10 +356,10 @@ export class NeonVoiceOverlay {
     this.writtenWrapperEl.style.display = 'block';
 
     let icon = '✓';
-    if (type === 'clarification') icon = '❓';
-    else if (type === 'error') icon = '⚠️';
+    if (type === 'clarification') icon = '';
+    else if (type === 'error') icon = '';
     else if (type === 'undo') icon = '↶';
-    else if (type === 'query') icon = '📊';
+    else if (type === 'query') icon = '';
 
     this.writtenReplyEl.className = `neon-written-reply-box reply-${type} animate-in`;
     this.writtenReplyEl.innerHTML = `

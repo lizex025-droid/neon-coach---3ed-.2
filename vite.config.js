@@ -189,9 +189,9 @@ export default defineConfig(({ mode }) => {
         }
         httpsServer.on('error', (err) => {
           if (err.code === 'EADDRINUSE') {
-            console.log('  ⚠️  Port 3443 already in use, companion HTTPS server will reuse it.');
+            console.log('    Port 3443 already in use, companion HTTPS server will reuse it.');
           } else {
-            console.warn('  ⚠️  Companion HTTPS server error:', err.message);
+            console.warn('    Companion HTTPS server error:', err.message);
           }
         });
         server.httpServer?.on('close', () => {

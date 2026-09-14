@@ -528,9 +528,9 @@ function removeNote(id) {
       exact: "حان وقت المهمة الآن"
     };
     const telegramMessage = [
-      "⏰ تذكير المهام",
-      `📝 المهمة: ${reminder.name}`,
-      `⏳ التنبيه: ${timingLabels[type]}`
+      " تذكير المهام",
+      ` المهمة: ${reminder.name}`,
+      ` التنبيه: ${timingLabels[type]}`
     ].join("\n");
 
     const delivered = await sendTelegramMessage(telegramMessage);

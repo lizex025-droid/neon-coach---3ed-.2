@@ -16,9 +16,9 @@ export const pdfService = {
     const name = user.name || 'البطل';
     const change = reportData.weightChangeKg || 0;
     const changeText = change < 0 
-      ? `خسارة ${Math.abs(change)} كغ من الوزن 📉` 
-      : (change > 0 ? `زيادة ${change} كغ 📈` : 'ثبات الوزن');
-    const shareText = `تقرير تقدم NEON COACH لـ ${name}:\n- ${changeText}\n- الوزن الحالي: ${reportData.currentDay?.weight || 0} كغ\n- قوة تمرين الصدر Bench Press: ${reportData.currentDay?.benchPressKg || 0} كغ\n- التزام التدريب: ${reportData.adherence?.trainingPct || 0}%\n- التزام التغذية: ${reportData.adherence?.nutritionPct || 0}%\n- التزام الماء: ${reportData.adherence?.waterPct || 0}%\nلياقتك، خطتك، تقدمك 💚`;
+      ? `خسارة ${Math.abs(change)} كغ من الوزن `
+      : (change > 0 ? `زيادة ${change} كغ ` : 'ثبات الوزن');
+    const shareText = `تقرير تقدم NEON COACH لـ ${name}:\n- ${changeText}\n- الوزن الحالي: ${reportData.currentDay?.weight || 0} كغ\n- قوة تمرين الصدر Bench Press: ${reportData.currentDay?.benchPressKg || 0} كغ\n- التزام التدريب: ${reportData.adherence?.trainingPct || 0}%\n- التزام التغذية: ${reportData.adherence?.nutritionPct || 0}%\n- التزام الماء: ${reportData.adherence?.waterPct || 0}%\nلياقتك، خطتك، تقدمك `;
 
     if (navigator.share) {
       try {

@@ -44,7 +44,7 @@ export function renderNutritionView() {
           </span>
         </div>
         <button id="shopping-list-btn" class="btn-icon" title="قائمة المشتريات" aria-label="قائمة المشتريات">
-          🛒
+
         </button>
       </div>
 
@@ -164,10 +164,10 @@ export function renderNutritionView() {
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <button type="button" id="open-custom-food-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(85,247,165,0.35);" title="إضافة أو تعديل أكلة في قاعدة البيانات">
-              <span>🥗 أكلاتي المخصصة</span>
+              <span> أكلاتي المخصصة</span>
             </button>
             <a href="#meal-log" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 12px;">
-              <span>➕ إضافة وجبة</span>
+              <span> إضافة وجبة</span>
             </a>
           </div>
         </div>
@@ -215,13 +215,13 @@ export function renderNutritionView() {
                 ${neonIcon('pencil', 14)} تعديل
               </button>
               <button type="button" class="btn btn-secondary delete-logged-meal-btn" data-meal-id="${meal.id}" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 10px; color: #FF6B6B; border-color: rgba(255,107,107,0.3);">
-                🗑️ حذف
+                 حذف
               </button>
             </div>
           </div>
         `).join('') : `
           <div class="neon-card" style="padding: 18px; text-align: center; color: #8C9992; font-size: 0.88rem;">
-            لم تسجل أي وجبة اليوم بعد. اضغط "➕ إضافة وجبة" لإضافة وجبتك الأولى.
+            لم تسجل أي وجبة اليوم بعد. اضغط " إضافة وجبة" لإضافة وجبتك الأولى.
           </div>
         `}
       </div>
@@ -232,7 +232,7 @@ export function renderNutritionView() {
       <div id="swap-modal" class="ai-modal-overlay">
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 20px; border-radius: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: #55F7A5; font-size: 1.2rem;">🔁 اختر بديل الوجبة</h3>
+            <h3 style="color: #55F7A5; font-size: 1.2rem;"> اختر بديل الوجبة</h3>
             <button type="button" id="close-swap-modal-btn" class="btn-icon" data-action="close" aria-label="إغلاق">✕</button>
           </div>
           <div id="swap-options-list" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 60vh;">
@@ -363,7 +363,7 @@ export function renderNutritionView() {
                     ${neonIcon('bulb', 14)} <strong>القاعدة العلمية:</strong> 1غ بروتين = 4 سعرة | 1غ كارب = 4 سعرة | 1غ دهون = 9 سعرة
                   </div>
                   <button type="button" id="auto-fix-macros-btn" class="btn btn-primary" style="width: 100%; margin-top: 8px; padding: 8px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 8px;">
-                    ⚡ تعديل واقتراح تقسيم الماكروز لتطابق الهدف تماماً
+                     تعديل واقتراح تقسيم الماكروز لتطابق الهدف تماماً
                   </button>
                 </div>
 
@@ -420,11 +420,11 @@ function refreshNutritionView() {
 
 function getMealIcon(type) {
   switch (type) {
-    case 'breakfast': return '🌅';
-    case 'lunch': return '☀️';
-    case 'dinner': return '🌙';
-    case 'snack': return '🍏';
-    default: return '🍽️';
+    case 'breakfast': return '';
+    case 'lunch': return '';
+    case 'dinner': return '';
+    case 'snack': return '';
+    default: return '';
   }
 }
 
@@ -718,7 +718,7 @@ export function bindNutritionEvents() {
 
     try { await store.updateLoggedMeal(currentEditingMealId, copy); } catch (e) { notificationService.showToast(e.message, 'error'); return; }
     closeEditModal();
-    notificationService.showToast('تم تعديل الوجبة وتحديث السعرات اليومية بنجاح 🥗', 'success');
+    notificationService.showToast('تم تعديل الوجبة وتحديث السعرات اليومية بنجاح ', 'success');
     refreshNutritionView();
   });
 
@@ -773,7 +773,7 @@ export function bindNutritionEvents() {
           const selectedSwap = swaps[swIdx];
           store.swapMealPlan(mealId, selectedSwap);
           swapModal?.classList.remove('open');
-          notificationService.showToast('تم تبديل الوجبة بنجاح وتحديث خطتك الغذائية 🥗', 'success');
+          notificationService.showToast('تم تبديل الوجبة بنجاح وتحديث خطتك الغذائية ', 'success');
           refreshNutritionView();
         });
       });
@@ -937,7 +937,7 @@ export function bindNutritionEvents() {
     if (cInput) cInput.value = newC;
 
     updateMacroValidation();
-    notificationService.showToast(`تم تعديل الماكروز لتطابق ${targetVal.toLocaleString('en-US')} سعرة بدقة! ⚖️`, 'success');
+    notificationService.showToast(`تم تعديل الماكروز لتطابق ${targetVal.toLocaleString('en-US')} سعرة بدقة! `, 'success');
   });
 
   document.getElementById('manual-protein-input')?.addEventListener('input', updateMacroValidation);
@@ -1008,7 +1008,7 @@ export function bindNutritionEvents() {
 
     store.setTargetCalories(newTarget, customMacros);
     closeCalModal();
-    notificationService.showToast(`تم تعديل هدف السعرات اليومي إلى ${newTarget.toLocaleString('en-US')} سعرة بنجاح 🔥`, 'success');
+    notificationService.showToast(`تم تعديل هدف السعرات اليومي إلى ${newTarget.toLocaleString('en-US')} سعرة بنجاح `, 'success');
     refreshNutritionView();
   });
 

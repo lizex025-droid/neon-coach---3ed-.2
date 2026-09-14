@@ -488,7 +488,7 @@ export const WEEKLY_LOSS_RATES = [
     id: 'rate_200',
     value: 0.0200,
     percentText: '2.0%',
-    label: 'EXTREME ⚠️',
+    label: 'EXTREME ',
     isExtreme: true,
     description: 'أقصى معدل نزول ممكن — عجز شديد يتطلب تأكيدًا ومراقبة دقيقة للأعراض',
     riskLevel: 'extreme',
@@ -529,20 +529,20 @@ export function evaluateWeightLossTarget({
 
   let riskLevel = 'normal';
   let requiresConfirmation = false;
-  let badgeText = 'ضمن حدود الحساب الحالية ✅';
+  let badgeText = 'ضمن حدود الحساب الحالية ';
   let badgeClass = 'badge-normal';
   let warningText = '';
 
   if (weeklyLossPercent >= 0.02) {
     riskLevel = 'extreme';
     requiresConfirmation = true;
-    badgeText = 'هدف شديد ⚠️';
+    badgeText = 'هدف شديد ';
     badgeClass = 'badge-extreme';
     warningText = 'نزول 2% أسبوعياً يمثل عجزاً شديداً قد يؤدي لخسارة عضلية، بطء في الأيض، أو إرهاق سريع. يتطلب التزاماً صارماً بمغذيات دقيقة وتأكيداً واعياً.';
   } else if (requestedCalories < minCalorieFloor || deficitRatio > 0.40) {
     riskLevel = 'high_risk';
     requiresConfirmation = true;
-    badgeText = 'يتطلب حذرًا ⚠️';
+    badgeText = 'يتطلب حذرًا ';
     badgeClass = 'badge-warning';
     warningText = `السعرات الناتجة (${requestedCalories} سعرة) أقل من الحد الأدنى المقترح (${minCalorieFloor} سعرة) أو العجز يتجاوز 40% من طاقتك الكلية.`;
   } else if (weeklyLossPercent >= 0.015) {
@@ -554,13 +554,13 @@ export function evaluateWeightLossTarget({
   } else if (weeklyLossPercent <= 0.0025) {
     riskLevel = 'mild';
     requiresConfirmation = false;
-    badgeText = 'نزول هادئ ومستدام ✅';
+    badgeText = 'نزول هادئ ومستدام ';
     badgeClass = 'badge-mild';
     warningText = '';
   } else {
     riskLevel = 'optimal';
     requiresConfirmation = false;
-    badgeText = 'ضمن حدود الحساب الحالية ✅';
+    badgeText = 'ضمن حدود الحساب الحالية ';
     badgeClass = 'badge-optimal';
     warningText = '';
   }

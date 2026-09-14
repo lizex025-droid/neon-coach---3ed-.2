@@ -32,7 +32,7 @@ export function renderShoppingListView() {
           <div style="font-size: 0.78rem; color: #55F7A5;">مجمعة تلقائياً من خطتك الغذائية</div>
         </div>
         <button id="clear-checked-shop-btn" class="btn-icon" title="حذف المكتمل">
-          🗑️
+
         </button>
       </div>
 
