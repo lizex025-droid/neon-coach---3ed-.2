@@ -1,6 +1,6 @@
-# 🔗 روابط صور التمارين على Cloudflare R2 (GYM.2)
+﻿# 🔗 روابط صور التمارين على Cloudflare R2 (GYM.2)
 
-> إجمالي الصور: **88 صورة** مجمعة ومصنفة حسب العضلة المستهدفة.
+> إجمالي الصور المعتمدة مع صور البايسيبس الجديدة.
 
 ## 🏋️ ارجل
 
@@ -20,16 +20,15 @@
 14. [ChatGPT Image Sep 14, 2026, 11_55_48 PM (4).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A7%D8%B1%D8%AC%D9%84/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_55_48%20PM%20(4).png)
 15. [ChatGPT Image Sep 14, 2026, 11_55_49 PM (5).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A7%D8%B1%D8%AC%D9%84/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_55_49%20PM%20(5).png)
 
-## 🏋️ باي
+## 🏋️ بايسيبس
 
-1. [ChatGPT Image Sep 15, 2026, 12_07_42 AM (1).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_42%20AM%20(1).png)
-2. [ChatGPT Image Sep 15, 2026, 12_07_43 AM (2).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_43%20AM%20(2).png)
-3. [ChatGPT Image Sep 15, 2026, 12_07_43 AM (3).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_43%20AM%20(3).png)
-4. [ChatGPT Image Sep 15, 2026, 12_07_44 AM (4).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_44%20AM%20(4).png)
-5. [ChatGPT Image Sep 15, 2026, 12_07_44 AM (5).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_44%20AM%20(5).png)
-6. [ChatGPT Image Sep 15, 2026, 12_07_44 AM (6).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_44%20AM%20(6).png)
-7. [ChatGPT Image Sep 15, 2026, 12_07_44 AM (7).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_44%20AM%20(7).png)
-8. [ChatGPT Image Sep 15, 2026, 12_07_44 AM (8).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_07_44%20AM%20(8).png)
+1. [ChatGPT Image Sep 15, 2026, 01_53_54 AM (1).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20(1).png)
+2. [ChatGPT Image Sep 15, 2026, 01_53_54 AM (2).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20(2).png)
+3. [ChatGPT Image Sep 15, 2026, 01_53_54 AM (3).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20(3).png)
+4. [ChatGPT Image Sep 15, 2026, 01_53_54 AM (4).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20(4).png)
+5. [ChatGPT Image Sep 15, 2026, 01_53_54 AM (5).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20(5).png)
+6. [ChatGPT Image Sep 15, 2026, 01_53_54 AM (6).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20(6).png)
+7. [ChatGPT Image Sep 15, 2026, 01_53_54 AM (7).png](https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20(7).png)
 
 ## 🏋️ بطن
 
