@@ -174,10 +174,12 @@ try {
   await page.waitForFunction(() => location.hash === '#nutrition');
 
   // The complete 40-day workout now runs inside the SPA instead of a standalone HTML reader.
-  await page.evaluate(() => { location.hash = 'workout'; });
+  const workoutOpenStartedAt = Date.now();
+  await page.locator('[data-nav="workout"]').tap();
   await page.locator('#forty-workout-root').waitFor();
+  const workoutOpenMs = Date.now() - workoutOpenStartedAt;
   await page.locator('.app-bottom-nav').waitFor();
-  await page.locator('#neon-app-splash').waitFor({ state: 'detached', timeout: 10000 });
+  assert.equal(await page.locator('#neon-app-splash').count(), 0, 'Internal workout navigation created a blocking splash');
   assert.equal(new URL(page.url()).pathname.includes('40-days-workout.html'), false, 'Workout left the SPA');
   assert.equal(await page.locator('.forty-day-tab').count(), 7, '40-day week tabs are incomplete');
   assert.equal(await page.locator('.forty-exercise-card').count(), 7, 'Push A exercises are incomplete');
@@ -257,6 +259,7 @@ try {
     splashSafetyVerified: true,
     workoutNavigationVerified: true,
     integratedFortyDayWorkoutVerified: true,
+    workoutOpenMs,
     errors,
   }));
 } catch (error) {

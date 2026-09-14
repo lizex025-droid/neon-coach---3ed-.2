@@ -76,6 +76,24 @@ class FortyDayWorkoutService {
     this.save();
   }
 
+  getTrackersForDay(dayKey) {
+    const day = getFortyDay(dayKey);
+    const state = this.load();
+    let shouldSave = false;
+    const trackers = day.exercises.map((exercise, exerciseIndex) => {
+      const id = fortyDayExerciseId(dayKey, exerciseIndex);
+      if (!state.trackers[id]) {
+        state.trackers[id] = normalizeTracker(readJson(`exercise_tracker_${id}`, null), exercise);
+        shouldSave = true;
+      } else {
+        state.trackers[id] = normalizeTracker(state.trackers[id], exercise);
+      }
+      return state.trackers[id];
+    });
+    if (shouldSave) this.save();
+    return trackers;
+  }
+
   getTracker(dayKey, exerciseIndex) {
     const exercise = getFortyDay(dayKey).exercises[exerciseIndex];
     if (!exercise) return null;

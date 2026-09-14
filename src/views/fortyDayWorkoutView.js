@@ -87,16 +87,16 @@ export function renderFortyDayWorkoutView() {
 function renderDay(dayKey) {
   const day = getFortyDay(dayKey);
   if (!day.exercises.length) return `<article class="forty-rest-day"><span>REST DAY</span><h2>اليوم السابع: راحة</h2><p>استشفاء، نوم جيد، وترطيب كافٍ. يمكنك إضافة مشي خفيف ثم العودة إلى Push A في اليوم التالي.</p></article>`;
+  const trackers = fortyDayWorkoutService.getTrackersForDay(dayKey);
   return `
     <header class="forty-day-header"><div><span>${escapeHtml(day.short)}</span><h2>${escapeHtml(day.label)}</h2></div><strong>${day.exercises.length} تمارين</strong></header>
     <div class="forty-exercise-grid">
-      ${day.exercises.map((exercise, index) => renderExerciseCard(day, exercise, index)).join('')}
+      ${day.exercises.map((exercise, index) => renderExerciseCard(day, exercise, index, trackers[index])).join('')}
     </div>
   `;
 }
 
-function renderExerciseCard(day, exercise, exerciseIndex) {
-  const tracker = fortyDayWorkoutService.getTracker(day.key, exerciseIndex);
+function renderExerciseCard(day, exercise, exerciseIndex, tracker) {
   const completed = tracker.sets.length > 0 && tracker.sets.every(set => set.done);
   return `
     <article class="forty-exercise-card ${completed ? 'is-completed' : ''}" data-exercise-card="${exerciseIndex}">

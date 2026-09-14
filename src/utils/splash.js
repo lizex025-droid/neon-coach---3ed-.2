@@ -1,6 +1,6 @@
 /**
  * NEON COACH - شاشة التحميل الذكية الفورية (Unified Cyber Splash Loader)
- * تظهر فور الضغط على زر التدريب أو عند تحميل صفحات التمرين
+ * تُستخدم فقط عند فتح قارئ التمرين القديم، أما مسار التطبيق الداخلي فيفتح فوراً.
  */
 
 const SPLASH_SAFETY_TIMEOUT_MS = 8000;
@@ -123,7 +123,7 @@ export function setupTrainingLoadingInterceptors() {
   if (typeof window === 'undefined') return;
 
   document.addEventListener('click', (e) => {
-    const target = e.target.closest('a[href*="40-days-workout"], a[href*="fortyDay"], #start-workout-btn, [data-nav="workout"]');
+    const target = e.target.closest('a[href*="40-days-workout"], a[href*="fortyDay"]');
     if (target) {
       showNeonSplash('جاري تجهيز تمرين الـ 40 يوماً...');
     }
