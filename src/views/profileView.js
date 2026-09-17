@@ -24,11 +24,16 @@ export function setActiveSubPage(subPage) {
 }
 
 export function renderProfileView() {
-  // فحص إذا كان الـ hash يحدد صفحة فرعية (مثل #profile/plan)
+  // فحص إذا كان الـ hash يحدد صفحة فرعية (مثل #profile/plan) أو العودة للمركز الرئيسي (#profile)
   if (typeof window !== 'undefined') {
-    const parts = window.location.hash.split('/');
-    if (parts.length > 1 && ['plan', 'badges', 'preferences', 'security'].includes(parts[1])) {
-      activeSubPage = parts[1];
+    const raw = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0];
+    const parts = raw.split('/');
+    if (parts[0] === 'profile') {
+      if (parts[1] && ['plan', 'badges', 'preferences', 'security'].includes(parts[1])) {
+        activeSubPage = parts[1];
+      } else {
+        activeSubPage = 'main';
+      }
     }
   }
 
@@ -254,6 +259,7 @@ function renderPlanSubPage(profile, state) {
   const sessionDuration = profile.sessionDuration || '60';
   const activityLevel = profile.activityLevel || 'moderate';
   const weightLossRate = profile.weightLossRate || 'balanced';
+  const selectedInjury = Array.isArray(profile.injuries) ? (profile.injuries[0] || 'none') : (profile.injuries || 'none');
 
   const today = state.today || {};
   const targetCalories = today.targetCalories || profile.targetCalories || 2200;
@@ -388,11 +394,11 @@ function renderPlanSubPage(profile, state) {
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">الإصابات أو القيود</label>
             <select id="plan-injuries" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem;">
-              <option value="none">لا توجد إصابات ✓</option>
-              <option value="shoulder">كتف</option>
-              <option value="knee">ركبة</option>
-              <option value="lower_back">أسفل الظهر</option>
-              <option value="wrist">معصم</option>
+              <option value="none" ${selectedInjury === 'none' ? 'selected' : ''}>لا توجد إصابات ✓</option>
+              <option value="shoulder" ${selectedInjury === 'shoulder' ? 'selected' : ''}>كتف</option>
+              <option value="knee" ${selectedInjury === 'knee' ? 'selected' : ''}>ركبة</option>
+              <option value="lower_back" ${selectedInjury === 'lower_back' ? 'selected' : ''}>أسفل الظهر</option>
+              <option value="wrist" ${selectedInjury === 'wrist' ? 'selected' : ''}>معصم</option>
             </select>
           </div>
 
@@ -815,28 +821,34 @@ export function bindProfileEvents() {
   // 1. التنقل بين الصفحات الفرعية والعودة للمركز الرئيسي
   container.querySelectorAll('[data-navigate]').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
       const target = btn.dataset.navigate;
+      const targetHash = target === 'main' ? '#profile' : `#profile/${target}`;
       activeSubPage = target;
       if (typeof window !== 'undefined') {
-        window.location.hash = target === 'main' ? '#profile' : `#profile/${target}`;
+        window.location.hash = targetHash;
       }
-      const parent = container.parentElement;
+      const parent = container.parentElement || document.getElementById('view-container');
       if (parent) {
         parent.innerHTML = renderProfileView();
         bindProfileEvents();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo?.({ top: 0, behavior: 'smooth' });
       }
     });
   });
 
   // زر تعديل مباشر من البطاقة
-  document.getElementById('btn-open-plan-direct')?.addEventListener('click', () => {
+  document.getElementById('btn-open-plan-direct')?.addEventListener('click', (e) => {
+    e.preventDefault();
     activeSubPage = 'plan';
-    const parent = container.parentElement;
+    if (typeof window !== 'undefined') {
+      window.location.hash = '#profile/plan';
+    }
+    const parent = container.parentElement || document.getElementById('view-container');
     if (parent) {
       parent.innerHTML = renderProfileView();
       bindProfileEvents();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo?.({ top: 0, behavior: 'smooth' });
     }
   });
 
@@ -928,26 +940,43 @@ export function bindProfileEvents() {
     });
 
     // حفظ كل تغييرات الخطة مع التنبيه الذكي
-    const savePlanDirect = () => {
+    const savePlanDirect = (recalc = false) => {
       const existing = store.getState().userProfile || {};
       const name = document.getElementById('plan-name')?.value.trim() || existing.name || 'متدرب نيون';
       const birthDate = document.getElementById('plan-birthdate')?.value || existing.birthDate || '';
       const gender = document.getElementById('plan-gender')?.value || existing.gender || 'male';
-      const height = Number(document.getElementById('plan-height')?.value) || 178;
-      const currentWeight = Number(document.getElementById('plan-current-weight')?.value) || 75;
-      const targetWeight = Number(document.getElementById('plan-target-weight')?.value) || currentWeight;
+      const height = Number(document.getElementById('plan-height')?.value) || existing.height || 178;
+      const currentWeight = Number(document.getElementById('plan-current-weight')?.value) || existing.currentWeight || 75;
+      const targetWeight = Number(document.getElementById('plan-target-weight')?.value) || existing.targetWeight || currentWeight;
 
-      const goal = document.getElementById('plan-goal')?.value || 'fat_loss';
-      const trainingLevel = document.getElementById('plan-level')?.value || 'intermediate';
-      const workoutDaysCount = Number(document.getElementById('plan-workout-days')?.value) || 4;
-      const sessionDuration = document.getElementById('plan-session-duration')?.value || '60';
-      const equipment = document.getElementById('plan-equipment')?.value || 'gym';
-      const workoutPlan = document.getElementById('plan-workout-plan')?.value || 'hasm';
+      const goal = document.getElementById('plan-goal')?.value || existing.goal || 'fat_loss';
+      const trainingLevel = document.getElementById('plan-level')?.value || existing.trainingLevel || 'intermediate';
+      const workoutDaysCount = Number(document.getElementById('plan-workout-days')?.value) || existing.workoutDaysCount || 4;
+      const sessionDuration = document.getElementById('plan-session-duration')?.value || existing.sessionDuration || '60';
+      const equipment = document.getElementById('plan-equipment')?.value || existing.equipment || 'gym';
+      const workoutPlan = document.getElementById('plan-workout-plan')?.value || existing.workoutPlan || 'hasm';
+      const injuries = document.getElementById('plan-injuries')?.value || 'none';
 
-      const activityLevel = document.getElementById('plan-activity-level')?.value || 'moderate';
-      const weightLossRate = document.getElementById('plan-weight-loss-rate')?.value || 'balanced';
-      const targetCalories = Number(document.getElementById('plan-target-calories')?.value) || 2200;
-      const targetWaterLiters = Number(document.getElementById('plan-target-water')?.value) || 3.0;
+      const activityLevel = document.getElementById('plan-activity-level')?.value || existing.activityLevel || 'moderate';
+      const weightLossRate = document.getElementById('plan-weight-loss-rate')?.value || existing.weightLossRate || 'balanced';
+      let targetCalories = Number(document.getElementById('plan-target-calories')?.value) || existing.targetCalories || 2200;
+      let targetWaterLiters = Number(document.getElementById('plan-target-water')?.value) || existing.targetWaterLiters || 3.0;
+
+      if (recalc) {
+        const calculated = calculateNutritionTargets({
+          weight: currentWeight,
+          height,
+          birthDate,
+          gender,
+          activityLevel,
+          goal,
+          selectedWeeklyLossRate: weightLossRate,
+          weeklyLossPercent: existing.weeklyLossPercent,
+          age: calculateAge(birthDate)
+        });
+        targetCalories = calculated.targetCalories;
+        targetWaterLiters = Math.round((calculated.targetWaterMl / 1000) * 10) / 10;
+      }
 
       store.setUserProfile({
         ...existing,
@@ -963,6 +992,7 @@ export function bindProfileEvents() {
         sessionDuration,
         equipment,
         workoutPlan,
+        injuries: injuries !== 'none' ? [injuries] : [],
         activityLevel,
         weightLossRate,
         targetCalories,
@@ -984,11 +1014,14 @@ export function bindProfileEvents() {
 
       notificationService.showToast('تم حفظ كافة بيانات الخطة بنجاح ✓', 'success');
       activeSubPage = 'main';
-      const parent = container.parentElement;
+      if (typeof window !== 'undefined') {
+        window.location.hash = '#profile';
+      }
+      const parent = container.parentElement || document.getElementById('view-container');
       if (parent) {
         parent.innerHTML = renderProfileView();
         bindProfileEvents();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo?.({ top: 0, behavior: 'smooth' });
       }
     };
 
@@ -1006,14 +1039,14 @@ export function bindProfileEvents() {
       if (hasCriticalChange && confirmModal) {
         confirmModal.classList.add('open');
       } else {
-        savePlanDirect();
+        savePlanDirect(false);
       }
     });
 
     document.getElementById('btn-cancel-plan-change')?.addEventListener('click', () => confirmModal?.classList.remove('open'));
     document.getElementById('btn-confirm-plan-change')?.addEventListener('click', () => {
       confirmModal?.classList.remove('open');
-      savePlanDirect();
+      savePlanDirect(true);
     });
 
     document.getElementById('btn-restart-quiz')?.addEventListener('click', () => {

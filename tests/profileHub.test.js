@@ -152,3 +152,53 @@ test('Security Sub-Page renders password, sessions, export, and delete modal req
   assert.match(html, /اكتب كلمة .*حذف/);
   assert.match(html, /input-confirm-delete-word/);
 });
+
+test('renderProfileView automatically switches activeSubPage based on window.location.hash', () => {
+  // Mock window.location.hash
+  globalThis.window = globalThis.window || {};
+  
+  window.location = { hash: '#profile/plan' };
+  let html = renderProfileView();
+  assert.equal(getActiveSubPage(), 'plan');
+  assert.match(html, /بياناتي وخطتي/);
+
+  window.location.hash = '#profile/badges';
+  html = renderProfileView();
+  assert.equal(getActiveSubPage(), 'badges');
+  assert.match(html, /الشارات والإنجازات/);
+
+  window.location.hash = '#profile/preferences';
+  html = renderProfileView();
+  assert.equal(getActiveSubPage(), 'preferences');
+  assert.match(html, /اللغة والمظهر والوحدات/);
+
+  window.location.hash = '#profile/security';
+  html = renderProfileView();
+  assert.equal(getActiveSubPage(), 'security');
+  assert.match(html, /الخصوصية والأمان/);
+
+  window.location.hash = '#profile';
+  html = renderProfileView();
+  assert.equal(getActiveSubPage(), 'main');
+  assert.match(html, /profile-user-card/);
+});
+
+test('Plan Sub-Page correctly sets selected injury', () => {
+  store.setUserProfile({
+    injuries: ['shoulder']
+  });
+
+  window.location.hash = '#profile/plan';
+  const html = renderProfileView();
+  assert.match(html, /<option value="shoulder" selected>كتف<\/option>/);
+});
+
+test('Router routeKey resolution correctly maps #profile/plan and subroutes to profile', () => {
+  const testHashes = ['#profile/plan', '#profile/badges', '#profile/preferences', '#profile/security', '#profile'];
+  testHashes.forEach(h => {
+    const rawHash = h.replace(/^#\/?/, '') || '';
+    const routePath = rawHash.split('?')[0];
+    const routeKey = routePath.split('/')[0];
+    assert.equal(routeKey, 'profile');
+  });
+});

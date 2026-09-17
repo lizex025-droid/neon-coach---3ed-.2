@@ -83,20 +83,21 @@ export class Router {
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
     const isAuthenticated = authService.isAuthenticated();
     const rawHash = hash.replace(/^#\/?/, '').split('?')[0];
+    const routeKey = rawHash.split('/')[0];
 
     // المستخدم الجديد يبدأ بالأسئلة، ثم يُطلب منه حفظ الخطة داخل حساب حقيقي.
     if (!hasCompletedOnboarding) {
-      if (rawHash !== 'questionnaire' && rawHash !== 'auth') {
+      if (routeKey !== 'questionnaire' && routeKey !== 'auth') {
         window.location.hash = '#questionnaire';
         return;
       }
     } else if (!isAuthenticated) {
-      if (rawHash !== 'auth') {
+      if (routeKey !== 'auth') {
         window.location.hash = '#auth?from=plan';
         return;
       }
     } else {
-      if (!rawHash || rawHash === 'auth') {
+      if (!rawHash || routeKey === 'auth') {
         window.location.hash = '#today';
         return;
       }
@@ -108,7 +109,8 @@ export class Router {
   handleRoute() {
     const hash = window.location.hash || '';
     const rawHash = hash.replace(/^#\/?/, '') || '';
-    const routeKey = rawHash.split('?')[0];
+    const routePath = rawHash.split('?')[0];
+    const routeKey = routePath.split('/')[0];
 
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
