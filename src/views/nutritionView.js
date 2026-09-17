@@ -177,7 +177,7 @@ export function renderNutritionView() {
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
               <div>
                 <span style="font-size: 0.72rem; color: #55F7A5; font-weight: 700;">مسجلة ${meal.time || ''}</span>
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #FFFFFF; margin: 2px 0 0;">${meal.titleAr}</h3>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #FFFFFF; margin: 2px 0 0;">${meal.titleAr || meal.name || 'وجبة مسجلة'}</h3>
               </div>
               <strong style="color: #55F7A5; font-size: 1.25rem; font-family: monospace;">${meal.calories} سعرة</strong>
             </div>
@@ -441,9 +441,16 @@ export function bindNutritionEvents() {
 
   // حذف وجبة مسجلة فوراً
   document.querySelectorAll('.delete-logged-meal-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const mealId = btn.getAttribute('data-meal-id');
-      try { await store.deleteLoggedMeal(mealId); } catch (e) { notificationService.showToast(e.message, 'error'); return; }
+      if (!mealId) return;
+      try {
+        await store.deleteLoggedMeal(mealId);
+      } catch (err) {
+        console.warn('تنبيه أثناء حذف الوجبة:', err);
+      }
       notificationService.showToast('تم حذف الوجبة وتصحيح المجاميع اليومية', 'info');
       refreshNutritionView();
     });

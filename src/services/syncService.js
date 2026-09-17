@@ -98,10 +98,14 @@ class SyncService {
         .eq('date', todayStr);
 
       if (meals && meals.length > 0 && store) {
-        const totalCals = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
-        const totalP = meals.reduce((sum, m) => sum + (Number(m.protein) || 0), 0);
-        const totalC = meals.reduce((sum, m) => sum + (Number(m.carbs) || 0), 0);
-        const totalF = meals.reduce((sum, m) => sum + (Number(m.fats) || 0), 0);
+        const formattedMeals = meals.map(m => ({
+          ...m,
+          titleAr: m.titleAr || m.name || 'وجبة مسجلة'
+        }));
+        const totalCals = formattedMeals.reduce((sum, m) => sum + (m.calories || 0), 0);
+        const totalP = formattedMeals.reduce((sum, m) => sum + (Number(m.protein) || 0), 0);
+        const totalC = formattedMeals.reduce((sum, m) => sum + (Number(m.carbs) || 0), 0);
+        const totalF = formattedMeals.reduce((sum, m) => sum + (Number(m.fats) || 0), 0);
 
         store.setState({
           today: {
@@ -111,7 +115,7 @@ class SyncService {
             consumedCarbs: Math.round(totalC),
             consumedFats: Math.round(totalF),
           },
-          loggedMeals: meals,
+          loggedMeals: formattedMeals,
         });
       }
 
@@ -248,20 +252,29 @@ class SyncService {
    */
   async syncMealLog(userId, meal) {
     if (!isSupabaseConfigured() || !userId) return null;
+    const isUserUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    if (!isUserUuid) return null;
     try {
+      const isUuid = meal.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(meal.id);
+      const payload = {
+        user_id: userId,
+        date: meal.date || localDate(),
+        meal_type: meal.meal_type || 'meal',
+        name: meal.name || meal.titleAr || 'وجبة جديدة',
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fats: meal.fats,
+        items: meal.items || [],
+      };
+      if (isUuid) {
+        payload.id = meal.id;
+      }
       const { data, error } = await supabase
         .from('meal_logs')
-        .insert({
-          user_id: userId,
-          date: meal.date || localDate(),
-          meal_type: meal.meal_type || 'meal',
-          name: meal.name,
-          calories: meal.calories,
-          protein: meal.protein,
-          carbs: meal.carbs,
-          fats: meal.fats,
-          items: meal.items || [],
-        });
+        .insert(payload)
+        .select()
+        .maybeSingle();
       if (error) throw error;
       return data;
     } catch (err) {
@@ -271,13 +284,33 @@ class SyncService {
   }
 
   async persistManualMeal(userId, id, update = null) {
-    if (!isSupabaseConfigured() || !userId) throw new Error('سجّل الدخول لحفظ تعديل الوجبة.');
-    const query = update ? supabase.from('meal_logs').update({ name: update.titleAr, calories: update.calories, protein: update.protein, carbs: update.carbs, fats: update.fats, items: update.items }) : supabase.from('meal_logs').delete();
-    const { data, error } = await query.eq('user_id', userId).eq('id', id).select('id');
-    if (error || data?.length !== 1) throw new Error('تعذر حفظ تعديل الوجبة في الحساب.');
-    const { data: readback, error: readError } = await supabase.from('meal_logs').select('*').eq('user_id', userId).eq('id', id).maybeSingle();
-    if (readError || (update ? !readback : !!readback)) throw new Error('تعذر تأكيد نتيجة تعديل الوجبة.');
-    return readback;
+    if (!isSupabaseConfigured() || !userId) return null;
+    const isUserUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    const isMealUuid = id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (!isUserUuid || !isMealUuid) return null;
+
+    try {
+      const query = update 
+        ? supabase.from('meal_logs').update({ 
+            name: update.titleAr || update.name || 'وجبة معدلة', 
+            calories: update.calories, 
+            protein: update.protein, 
+            carbs: update.carbs, 
+            fats: update.fats, 
+            items: update.items 
+          }) 
+        : supabase.from('meal_logs').delete();
+
+      const { data, error } = await query.eq('user_id', userId).eq('id', id).select('id');
+      if (error) {
+        console.warn('خطأ في مزامنة الوجبة سحابياً:', error);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.warn('تعذر حفظ تعديل/حذف الوجبة سحابياً:', err);
+      return null;
+    }
   }
 
   /**

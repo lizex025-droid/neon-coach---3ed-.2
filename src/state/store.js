@@ -11,6 +11,17 @@ import { rolloverDailyState } from '../domain/dailyCycle.js';
 
 const STORAGE_KEY = 'neon_coach_app_state_v1';
 
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 class Store {
   constructor() {
     this.state = this.loadState();
@@ -700,11 +711,12 @@ class Store {
   // --- تسجيل الوجبات وتحديث المجاميع ---
   logMeal(meal) {
     this.ensureCurrentDay({ notify: false });
+    const isUuid = meal.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(meal.id);
     const newLog = {
-      id: 'log-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-      date: localDate(),
-      time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-      titleAr: meal.titleAr || 'وجبة جديدة',
+      id: isUuid ? meal.id : generateUUID(),
+      date: meal.date || localDate(),
+      time: meal.time || new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+      titleAr: meal.titleAr || meal.name || 'وجبة جديدة',
       calories: Number(meal.calories ?? meal.totalCalories) || 0,
       protein: Number(meal.protein ?? meal.totalProtein) || 0,
       carbs: Number(meal.carbs ?? meal.totalCarbs) || 0,
@@ -719,12 +731,14 @@ class Store {
     const userId = this.state.auth?.user?.id;
     if (userId) {
       syncService.syncMealLog(userId, {
+        id: newLog.id,
         name: newLog.titleAr,
         calories: newLog.calories,
         protein: newLog.protein,
         carbs: newLog.carbs,
         fats: newLog.fats,
         items: newLog.items,
+        date: newLog.date,
       });
     }
 
@@ -732,22 +746,35 @@ class Store {
   }
 
   async updateLoggedMeal(logId, updatedData) {
-    const userId = this.state.auth?.user?.id;
-    if (userId) await syncService.persistManualMeal(userId, logId, updatedData);
-    const index = this.state.loggedMeals.findIndex(m => m.id === logId);
+    const index = (this.state.loggedMeals || []).findIndex(m => m.id === logId);
     if (index !== -1) {
       this.state.loggedMeals[index] = { ...this.state.loggedMeals[index], ...updatedData };
       this.recalculateDailyNutrition();
       this.saveState();
     }
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      try {
+        await syncService.persistManualMeal(userId, logId, updatedData);
+      } catch (err) {
+        console.warn('فشل مزامنة تعديل الوجبة سحابياً:', err);
+      }
+    }
   }
 
   async deleteLoggedMeal(logId) {
-    const userId = this.state.auth?.user?.id;
-    if (userId) await syncService.persistManualMeal(userId, logId);
-    this.state.loggedMeals = this.state.loggedMeals.filter(m => m.id !== logId);
+    this.state.loggedMeals = (this.state.loggedMeals || []).filter(m => m.id !== logId);
     this.recalculateDailyNutrition();
     this.saveState();
+
+    const userId = this.state.auth?.user?.id;
+    if (userId) {
+      try {
+        await syncService.persistManualMeal(userId, logId);
+      } catch (err) {
+        console.warn('فشل مزامنة حذف الوجبة سحابياً:', err);
+      }
+    }
   }
 
   recalculateDailyNutrition() {
