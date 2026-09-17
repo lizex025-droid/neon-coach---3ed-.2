@@ -10,13 +10,13 @@ import {
 } from '../src/data/hasmWorkout.js';
 import { fortyDayWorkoutService } from '../src/services/fortyDayWorkoutService.js';
 
-test('Nizam Al-Hasm (نظام الحسم) workout data has 4 groups and 30 exercises', () => {
+test('Nizam Al-Hasm (نظام الحسم) workout data has 6 groups and 45 exercises including arms and upper', () => {
   assert.equal(HASM_PROGRAM.id, 'hasm');
   assert.equal(HASM_PROGRAM.title, 'نظام الحسم');
-  assert.equal(HASM_GROUPS.length, 4);
+  assert.equal(HASM_GROUPS.length, 6);
 
   const groupKeys = HASM_GROUPS.map(g => g.key);
-  assert.deepEqual(groupKeys, ['chestBiceps', 'backAbs', 'shouldersTrapsTriceps', 'legsCalves']);
+  assert.deepEqual(groupKeys, ['chestBiceps', 'backAbs', 'shouldersTrapsTriceps', 'legsCalves', 'arms', 'upper']);
 
   // Check exercises count per muscle group
   const chestBiceps = getHasmGroup('chestBiceps');
@@ -31,9 +31,21 @@ test('Nizam Al-Hasm (نظام الحسم) workout data has 4 groups and 30 exerc
   const legsCalves = getHasmGroup('legsCalves');
   assert.equal(legsCalves.exercises.length, 8);
 
-  // Total exercises
+  const arms = getHasmGroup('arms');
+  assert.equal(arms.exercises.length, 8);
+  assert.equal(arms.short, 'أذرع');
+  assert.match(arms.exercises[0].title, /EZ Barbell Curl/);
+  assert.ok(arms.exercises[0].image.startsWith('https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/'));
+
+  const upper = getHasmGroup('upper');
+  assert.equal(upper.exercises.length, 7);
+  assert.equal(upper.short, 'علوي Upper');
+  assert.match(upper.exercises[0].title, /Pec Deck Fly/);
+  assert.ok(upper.exercises[0].image.startsWith('https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/'));
+
+  // Total exercises: 7 + 7 + 8 + 8 + 8 + 7 = 45
   const allExercises = getAllHasmExercises();
-  assert.equal(allExercises.length, 30);
+  assert.equal(allExercises.length, 45);
 
   // Verify first exercise of chest and biceps
   assert.equal(chestBiceps.exercises[0].number, 1);
@@ -42,7 +54,8 @@ test('Nizam Al-Hasm (نظام الحسم) workout data has 4 groups and 30 exerc
 
   // Verify exercise ID generation
   assert.equal(hasmExerciseId('chestBiceps', 0), 'hasm_chestBiceps_0');
-  assert.equal(hasmExerciseId('legsCalves', 7), 'hasm_legsCalves_7');
+  assert.equal(hasmExerciseId('arms', 7), 'hasm_arms_7');
+  assert.equal(hasmExerciseId('upper', 6), 'hasm_upper_6');
 });
 
 test('fortyDayWorkoutService dynamically supports both Hasm and PPL programs', () => {
@@ -50,8 +63,10 @@ test('fortyDayWorkoutService dynamically supports both Hasm and PPL programs', (
   fortyDayWorkoutService.setActivePlan('hasm');
   assert.equal(fortyDayWorkoutService.getActivePlan(), 'hasm');
   assert.equal(fortyDayWorkoutService.getProgram().title, 'نظام الحسم');
-  assert.equal(fortyDayWorkoutService.getDays().length, 4);
+  assert.equal(fortyDayWorkoutService.getDays().length, 6);
   assert.equal(fortyDayWorkoutService.getDay('chestBiceps').short, 'صدر وبايسبس');
+  assert.equal(fortyDayWorkoutService.getDay('arms').short, 'أذرع');
+  assert.equal(fortyDayWorkoutService.getDay('upper').short, 'علوي Upper');
 
   // Switch to PPL
   fortyDayWorkoutService.setActivePlan('ppl');

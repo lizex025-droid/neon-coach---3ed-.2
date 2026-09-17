@@ -352,6 +352,174 @@ export const HASM_GROUPS = [
         pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0021.jpg?v=1785709352'
       }
     ]
+  },
+  {
+    key: 'arms',
+    label: 'أذرع (باي وتراي وسواعد)',
+    short: 'أذرع',
+    tone: 'arms',
+    description: 'تمارين الأذرع المتكاملة بنظام الحسم (8 تمارين)',
+    exercises: [
+      {
+        number: 1,
+        title: 'بار زقزاق واسع أو ضيق | EZ Barbell Curl',
+        sets: 3,
+        reps: '8-12',
+        alternative: 'بايسبس دامبل تبادل | Alternate Dumbbell Curl',
+        page: 21,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20%284%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0021.jpg?v=1769279348'
+      },
+      {
+        number: 2,
+        title: 'دفع مسطرة للأسفل | Triceps Pushdown',
+        sets: 3,
+        reps: '12',
+        alternative: 'دفع بالحبل | Rope Pushdown',
+        page: 21,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%AA%D8%B1%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_03_37%20AM%20%287%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0021.jpg?v=1769279348'
+      },
+      {
+        number: 3,
+        title: 'عزل بايسيبس دامبل مائل | Incline Dumbbell Curl',
+        sets: 3,
+        reps: '8-12',
+        alternative: 'عزل على المسطبة | Preacher Curl',
+        page: 22,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20%283%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0022.jpg?v=1769279349'
+      },
+      {
+        number: 4,
+        title: 'بنش برس قبضة ضيقة | Close Grip Bench Press',
+        sets: 3,
+        reps: '15',
+        alternative: 'متوازي ترايسبس | Dips',
+        page: 22,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%AA%D8%B1%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_03_35%20AM%20%282%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0022.jpg?v=1769279349'
+      },
+      {
+        number: 5,
+        title: 'تبادل همر دامبلز | Alternating Dumbbell Hammer Curl',
+        sets: 3,
+        reps: '8-12',
+        alternative: 'واقف أو جالس | Standing or Seated',
+        page: 23,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20%285%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0023.jpg?v=1769279348'
+      },
+      {
+        number: 6,
+        title: 'دامبل من فوق الرأس | Seated Overhead Dumbbell Extension',
+        sets: 3,
+        reps: '8-12',
+        alternative: 'حبل خلف الرأس أو بدائله | Overhead Rope Extension or Alternatives',
+        page: 23,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%AA%D8%B1%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_03_36%20AM%20%285%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0023.jpg?v=1769279348'
+      },
+      {
+        number: 7,
+        title: 'سحب تراي مع قبضة عكسية | Triceps Pushdown with Reverse Grip',
+        sets: 2,
+        reps: '8-12',
+        alternative: '',
+        page: 24,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%AA%D8%B1%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_03_37%20AM%20%286%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0024.jpg?v=1769279348'
+      },
+      {
+        number: 8,
+        title: 'سواعد | Forearms',
+        sets: 3,
+        reps: '12',
+        alternative: 'اختر 2 تمرين سواعد | Choose 2 Forearm Exercises',
+        page: 24,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B3%D9%88%D8%A7%D8%B9%D8%AF/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_10_10%20AM%20%282%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0701/6736/3720/files/pages-to-jpg-0024.jpg?v=1769279348'
+      }
+    ]
+  },
+  {
+    key: 'upper',
+    label: 'علوي (Upper Body)',
+    short: 'علوي Upper',
+    tone: 'upper',
+    description: 'تمارين الجزء العلوي المتكاملة بنظام الحسم (7 تمارين)',
+    exercises: [
+      {
+        number: 1,
+        title: 'عزل الصدر بجهاز الفراشة | Pec Deck Fly',
+        sets: 3,
+        reps: '10-12',
+        alternative: 'تفتيح بالدامبلز | Dumbbell Fly',
+        page: 7,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B5%D8%AF%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_07_33%20PM%20%288%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0007.jpg?v=1785709352'
+      },
+      {
+        number: 2,
+        title: 'ضغط صدر علوي بزاوية 45 درجة | Incline Bench Press',
+        sets: 3,
+        reps: '8-10',
+        alternative: 'صدر علوي بالدامبل | Incline Dumbbell Bench Press',
+        page: 6,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B5%D8%AF%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_07_31%20PM%20%283%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0006.jpg?v=1785709350'
+      },
+      {
+        number: 3,
+        title: 'سحب أمامي للظهر واسع | Wide Grip Lat Pulldown',
+        sets: 3,
+        reps: '8-12',
+        alternative: 'عقلة | Pull-Ups',
+        page: 10,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B8%D9%87%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_53_11%20PM%20%282%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0010.jpg?v=1785709352'
+      },
+      {
+        number: 4,
+        title: 'سحب أرضي بمسكة ضيقة | Seated Cable Row',
+        sets: 3,
+        reps: '8-12',
+        alternative: 'سحب أرضي بمسطرة واسعة | Wide Seated Cable Row',
+        page: 11,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B8%D9%87%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_53_35%20PM%20%283%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0011.jpg?v=1785709352'
+      },
+      {
+        number: 5,
+        title: 'رفرفة كتف جانبية بالدامبل | Dumbbell Lateral Raise',
+        sets: 3,
+        reps: '12-15',
+        alternative: 'رفرفة كتف جانبية بالكابل | Cable Lateral Raise',
+        page: 14,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D9%83%D8%AA%D9%81/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_54_44%20PM%20%283%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0014.jpg?v=1785709353'
+      },
+      {
+        number: 6,
+        title: 'بايسبس بار زجزاج على المسطبة | Barbell Preacher Curl',
+        sets: 3,
+        reps: '10-12',
+        alternative: 'بايسبس تبادل واقف | Standing Dumbbell Curl',
+        page: 9,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20%282%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0009.jpg?v=1785709353'
+      },
+      {
+        number: 7,
+        title: 'تمديد الترايسبس بالحبل فوق الرأس | Overhead Cable Rope Extension',
+        sets: 3,
+        reps: '10-12',
+        alternative: 'تمديد ترايسبس دامبل فوق الرأس | Overhead Dumbbell Extension',
+        page: 17,
+        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%AA%D8%B1%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_03_36%20AM%20%284%29.png',
+        pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0017.jpg?v=1785709352'
+      }
+    ]
   }
 ];
 
