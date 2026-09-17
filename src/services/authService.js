@@ -61,7 +61,13 @@ class AuthService {
       if (session?.user) {
         await this.syncSessionFromSupabase(session);
       } else {
-        this.saveSession(null);
+        // لا نمسح الجلسة المحلية فوراً إذا لم يرجع Supabase جلسة —
+        // قد يكون الـ token منتهياً ويحتاج تجديداً أو الشبكة مقطوعة.
+        // onAuthStateChange سيتولى مسح الجلسة عند SIGNED_OUT الحقيقي.
+        // لكن إذا لم تكن هناك جلسة محلية أصلاً، نتأكد أن الحالة نظيفة.
+        if (!this.currentSession) {
+          this.saveSession(null);
+        }
       }
     } catch (err) {
       console.warn('Supabase getSession error:', err);
