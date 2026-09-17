@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --mode neon",
     "build": "vite build",
-    "test": "node --test tests/aiProxy.test.js tests/dailyCycle.test.js tests/neonBackend.test.js tests/neonDispatcher.test.js tests/neonActionAgent.test.js tests/neonSoundFeedback.test.js tests/actionVoice.test.js tests/supplementsAndWater.test.js tests/calculations.test.js tests/calorieEngine.test.js tests/nutrition.test.js tests/nutritionSearch.test.js tests/planner.test.js tests/fortyDayWorkout.test.js",
+    "test": "node --test tests/aiProxy.test.js tests/dailyCycle.test.js tests/neonBackend.test.js tests/neonDispatcher.test.js tests/neonActionAgent.test.js tests/neonSoundFeedback.test.js tests/actionVoice.test.js tests/supplementsAndWater.test.js tests/calculations.test.js tests/calorieEngine.test.js tests/nutrition.test.js tests/nutritionSearch.test.js tests/planner.test.js tests/fortyDayWorkout.test.js tests/hasmWorkout.test.js",
     "test:provider": "node --env-file=.env.local scripts/test-neon-provider.mjs",
     "test:browser": "node scripts/verify-neon-browser.mjs",
     "test:bottom-nav": "node scripts/verify-bottom-nav.mjs",

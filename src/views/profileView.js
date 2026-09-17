@@ -6,6 +6,7 @@ import { store } from '../state/store.js';
 import { notificationService } from '../services/notificationService.js';
 import { calculateAge, calculateBMI, calculateNutritionTargets } from '../domain/calculations.js';
 import { neonIcon } from '../utils/neonIcons.js';
+import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 
 export function renderProfileView() {
   const state = store.getState();
@@ -20,6 +21,7 @@ export function renderProfileView() {
   const gender = profile.gender || 'male';
   const goal = profile.goal || 'fat_loss';
   const workoutDaysCount = profile.workoutDaysCount || 4;
+  const workoutPlan = profile.workoutPlan || 'hasm';
   const equipment = profile.equipment || 'gym';
   const unitSystem = profile.unitSystem || 'metric';
 
@@ -147,11 +149,14 @@ export function renderProfileView() {
             </select>
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 0.82rem;">نظام القياس</label>
-            <select id="setting-unit-system" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem;">
-              <option value="metric" ${unitSystem === 'metric' ? 'selected' : ''}>متري (كغ / سم)</option>
-              <option value="imperial" ${unitSystem === 'imperial' ? 'selected' : ''}>إمبراطوري (باوند / إنش)</option>
+          <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.82rem; display: flex; justify-content: space-between;">
+              <span>نظام التمرين المعتمد</span>
+              <span style="color: #55F7A5; font-size: 0.72rem; font-weight: 700;">${workoutPlan === 'ppl' ? 'Push Pull Legs' : 'نظام الحسم'}</span>
+            </label>
+            <select id="setting-workout-plan" style="padding: 10px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 0.85rem; font-weight: 600;">
+              <option value="hasm" ${workoutPlan === 'hasm' ? 'selected' : ''}>نظام الحسم — 4 مجموعات (صدر وبايسبس، ظهر وبطن، كتف وترابيس، أرجل وسمانات)</option>
+              <option value="ppl" ${workoutPlan === 'ppl' ? 'selected' : ''}>Push Pull Legs — تمرين الـ40 يوم (Push A/B, Pull A/B, Legs A/B)</option>
             </select>
           </div>
         </div>
@@ -293,6 +298,7 @@ export function bindProfileEvents() {
 
     const goal = document.getElementById('setting-goal')?.value || 'fat_loss';
     const workoutDaysCount = Number(document.getElementById('setting-workout-days')?.value) || 4;
+    const workoutPlan = document.getElementById('setting-workout-plan')?.value || 'hasm';
     const equipment = document.getElementById('setting-equipment')?.value || 'gym';
     const unitSystem = document.getElementById('setting-unit-system')?.value || 'metric';
 
@@ -311,10 +317,13 @@ export function bindProfileEvents() {
       height,
       goal,
       workoutDaysCount,
+      workoutPlan,
       equipment,
       unitSystem,
       targetCalories
     });
+
+    fortyDayWorkoutService.setActivePlan(workoutPlan);
 
     store.setTargetCalories(targetCalories);
 

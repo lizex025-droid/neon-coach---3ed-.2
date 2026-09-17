@@ -1,4 +1,5 @@
-import { FORTY_DAY_DAYS, getFortyDay, fortyDayExerciseId } from '../data/fortyDayWorkout.js';
+import { FORTY_DAY_DAYS, FORTY_DAY_PROGRAM, getFortyDay, fortyDayExerciseId } from '../data/fortyDayWorkout.js';
+import { HASM_GROUPS, HASM_PROGRAM, getHasmGroup, hasmExerciseId } from '../data/hasmWorkout.js';
 import { store } from '../state/store.js';
 
 const STATE_KEY = 'neon_forty_day_workout_v2';
@@ -6,7 +7,12 @@ const LEGACY_SESSION_KEY = 'fortyDay_active_workout_v1';
 const LEGACY_HISTORY_KEY = 'fortyDay_workout_history_v1';
 
 const readJson = (key, fallback) => {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+  try {
+    if (typeof localStorage === 'undefined') return fallback;
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch {
+    return fallback;
+  }
 };
 const blankSet = (weight = '', reps = '') => ({ kg: weight, reps, done: false });
 const targetReps = value => String(value || '').match(/\d+/)?.[0] || '';
@@ -20,7 +26,8 @@ const clampNumber = (value, min, max, integer = false) => {
 
 function defaultState() {
   return {
-    activeDay: 'pushA',
+    activePlan: 'hasm',
+    activeDay: 'chestBiceps',
     programStartedAt: null,
     session: null,
     restUntil: null,
@@ -65,23 +72,70 @@ class FortyDayWorkoutService {
   }
 
   save() {
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem(STATE_KEY, JSON.stringify(this.load()));
   }
 
   getSnapshot() { return structuredClone(this.load()); }
 
+  getActivePlan() {
+    const profilePlan = store.getState()?.userProfile?.workoutPlan;
+    if (profilePlan === 'hasm' || profilePlan === 'ppl' || profilePlan === 'fortyDay') {
+      return (profilePlan === 'ppl' || profilePlan === 'fortyDay') ? 'ppl' : 'hasm';
+    }
+    return this.load().activePlan || 'hasm';
+  }
+
+  setActivePlan(planKey) {
+    const normalized = (planKey === 'ppl' || planKey === 'fortyDay') ? 'ppl' : 'hasm';
+    const state = this.load();
+    state.activePlan = normalized;
+    state.activeDay = normalized === 'hasm' ? 'chestBiceps' : 'pushA';
+    this.save();
+    const profile = store.getState()?.userProfile;
+    if (profile && profile.workoutPlan !== normalized) {
+      store.setUserProfile({ ...profile, workoutPlan: normalized });
+    }
+  }
+
+  getProgram(planKey = this.getActivePlan()) {
+    return (planKey === 'ppl' || planKey === 'fortyDay') ? FORTY_DAY_PROGRAM : HASM_PROGRAM;
+  }
+
+  getDays(planKey = this.getActivePlan()) {
+    return (planKey === 'ppl' || planKey === 'fortyDay') ? FORTY_DAY_DAYS : HASM_GROUPS;
+  }
+
+  getDay(dayKey, planKey = this.getActivePlan()) {
+    if (HASM_GROUPS.some(day => day.key === dayKey)) {
+      return getHasmGroup(dayKey);
+    }
+    if (FORTY_DAY_DAYS.some(day => day.key === dayKey)) {
+      return getFortyDay(dayKey);
+    }
+    return (planKey === 'ppl' || planKey === 'fortyDay') ? getFortyDay(dayKey) : getHasmGroup(dayKey);
+  }
+
+  getExerciseId(dayKey, exerciseIndex, planKey = this.getActivePlan()) {
+    if (HASM_GROUPS.some(day => day.key === dayKey) || planKey === 'hasm') {
+      return hasmExerciseId(dayKey, exerciseIndex);
+    }
+    return fortyDayExerciseId(dayKey, exerciseIndex);
+  }
+
   setActiveDay(dayKey) {
-    if (!FORTY_DAY_DAYS.some(day => day.key === dayKey)) return;
+    const allDays = [...HASM_GROUPS, ...FORTY_DAY_DAYS];
+    if (!allDays.some(day => day.key === dayKey)) return;
     this.load().activeDay = dayKey;
     this.save();
   }
 
   getTrackersForDay(dayKey) {
-    const day = getFortyDay(dayKey);
+    const day = this.getDay(dayKey);
     const state = this.load();
     let shouldSave = false;
     const trackers = day.exercises.map((exercise, exerciseIndex) => {
-      const id = fortyDayExerciseId(dayKey, exerciseIndex);
+      const id = this.getExerciseId(dayKey, exerciseIndex);
       if (!state.trackers[id]) {
         state.trackers[id] = normalizeTracker(readJson(`exercise_tracker_${id}`, null), exercise);
         shouldSave = true;
@@ -95,9 +149,9 @@ class FortyDayWorkoutService {
   }
 
   getTracker(dayKey, exerciseIndex) {
-    const exercise = getFortyDay(dayKey).exercises[exerciseIndex];
+    const exercise = this.getDay(dayKey)?.exercises[exerciseIndex];
     if (!exercise) return null;
-    const id = fortyDayExerciseId(dayKey, exerciseIndex);
+    const id = this.getExerciseId(dayKey, exerciseIndex);
     if (!this.load().trackers[id]) {
       const legacy = readJson(`exercise_tracker_${id}`, null);
       this.load().trackers[id] = normalizeTracker(legacy, exercise);
@@ -142,7 +196,7 @@ class FortyDayWorkoutService {
   markTouched(dayKey, exerciseIndex) {
     const state = this.load();
     if (!state.session) state.session = { startedAt: Date.now(), dayKey, touchedExerciseIds: [] };
-    const id = fortyDayExerciseId(dayKey, exerciseIndex);
+    const id = this.getExerciseId(dayKey, exerciseIndex);
     if (!state.session.touchedExerciseIds.includes(id)) state.session.touchedExerciseIds.push(id);
   }
 
@@ -156,10 +210,11 @@ class FortyDayWorkoutService {
   }
 
   resetExercise(dayKey, exerciseIndex) {
-    const exercise = getFortyDay(dayKey).exercises[exerciseIndex];
+    const exercise = this.getDay(dayKey)?.exercises[exerciseIndex];
     if (!exercise) return;
     const tracker = this.getTracker(dayKey, exerciseIndex);
-    this.load().trackers[fortyDayExerciseId(dayKey, exerciseIndex)] = normalizeTracker({ history: tracker.history }, exercise);
+    const id = this.getExerciseId(dayKey, exerciseIndex);
+    this.load().trackers[id] = normalizeTracker({ history: tracker.history }, exercise);
     this.save();
   }
 
@@ -201,11 +256,21 @@ class FortyDayWorkoutService {
     const exercises = [];
     let totalSets = 0, totalReps = 0, totalVolume = 0, personalRecords = 0;
     for (const id of session.touchedExerciseIds || []) {
-      const match = id.match(/^fortyDay_(.+)_(\d+)$/);
-      if (!match) continue;
-      const dayKey = match[1];
-      const exerciseIndex = Number(match[2]);
-      const exercise = getFortyDay(dayKey).exercises[exerciseIndex];
+      let dayKey = null;
+      let exerciseIndex = null;
+      const hasmMatch = id.match(/^hasm_(.+)_(\d+)$/);
+      const fortyMatch = id.match(/^fortyDay_(.+)_(\d+)$/);
+      if (hasmMatch) {
+        dayKey = hasmMatch[1];
+        exerciseIndex = Number(hasmMatch[2]);
+      } else if (fortyMatch) {
+        dayKey = fortyMatch[1];
+        exerciseIndex = Number(fortyMatch[2]);
+      } else {
+        continue;
+      }
+      const day = this.getDay(dayKey);
+      const exercise = day?.exercises?.[exerciseIndex];
       const tracker = state.trackers[id];
       if (!exercise || !tracker) continue;
       const played = tracker.sets.filter(set => set.done && (set.kg !== '' || set.reps !== ''));
@@ -233,10 +298,10 @@ class FortyDayWorkoutService {
       tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet(tracker.weight, targetReps(tracker.targetReps)));
       exercises.push({ title: exercise.title, nameAr: exercise.title, sets: played.length, setsCount: played.length, bestKg: record.bestKg, bestReps: record.bestReps, bestSet: record.bestKg ? `${record.bestKg} كغ × ${record.bestReps || '-'} تكرار` : `${record.bestReps || '-'} تكرار`, volume, isPersonalRecord });
     }
-    const day = getFortyDay(session.dayKey);
+    const day = this.getDay(session.dayKey);
     const summary = {
-      id: `fortyDay_${finishedAt}`,
-      title: day.label,
+      id: `${session.dayKey.startsWith('push') || session.dayKey.startsWith('pull') || session.dayKey.startsWith('legs') ? 'fortyDay' : 'hasm'}_${finishedAt}`,
+      title: day.label || day.short,
       workoutNumber: state.history.length + 1,
       startedAt: session.startedAt,
       finishedAt,
@@ -249,8 +314,10 @@ class FortyDayWorkoutService {
     state.restUntil = null;
     state.restDuration = 0;
     this.save();
-    localStorage.removeItem(LEGACY_SESSION_KEY);
-    localStorage.setItem(LEGACY_HISTORY_KEY, JSON.stringify(state.history));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(LEGACY_SESSION_KEY);
+      localStorage.setItem(LEGACY_HISTORY_KEY, JSON.stringify(state.history));
+    }
     store.finishWorkoutSession({ title: summary.title, dateLabel: summary.dateLabel, durationMinutes: Math.max(1, Math.round(summary.durationSeconds / 60)), totalVolumeKg: summary.totalVolume, totalSets, totalReps, exercises });
     return summary;
   }

@@ -58,6 +58,7 @@ export const EMPTY_INITIAL_STATE = {
     goal: 'fat_loss',
     activityLevel: 'moderate',
     workoutDaysCount: 4,
+    workoutPlan: 'hasm',
     preferredDays: [],
     equipment: 'gym',
     sessionDurationMin: 50,
