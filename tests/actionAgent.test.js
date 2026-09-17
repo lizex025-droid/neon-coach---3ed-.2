@@ -9,6 +9,8 @@ const options = { now, createId: (() => { let id = 0; return () => `record-${++i
 function fixture() {
   const state = structuredClone(EMPTY_INITIAL_STATE);
   state.today.date = localDate(now);
+  state.today.targetProtein = 150;
+  state.today.targetWaterLiters = 2.5;
   state.supplementsSchedule = [{ id: 'creatine', nameAr: 'Creatine / كرياتين', schedule: { morning: { taken: false, time: null }, evening: { taken: false, time: null } } }];
   state.actionSupplementTaken = {};
   state.shoppingItems = [];

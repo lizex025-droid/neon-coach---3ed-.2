@@ -157,8 +157,8 @@ class Store {
 
   setUserProfile(profile) {
     this.state.userProfile = { ...this.state.userProfile, ...profile };
-    if (profile.birthDate) {
-      this.state.userProfile.age = calculateAge(profile.birthDate);
+    if (profile.birthDate !== undefined) {
+      this.state.userProfile.age = profile.birthDate ? calculateAge(profile.birthDate) : 0;
     }
     if (profile.targetCalories !== undefined) {
       this.state.today.targetCalories = profile.targetCalories;

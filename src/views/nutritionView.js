@@ -914,7 +914,7 @@ export function bindNutritionEvents() {
   const autoFixBtn = document.getElementById('auto-fix-macros-btn');
   autoFixBtn?.addEventListener('click', () => {
     const targetVal = Number(calInput?.value) || 2000;
-    const userWeight = store.getState().userProfile?.currentWeight || 75;
+    const userWeight = Number(store.getState().userProfile?.currentWeight) || 0;
     const pInput = document.getElementById('manual-protein-input');
     const cInput = document.getElementById('manual-carbs-input');
     const fInput = document.getElementById('manual-fats-input');
@@ -934,7 +934,7 @@ export function bindNutritionEvents() {
       newC = Math.round(Math.max(0, targetVal - (newP * 4 + newF * 9)) / 4);
     } else {
       // توزيع رياضي علمي متوازن
-      newP = Math.round(Math.min(userWeight * 2.2, (targetVal * 0.3) / 4));
+      newP = Math.round(userWeight > 0 ? Math.min(userWeight * 2.2, (targetVal * 0.3) / 4) : (targetVal * 0.3) / 4);
       newF = Math.round((targetVal * 0.25) / 9);
       newC = Math.round(Math.max(0, targetVal - (newP * 4 + newF * 9)) / 4);
     }
@@ -954,8 +954,8 @@ export function bindNutritionEvents() {
   // تحديث المعاينة الحية عند كتابة السعرات
   const updatePreview = () => {
     const val = Number(calInput?.value) || 2000;
-    const userWeight = store.getState().userProfile?.currentWeight || 75;
-    const p = Math.round(Math.min(userWeight * 2.2, (val * 0.3) / 4));
+    const userWeight = Number(store.getState().userProfile?.currentWeight) || 0;
+    const p = Math.round(userWeight > 0 ? Math.min(userWeight * 2.2, (val * 0.3) / 4) : (val * 0.3) / 4);
     const f = Math.round((val * 0.25) / 9);
     const rem = Math.max(0, val - (p * 4 + f * 9));
     const c = Math.round(rem / 4);

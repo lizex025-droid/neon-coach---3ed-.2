@@ -479,8 +479,8 @@ export function bindTodayViewEvents() {
   // معاينة الماكروز المحدثة
   todayCalInput?.addEventListener('input', () => {
     const val = Number(todayCalInput?.value) || 2000;
-    const userWeight = store.getState().userProfile?.currentWeight || 75;
-    const p = Math.round(Math.min(userWeight * 2.2, (val * 0.3) / 4));
+    const userWeight = Number(store.getState().userProfile?.currentWeight) || 0;
+    const p = Math.round(userWeight > 0 ? Math.min(userWeight * 2.2, (val * 0.3) / 4) : (val * 0.3) / 4);
     const f = Math.round((val * 0.25) / 9);
     const rem = Math.max(0, val - (p * 4 + f * 9));
     const c = Math.round(rem / 4);

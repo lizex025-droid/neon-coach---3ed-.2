@@ -202,3 +202,54 @@ test('Router routeKey resolution correctly maps #profile/plan and subroutes to p
     assert.equal(routeKey, 'profile');
   });
 });
+
+test('Default data uses user input and stays 0 when nothing is entered', () => {
+  store.setUserProfile({
+    name: '',
+    email: '',
+    currentWeight: 0,
+    targetWeight: 0,
+    streakDays: 0,
+    birthDate: '',
+    gender: 'male',
+    height: 0,
+    targetCalories: 0,
+    targetWaterLiters: 0,
+    workoutDaysCount: 0
+  });
+
+  // 1. Main Hub: defaults to 0 and no fake 103, 90, 12 numbers
+  window.location.hash = '#profile';
+  setActiveSubPage('main');
+  let html = renderProfileView();
+  assert.match(html, /0 كغ/);
+  assert.match(html, /الهدف 0 كغ/);
+  assert.match(html, /0 يومًا/);
+  assert.doesNotMatch(html, /103 كغ/);
+  assert.doesNotMatch(html, /90 كغ/);
+  assert.doesNotMatch(html, /12 يومًا/);
+
+  // 2. Plan Sub-Page: inputs default to 0 and placeholder 0
+  window.location.hash = '#profile/plan';
+  setActiveSubPage('plan');
+  html = renderProfileView();
+  assert.match(html, /BMI: 0 \(غير معروف\)/);
+  assert.match(html, /0 سنة/);
+  assert.match(html, /id="plan-height"[^>]*placeholder="0"/);
+  assert.match(html, /id="plan-current-weight"[^>]*placeholder="0"/);
+  assert.match(html, /id="plan-target-weight"[^>]*placeholder="0"/);
+  assert.match(html, /id="plan-target-calories"[^>]*placeholder="0"/);
+  assert.match(html, /id="plan-target-water"[^>]*placeholder="0"/);
+
+  // 3. Badges Sub-Page: XP and stats default to 0, no fake 600 XP or 14/18/48500
+  window.location.hash = '#profile/badges';
+  setActiveSubPage('badges');
+  html = renderProfileView();
+  assert.match(html, /0 XP/);
+  assert.match(html, /0 يوماً/);
+  assert.match(html, /0 تمرين/);
+  assert.match(html, /0 كغ/);
+  assert.doesNotMatch(html, /600 XP/);
+  assert.doesNotMatch(html, /48500 كغ/);
+});
+

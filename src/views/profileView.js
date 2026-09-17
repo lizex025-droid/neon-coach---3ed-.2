@@ -59,9 +59,9 @@ export function renderProfileView() {
 // 1. مركز الإعدادات المختصر الرئيسي (Main Settings Hub)
 // ----------------------------------------------------
 function renderMainHub(profile, state) {
-  const currentWeight = Number(profile.currentWeight) || 103;
-  const targetWeight = Number(profile.targetWeight) || 90;
-  const streak = profile.streakDays || state.today?.waterStreakDays || 12;
+  const currentWeight = Number(profile.currentWeight) || 0;
+  const targetWeight = Number(profile.targetWeight) || 0;
+  const streak = profile.streakDays ?? state.today?.waterStreakDays ?? 0;
 
   return `
     <div class="profile-hub-container" id="profile-hub-root">
@@ -245,14 +245,14 @@ function renderMainHub(profile, state) {
 // 2. صفحة فرعية: «بياناتي وخطتي» (My Data & Plan)
 // ----------------------------------------------------
 function renderPlanSubPage(profile, state) {
-  const currentWeight = Number(profile.currentWeight) || 103;
-  const targetWeight = Number(profile.targetWeight) || 90;
-  const height = Number(profile.height) || 178;
-  const birthDate = profile.birthDate || '2000-01-01';
-  const age = calculateAge(birthDate) || 26;
+  const currentWeight = Number(profile.currentWeight) || 0;
+  const targetWeight = Number(profile.targetWeight) || 0;
+  const height = Number(profile.height) || 0;
+  const birthDate = profile.birthDate || '';
+  const age = birthDate ? calculateAge(birthDate) : (Number(profile.age) || 0);
   const gender = profile.gender || 'male';
   const goal = profile.goal || 'fat_loss';
-  const workoutDaysCount = profile.workoutDaysCount || 4;
+  const workoutDaysCount = Number(profile.workoutDaysCount) || 0;
   const workoutPlan = profile.workoutPlan || 'hasm';
   const equipment = profile.equipment || 'gym';
   const trainingLevel = profile.trainingLevel || 'intermediate';
@@ -262,8 +262,8 @@ function renderPlanSubPage(profile, state) {
   const selectedInjury = Array.isArray(profile.injuries) ? (profile.injuries[0] || 'none') : (profile.injuries || 'none');
 
   const today = state.today || {};
-  const targetCalories = today.targetCalories || profile.targetCalories || 2200;
-  const targetWaterLiters = today.targetWaterLiters || profile.targetWaterLiters || 3.0;
+  const targetCalories = today.targetCalories || profile.targetCalories || 0;
+  const targetWaterLiters = today.targetWaterLiters || profile.targetWaterLiters || 0;
 
   const bmiInfo = calculateBMI(currentWeight, height);
 
@@ -292,7 +292,7 @@ function renderPlanSubPage(profile, state) {
           <div class="form-group" style="margin-bottom: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <label class="form-label" style="font-size: 0.82rem;">تاريخ الميلاد</label>
-              <span id="label-plan-age" style="font-size: 0.72rem; color: #55F7A5; font-weight: 700;">${age} سنة</span>
+              <span id="label-plan-age" style="font-size: 0.72rem; color: #55F7A5; font-weight: 700;">${age > 0 ? `${age} سنة` : '0 سنة'}</span>
             </div>
             <input type="date" id="plan-birthdate" value="${birthDate}" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem; text-align: center;">
           </div>
@@ -321,17 +321,17 @@ function renderPlanSubPage(profile, state) {
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.8rem;">الطول (سم)</label>
-            <input type="number" id="plan-height" value="${height}" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-weight: 700;">
+            <input type="number" id="plan-height" value="${height || ''}" placeholder="0" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-weight: 700;">
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.8rem;">الوزن الحالي (كغ)</label>
-            <input type="number" id="plan-current-weight" value="${currentWeight}" step="0.1" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.35); color: #55F7A5; font-weight: 800;">
+            <input type="number" id="plan-current-weight" value="${currentWeight || ''}" placeholder="0" step="0.1" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.35); color: #55F7A5; font-weight: 800;">
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.8rem;">الوزن المستهدف (كغ)</label>
-            <input type="number" id="plan-target-weight" value="${targetWeight}" step="0.1" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-weight: 700;">
+            <input type="number" id="plan-target-weight" value="${targetWeight || ''}" placeholder="0" step="0.1" style="text-align: center; padding: 9px 6px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-weight: 700;">
           </div>
         </div>
       </div>
@@ -364,6 +364,7 @@ function renderPlanSubPage(profile, state) {
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">أيام التمرين أسبوعياً</label>
             <select id="plan-workout-days" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.25); color: #FFFFFF; font-size: 0.85rem;">
+              <option value="0" ${workoutDaysCount === 0 ? 'selected' : ''}>لم يحدد بعد (0)</option>
               <option value="2" ${workoutDaysCount === 2 ? 'selected' : ''}>يومان</option>
               <option value="3" ${workoutDaysCount === 3 ? 'selected' : ''}>3 أيام</option>
               <option value="4" ${workoutDaysCount === 4 ? 'selected' : ''}>4 أيام (الموصى به)</option>
@@ -444,7 +445,7 @@ function renderPlanSubPage(profile, state) {
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">هدف السعرات اليومي</label>
             <div style="position: relative;">
-              <input type="number" id="plan-target-calories" value="${targetCalories}" step="50" min="800" max="8000" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-weight: 800; font-family: monospace; width: 100%;">
+              <input type="number" id="plan-target-calories" value="${targetCalories || ''}" placeholder="0" step="50" min="0" max="8000" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-weight: 800; font-family: monospace; width: 100%;">
               <span style="position: absolute; left: 10px; top: 10px; font-size: 0.75rem; color: #B8C0BC;">سعرة</span>
             </div>
           </div>
@@ -452,7 +453,7 @@ function renderPlanSubPage(profile, state) {
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">هدف شرب الماء</label>
             <div style="position: relative;">
-              <input type="number" id="plan-target-water" value="${targetWaterLiters}" step="0.1" min="1" max="8" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-weight: 800; font-family: monospace; width: 100%;">
+              <input type="number" id="plan-target-water" value="${targetWaterLiters || ''}" placeholder="0" step="0.1" min="0" max="8" style="padding: 9px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.3); color: #55F7A5; font-weight: 800; font-family: monospace; width: 100%;">
               <span style="position: absolute; left: 10px; top: 10px; font-size: 0.75rem; color: #B8C0BC;">لتر</span>
             </div>
           </div>
@@ -494,18 +495,18 @@ function renderPlanSubPage(profile, state) {
 // 3. صفحة فرعية: «الشارات والإنجازات» (Badges & Achievements)
 // ----------------------------------------------------
 function renderBadgesSubPage(profile, state) {
-  const currentWeight = Number(profile.currentWeight) || 103;
-  const targetWeight = Number(profile.targetWeight) || 90;
-  const streak = profile.streakDays || 12;
+  const currentWeight = Number(profile.currentWeight) || 0;
+  const targetWeight = Number(profile.targetWeight) || 0;
+  const streak = profile.streakDays || state.today?.waterStreakDays || 0;
   const history = state.workoutHistory || [];
   const totalWorkouts = history.length;
   const totalVolume = history.reduce((sum, h) => sum + (h.totalVolumeKg || 0), 0);
 
   // حساب المستوى ونقاط XP
-  const xp = 600 + (totalWorkouts * 80) + (streak * 25);
-  const level = Math.floor(xp / 400) + 1;
+  const xp = (totalWorkouts * 80) + (streak * 25);
+  const level = xp > 0 ? Math.floor(xp / 400) + 1 : 1;
   const nextLevelXp = level * 400;
-  const currentLevelProgress = Math.min(100, Math.round(((xp % 400) / 400) * 100));
+  const currentLevelProgress = xp > 0 ? Math.min(100, Math.round(((xp % 400) / 400) * 100)) : 0;
 
   return `
     <div class="profile-hub-container" id="profile-badges-root">
@@ -547,21 +548,21 @@ function renderBadgesSubPage(profile, state) {
           <span class="profile-stat-pill-label">أطول سلسلة التزام</span>
           <span class="profile-stat-pill-value">
             <span class="accent">🔥</span>
-            <span>${Math.max(streak, 14)} يوماً</span>
+            <span>${streak} يوماً</span>
           </span>
         </div>
         <div class="profile-stat-pill">
           <span class="profile-stat-pill-label">إجمالي التمارين</span>
           <span class="profile-stat-pill-value">
             <span class="accent">🏋️</span>
-            <span>${totalWorkouts || 18} تمرين</span>
+            <span>${totalWorkouts} تمرين</span>
           </span>
         </div>
         <div class="profile-stat-pill">
           <span class="profile-stat-pill-label">إجمالي الحجم التدريبي</span>
           <span class="profile-stat-pill-value">
             <span class="accent">⚡</span>
-            <span>${totalVolume || 48500} كغ</span>
+            <span>${totalVolume} كغ</span>
           </span>
         </div>
         <div class="profile-stat-pill">
@@ -891,12 +892,15 @@ export function bindProfileEvents() {
   if (activeSubPage === 'plan') {
     // حساب حي للـ BMI والعمر
     const updatePlanMetrics = () => {
-      const w = Number(document.getElementById('plan-current-weight')?.value) || 75;
-      const h = Number(document.getElementById('plan-height')?.value) || 178;
+      const w = Number(document.getElementById('plan-current-weight')?.value) || 0;
+      const h = Number(document.getElementById('plan-height')?.value) || 0;
       const bDate = document.getElementById('plan-birthdate')?.value;
+      const ageLabel = document.getElementById('label-plan-age');
       if (bDate) {
-        const ageLabel = document.getElementById('label-plan-age');
-        if (ageLabel) ageLabel.textContent = `${calculateAge(bDate)} سنة`;
+        const calculatedAge = calculateAge(bDate);
+        if (ageLabel) ageLabel.textContent = calculatedAge ? `${calculatedAge} سنة` : '0 سنة';
+      } else {
+        if (ageLabel) ageLabel.textContent = '0 سنة';
       }
       const bmiInfo = calculateBMI(w, h);
       const badge = document.getElementById('plan-bmi-badge');
@@ -912,12 +916,17 @@ export function bindProfileEvents() {
     // إعادة الحساب التلقائي للسعرات والماء
     document.getElementById('btn-recalculate-targets')?.addEventListener('click', () => {
       const existing = store.getState().userProfile || {};
-      const weight = Number(document.getElementById('plan-current-weight')?.value) || existing.currentWeight || 75;
-      const height = Number(document.getElementById('plan-height')?.value) || existing.height || 178;
-      const birthDate = document.getElementById('plan-birthdate')?.value || existing.birthDate || '2000-01-01';
+      const weight = Number(document.getElementById('plan-current-weight')?.value) || existing.currentWeight || 0;
+      const height = Number(document.getElementById('plan-height')?.value) || existing.height || 0;
+      const birthDate = document.getElementById('plan-birthdate')?.value || existing.birthDate || '';
       const gender = document.getElementById('plan-gender')?.value || existing.gender || 'male';
       const goal = document.getElementById('plan-goal')?.value || existing.goal || 'fat_loss';
       const act = document.getElementById('plan-activity-level')?.value || existing.activityLevel || 'moderate';
+
+      if (!weight || !height || weight <= 0 || height <= 0) {
+        notificationService.showToast('يرجى إدخال الوزن والطول أولاً لحساب السعرات', 'warning');
+        return;
+      }
 
       const targets = calculateNutritionTargets({
         weight,
@@ -928,7 +937,7 @@ export function bindProfileEvents() {
         goal,
         selectedWeeklyLossRate: existing.selectedWeeklyLossRate || existing.weeklyLossPercent,
         weeklyLossPercent: existing.weeklyLossPercent,
-        age: calculateAge(birthDate)
+        age: birthDate ? calculateAge(birthDate) : existing.age
       });
 
       const calsInput = document.getElementById('plan-target-calories');
@@ -942,16 +951,22 @@ export function bindProfileEvents() {
     // حفظ كل تغييرات الخطة مع التنبيه الذكي
     const savePlanDirect = (recalc = false) => {
       const existing = store.getState().userProfile || {};
-      const name = document.getElementById('plan-name')?.value.trim() || existing.name || 'متدرب نيون';
+      const name = document.getElementById('plan-name')?.value.trim() || existing.name || '';
       const birthDate = document.getElementById('plan-birthdate')?.value || existing.birthDate || '';
       const gender = document.getElementById('plan-gender')?.value || existing.gender || 'male';
-      const height = Number(document.getElementById('plan-height')?.value) || existing.height || 178;
-      const currentWeight = Number(document.getElementById('plan-current-weight')?.value) || existing.currentWeight || 75;
-      const targetWeight = Number(document.getElementById('plan-target-weight')?.value) || existing.targetWeight || currentWeight;
+
+      const heightInput = document.getElementById('plan-height')?.value;
+      const height = heightInput !== '' && heightInput !== undefined ? Number(heightInput) : (existing.height ?? 0);
+
+      const currentWeightInput = document.getElementById('plan-current-weight')?.value;
+      const currentWeight = currentWeightInput !== '' && currentWeightInput !== undefined ? Number(currentWeightInput) : (existing.currentWeight ?? 0);
+
+      const targetWeightInput = document.getElementById('plan-target-weight')?.value;
+      const targetWeight = targetWeightInput !== '' && targetWeightInput !== undefined ? Number(targetWeightInput) : (existing.targetWeight ?? 0);
 
       const goal = document.getElementById('plan-goal')?.value || existing.goal || 'fat_loss';
       const trainingLevel = document.getElementById('plan-level')?.value || existing.trainingLevel || 'intermediate';
-      const workoutDaysCount = Number(document.getElementById('plan-workout-days')?.value) || existing.workoutDaysCount || 4;
+      const workoutDaysCount = Number(document.getElementById('plan-workout-days')?.value) || existing.workoutDaysCount || 0;
       const sessionDuration = document.getElementById('plan-session-duration')?.value || existing.sessionDuration || '60';
       const equipment = document.getElementById('plan-equipment')?.value || existing.equipment || 'gym';
       const workoutPlan = document.getElementById('plan-workout-plan')?.value || existing.workoutPlan || 'hasm';
@@ -959,10 +974,14 @@ export function bindProfileEvents() {
 
       const activityLevel = document.getElementById('plan-activity-level')?.value || existing.activityLevel || 'moderate';
       const weightLossRate = document.getElementById('plan-weight-loss-rate')?.value || existing.weightLossRate || 'balanced';
-      let targetCalories = Number(document.getElementById('plan-target-calories')?.value) || existing.targetCalories || 2200;
-      let targetWaterLiters = Number(document.getElementById('plan-target-water')?.value) || existing.targetWaterLiters || 3.0;
 
-      if (recalc) {
+      const targetCaloriesInput = document.getElementById('plan-target-calories')?.value;
+      let targetCalories = targetCaloriesInput !== '' && targetCaloriesInput !== undefined ? Number(targetCaloriesInput) : (existing.targetCalories ?? 0);
+
+      const targetWaterInput = document.getElementById('plan-target-water')?.value;
+      let targetWaterLiters = targetWaterInput !== '' && targetWaterInput !== undefined ? Number(targetWaterInput) : (existing.targetWaterLiters ?? 0);
+
+      if (recalc && currentWeight > 0 && height > 0) {
         const calculated = calculateNutritionTargets({
           weight: currentWeight,
           height,
@@ -972,7 +991,7 @@ export function bindProfileEvents() {
           goal,
           selectedWeeklyLossRate: weightLossRate,
           weeklyLossPercent: existing.weeklyLossPercent,
-          age: calculateAge(birthDate)
+          age: birthDate ? calculateAge(birthDate) : existing.age
         });
         targetCalories = calculated.targetCalories;
         targetWaterLiters = Math.round((calculated.targetWaterMl / 1000) * 10) / 10;
