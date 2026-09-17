@@ -6,6 +6,7 @@ import './styles/variables.css';
 import './styles/reset.css';
 import './styles/base.css';
 import './styles/components.css';
+import './styles/progressWeightTracker.css';
 
 import { Router } from './router/router.js';
 import { setupTrainingLoadingInterceptors } from './utils/splash.js';

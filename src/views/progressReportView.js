@@ -18,6 +18,19 @@ import { neonIcon } from '../utils/neonIcons.js';
 import { filterStrongestExercisePerMuscle } from '../domain/calculations.js';
 import { escapeActionHtml } from '../components/actionPanel.js';
 import { dailyHistoryWithin } from '../domain/dailyCycle.js';
+import { localPhotoStorage } from '../services/localPhotoStorage.js';
+import {
+  wtLoad,
+  wtSave,
+  wtSaveEntry,
+  wtDateKey,
+  wtParseKey,
+  photoFmtDate,
+  calculateStreak,
+  calculate7DayDelta,
+  smoothSvgPath,
+  calculateCompositionEstimate
+} from '../domain/compositionEstimate.js';
 
 let activePeriod = '90'; // '7' | '30' | '90'
 
@@ -97,6 +110,94 @@ export function renderProgressReportView() {
         </span>
         <button id="report-info-btn" class="btn-icon no-print" aria-label="دليل القياس والتقدم" title="دليل قراءة المؤشرات">
           ${neonIcon('bulb', 18)}
+        </button>
+      </div>
+
+      <!-- ============================================================
+           WEIGHT TRACKER + HERO SECTION (مطابق لـ gym.html والصورة المرفقة)
+           ============================================================ -->
+      <div class="wt-section no-print">
+        <div class="wt-divider"><span>WEIGHT</span></div>
+
+        <div class="wt-card">
+          <div class="wt-row">
+            <span class="wt-num" id="wtNum">-</span>
+            <span class="wt-unit" id="wtUnit">kg</span>
+          </div>
+          <div class="wt-delta hidden" id="wtDelta"></div>
+          <div class="wt-streak hidden" id="wtStreak"><span id="wtStreakNum">0 day streak</span></div>
+
+          <div class="wt-empty" id="wtEmpty">Log your first weight to start tracking.</div>
+
+          <div class="wt-chart-wrap hidden" id="wtChartWrap">
+            <div class="wt-chart-yaxis">
+              <span id="wtYAxisMax">-</span>
+              <span id="wtYAxisMin">-</span>
+            </div>
+            <svg class="wt-chart" viewBox="0 0 320 130" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="wtFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#55F7A5" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#55F7A5" stop-opacity="0"/>
+                </linearGradient>
+                <filter id="wtGlow">
+                  <feGaussianBlur stdDeviation="1.5" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <line class="wt-grid" x1="0" y1="20" x2="320" y2="20"></line>
+              <line class="wt-grid" x1="0" y1="65" x2="320" y2="65"></line>
+              <line class="wt-grid" x1="0" y1="110" x2="320" y2="110"></line>
+              <g id="wtChartContent"></g>
+            </svg>
+            <div class="wt-meta" id="wtMeta">0 entries</div>
+          </div>
+
+          <div class="wt-legend hidden" id="wtLegend">
+            <span class="wt-legend-item"><span class="wt-legend-dot"></span>DAILY</span>
+            <span class="wt-legend-item"><span class="wt-legend-dot wt-legend-dot-avg"></span>7-DAY AVG</span>
+          </div>
+
+          <!-- Composition estimate -->
+          <div class="wt-comp hidden" id="wtComp">
+            <div class="wt-comp-h">
+              <span class="wt-comp-label">COMPOSITION ESTIMATE</span>
+              <span class="wt-comp-window" id="wtCompWindow">last 30d</span>
+            </div>
+            <div class="wt-comp-headline" id="wtCompHeadline">-</div>
+            <div class="wt-comp-bars" id="wtCompBars"></div>
+            <div class="wt-comp-foot" id="wtCompFoot">-</div>
+          </div>
+
+          <!-- Locked Today Row -->
+          <div class="wt-locked hidden" id="wtLocked">
+            <div class="wt-locked-info">
+              <span class="wt-locked-check">✓</span>
+              <div>
+                <div class="wt-locked-label">LOGGED TODAY</div>
+                <div class="wt-locked-value" id="wtLockedValue">- kg</div>
+              </div>
+            </div>
+            <button class="wt-edit-btn" id="wtEditBtn" type="button">Edit</button>
+          </div>
+
+          <!-- Input Row -->
+          <div class="wt-input-row" id="wtInputRow">
+            <div class="wt-input-top">
+              <input type="number" step="0.1" class="wt-input" id="wtInput" placeholder="Enter weight" inputmode="decimal" aria-label="Today's weight">
+              <span class="wt-unit-static" id="wtUnitStatic">kg</span>
+              <button class="wt-save-btn" id="wtSaveBtn" type="button">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Photos Link Button -->
+        <button class="wt-progress-link" id="wtProgressLink" type="button" aria-label="Open progress photos">
+          <div>
+            <div class="wt-progress-label">PROGRESS PHOTOS</div>
+            <div class="wt-progress-count" id="wtProgressCount">0 photos</div>
+          </div>
+          <span class="wt-progress-arrow">→</span>
         </button>
       </div>
 
@@ -579,8 +680,602 @@ export function renderProgressReportView() {
         </div>
       </div>
 
+      <!-- ============================================================
+           MODALS FOR LOCAL PROGRESS PHOTOS (مطابق لـ gym.html والصورة المرفقة)
+           ============================================================ -->
+      <!-- Progress photos overlay (100% Local Storage) -->
+      <div class="wt-overlay no-print" id="wtOverlay" aria-hidden="true">
+        <div class="wt-overlay-inner">
+          <div class="wt-overlay-h">
+            <button class="wt-back" id="wtBack" type="button" aria-label="Back">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="wt-overlay-title">Progress Photos</div>
+          </div>
+          <div class="wt-overlay-actions">
+            <button class="wt-overlay-action wt-overlay-primary" id="wtTakePhotoBtn" type="button">Take Photo</button>
+            <button class="wt-overlay-action wt-overlay-secondary" id="wtFromLibraryBtn" type="button">From Library</button>
+          </div>
+          <input type="file" id="wtFileCamera" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="wtFileLibrary" accept="image/*" style="display:none">
+          <div class="wt-photo-grid" id="wtPhotoGrid">
+            <div class="wt-photo-empty">No photos yet · tap Take Photo to start</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera modal -->
+      <div class="wt-cam no-print" id="wtCam" aria-hidden="true">
+        <div class="wt-cam-stage">
+          <video class="wt-cam-video" id="wtCamVideo" autoplay playsinline muted></video>
+          <canvas id="wtCamCanvas" style="display:none"></canvas>
+        </div>
+        <div class="wt-cam-actions">
+          <button class="wt-cam-btn" id="wtCamCancel" type="button">Cancel</button>
+          <button class="wt-cam-shutter" id="wtCamShutter" type="button" aria-label="Capture"></button>
+          <button class="wt-cam-btn" id="wtCamFlip" type="button" aria-label="Flip camera">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Photo viewer - has two modes: single and compare -->
+      <div class="wt-viewer no-print" id="wtViewer" data-mode="single" aria-hidden="true">
+        <!-- SINGLE MODE -->
+        <div class="wt-viewer-single">
+          <div class="wt-viewer-stage">
+            <img id="wtViewerImg" alt="" style="max-width:100%; max-height:100%; object-fit:contain;">
+          </div>
+          <div class="wt-viewer-meta">
+            <div class="wt-viewer-date" id="wtViewerDate">-</div>
+            <div class="wt-viewer-weight" id="wtViewerWeight">-</div>
+          </div>
+          <div class="wt-viewer-actions">
+            <button class="wt-viewer-btn wt-viewer-compare" id="wtViewerCompare" type="button">Compare</button>
+            <button class="wt-viewer-btn wt-viewer-close" id="wtViewerClose" type="button">Close</button>
+            <button class="wt-viewer-btn wt-viewer-delete" id="wtViewerDelete" type="button">Delete</button>
+          </div>
+        </div>
+
+        <!-- COMPARE MODE -->
+        <div class="wt-viewer-compare-view">
+          <div class="wt-compare-stage">
+            <div class="wt-compare-side" id="wtCmpSideA">
+              <img id="wtCmpImgA" alt="">
+              <div class="wt-compare-meta-line" id="wtCmpMetaA">-</div>
+            </div>
+            <button type="button" class="wt-compare-side wt-compare-other" id="wtCmpSideB" title="Tap to compare to a different photo" aria-label="Compare to a different photo">
+              <img id="wtCmpImgB" alt="">
+              <div class="wt-compare-meta-line" id="wtCmpMetaB">-</div>
+            </button>
+          </div>
+          <div class="wt-compare-headline" id="wtCompareHeadline">-</div>
+          <div class="wt-viewer-actions">
+            <button class="wt-viewer-btn wt-viewer-back" id="wtCompareBack" type="button">← Back</button>
+            <button class="wt-viewer-btn wt-viewer-close" id="wtCompareClose" type="button">Close</button>
+            <button class="wt-viewer-btn wt-viewer-delete" id="wtCompareDelete" type="button">Delete</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   `;
+}
+
+let camStream = null;
+let camFacing = 'environment';
+let activePhotoId = null;
+let comparePhotoId = null;
+let pvDeleteConfirm = false;
+
+function initPhotosUI(units, getWtEntries) {
+  let photos = [];
+
+  const photoCurrentWeight = () => {
+    const entries = getWtEntries();
+    const last = entries[entries.length - 1];
+    return last ? `${last.weight.toFixed(1)} ${units}` : '-';
+  };
+
+  const renderPhotosGrid = () => {
+    const grid = document.getElementById('wtPhotoGrid');
+    const countEl = document.getElementById('wtProgressCount');
+
+    if (countEl) {
+      if (!photos.length) {
+        countEl.textContent = '0 photos';
+      } else if (photos.length === 1) {
+        countEl.textContent = `1 photo · latest ${photoFmtDate(photos[0].dateKey)}`;
+      } else {
+        countEl.textContent = `${photos.length} photos · latest ${photoFmtDate(photos[0].dateKey)}`;
+      }
+    }
+
+    if (!grid) return;
+    if (!photos.length) {
+      grid.innerHTML = '<div class="wt-photo-empty">No photos yet · tap Take Photo to start</div>';
+      return;
+    }
+
+    grid.innerHTML = photos.map(p => `
+      <button class="wt-photo-card" data-id="${p.id}" type="button">
+        <img src="${p.dataUrl}" alt="Progress photo" loading="lazy">
+        <div class="wt-photo-overlay"></div>
+        <div class="wt-photo-meta">
+          <span class="wt-photo-date">${photoFmtDate(p.dateKey)}</span>
+          <span class="wt-photo-weight">${p.weight || '-'}</span>
+        </div>
+      </button>
+    `).join('');
+
+    grid.querySelectorAll('.wt-photo-card').forEach(card => {
+      card.addEventListener('click', () => openPhoto(card.dataset.id));
+    });
+  };
+
+  const loadPhotos = async () => {
+    photos = await localPhotoStorage.getAllPhotos();
+    renderPhotosGrid();
+  };
+
+  const addLocalPhoto = async (dataUrl) => {
+    await localPhotoStorage.savePhoto({
+      dataUrl,
+      dateKey: wtDateKey(new Date()),
+      weight: photoCurrentWeight()
+    });
+    await loadPhotos();
+    notificationService.showToast('تم حفظ صورة التقدم محلياً على جهازك ✓', 'success');
+  };
+
+  const handleFileSelected = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        addLocalPhoto(e.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Overlay Open & Close
+  document.getElementById('wtProgressLink')?.addEventListener('click', async () => {
+    await loadPhotos();
+    document.getElementById('wtOverlay')?.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  });
+
+  document.getElementById('wtBack')?.addEventListener('click', () => {
+    document.getElementById('wtOverlay')?.classList.remove('is-open');
+    document.body.style.overflow = '';
+  });
+
+  // Camera Handling
+  const openCam = async () => {
+    const camModal = document.getElementById('wtCam');
+    const video = document.getElementById('wtCamVideo');
+    camModal?.classList.add('is-open');
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: camFacing } },
+        audio: false
+      });
+      if (video) video.srcObject = camStream;
+    } catch {
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        if (video) video.srcObject = camStream;
+      } catch (err) {
+        closeCam();
+        document.getElementById('wtFileLibrary')?.click();
+      }
+    }
+  };
+
+  const closeCam = () => {
+    if (camStream) {
+      camStream.getTracks().forEach(t => t.stop());
+      camStream = null;
+    }
+    const video = document.getElementById('wtCamVideo');
+    if (video) video.srcObject = null;
+    document.getElementById('wtCam')?.classList.remove('is-open');
+  };
+
+  document.getElementById('wtTakePhotoBtn')?.addEventListener('click', async () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        await openCam();
+        return;
+      } catch {}
+    }
+    document.getElementById('wtFileCamera')?.click();
+  });
+
+  document.getElementById('wtFromLibraryBtn')?.addEventListener('click', () => {
+    document.getElementById('wtFileLibrary')?.click();
+  });
+
+  document.getElementById('wtFileCamera')?.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) handleFileSelected(f);
+    e.target.value = '';
+  });
+
+  document.getElementById('wtFileLibrary')?.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) handleFileSelected(f);
+    e.target.value = '';
+  });
+
+  document.getElementById('wtCamCancel')?.addEventListener('click', closeCam);
+
+  document.getElementById('wtCamFlip')?.addEventListener('click', async () => {
+    camFacing = (camFacing === 'environment') ? 'user' : 'environment';
+    if (camStream) camStream.getTracks().forEach(t => t.stop());
+    try { await openCam(); } catch {}
+  });
+
+  document.getElementById('wtCamShutter')?.addEventListener('click', () => {
+    const video = document.getElementById('wtCamVideo');
+    const canvas = document.getElementById('wtCamCanvas');
+    if (!video || !canvas || !video.videoWidth) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    closeCam();
+    addLocalPhoto(dataUrl);
+  });
+
+  // Photo Viewer & Compare Mode
+  const openPhoto = (id) => {
+    const p = photos.find(x => x.id === id);
+    if (!p) return;
+    activePhotoId = id;
+    const viewer = document.getElementById('wtViewer');
+    const img = document.getElementById('wtViewerImg');
+    const dateEl = document.getElementById('wtViewerDate');
+    const weightEl = document.getElementById('wtViewerWeight');
+    const deleteBtn = document.getElementById('wtViewerDelete');
+    const compareBtn = document.getElementById('wtViewerCompare');
+
+    if (img) img.src = p.dataUrl;
+    if (dateEl) dateEl.textContent = photoFmtDate(p.dateKey).toUpperCase();
+    if (weightEl) weightEl.textContent = p.weight || '-';
+    if (viewer) {
+      viewer.dataset.mode = 'single';
+      viewer.classList.add('is-open');
+    }
+    pvDeleteConfirm = false;
+    if (deleteBtn) {
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.classList.remove('is-confirm');
+    }
+    if (compareBtn) {
+      compareBtn.disabled = photos.length < 2;
+      compareBtn.style.opacity = photos.length < 2 ? '0.4' : '';
+    }
+  };
+
+  const closePhoto = () => {
+    const viewer = document.getElementById('wtViewer');
+    if (viewer) {
+      viewer.classList.remove('is-open');
+      viewer.dataset.mode = 'single';
+    }
+    activePhotoId = null;
+    comparePhotoId = null;
+  };
+
+  const defaultCompareFor = (activeId) => {
+    const idx = photos.findIndex(p => p.id === activeId);
+    if (idx === -1) return null;
+    if (photos[idx + 1]) return photos[idx + 1].id;
+    if (photos[idx - 1]) return photos[idx - 1].id;
+    return null;
+  };
+
+  const openCompare = (activeId, otherId) => {
+    const A = photos.find(p => p.id === activeId);
+    const B = photos.find(p => p.id === otherId);
+    if (!A || !B) return;
+    activePhotoId = activeId;
+    comparePhotoId = otherId;
+
+    const imgA = document.getElementById('wtCmpImgA');
+    const imgB = document.getElementById('wtCmpImgB');
+    const metaA = document.getElementById('wtCmpMetaA');
+    const metaB = document.getElementById('wtCmpMetaB');
+    const headEl = document.getElementById('wtCompareHeadline');
+    const viewer = document.getElementById('wtViewer');
+
+    if (imgA) imgA.src = A.dataUrl;
+    if (imgB) imgB.src = B.dataUrl;
+    if (metaA) metaA.textContent = `${photoFmtDate(A.dateKey)} · ${A.weight || '-'}`;
+    if (metaB) metaB.textContent = `${photoFmtDate(B.dateKey)} · ${B.weight || '-'}`;
+
+    const parseWeight = (wStr) => {
+      if (!wStr) return null;
+      const m = String(wStr).match(/-?\d+(\.\d+)?/);
+      return m ? parseFloat(m[0]) : null;
+    };
+    const wA = parseWeight(A.weight);
+    const wB = parseWeight(B.weight);
+
+    let cls = 'flat';
+    let headline = `${photoFmtDate(A.dateKey)} → ${photoFmtDate(B.dateKey)}`;
+    if (wA != null && wB != null) {
+      const diff = Math.round((wA - wB) * 10) / 10;
+      if (Math.abs(diff) < 0.05) {
+        headline += ' · no change';
+      } else {
+        const sign = diff > 0 ? '+' : '';
+        const arrow = diff > 0 ? '▲' : '▼';
+        headline += ` · ${arrow} ${sign}${diff.toFixed(1)} ${units}`;
+        cls = diff > 0 ? 'up' : 'down';
+      }
+    }
+    if (headEl) {
+      headEl.textContent = headline;
+      headEl.className = 'wt-compare-headline ' + cls;
+    }
+
+    if (viewer) {
+      viewer.dataset.mode = 'compare';
+      viewer.classList.add('is-open');
+    }
+  };
+
+  const cycleCompareTarget = () => {
+    if (!activePhotoId) return;
+    const others = photos.filter(p => p.id !== activePhotoId);
+    if (!others.length) return;
+    const curIdx = others.findIndex(p => p.id === comparePhotoId);
+    const nextIdx = (curIdx + 1) % others.length;
+    openCompare(activePhotoId, others[nextIdx].id);
+  };
+
+  const deleteActivePhoto = async (deleteBtn) => {
+    if (!activePhotoId) return;
+    if (!pvDeleteConfirm) {
+      pvDeleteConfirm = true;
+      deleteBtn.textContent = 'Confirm delete?';
+      deleteBtn.classList.add('is-confirm');
+      setTimeout(() => {
+        pvDeleteConfirm = false;
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.classList.remove('is-confirm');
+      }, 3000);
+      return;
+    }
+    await localPhotoStorage.deletePhoto(activePhotoId);
+    await loadPhotos();
+    closePhoto();
+    notificationService.showToast('تم حذف الصورة من جهازك بنجاح', 'info');
+  };
+
+  document.getElementById('wtViewerClose')?.addEventListener('click', closePhoto);
+  document.getElementById('wtCompareClose')?.addEventListener('click', closePhoto);
+  document.getElementById('wtViewerDelete')?.addEventListener('click', (e) => deleteActivePhoto(e.currentTarget));
+  document.getElementById('wtCompareDelete')?.addEventListener('click', (e) => deleteActivePhoto(e.currentTarget));
+
+  document.getElementById('wtViewerCompare')?.addEventListener('click', () => {
+    if (!activePhotoId) return;
+    const otherId = defaultCompareFor(activePhotoId);
+    if (!otherId) {
+      alert('Need at least 2 photos to compare.');
+      return;
+    }
+    openCompare(activePhotoId, otherId);
+  });
+
+  document.getElementById('wtCompareBack')?.addEventListener('click', () => {
+    const viewer = document.getElementById('wtViewer');
+    if (viewer && activePhotoId) {
+      viewer.dataset.mode = 'single';
+    } else {
+      closePhoto();
+    }
+  });
+
+  document.getElementById('wtCmpSideB')?.addEventListener('click', cycleCompareTarget);
+
+  window.addEventListener('hashchange', () => {
+    closeCam();
+  }, { once: true });
+
+  loadPhotos();
+}
+
+function initWeightTrackerAndPhotos(state, report, user) {
+  const currentWeight = user.currentWeight || report.currentDay?.weight || 129;
+  let wtEntries = wtLoad(currentWeight);
+  const units = user.units || 'kg';
+
+  function renderWt() {
+    const wtNumEl = document.getElementById('wtNum');
+    const wtUnitEl = document.getElementById('wtUnit');
+    const wtUnitStaticEl = document.getElementById('wtUnitStatic');
+    const wtEmptyEl = document.getElementById('wtEmpty');
+    const wtLockedEl = document.getElementById('wtLocked');
+    const wtLockedValEl = document.getElementById('wtLockedValue');
+    const wtInputRowEl = document.getElementById('wtInputRow');
+    const wtInputEl = document.getElementById('wtInput');
+    const wtChartWrapEl = document.getElementById('wtChartWrap');
+    const wtLegendEl = document.getElementById('wtLegend');
+    const wtDeltaEl = document.getElementById('wtDelta');
+    const wtStreakEl = document.getElementById('wtStreak');
+    const wtStreakNumEl = document.getElementById('wtStreakNum');
+    const wtCompEl = document.getElementById('wtComp');
+
+    if (!wtNumEl) return;
+
+    const last = wtEntries[wtEntries.length - 1] || null;
+    const todayKey = wtDateKey(new Date());
+    const todayEntry = wtEntries.find(e => e.dateKey === todayKey);
+
+    if (wtUnitEl) wtUnitEl.textContent = units;
+    if (wtUnitStaticEl) wtUnitStaticEl.textContent = units;
+    if (wtNumEl) wtNumEl.textContent = last ? last.weight.toFixed(1) : (currentWeight ? Number(currentWeight).toFixed(1) : '-');
+
+    if (todayEntry) {
+      wtEmptyEl?.classList.add('hidden');
+      if (wtLockedValEl) wtLockedValEl.textContent = todayEntry.weight.toFixed(1) + ' ' + units;
+      wtLockedEl?.classList.remove('hidden');
+      wtInputRowEl?.classList.add('hidden');
+    } else {
+      if (wtEntries.length === 0) wtEmptyEl?.classList.remove('hidden');
+      else wtEmptyEl?.classList.add('hidden');
+      wtLockedEl?.classList.add('hidden');
+      wtInputRowEl?.classList.remove('hidden');
+      if (last && wtInputEl && !wtInputEl.value) {
+        wtInputEl.value = last.weight.toFixed(1);
+      }
+    }
+
+    // Chart & Delta & Composition
+    if (wtEntries.length >= 2) {
+      wtChartWrapEl?.classList.remove('hidden');
+      wtLegendEl?.classList.remove('hidden');
+
+      const recent = wtEntries.slice(-30);
+      const weights = recent.map(e => e.weight);
+      const min = Math.min(...weights);
+      const max = Math.max(...weights);
+      const pad = Math.max((max - min) * 0.15, 0.5);
+      const yMin = min - pad;
+      const yMax = max + pad;
+      const xLeft = 8, xRight = 312, yTop = 20, yBot = 110;
+      const xRange = xRight - xLeft;
+      const yRange = yBot - yTop;
+      const xFor = (i) => recent.length === 1 ? xRight : xLeft + (i / (recent.length - 1)) * xRange;
+      const yFor = (w) => yBot - ((w - yMin) / (yMax - yMin)) * yRange;
+
+      const points = recent.map((e, i) => ({ x: xFor(i), y: yFor(e.weight) }));
+      const linePath = smoothSvgPath(points);
+      const areaPath = linePath + ' L ' + points[points.length - 1].x.toFixed(2) + ' ' + yBot + ' L ' + points[0].x.toFixed(2) + ' ' + yBot + ' Z';
+
+      const avgPoints = recent.map((_, i) => {
+        const start = Math.max(0, i - 6);
+        const win = recent.slice(start, i + 1);
+        const avg = win.reduce((s, p) => s + p.weight, 0) / win.length;
+        return { x: xFor(i), y: yFor(avg) };
+      });
+      const avgPath = smoothSvgPath(avgPoints);
+
+      let chartSvgHtml = '<path class="wt-avg-line" d="' + avgPath + '"></path>'
+        + '<path class="wt-area" d="' + areaPath + '"></path>'
+        + '<path class="wt-line" filter="url(#wtGlow)" d="' + linePath + '"></path>';
+
+      points.forEach((p, i) => {
+        const cls = (i === points.length - 1) ? 'wt-dot-today' : 'wt-dot';
+        const r = (i === points.length - 1) ? 5 : 3;
+        chartSvgHtml += `<circle class="${cls}" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${r}"/>`;
+      });
+
+      const chartContentEl = document.getElementById('wtChartContent');
+      if (chartContentEl) chartContentEl.innerHTML = chartSvgHtml;
+      const yMaxEl = document.getElementById('wtYAxisMax');
+      const yMinEl = document.getElementById('wtYAxisMin');
+      if (yMaxEl) yMaxEl.textContent = yMax.toFixed(1);
+      if (yMinEl) yMinEl.textContent = yMin.toFixed(1);
+      const metaEl = document.getElementById('wtMeta');
+      if (metaEl) {
+        metaEl.textContent = `${wtEntries.length} ${wtEntries.length === 1 ? 'entry' : 'entries'} · last ${recent.length} days`;
+      }
+
+      // Delta
+      const deltaInfo = calculate7DayDelta(wtEntries, units);
+      if (deltaInfo && wtDeltaEl) {
+        wtDeltaEl.textContent = deltaInfo.text;
+        wtDeltaEl.className = 'wt-delta ' + deltaInfo.cls;
+        wtDeltaEl.classList.remove('hidden');
+      } else {
+        wtDeltaEl?.classList.add('hidden');
+      }
+
+      // Composition Estimate
+      const comp = calculateCompositionEstimate({
+        entries: wtEntries,
+        workoutHistory: store.getWorkoutHistory() || [],
+        units,
+        windowDays: 30,
+        yearsTraining: user.yearsTraining || 1
+      });
+
+      if (comp.visible && wtCompEl) {
+        wtCompEl.classList.remove('hidden');
+        const winEl = document.getElementById('wtCompWindow');
+        const headEl = document.getElementById('wtCompHeadline');
+        const barsEl = document.getElementById('wtCompBars');
+        const footEl = document.getElementById('wtCompFoot');
+
+        if (winEl) winEl.textContent = `last ${comp.actualDays}d`;
+        if (headEl) {
+          headEl.textContent = comp.headline;
+          headEl.className = 'wt-comp-headline ' + comp.headlineCls;
+        }
+        if (barsEl) {
+          barsEl.innerHTML = `
+            <div class="wt-comp-bar muscle" style="width:${comp.musclePct.toFixed(1)}%"></div>
+            <div class="wt-comp-bar fat" style="width:${comp.fatPct.toFixed(1)}%"></div>
+          `;
+        }
+        if (footEl) footEl.textContent = comp.footText;
+      } else {
+        wtCompEl?.classList.add('hidden');
+      }
+    } else {
+      wtChartWrapEl?.classList.add('hidden');
+      wtLegendEl?.classList.add('hidden');
+      wtDeltaEl?.classList.add('hidden');
+      wtCompEl?.classList.add('hidden');
+    }
+
+    // Streak
+    const streak = calculateStreak(wtEntries);
+    if (streak >= 2 && wtStreakEl && wtStreakNumEl) {
+      wtStreakNumEl.textContent = `${streak} day streak`;
+      wtStreakEl.classList.remove('hidden');
+    } else {
+      wtStreakEl?.classList.add('hidden');
+    }
+  }
+
+  const inputEl = document.getElementById('wtInput');
+  const saveBtn = document.getElementById('wtSaveBtn');
+  const editBtn = document.getElementById('wtEditBtn');
+
+  const doSaveWeight = () => {
+    const v = parseFloat(inputEl?.value);
+    if (isNaN(v) || v <= 0) return;
+    wtEntries = wtSaveEntry(wtEntries, v);
+    store.logProgressMeasurement({ weight: v });
+    notificationService.showToast('تم تسجيل وزن اليوم بنجاح ✓', 'success');
+    renderWt();
+  };
+
+  saveBtn?.addEventListener('click', doSaveWeight);
+  inputEl?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doSaveWeight();
+  });
+
+  editBtn?.addEventListener('click', () => {
+    document.getElementById('wtLocked')?.classList.add('hidden');
+    document.getElementById('wtInputRow')?.classList.remove('hidden');
+    const todayKey = wtDateKey(new Date());
+    const todayEntry = wtEntries.find(e => e.dateKey === todayKey);
+    if (todayEntry && inputEl) {
+      inputEl.value = todayEntry.weight.toFixed(1);
+    }
+    inputEl?.focus();
+    inputEl?.select();
+  });
+
+  renderWt();
+  initPhotosUI(units, () => wtEntries);
 }
 
 export function bindProgressReportEvents() {
@@ -592,6 +1287,9 @@ export function bindProgressReportEvents() {
   const state = store.getState();
   const report = state.progressReport || {};
   const user = state.userProfile || {};
+
+  // تهيئة وتفعيل مراقب الوزن والصور المحلية المطابقة لـ gym.html
+  initWeightTrackerAndPhotos(state, report, user);
   const currentWeight = user.currentWeight || report.currentDay?.weight || 118;
   const currentWaist = report.currentDay?.waistCm || 108;
   const currentStrength = report.currentDay?.benchPressKg || 82.5;
@@ -658,6 +1356,9 @@ export function bindProgressReportEvents() {
     const w = document.getElementById('input-measure-weight')?.value;
     const waist = document.getElementById('input-measure-waist')?.value;
     const bench = document.getElementById('input-measure-bench')?.value;
+    if (w && !isNaN(Number(w))) {
+      wtSaveEntry(wtLoad(), Number(w));
+    }
     store.logProgressMeasurement({ weight: w, waistCm: waist, benchPressKg: bench });
     measureModal?.classList.remove('open');
     notificationService.showToast('تم حفظ القياسات وتحديث التقرير بنجاح ✓', 'success');
