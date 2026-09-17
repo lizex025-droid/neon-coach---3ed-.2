@@ -105,3 +105,34 @@ test('fortyDayWorkout and EXERCISES contain verified R2 image links with pageIma
   }
 });
 
+test('exercise sets are completely blank (empty kg and reps) by default for user entry', () => {
+  fortyDayWorkoutService.setActivePlan('hasm');
+  const trackers = fortyDayWorkoutService.getTrackersForDay('chestBiceps');
+  assert.ok(trackers.length > 0);
+  for (const tracker of trackers) {
+    assert.ok(tracker.sets.length >= 3);
+    for (const set of tracker.sets) {
+      assert.equal(set.kg, '', 'Weight should be empty string');
+      assert.equal(set.reps, '', 'Reps should be empty string');
+      assert.equal(set.done, false, 'Set should not be done by default');
+    }
+  }
+
+  // Adding a set should also be blank
+  fortyDayWorkoutService.addSet('chestBiceps', 0);
+  const updatedTracker = fortyDayWorkoutService.getTracker('chestBiceps', 0);
+  const newSet = updatedTracker.sets.at(-1);
+  assert.equal(newSet.kg, '');
+  assert.equal(newSet.reps, '');
+  assert.equal(newSet.done, false);
+
+  // Resetting should also produce blank sets
+  fortyDayWorkoutService.resetExercise('chestBiceps', 0);
+  const resetTracker = fortyDayWorkoutService.getTracker('chestBiceps', 0);
+  for (const set of resetTracker.sets) {
+    assert.equal(set.kg, '');
+    assert.equal(set.reps, '');
+    assert.equal(set.done, false);
+  }
+});
+

@@ -77,8 +77,13 @@ export function renderFortyDayWorkoutView() {
           </div>
           <p>${activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : '6 أيام Push / Pull / Legs ثم يوم راحة'}</p>
         </div>
-        <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : ''}" id="forty-day-tabs">
-          ${days.map(day => `<button type="button" class="forty-day-tab tone-${day.tone} ${day.key === activeDay ? 'is-active' : ''}" data-day="${day.key}">${day.short}</button>`).join('')}
+        <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : ''}" id="forty-day-tabs" role="tablist" aria-label="أيام التمرين">
+          ${days.map((day, idx) => `
+            <button type="button" role="tab" aria-selected="${day.key === activeDay ? 'true' : 'false'}" class="forty-day-tab tone-${day.tone} ${day.key === activeDay ? 'is-active' : ''}" data-day="${day.key}">
+              <span class="forty-tab-day">${activePlan === 'hasm' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
+              <span class="forty-tab-title">${escapeHtml(day.short)}</span>
+            </button>
+          `).join('')}
         </div>
       </section>
 

@@ -40,16 +40,27 @@
 .forty-section-heading span,.forty-day-header span { color: var(--forty-mint); font-size: .72rem; font-weight: 900; letter-spacing: .08em; }
 .forty-section-heading h2,.forty-day-header h2 { margin: 3px 0 0; color: #fff; font: italic 800 1.45rem/1.3 Georgia,serif; }
 .forty-section-heading p { color: rgba(255,255,255,.45); margin: 0; font-size: .82rem; }
-.forty-day-tabs { display: grid; grid-template-columns: repeat(7,minmax(80px,1fr)); gap: 8px; }
-.forty-day-tabs.hasm-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-@media (max-width: 900px) {
-  .forty-day-tabs.hasm-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.forty-day-tabs { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 10px; }
+@media (max-width: 960px) {
+  .forty-day-tabs:not(.hasm-tabs) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-@media (max-width: 540px) {
-  .forty-day-tabs.hasm-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 560px) {
+  .forty-day-tabs:not(.hasm-tabs) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-.forty-day-tab { min-height: 46px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 13px; color: rgba(255,255,255,.62); background: rgba(255,255,255,.025); cursor: pointer; font-family: inherit; font-weight: 900; white-space: nowrap; text-align: center; }
-.forty-day-tab.is-active { color: #031d12; background: var(--forty-mint); border-color: var(--forty-mint); box-shadow: 0 0 20px rgba(110,231,183,.2); }
+.forty-day-tabs.hasm-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 960px) {
+  .forty-day-tabs.hasm-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+}
+@media (max-width: 560px) {
+  .forty-day-tabs.hasm-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
+.forty-day-tab { min-height: 56px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color: rgba(255,255,255,.65); background: rgba(255,255,255,.03); cursor: pointer; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center; transition: all .2s cubic-bezier(0.16, 1, 0.3, 1); box-sizing: border-box; }
+.forty-day-tab:hover { border-color: rgba(110,231,183,.4); background: rgba(110,231,183,.06); color: #fff; }
+.forty-tab-day { font-size: .68rem; font-weight: 800; letter-spacing: .05em; color: var(--forty-mint); opacity: .85; line-height: 1; }
+.forty-tab-title { font-size: .82rem; font-weight: 800; line-height: 1.25; color: inherit; white-space: normal; text-align: center; }
+.forty-day-tab.is-active { color: #031d12; background: var(--forty-mint); border-color: var(--forty-mint); box-shadow: 0 0 22px rgba(110,231,183,.28); }
+.forty-day-tab.is-active .forty-tab-day { color: #033621; opacity: .9; }
+.forty-day-tab.is-active .forty-tab-title { color: #031d12; }
 .forty-day-content,.forty-exercise-grid { width: 100%; min-width: 0; }
 .forty-day-content { display: grid; gap: 14px; }
 .forty-day-header { padding: 4px 4px 0; }
@@ -195,7 +206,8 @@
   .forty-hero,.forty-hero-content { min-height: 280px; }
   .forty-hero-content { padding: 25px 20px; }
   .forty-section-heading { align-items: flex-start; flex-direction: column; }
-  .forty-day-tabs { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .forty-day-tabs:not(.hasm-tabs) { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .forty-day-tabs.hasm-tabs { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
   .forty-exercise-card { padding: 14px; }
   .forty-set-row { min-height: 82px; grid-template-columns: 28px minmax(70px,1fr) 14px minmax(70px,1fr) 44px; gap: 5px; padding: 10px; }
   .forty-set-row input { min-height: 46px; font-size: 1.22rem; }
@@ -209,7 +221,8 @@
   .forty-rest-bar { flex-wrap: wrap; }
   .forty-rest-progress { order: 3; flex-basis: 100%; }
   .forty-days-section { padding: 17px; }
-  .forty-day-tabs { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .forty-day-tabs:not(.hasm-tabs) { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .forty-day-tabs.hasm-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   .forty-exercise-head { grid-template-columns: 24px minmax(0,1fr) 36px; gap: 8px; }
   .forty-exercise-head h3 { font-size: 1.05rem; }
   .forty-image-btn { width: 36px; height: 36px; }

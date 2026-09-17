@@ -40,13 +40,27 @@ function defaultState() {
 function normalizeTracker(raw, exercise) {
   const count = Math.max(1, Number(raw?.targetSets) || Number(exercise.sets) || 3);
   const weight = clampNumber(raw?.weight ?? '', 0, 1000);
-  const reps = targetReps(raw?.targetReps || exercise.reps);
-  const sets = Array.isArray(raw?.sets) ? raw.sets.slice(0, 12).map(set => ({
-    kg: clampNumber(set.kg, 0, 1000),
-    reps: clampNumber(set.reps, 0, 1000, true),
-    done: Boolean(set.done)
-  })) : [];
-  while (sets.length < count) sets.push(blankSet(weight, reps));
+  const defaultReps = targetReps(raw?.targetReps || exercise.reps);
+  const sets = Array.isArray(raw?.sets) ? raw.sets.slice(0, 12).map(set => {
+    const isDone = Boolean(set.done);
+    const kg = clampNumber(set.kg, 0, 1000);
+    let reps = '';
+    if (isDone) {
+      reps = clampNumber(set.reps, 0, 1000, true);
+    } else if (kg !== '') {
+      reps = clampNumber(set.reps, 0, 1000, true);
+    } else if (set.reps !== '' && set.reps != null && String(set.reps) !== String(defaultReps) && String(set.reps) !== '8') {
+      reps = clampNumber(set.reps, 0, 1000, true);
+    } else {
+      reps = '';
+    }
+    return {
+      kg,
+      reps,
+      done: isDone
+    };
+  }) : [];
+  while (sets.length < count) sets.push(blankSet('', ''));
   return {
     sets,
     targetSets: count,
@@ -67,6 +81,18 @@ class FortyDayWorkoutService {
     if (!this.state.session) {
       const legacy = readJson(LEGACY_SESSION_KEY, null);
       if (legacy?.startedAt) this.state.session = { startedAt: Number(legacy.startedAt), dayKey: this.state.activeDay, touchedExerciseIds: Object.keys(legacy.exerciseRecords || {}) };
+    }
+    if (this.state.trackers) {
+      for (const tracker of Object.values(this.state.trackers)) {
+        if (Array.isArray(tracker?.sets)) {
+          for (const s of tracker.sets) {
+            if (!s.done && (s.kg === '' || s.kg == null)) {
+              s.kg = '';
+              s.reps = '';
+            }
+          }
+        }
+      }
     }
     return this.state;
   }
@@ -203,8 +229,7 @@ class FortyDayWorkoutService {
   addSet(dayKey, exerciseIndex) {
     const tracker = this.getTracker(dayKey, exerciseIndex);
     if (!tracker || tracker.sets.length >= 12) return;
-    const last = tracker.sets.at(-1) || blankSet(tracker.weight, targetReps(tracker.targetReps));
-    tracker.sets.push(blankSet(last.kg, last.reps));
+    tracker.sets.push(blankSet('', ''));
     tracker.targetSets = tracker.sets.length;
     this.save();
   }
@@ -295,7 +320,7 @@ class FortyDayWorkoutService {
         rounds: played.map((set, index) => ({ round: index + 1, kg: Number(set.kg || 0), reps: Number(set.reps || 0) }))
       };
       tracker.history = [...(tracker.history || []), record].slice(-100);
-      tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet(tracker.weight, targetReps(tracker.targetReps)));
+      tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet('', ''));
       exercises.push({ title: exercise.title, nameAr: exercise.title, sets: played.length, setsCount: played.length, bestKg: record.bestKg, bestReps: record.bestReps, bestSet: record.bestKg ? `${record.bestKg} كغ × ${record.bestReps || '-'} تكرار` : `${record.bestReps || '-'} تكرار`, volume, isPersonalRecord });
     }
     const day = this.getDay(session.dayKey);
