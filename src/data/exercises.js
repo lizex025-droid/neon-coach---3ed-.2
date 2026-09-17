@@ -18,6 +18,7 @@ export const EXERCISES = [
     defaultRestSec: 90,
     defaultRpe: 8,
     icon: 'barbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B5%D8%AF%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_07_31%20PM%20%283%29.png',
     substitutes: ['dumbbell-incline-press', 'smith-incline-press', 'incline-chest-press-machine']
   },
   {
@@ -34,6 +35,7 @@ export const EXERCISES = [
     defaultRestSec: 120,
     defaultRpe: 8.5,
     icon: 'barbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B5%D8%AF%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_07_30%20PM%20%281%29.png',
     substitutes: ['dumbbell-flat-press', 'chest-press-machine', 'push-ups']
   },
   {
@@ -50,6 +52,7 @@ export const EXERCISES = [
     defaultRestSec: 60,
     defaultRpe: 8,
     icon: 'cable',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B5%D8%AF%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_07_33%20PM%20%287%29.png',
     substitutes: ['pec-deck-fly', 'dumbbell-fly']
   },
   {
@@ -66,6 +69,7 @@ export const EXERCISES = [
     defaultRestSec: 60,
     defaultRpe: 8,
     icon: 'cable',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%AA%D8%B1%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_03_34%20AM%20%281%29.png',
     substitutes: ['straight-bar-pushdown', 'overhead-cable-extension', 'skull-crushers']
   },
   {
@@ -82,6 +86,7 @@ export const EXERCISES = [
     defaultRestSec: 75,
     defaultRpe: 8,
     icon: 'dumbbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%AA%D8%B1%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_03_36%20AM%20%285%29.png',
     substitutes: ['cable-overhead-extension', 'french-press']
   },
   {
@@ -98,6 +103,7 @@ export const EXERCISES = [
     defaultRestSec: 150,
     defaultRpe: 8.5,
     icon: 'barbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A7%D8%B1%D8%AC%D9%84/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_55_36%20PM%20%281%29.png',
     substitutes: ['leg-press', 'goblet-squat', 'hack-squat']
   },
   {
@@ -114,6 +120,7 @@ export const EXERCISES = [
     defaultRestSec: 90,
     defaultRpe: 8,
     icon: 'barbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B8%D9%87%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_53_11%20PM%20%287%29.png',
     substitutes: ['dumbbell-rdl', 'leg-curl', 'cable-pull-through']
   },
   {
@@ -130,6 +137,7 @@ export const EXERCISES = [
     defaultRestSec: 75,
     defaultRpe: 8,
     icon: 'machine',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B8%D9%87%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_53_11%20PM%20%282%29.png',
     substitutes: ['pull-ups', 'cable-straight-arm-pulldown', 'seated-cable-row']
   },
   {
@@ -146,6 +154,7 @@ export const EXERCISES = [
     defaultRestSec: 90,
     defaultRpe: 8,
     icon: 'barbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%B8%D9%87%D8%B1/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_53_35%20PM%20%281%29.png',
     substitutes: ['dumbbell-row', 't-bar-row', 'chest-supported-row']
   },
   {
@@ -162,6 +171,7 @@ export const EXERCISES = [
     defaultRestSec: 60,
     defaultRpe: 8.5,
     icon: 'dumbbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D9%83%D8%AA%D9%81/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_54_44%20PM%20%283%29.png',
     substitutes: ['cable-lateral-raise', 'machine-lateral-raise']
   },
   {
@@ -178,6 +188,7 @@ export const EXERCISES = [
     defaultRestSec: 90,
     defaultRpe: 8,
     icon: 'dumbbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D9%83%D8%AA%D9%81/ChatGPT%20Image%20Sep%2014%2C%202026%2C%2011_54_32%20PM%20%284%29.png',
     substitutes: ['overhead-barbell-press', 'machine-shoulder-press']
   },
   {
@@ -194,6 +205,7 @@ export const EXERCISES = [
     defaultRestSec: 60,
     defaultRpe: 8,
     icon: 'dumbbell',
+    image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%A7%D9%8A%D8%B3%D9%8A%D8%A8%D8%B3/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2001_53_54%20AM%20%283%29.png',
     substitutes: ['standing-barbell-curl', 'cable-bicep-curl', 'hammer-curls']
   }
 ];

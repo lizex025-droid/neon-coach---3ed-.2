@@ -64,3 +64,29 @@ test('fortyDayWorkoutService dynamically supports both Hasm and PPL programs', (
   fortyDayWorkoutService.setActivePlan('hasm');
   assert.equal(fortyDayWorkoutService.getActivePlan(), 'hasm');
 });
+
+test('fortyDayWorkout and EXERCISES contain verified R2 image links with pageImage fallbacks', async () => {
+  const { FORTY_DAY_DAYS } = await import('../src/data/fortyDayWorkout.js');
+  const { EXERCISES } = await import('../src/data/exercises.js');
+
+  // Verify Forty Day exercises have images and pageImages
+  let r2ExerciseCount = 0;
+  for (const day of FORTY_DAY_DAYS) {
+    for (const ex of day.exercises) {
+      assert.ok(ex.image, `Exercise ${ex.title} should have an image`);
+      assert.ok(ex.pageImage, `Exercise ${ex.title} should have a pageImage`);
+      if (ex.image.startsWith('https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/')) {
+        r2ExerciseCount++;
+      }
+    }
+  }
+  // At least 25 core exercises in 40-day workout have direct R2 demonstration images
+  assert.ok(r2ExerciseCount >= 25, `Expected >= 25 R2 images, found ${r2ExerciseCount}`);
+
+  // Verify EXERCISES have R2 image links
+  for (const ex of EXERCISES) {
+    assert.ok(ex.image, `EXERCISE ${ex.id} should have an image`);
+    assert.ok(ex.image.startsWith('https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/'));
+  }
+});
+

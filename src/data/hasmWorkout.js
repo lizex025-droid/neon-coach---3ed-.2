@@ -278,7 +278,7 @@ export const HASM_GROUPS = [
         reps: '10 دقائق',
         alternative: 'مشاية كهربائية أو إحماء ديناميكي | Treadmill Warm-up',
         page: 18,
-        image: 'https://pub-bc14264a47ab413ba995108f257ad83d.r2.dev/GYM.2/%D8%A8%D8%B7%D9%86/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2012_12_39%20AM%20%284%29.png',
+        image: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0018.jpg?v=1785709353',
         pageImage: 'https://cdn.shopify.com/s/files/1/0854/4560/7664/files/page-0018.jpg?v=1785709353'
       },
       {
