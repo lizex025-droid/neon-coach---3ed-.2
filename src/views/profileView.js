@@ -884,7 +884,7 @@ export function bindProfileEvents() {
       await authService.logout();
       store.logoutUser();
       notificationService.showToast('تم تسجيل الخروج بنجاح', 'info');
-      window.location.hash = '#auth';
+      window.location.hash = '#questionnaire';
     }
   });
 

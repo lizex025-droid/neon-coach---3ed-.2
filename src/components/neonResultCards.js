@@ -51,9 +51,8 @@ export function renderNeonResult(container, response) {
     else panel.append(element('pre', JSON.stringify(card.data, null, 2)));
   }
   if (response.status === 'error') {
-    const login = element('a', 'تسجيل الدخول'); login.href = '#auth';
     const retry = element('button', 'إعادة محاولة نفس الطلب', 'btn'); retry.type = 'button'; retry.onclick = async () => { retry.disabled = true; const result = await neonActionAgent.retry(); if (result) renderNeonResult(container, result); };
-    container.append(login, retry);
+    container.append(retry);
   }
 }
 

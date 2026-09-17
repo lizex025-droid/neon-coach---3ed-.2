@@ -22,13 +22,11 @@ import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
 import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
-import { renderAuthView, bindAuthViewEvents } from '../views/authView.js';
 import { authService } from '../services/authService.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
 import { updateVoiceTriggerVisibility } from '../components/voice/voiceTriggerBtn.js';
 
 export const ROUTES = {
-  auth: { render: renderAuthView, bind: bindAuthViewEvents, showNav: false, showHeader: false },
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
   today: { render: renderTodayView, bind: bindTodayViewEvents, showNav: true, showHeader: true },
   workout: { render: renderFortyDayWorkoutView, bind: bindFortyDayWorkoutEvents, showNav: true, showHeader: true },
@@ -84,15 +82,13 @@ export class Router {
     const rawHash = hash.replace(/^#\/?/, '').split('?')[0];
     const routeKey = rawHash.split('/')[0];
 
-    // المستخدم الجديد يبدأ بالأسئلة أولاً
     if (!hasCompletedOnboarding) {
-      if (routeKey !== 'questionnaire' && routeKey !== 'auth') {
+      if (routeKey !== 'questionnaire') {
         window.location.hash = '#questionnaire';
         return;
       }
     } else {
-      // [مؤقت] لا يُطلب تسجيل الدخول — المستخدم يدخل مباشرة
-      if (!rawHash || routeKey === 'auth') {
+      if (!rawHash) {
         window.location.hash = '#today';
         return;
       }
@@ -109,25 +105,12 @@ export class Router {
 
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
-    const isAuthenticated = authService.isAuthenticated();
-
-    // [مؤقت] لا يُطلب تسجيل الدخول — تم تعطيل إعادة التوجيه لصفحة المصادقة مؤقتاً
-    // if (hasCompletedOnboarding && !isAuthenticated && routeKey !== 'auth') {
-    //   window.location.hash = '#auth?from=plan';
-    //   return;
-    // }
-
-    if (hasCompletedOnboarding && isAuthenticated && routeKey === 'auth') {
-      window.location.hash = '#today';
-      return;
-    }
 
     // توجيه المستخدم الجديد إلى شاشة الأسئلة
-    if (!hasCompletedOnboarding && routeKey !== 'questionnaire' && routeKey !== 'auth') {
+    if (!hasCompletedOnboarding && routeKey !== 'questionnaire') {
       window.location.hash = '#questionnaire';
       return;
     }
-
 
     // دعم الرابط القديم داخل موجه التطبيق دون فتح صفحة HTML مستقلة
     if (routeKey === 'forty-day') {
