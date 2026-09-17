@@ -1644,9 +1644,7 @@ export function bindQuestionnaireEvents() {
 
       startedAt = Date.now();
       const hasAuthenticatedAccount = authService.isAuthenticated();
-      showStage(step4, hasAuthenticatedAccount
-        ? 'حفظ الحساب وتجهيز صفحة اليوم ومزامنة الخطة...'
-        : 'حفظ الخطة وتجهيز صفحة إنشاء الحساب...', 95);
+      showStage(step4, 'حفظ الخطة وتجهيز صفحة اليوم...', 95);
       store.setUserProfile(fullProfile);
       store.setDailyStackItems(selectedStackItems);
 
@@ -1683,14 +1681,12 @@ export function bindQuestionnaireEvents() {
       if (percentLabel) percentLabel.textContent = '100%';
       if (progressBar) progressBar.style.width = '100%';
       if (coreIcon) coreIcon.textContent = '';
-      if (actionLabel) actionLabel.textContent = hasAuthenticatedAccount
-        ? 'اكتملت خطتك بنجاح! جاري فتح صفحة اليوم...'
-        : 'اكتملت خطتك بنجاح! جاري فتح صفحة إنشاء الحساب...';
+      if (actionLabel) actionLabel.textContent = 'اكتملت خطتك بنجاح! جاري فتح صفحة اليوم...';
       notificationService.showToast(`تم إنشاء وتفعيل خطتك الشخصية بنجاح يا ${formData.name || 'بطل'}!`, 'success');
       await sleep(450);
       currentStep = 1;
       showWelcomeScreen = true;
-      window.location.hash = hasAuthenticatedAccount ? '#today' : '#auth?from=plan';
+      window.location.hash = '#today'; // [مؤقت] لا يُطلب تسجيل الدخول
     } catch (error) {
       console.error('Plan generation failed:', error);
       if (actionLabel) actionLabel.textContent = 'تعذر إكمال إنشاء الحساب. أعد المحاولة.';
