@@ -81,22 +81,17 @@ export class Router {
     const hash = window.location.hash || '';
     const profile = store.getState()?.userProfile;
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
-    const isAuthenticated = authService.isAuthenticated();
     const rawHash = hash.replace(/^#\/?/, '').split('?')[0];
     const routeKey = rawHash.split('/')[0];
 
-    // المستخدم الجديد يبدأ بالأسئلة، ثم يُطلب منه حفظ الخطة داخل حساب حقيقي.
+    // المستخدم الجديد يبدأ بالأسئلة أولاً
     if (!hasCompletedOnboarding) {
       if (routeKey !== 'questionnaire' && routeKey !== 'auth') {
         window.location.hash = '#questionnaire';
         return;
       }
-    } else if (!isAuthenticated) {
-      if (routeKey !== 'auth') {
-        window.location.hash = '#auth?from=plan';
-        return;
-      }
     } else {
+      // [مؤقت] لا يُطلب تسجيل الدخول — المستخدم يدخل مباشرة
       if (!rawHash || routeKey === 'auth') {
         window.location.hash = '#today';
         return;
@@ -116,11 +111,11 @@ export class Router {
     const hasCompletedOnboarding = profile?.onboardingCompleted || profile?.onboarding_completed;
     const isAuthenticated = authService.isAuthenticated();
 
-    // بعد تجهيز الخطة لا يمكن دخول التطبيق قبل تسجيل الدخول أو إنشاء الحساب.
-    if (hasCompletedOnboarding && !isAuthenticated && routeKey !== 'auth') {
-      window.location.hash = '#auth?from=plan';
-      return;
-    }
+    // [مؤقت] لا يُطلب تسجيل الدخول — تم تعطيل إعادة التوجيه لصفحة المصادقة مؤقتاً
+    // if (hasCompletedOnboarding && !isAuthenticated && routeKey !== 'auth') {
+    //   window.location.hash = '#auth?from=plan';
+    //   return;
+    // }
 
     if (hasCompletedOnboarding && isAuthenticated && routeKey === 'auth') {
       window.location.hash = '#today';
@@ -132,6 +127,7 @@ export class Router {
       window.location.hash = '#questionnaire';
       return;
     }
+
 
     // دعم الرابط القديم داخل موجه التطبيق دون فتح صفحة HTML مستقلة
     if (routeKey === 'forty-day') {
