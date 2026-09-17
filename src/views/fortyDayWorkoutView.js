@@ -100,9 +100,8 @@ export function renderFortyDayWorkoutView() {
       <div class="forty-modal" id="forty-image-modal" aria-hidden="true">
         <div class="forty-modal-sheet image-sheet">
           <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; flex-wrap: wrap; gap: 8px;">
+          <div style="margin-bottom: 12px; padding: 0 40px 0 4px;">
             <h3 id="forty-image-title" style="margin: 0; font-size: 0.95rem; color: #fff; font-weight: 700;"></h3>
-            <div id="forty-image-toggles" style="display: flex; gap: 6px;"></div>
           </div>
           <img id="forty-image-preview" alt="صورة التمرين" style="display: block; width: 100%; max-height: 75vh; object-fit: contain; border-radius: 14px; background: #000;">
         </div>
@@ -432,31 +431,10 @@ export function bindFortyDayWorkoutEvents() {
       const exercise = fortyDayWorkoutService.getDay(activeDay).exercises[index];
       const preview = document.getElementById('forty-image-preview');
       const titleEl = document.getElementById('forty-image-title');
-      const toggles = document.getElementById('forty-image-toggles');
       if (titleEl) titleEl.textContent = exercise.title;
       if (preview) {
         preview.src = exercise.image;
         preview.alt = exercise.title;
-      }
-      if (toggles) {
-        if (exercise.pageImage && exercise.pageImage !== exercise.image) {
-          toggles.innerHTML = `
-            <button type="button" class="btn btn-sm btn-primary" id="btn-show-r2" style="font-size:0.72rem;padding:4px 10px;border-radius:999px;">صورة التمرين</button>
-            <button type="button" class="btn btn-sm btn-ghost" id="btn-show-book" style="font-size:0.72rem;padding:4px 10px;border-radius:999px;">صفحة الكتاب</button>
-          `;
-          document.getElementById('btn-show-r2')?.addEventListener('click', () => {
-            if (preview) preview.src = exercise.image;
-            document.getElementById('btn-show-r2').className = 'btn btn-sm btn-primary';
-            document.getElementById('btn-show-book').className = 'btn btn-sm btn-ghost';
-          });
-          document.getElementById('btn-show-book')?.addEventListener('click', () => {
-            if (preview) preview.src = exercise.pageImage;
-            document.getElementById('btn-show-book').className = 'btn btn-sm btn-primary';
-            document.getElementById('btn-show-r2').className = 'btn btn-sm btn-ghost';
-          });
-        } else {
-          toggles.innerHTML = '';
-        }
       }
       openModal(imageModal);
       return;
