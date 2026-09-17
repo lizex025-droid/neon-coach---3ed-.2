@@ -585,6 +585,22 @@ class Store {
       }
     } catch (e) {}
 
+    // مزامنة الجلسة في قاعدة البيانات سحابياً
+    if (!customData?.skipSync) {
+      const userId = this.state?.auth?.user?.id;
+      if (userId) {
+        syncService.syncWorkoutLog(userId, {
+          title: newSessionRecord.title,
+          programType: 'workout',
+          date: localDate(),
+          durationMinutes: newSessionRecord.durationMinutes,
+          totalVolumeKg: newSessionRecord.totalVolumeKg,
+          exercises: newSessionRecord.exercises,
+          notes: `الجولات: ${newSessionRecord.totalSets}، التكرارات: ${newSessionRecord.totalReps}`
+        });
+      }
+    }
+
     this.saveState();
   }
 
@@ -802,6 +818,16 @@ class Store {
       if (!rep.strengthTrendData) rep.strengthTrendData = [];
       rep.strengthTrendData.push({ day: rep.periodDays || 90, weight: b });
     }
+
+    const userId = this.state?.auth?.user?.id;
+    if (userId) {
+      syncService.syncInbodyRecord(userId, {
+        weight: weight !== undefined && weight !== '' && !isNaN(Number(weight)) ? Number(weight) : null,
+        waistCm: waistCm !== undefined && waistCm !== '' && !isNaN(Number(waistCm)) ? Number(waistCm) : null,
+        notes: benchPressKg ? `بنش برس: ${benchPressKg} كغ` : ''
+      });
+    }
+
     this.saveState();
   }
 
@@ -817,6 +843,17 @@ class Store {
       skeletalMuscleMassKg: Number(skeletalMuscleMassKg) || 0,
       visceralFatLevel: Number(visceralFatLevel) || 0
     };
+
+    const userId = this.state?.auth?.user?.id;
+    if (userId) {
+      syncService.syncInbodyRecord(userId, {
+        bodyFatPct: Number(bodyFatPercentage) || null,
+        muscleMassKg: Number(skeletalMuscleMassKg) || null,
+        visceralFat: Number(visceralFatLevel) || null,
+        notes: provider || 'InBody Analysis'
+      });
+    }
+
     this.saveState();
   }
 

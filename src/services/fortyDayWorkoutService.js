@@ -2,6 +2,9 @@ import { FORTY_DAY_DAYS, FORTY_DAY_PROGRAM, getFortyDay, fortyDayExerciseId } fr
 import { HASM_GROUPS, HASM_PROGRAM, getHasmGroup, hasmExerciseId } from '../data/hasmWorkout.js';
 import { ANAS_DAYS, ANAS_PROGRAM, getAnasDay, anasExerciseId } from '../data/anasWorkout.js';
 import { store } from '../state/store.js';
+import { syncService } from './syncService.js';
+import { localDate } from '../domain/actionAgent.js';
+import { notificationService } from './notificationService.js';
 
 const STATE_KEY = 'neon_forty_day_workout_v2';
 const LEGACY_SESSION_KEY = 'fortyDay_active_workout_v1';
@@ -101,6 +104,62 @@ class FortyDayWorkoutService {
   save() {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(STATE_KEY, JSON.stringify(this.load()));
+    this._debouncedCloudSync();
+  }
+
+  _debouncedCloudSync() {
+    if (typeof window === 'undefined') return;
+    clearTimeout(this._cloudSyncTimer);
+    this._cloudSyncTimer = setTimeout(async () => {
+      try {
+        const user = store.getState()?.auth?.user;
+        if (user?.id) {
+          await syncService.syncUserState(user.id, this.load());
+        }
+      } catch (err) {
+        // silent offline fallback
+      }
+    }, 1500);
+  }
+
+  loadRemoteState(remotePayload) {
+    if (!remotePayload || typeof remotePayload !== 'object') return;
+    const local = this.load();
+    if (remotePayload.trackers && typeof remotePayload.trackers === 'object') {
+      for (const [id, remoteTracker] of Object.entries(remotePayload.trackers)) {
+        if (!local.trackers[id]) {
+          local.trackers[id] = remoteTracker;
+        } else {
+          if (Array.isArray(remoteTracker.history) && remoteTracker.history.length > 0) {
+            const localHistIds = new Set((local.trackers[id].history || []).map(h => h.isoDate || h.date));
+            const newHistory = [...(local.trackers[id].history || [])];
+            for (const h of remoteTracker.history) {
+              if (!localHistIds.has(h.isoDate || h.date)) {
+                newHistory.push(h);
+              }
+            }
+            local.trackers[id].history = newHistory;
+          }
+          const hasLocalWeights = local.trackers[id].sets?.some(s => s.kg !== '' || s.reps !== '');
+          const hasRemoteWeights = remoteTracker.sets?.some(s => s.kg !== '' || s.reps !== '');
+          if (!hasLocalWeights && hasRemoteWeights) {
+            local.trackers[id].sets = remoteTracker.sets;
+          }
+        }
+      }
+    }
+    if (Array.isArray(remotePayload.history) && remotePayload.history.length > 0) {
+      const existingIds = new Set(local.history.map(h => h.id));
+      for (const item of remotePayload.history) {
+        if (!existingIds.has(item.id)) {
+          local.history.push(item);
+        }
+      }
+      local.history.sort((a, b) => (b.finishedAt || 0) - (a.finishedAt || 0));
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STATE_KEY, JSON.stringify(local));
+    }
   }
 
   getSnapshot() { return structuredClone(this.load()); }
@@ -235,7 +294,33 @@ class FortyDayWorkoutService {
       this.load().restUntil = Date.now() + tracker.rest * 1000;
     }
     this.save();
+    if (tracker.sets[setIndex].done && Number(tracker.sets[setIndex].kg) > 0) {
+      this._syncExercisePr(dayKey, exerciseIndex);
+    }
     return tracker.sets[setIndex].done;
+  }
+
+  async _syncExercisePr(dayKey, exerciseIndex) {
+    try {
+      const user = store.getState()?.auth?.user;
+      if (!user?.id) return;
+      const tracker = this.getTracker(dayKey, exerciseIndex);
+      const day = this.getDay(dayKey);
+      const exercise = day?.exercises?.[exerciseIndex];
+      if (!tracker || !exercise) return;
+      const completedSets = tracker.sets.filter(s => s.done && Number(s.kg) > 0);
+      if (completedSets.length === 0) return;
+      const best = completedSets.reduce((max, s) => Number(s.kg) > Number(max.kg) ? s : max, completedSets[0]);
+      const exId = this.getExerciseId(dayKey, exerciseIndex);
+      await syncService.syncExerciseRecord(user.id, {
+        exercise_id: exId,
+        exercise_name: exercise.title,
+        max_weight_kg: Number(best.kg),
+        max_reps: Number(best.reps) || 0,
+        estimated_1rm: Math.round(Number(best.kg) * (1 + (Number(best.reps) || 10) / 30) * 10) / 10,
+        achieved_date: localDate()
+      });
+    } catch (err) {}
   }
 
   markTouched(dayKey, exerciseIndex) {
@@ -344,7 +429,20 @@ class FortyDayWorkoutService {
       };
       tracker.history = [...(tracker.history || []), record].slice(-100);
       tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet('', ''));
-      exercises.push({ title: exercise.title, nameAr: exercise.title, sets: played.length, setsCount: played.length, bestKg: record.bestKg, bestReps: record.bestReps, bestSet: record.bestKg ? `${record.bestKg} كغ × ${record.bestReps || '-'} تكرار` : `${record.bestReps || '-'} تكرار`, volume, isPersonalRecord });
+      exercises.push({
+        id,
+        exerciseId: id,
+        title: exercise.title,
+        nameAr: exercise.title,
+        sets: played.length,
+        setsCount: played.length,
+        bestKg: record.bestKg,
+        bestReps: record.bestReps,
+        bestSet: record.bestKg ? `${record.bestKg} كغ × ${record.bestReps || '-'} تكرار` : `${record.bestReps || '-'} تكرار`,
+        volume,
+        isPersonalRecord,
+        rounds: record.rounds
+      });
     }
     const day = this.getDay(session.dayKey);
     const planPrefix = session.dayKey.startsWith('saturday') || session.dayKey.startsWith('sunday') || session.dayKey.startsWith('monday') || session.dayKey.startsWith('wednesday') || session.dayKey.startsWith('thursday')
@@ -369,8 +467,61 @@ class FortyDayWorkoutService {
       localStorage.removeItem(LEGACY_SESSION_KEY);
       localStorage.setItem(LEGACY_HISTORY_KEY, JSON.stringify(state.history));
     }
-    store.finishWorkoutSession({ title: summary.title, dateLabel: summary.dateLabel, durationMinutes: Math.max(1, Math.round(summary.durationSeconds / 60)), totalVolumeKg: summary.totalVolume, totalSets, totalReps, exercises });
+    store.finishWorkoutSession({ title: summary.title, dateLabel: summary.dateLabel, durationMinutes: Math.max(1, Math.round(summary.durationSeconds / 60)), totalVolumeKg: summary.totalVolume, totalSets, totalReps, exercises, skipSync: true });
+    
+    // حفظ ومزامنة الجلسة والأوزان في قاعدة بيانات Supabase سحابياً
+    this._syncFinishedWorkoutToCloud(summary, exercises, planPrefix);
+
     return summary;
+  }
+
+  async _syncFinishedWorkoutToCloud(summary, exercises, planPrefix) {
+    try {
+      const user = store.getState()?.auth?.user;
+      if (!user?.id) return;
+
+      // 1. مزامنة الجلسة في جدول workout_logs
+      await syncService.syncWorkoutLog(user.id, {
+        title: summary.title,
+        programType: planPrefix,
+        date: localDate(),
+        durationMinutes: Math.max(1, Math.round(summary.durationSeconds / 60)),
+        totalVolumeKg: summary.totalVolume,
+        exercises: exercises.map(e => ({
+          title: e.title,
+          nameAr: e.nameAr || e.title,
+          sets: e.sets,
+          bestKg: e.bestKg,
+          bestReps: e.bestReps,
+          bestSet: e.bestSet,
+          volume: e.volume,
+          isPersonalRecord: e.isPersonalRecord,
+          rounds: e.rounds || []
+        })),
+        notes: `تمارين منجزة: ${exercises.length}، إجمالي الجولات: ${summary.totalSets}`
+      });
+
+      // 2. تحديث وحفظ الأوزان القياسية في exercise_records
+      const prRecords = exercises
+        .filter(e => e.bestKg > 0)
+        .map(e => ({
+          exercise_id: e.exerciseId || e.id || e.title,
+          exercise_name: e.title,
+          max_weight_kg: e.bestKg,
+          max_reps: e.bestReps || 0,
+          estimated_1rm: Math.round(e.bestKg * (1 + (e.bestReps || 0) / 30) * 10) / 10,
+          achieved_date: localDate()
+        }));
+
+      if (prRecords.length > 0) {
+        await syncService.syncExerciseRecords(user.id, prRecords);
+      }
+
+      // 3. تحديث حالة المتدرب العامة في user_state
+      await syncService.syncUserState(user.id, this.load());
+    } catch (syncErr) {
+      console.warn('تعذر حفظ الجلسة في قاعدة البيانات سحابياً:', syncErr);
+    }
   }
 }
 

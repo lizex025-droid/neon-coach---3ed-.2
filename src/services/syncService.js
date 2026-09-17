@@ -133,6 +133,58 @@ class SyncService {
         });
       }
 
+      // 4. جلب سجلات التمارين والجلسات السابقة من Supabase
+      try {
+        const { data: workouts } = await supabase
+          .from('workout_logs')
+          .select('*')
+          .eq('user_id', userId)
+          .order('date', { ascending: false })
+          .limit(50);
+
+        if (workouts && workouts.length > 0 && store) {
+          const formattedHistory = workouts.map(w => ({
+            id: w.id || 'hist_' + Date.now(),
+            title: w.workout_title || 'جلسة تدريبية',
+            programType: w.program_type || 'hasm',
+            dateLabel: w.date || 'مؤخراً',
+            durationMinutes: w.duration_minutes || 45,
+            totalVolumeKg: Number(w.total_volume_kg || 0),
+            totalSets: Array.isArray(w.exercises) ? w.exercises.reduce((sum, e) => sum + (e.sets || e.setsCount || 0), 0) : 0,
+            totalReps: Array.isArray(w.exercises) ? w.exercises.reduce((sum, e) => sum + (e.totalReps || 0), 0) : 0,
+            exercises: (w.exercises || []).map(ex => ({
+              nameAr: ex.nameAr || ex.title || 'تمرين',
+              bestSet: ex.bestSet || (ex.bestKg ? `${ex.bestKg} كغ × ${ex.bestReps || '-'} تكرار` : ''),
+              setsCount: ex.setsCount || ex.sets || 0,
+              bestKg: ex.bestKg || 0,
+              bestReps: ex.bestReps || 0,
+              volume: ex.volume || 0,
+              rounds: ex.rounds || []
+            }))
+          }));
+
+          store.setState({ workoutHistory: formattedHistory }, { notify: false });
+        }
+      } catch (wErr) {
+        console.warn('فشل جلب سجلات التمارين من السحابة:', wErr);
+      }
+
+      // 5. جلب حالة المستخدم وأوزان التمارين النشطة من user_state
+      try {
+        const { data: userStateRow } = await supabase
+          .from('user_state')
+          .select('payload')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (userStateRow?.payload) {
+          const { fortyDayWorkoutService } = await import('./fortyDayWorkoutService.js');
+          fortyDayWorkoutService.loadRemoteState(userStateRow.payload);
+        }
+      } catch (sErr) {
+        console.warn('فشل جلب حالة التمارين النشطة من السحابة:', sErr);
+      }
+
       store?.notify();
       return { success: true };
 
@@ -254,7 +306,7 @@ class SyncService {
   }
 
   /**
-   * مزامنة جلسة تمرين منجزة
+   * مزامنة جلسة تمرين منجزة بكامل تفاصيل الأوزان والجولات
    */
   async syncWorkoutLog(userId, workout) {
     if (!isSupabaseConfigured() || !userId) return null;
@@ -263,26 +315,106 @@ class SyncService {
         .from('workout_logs')
         .insert({
           user_id: userId,
-          workout_title: workout.title || 'جلسة تدريبية',
-          program_type: workout.programType || 'forty_days',
+          workout_title: workout.title || workout.workout_title || 'جلسة تدريبية',
+          program_type: workout.programType || workout.program_type || 'hasm',
           date: workout.date || localDate(),
-          duration_minutes: workout.durationMinutes || 50,
-          total_volume_kg: workout.totalVolumeKg || 0,
-          rpe: workout.rpe || null,
+          duration_minutes: workout.durationMinutes || workout.duration_minutes || 50,
+          total_volume_kg: workout.totalVolumeKg || workout.total_volume_kg || 0,
           completed: true,
           exercises: workout.exercises || [],
           notes: workout.notes || '',
-        });
+        })
+        .select();
       if (error) throw error;
       return data;
     } catch (err) {
-      console.warn('فشل مزامنة التمرين:', err);
+      console.warn('فشل مزامنة التمرين في workout_logs:', err);
       return null;
     }
   }
 
   /**
-   * مزامنة قياسات وفحص InBody
+   * مزامنة الأوزان القياسية (PRs) وسجل التمرين الفردي
+   */
+  async syncExerciseRecord(userId, record) {
+    if (!isSupabaseConfigured() || !userId || !record?.exercise_id) return null;
+    try {
+      const { data, error } = await supabase
+        .from('exercise_records')
+        .upsert({
+          user_id: userId,
+          exercise_id: record.exercise_id,
+          exercise_name: record.exercise_name || 'تمرين',
+          max_weight_kg: Number(record.max_weight_kg || 0),
+          max_reps: Number(record.max_reps || 0),
+          estimated_1rm: Number(record.estimated_1rm || 0),
+          achieved_date: record.achieved_date || localDate(),
+          notes: record.notes || '',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,exercise_id' })
+        .select();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('فشل مزامنة سجل التمرين في exercise_records:', err);
+      return null;
+    }
+  }
+
+  /**
+   * مزامنة جماعية لسجلات أوزان التمارين في exercise_records
+   */
+  async syncExerciseRecords(userId, records) {
+    if (!isSupabaseConfigured() || !userId || !Array.isArray(records) || records.length === 0) return null;
+    try {
+      const rows = records.map(r => ({
+        user_id: userId,
+        exercise_id: r.exercise_id,
+        exercise_name: r.exercise_name || 'تمرين',
+        max_weight_kg: Number(r.max_weight_kg || 0),
+        max_reps: Number(r.max_reps || 0),
+        estimated_1rm: Number(r.estimated_1rm || 0),
+        achieved_date: r.achieved_date || localDate(),
+        notes: r.notes || '',
+        updated_at: new Date().toISOString(),
+      }));
+      const { data, error } = await supabase
+        .from('exercise_records')
+        .upsert(rows, { onConflict: 'user_id,exercise_id' })
+        .select();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('فشل المزامنة الجماعية لسجلات التمارين:', err);
+      return null;
+    }
+  }
+
+  /**
+   * حفظ حالة التمارين المفتوحة والمدخلات الحالية للأوزان في user_state
+   */
+  async syncUserState(userId, payload) {
+    if (!isSupabaseConfigured() || !userId || !payload) return null;
+    try {
+      const safePayload = typeof payload === 'object' ? payload : { data: payload };
+      const { data, error } = await supabase
+        .from('user_state')
+        .upsert({
+          user_id: userId,
+          payload: safePayload,
+          revision: Date.now(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('فشل مزامنة user_state:', err);
+      return null;
+    }
+  }
+
+  /**
+   * مزامنة قياسات وفحص InBody ووزن الجسم
    */
   async syncInbodyRecord(userId, record) {
     if (!isSupabaseConfigured() || !userId) return null;
@@ -307,6 +439,15 @@ class SyncService {
           notes: record.notes || '',
         });
       if (error) throw error;
+
+      // تحديث وزن المستخدم الحالي في ملف profiles تلقائياً
+      if (record.weight) {
+        await supabase
+          .from('profiles')
+          .update({ current_weight: record.weight })
+          .eq('id', userId);
+      }
+
       return data;
     } catch (err) {
       console.warn('فشل مزامنة InBody:', err);
