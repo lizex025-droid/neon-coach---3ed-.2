@@ -152,10 +152,11 @@ export function renderProfileView() {
           <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem; display: flex; justify-content: space-between;">
               <span>نظام التمرين المعتمد</span>
-              <span style="color: #55F7A5; font-size: 0.72rem; font-weight: 700;">${workoutPlan === 'ppl' ? 'Push Pull Legs' : 'نظام الحسم'}</span>
+              <span style="color: #55F7A5; font-size: 0.72rem; font-weight: 700;">${workoutPlan === 'ppl' ? 'Push Pull Legs' : (workoutPlan === 'anas' ? 'نظام أنس' : 'نظام الحسم')}</span>
             </label>
             <select id="setting-workout-plan" style="padding: 10px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 0.85rem; font-weight: 600;">
-              <option value="hasm" ${workoutPlan === 'hasm' ? 'selected' : ''}>نظام الحسم — 6 مجموعات (صدر وبايسبس، ظهر وبطن، كتف وترابيس، أرجل وسمانات، أذرع، علوي Upper)</option>
+              <option value="hasm" ${workoutPlan === 'hasm' ? 'selected' : ''}>نظام الحسم — 6 مجموعات (صدر، ظهر، كتف، أرجل، أذرع، علوي)</option>
+              <option value="anas" ${workoutPlan === 'anas' ? 'selected' : ''}>نظام أنس — 5 أيام تدريبية (Push, Pull, Legs, Upper, كتف)</option>
               <option value="ppl" ${workoutPlan === 'ppl' ? 'selected' : ''}>Push Pull Legs — تمرين الـ40 يوم (Push A/B, Pull A/B, Legs A/B)</option>
             </select>
           </div>

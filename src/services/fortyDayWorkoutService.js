@@ -1,5 +1,6 @@
 import { FORTY_DAY_DAYS, FORTY_DAY_PROGRAM, getFortyDay, fortyDayExerciseId } from '../data/fortyDayWorkout.js';
 import { HASM_GROUPS, HASM_PROGRAM, getHasmGroup, hasmExerciseId } from '../data/hasmWorkout.js';
+import { ANAS_DAYS, ANAS_PROGRAM, getAnasDay, anasExerciseId } from '../data/anasWorkout.js';
 import { store } from '../state/store.js';
 
 const STATE_KEY = 'neon_forty_day_workout_v2';
@@ -106,17 +107,23 @@ class FortyDayWorkoutService {
 
   getActivePlan() {
     const profilePlan = store.getState()?.userProfile?.workoutPlan;
-    if (profilePlan === 'hasm' || profilePlan === 'ppl' || profilePlan === 'fortyDay') {
-      return (profilePlan === 'ppl' || profilePlan === 'fortyDay') ? 'ppl' : 'hasm';
+    if (profilePlan === 'hasm' || profilePlan === 'ppl' || profilePlan === 'fortyDay' || profilePlan === 'anas') {
+      return (profilePlan === 'ppl' || profilePlan === 'fortyDay') ? 'ppl' : profilePlan;
     }
     return this.load().activePlan || 'hasm';
   }
 
   setActivePlan(planKey) {
-    const normalized = (planKey === 'ppl' || planKey === 'fortyDay') ? 'ppl' : 'hasm';
+    const normalized = (planKey === 'ppl' || planKey === 'fortyDay') ? 'ppl' : (planKey === 'anas' ? 'anas' : 'hasm');
     const state = this.load();
     state.activePlan = normalized;
-    state.activeDay = normalized === 'hasm' ? 'chestBiceps' : 'pushA';
+    if (normalized === 'anas') {
+      state.activeDay = 'saturdayPush';
+    } else if (normalized === 'ppl') {
+      state.activeDay = 'pushA';
+    } else {
+      state.activeDay = 'chestBiceps';
+    }
     this.save();
     const profile = store.getState()?.userProfile;
     if (profile && profile.workoutPlan !== normalized) {
@@ -125,24 +132,36 @@ class FortyDayWorkoutService {
   }
 
   getProgram(planKey = this.getActivePlan()) {
-    return (planKey === 'ppl' || planKey === 'fortyDay') ? FORTY_DAY_PROGRAM : HASM_PROGRAM;
+    if (planKey === 'anas') return ANAS_PROGRAM;
+    if (planKey === 'ppl' || planKey === 'fortyDay') return FORTY_DAY_PROGRAM;
+    return HASM_PROGRAM;
   }
 
   getDays(planKey = this.getActivePlan()) {
-    return (planKey === 'ppl' || planKey === 'fortyDay') ? FORTY_DAY_DAYS : HASM_GROUPS;
+    if (planKey === 'anas') return ANAS_DAYS;
+    if (planKey === 'ppl' || planKey === 'fortyDay') return FORTY_DAY_DAYS;
+    return HASM_GROUPS;
   }
 
   getDay(dayKey, planKey = this.getActivePlan()) {
+    if (ANAS_DAYS.some(day => day.key === dayKey)) {
+      return getAnasDay(dayKey);
+    }
     if (HASM_GROUPS.some(day => day.key === dayKey)) {
       return getHasmGroup(dayKey);
     }
     if (FORTY_DAY_DAYS.some(day => day.key === dayKey)) {
       return getFortyDay(dayKey);
     }
-    return (planKey === 'ppl' || planKey === 'fortyDay') ? getFortyDay(dayKey) : getHasmGroup(dayKey);
+    if (planKey === 'anas') return getAnasDay(dayKey);
+    if (planKey === 'ppl' || planKey === 'fortyDay') return getFortyDay(dayKey);
+    return getHasmGroup(dayKey);
   }
 
   getExerciseId(dayKey, exerciseIndex, planKey = this.getActivePlan()) {
+    if (ANAS_DAYS.some(day => day.key === dayKey) || planKey === 'anas') {
+      return anasExerciseId(dayKey, exerciseIndex);
+    }
     if (HASM_GROUPS.some(day => day.key === dayKey) || planKey === 'hasm') {
       return hasmExerciseId(dayKey, exerciseIndex);
     }
@@ -150,7 +169,7 @@ class FortyDayWorkoutService {
   }
 
   setActiveDay(dayKey) {
-    const allDays = [...HASM_GROUPS, ...FORTY_DAY_DAYS];
+    const allDays = [...ANAS_DAYS, ...HASM_GROUPS, ...FORTY_DAY_DAYS];
     if (!allDays.some(day => day.key === dayKey)) return;
     this.load().activeDay = dayKey;
     this.save();
@@ -283,9 +302,13 @@ class FortyDayWorkoutService {
     for (const id of session.touchedExerciseIds || []) {
       let dayKey = null;
       let exerciseIndex = null;
+      const anasMatch = id.match(/^anas_(.+)_(\d+)$/);
       const hasmMatch = id.match(/^hasm_(.+)_(\d+)$/);
       const fortyMatch = id.match(/^fortyDay_(.+)_(\d+)$/);
-      if (hasmMatch) {
+      if (anasMatch) {
+        dayKey = anasMatch[1];
+        exerciseIndex = Number(anasMatch[2]);
+      } else if (hasmMatch) {
         dayKey = hasmMatch[1];
         exerciseIndex = Number(hasmMatch[2]);
       } else if (fortyMatch) {
@@ -324,8 +347,11 @@ class FortyDayWorkoutService {
       exercises.push({ title: exercise.title, nameAr: exercise.title, sets: played.length, setsCount: played.length, bestKg: record.bestKg, bestReps: record.bestReps, bestSet: record.bestKg ? `${record.bestKg} كغ × ${record.bestReps || '-'} تكرار` : `${record.bestReps || '-'} تكرار`, volume, isPersonalRecord });
     }
     const day = this.getDay(session.dayKey);
+    const planPrefix = session.dayKey.startsWith('saturday') || session.dayKey.startsWith('sunday') || session.dayKey.startsWith('monday') || session.dayKey.startsWith('wednesday') || session.dayKey.startsWith('thursday')
+      ? 'anas'
+      : (session.dayKey.startsWith('push') || session.dayKey.startsWith('pull') || session.dayKey.startsWith('legs') ? 'fortyDay' : 'hasm');
     const summary = {
-      id: `${session.dayKey.startsWith('push') || session.dayKey.startsWith('pull') || session.dayKey.startsWith('legs') ? 'fortyDay' : 'hasm'}_${finishedAt}`,
+      id: `${planPrefix}_${finishedAt}`,
       title: day.label || day.short,
       workoutNumber: state.history.length + 1,
       startedAt: session.startedAt,

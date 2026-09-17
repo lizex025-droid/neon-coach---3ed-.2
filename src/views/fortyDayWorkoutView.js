@@ -39,15 +39,16 @@ export function renderFortyDayWorkoutView() {
         <img src="${program.cover}" alt="غلاف ${program.title}" class="forty-hero-cover">
         <div class="forty-hero-overlay"></div>
         <div class="forty-hero-content">
-          <div class="forty-plan-switcher" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.45); padding: 4px; border-radius: 999px; border: 1px solid var(--forty-line); margin-bottom: 12px; gap: 4px; z-index: 2;">
-            <button type="button" data-action="switch-plan" data-plan="hasm" class="btn btn-sm ${activePlan === 'hasm' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">نظام الحسم (6 مجموعات)</button>
-            <button type="button" data-action="switch-plan" data-plan="ppl" class="btn btn-sm ${activePlan === 'ppl' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">Push Pull Legs (6 أيام)</button>
+          <div class="forty-plan-switcher" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.45); padding: 4px; border-radius: 999px; border: 1px solid var(--forty-line); margin-bottom: 12px; gap: 4px; z-index: 2; flex-wrap: wrap;">
+            <button type="button" data-action="switch-plan" data-plan="hasm" class="btn btn-sm ${activePlan === 'hasm' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">نظام الحسم</button>
+            <button type="button" data-action="switch-plan" data-plan="anas" class="btn btn-sm ${activePlan === 'anas' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">نظام أنس</button>
+            <button type="button" data-action="switch-plan" data-plan="ppl" class="btn btn-sm ${activePlan === 'ppl' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">Push Pull Legs</button>
           </div>
           <span class="forty-kicker">${program.kicker || 'NEON TRAINING PROGRAM'}</span>
           <h1>${program.title}</h1>
           <p>${program.description}</p>
           <div class="forty-progress-meta">
-            <strong>${activePlan === 'hasm' ? `المجموعة النشطة: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
+            <strong>${activePlan === 'hasm' || activePlan === 'anas' ? `اليوم النشط: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
             <span>${progress}% مكتمل</span>
           </div>
           <div class="forty-progress-track"><span style="width:${progress}%"></span></div>
@@ -72,15 +73,15 @@ export function renderFortyDayWorkoutView() {
       <section class="forty-days-section">
         <div class="forty-section-heading">
           <div>
-            <span>${activePlan === 'hasm' ? 'خطة نظام الحسم' : 'خطة الأسبوع'}</span>
-            <h2>${activePlan === 'hasm' ? 'اختر مجموعة العضلات لعرض تمارينها فقط' : 'اختر يوم التمرين'}</h2>
+            <span>${activePlan === 'anas' ? 'خطة نظام أنس' : (activePlan === 'hasm' ? 'خطة نظام الحسم' : 'خطة الأسبوع')}</span>
+            <h2>${activePlan === 'anas' ? 'اختر نوع التمرين' : (activePlan === 'hasm' ? 'اختر مجموعة العضلات لعرض تمارينها فقط' : 'اختر يوم التمرين')}</h2>
           </div>
-          <p>${activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : '6 أيام Push / Pull / Legs ثم يوم راحة'}</p>
+          <p>${activePlan === 'anas' ? '5 أيام تدريبية: Push / Pull / Legs / Upper / كتف' : (activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : '6 أيام Push / Pull / Legs ثم يوم راحة')}</p>
         </div>
-        <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : ''}" id="forty-day-tabs" role="tablist" aria-label="أيام التمرين">
+        <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : (activePlan === 'anas' ? 'anas-tabs' : '')}" id="forty-day-tabs" role="tablist" aria-label="أيام التمرين">
           ${days.map((day, idx) => `
             <button type="button" role="tab" aria-selected="${day.key === activeDay ? 'true' : 'false'}" class="forty-day-tab tone-${day.tone} ${day.key === activeDay ? 'is-active' : ''}" data-day="${day.key}">
-              <span class="forty-tab-day">${activePlan === 'hasm' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
+              <span class="forty-tab-day">${activePlan === 'hasm' || activePlan === 'anas' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
               <span class="forty-tab-title">${escapeHtml(day.short)}</span>
             </button>
           `).join('')}
@@ -394,7 +395,8 @@ export function bindFortyDayWorkoutEvents() {
       fortyDayWorkoutService.setActivePlan(targetPlan);
       root.outerHTML = renderFortyDayWorkoutView();
       bindFortyDayWorkoutEvents();
-      notificationService.showToast(`تم التبديل إلى ${targetPlan === 'hasm' ? 'نظام الحسم' : 'Push Pull Legs'} بنجاح`, 'info');
+      const planName = targetPlan === 'anas' ? 'نظام أنس' : (targetPlan === 'hasm' ? 'نظام الحسم' : 'Push Pull Legs');
+      notificationService.showToast(`تم التبديل إلى ${planName} بنجاح`, 'info');
       return;
     }
 
