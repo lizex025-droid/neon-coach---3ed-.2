@@ -58,37 +58,38 @@ class SyncService {
 
       if (profile && store) {
         store.setUserProfile({
-          name: profile.name || '',
-          email: profile.email || '',
-          age: profile.age || 25,
-          gender: profile.gender || 'male',
-          height: profile.height || 178,
-          currentWeight: profile.current_weight || 75,
-          targetWeight: profile.target_weight || 80,
-          goal: profile.fitness_goal || 'fat_loss',
-          weeklyLossPercent: profile.weekly_loss_percent !== undefined && profile.weekly_loss_percent !== null ? Number(profile.weekly_loss_percent) : 0.0075,
-          weeklyLossKg: profile.weekly_loss_kg !== undefined && profile.weekly_loss_kg !== null ? Number(profile.weekly_loss_kg) : 0.53,
-          dailyCalorieDeficit: profile.daily_calorie_deficit !== undefined && profile.daily_calorie_deficit !== null ? Number(profile.daily_calorie_deficit) : 578,
-          requestedCalories: profile.requested_calories !== undefined && profile.requested_calories !== null ? Number(profile.requested_calories) : (profile.target_calories || 1822),
-          estimatedGoalWeeks: profile.estimated_goal_weeks !== undefined && profile.estimated_goal_weeks !== null ? Number(profile.estimated_goal_weeks) : 10,
-          weightLossRiskLevel: profile.weight_loss_risk_level || 'optimal',
-          activityLevel: profile.activity_level || 'light',
-          workoutDaysCount: profile.training_days_per_week || 4,
-          equipment: profile.equipment || 'gym',
-          injuries: profile.injuries || [],
-          allergens: profile.allergies || [],
-          likedFoods: profile.liked_foods || [],
-          dislikedFoods: profile.disliked_foods || [],
-          targetCalories: profile.target_calories || 2400,
-          targetProtein: profile.target_protein || 180,
-          targetCarbs: profile.target_carbs || 250,
-          targetFats: profile.target_fats || 65,
-          targetWaterLiters: profile.target_water_liters || 2.5,
-          targetGlasses: profile.target_glasses || 10,
+          name: profile.name ?? '',
+          email: profile.email ?? '',
+          age: profile.age ?? 0,
+          gender: profile.gender ?? 'male',
+          height: profile.height ?? 0,
+          currentWeight: profile.current_weight ?? 0,
+          targetWeight: profile.target_weight ?? 0,
+          goal: profile.fitness_goal ?? 'fat_loss',
+          weeklyLossPercent: profile.weekly_loss_percent != null ? Number(profile.weekly_loss_percent) : undefined,
+          weeklyLossKg: profile.weekly_loss_kg != null ? Number(profile.weekly_loss_kg) : undefined,
+          dailyCalorieDeficit: profile.daily_calorie_deficit != null ? Number(profile.daily_calorie_deficit) : undefined,
+          requestedCalories: profile.requested_calories != null ? Number(profile.requested_calories) : undefined,
+          estimatedGoalWeeks: profile.estimated_goal_weeks != null ? Number(profile.estimated_goal_weeks) : undefined,
+          weightLossRiskLevel: profile.weight_loss_risk_level ?? undefined,
+          activityLevel: profile.activity_level ?? 'light',
+          workoutDaysCount: profile.training_days_per_week ?? 0,
+          equipment: profile.equipment ?? 'gym',
+          injuries: profile.injuries ?? [],
+          allergens: profile.allergies ?? [],
+          likedFoods: profile.liked_foods ?? [],
+          dislikedFoods: profile.disliked_foods ?? [],
+          targetCalories: profile.target_calories ?? 0,
+          targetProtein: profile.target_protein ?? 0,
+          targetCarbs: profile.target_carbs ?? 0,
+          targetFats: profile.target_fats ?? 0,
+          targetWaterLiters: profile.target_water_liters ?? 0,
+          targetGlasses: profile.target_glasses ?? 0,
           onboardingCompleted: !!profile.onboarding_completed,
           onboarding_completed: !!profile.onboarding_completed,
         });
       }
+
 
       // 2. جلب وجبات اليوم
       const { data: meals } = await supabase
@@ -206,39 +207,46 @@ class SyncService {
   async syncProfile(userId, profileData) {
     if (!isSupabaseConfigured() || !userId) return null;
     try {
+      // نبني الـ payload فقط بالأعمدة الموجودة فعلاً في جدول profiles
+      const payload = {
+        id: userId,
+        name: profileData.name,
+        email: profileData.email,
+        age: profileData.age,
+        gender: profileData.gender,
+        height: profileData.height,
+        current_weight: profileData.currentWeight ?? profileData.weight,
+        target_weight: profileData.targetWeight,
+        activity_level: profileData.activityLevel || 'light',
+        fitness_goal: profileData.goal || 'fat_loss',
+        training_days_per_week: profileData.workoutDaysCount,
+        equipment: profileData.equipment || 'gym',
+        injuries: Array.isArray(profileData.injuries) ? profileData.injuries : [],
+        allergies: Array.isArray(profileData.allergens) ? profileData.allergens : [],
+        liked_foods: Array.isArray(profileData.likedFoods) ? profileData.likedFoods : [],
+        disliked_foods: Array.isArray(profileData.dislikedFoods) ? profileData.dislikedFoods : [],
+        target_calories: profileData.targetCalories,
+        target_protein: profileData.targetProtein,
+        target_carbs: profileData.targetCarbs,
+        target_fats: profileData.targetFats,
+        target_water_liters: profileData.targetWaterLiters,
+        target_glasses: profileData.targetGlasses,
+        onboarding_completed: profileData.onboardingCompleted ?? true,
+        updated_at: new Date().toISOString(),
+      };
+
+      // إضافة الأعمدة الاختيارية فقط إذا كانت موجودة (لتجنب فشل الأعمدة غير الموجودة)
+      if (profileData.birthDate !== undefined) payload.birthdate = profileData.birthDate;
+      if (profileData.weeklyLossPercent !== undefined) payload.weekly_loss_percent = profileData.weeklyLossPercent;
+      if (profileData.weeklyLossKg !== undefined) payload.weekly_loss_kg = profileData.weeklyLossKg;
+      if (profileData.dailyCalorieDeficit !== undefined) payload.daily_calorie_deficit = profileData.dailyCalorieDeficit;
+      if (profileData.requestedCalories !== undefined) payload.requested_calories = profileData.requestedCalories;
+      if (profileData.estimatedGoalWeeks !== undefined) payload.estimated_goal_weeks = profileData.estimatedGoalWeeks;
+      if (profileData.weightLossRiskLevel !== undefined) payload.weight_loss_risk_level = profileData.weightLossRiskLevel;
+
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({
-          id: userId,
-          name: profileData.name,
-          age: profileData.age,
-          gender: profileData.gender,
-          height: profileData.height,
-          current_weight: profileData.currentWeight || profileData.weight,
-          target_weight: profileData.targetWeight,
-          weekly_loss_percent: profileData.weeklyLossPercent,
-          weekly_loss_kg: profileData.weeklyLossKg,
-          daily_calorie_deficit: profileData.dailyCalorieDeficit,
-          requested_calories: profileData.requestedCalories,
-          estimated_goal_weeks: profileData.estimatedGoalWeeks,
-          weight_loss_risk_level: profileData.weightLossRiskLevel,
-          activity_level: profileData.activityLevel || 'light',
-          fitness_goal: profileData.goal || 'fat_loss',
-          training_days_per_week: profileData.workoutDaysCount || 4,
-          equipment: profileData.equipment || 'gym',
-          injuries: Array.isArray(profileData.injuries) ? profileData.injuries : [],
-          allergies: Array.isArray(profileData.allergens) ? profileData.allergens : [],
-          liked_foods: Array.isArray(profileData.likedFoods) ? profileData.likedFoods : [],
-          disliked_foods: Array.isArray(profileData.dislikedFoods) ? profileData.dislikedFoods : [],
-          target_calories: profileData.targetCalories,
-          target_protein: profileData.targetProtein,
-          target_carbs: profileData.targetCarbs,
-          target_fats: profileData.targetFats,
-          target_water_liters: profileData.targetWaterLiters,
-          target_glasses: profileData.targetGlasses,
-          onboarding_completed: profileData.onboardingCompleted ?? true,
-          updated_at: new Date().toISOString(),
-        });
+        .upsert(payload);
       if (error) throw error;
       return data;
     } catch (err) {
