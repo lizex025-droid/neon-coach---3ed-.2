@@ -477,11 +477,11 @@ class FortyDayWorkoutService {
 
   async _syncFinishedWorkoutToCloud(summary, exercises, planPrefix) {
     try {
-      const user = store.getState()?.auth?.user;
-      if (!user?.id) return;
+      const userId = store.getUserId?.() || store.getState()?.auth?.user?.id;
+      if (!userId) return;
 
       // 1. مزامنة الجلسة في جدول workout_logs
-      await syncService.syncWorkoutLog(user.id, {
+      await syncService.syncWorkoutLog(userId, {
         title: summary.title,
         programType: planPrefix,
         date: localDate(),
@@ -514,11 +514,11 @@ class FortyDayWorkoutService {
         }));
 
       if (prRecords.length > 0) {
-        await syncService.syncExerciseRecords(user.id, prRecords);
+        await syncService.syncExerciseRecords(userId, prRecords);
       }
 
       // 3. تحديث حالة المتدرب العامة في user_state
-      await syncService.syncUserState(user.id, this.load());
+      await syncService.syncUserState(userId, this.load());
     } catch (syncErr) {
       console.warn('تعذر حفظ الجلسة في قاعدة البيانات سحابياً:', syncErr);
     }

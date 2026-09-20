@@ -1025,10 +1025,10 @@ export function bindProfileEvents() {
       cur.today.targetWaterLiters = targetWaterLiters;
       store.saveState();
 
-      // مزامنة سحابية إذا كان المستخدم مسجلاً
-      const user = cur.auth?.user;
-      if (user?.id) {
-        syncService.syncProfile(user.id, cur.userProfile);
+      // مزامنة سحابية
+      const effectiveUserId = store.getUserId?.() || authService.getEffectiveUserId?.();
+      if (effectiveUserId) {
+        syncService.syncProfile(effectiveUserId, cur.userProfile);
       }
 
       notificationService.showToast('تم حفظ كافة بيانات الخطة بنجاح ✓', 'success');

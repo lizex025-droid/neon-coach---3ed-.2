@@ -1662,7 +1662,7 @@ export function bindQuestionnaireEvents() {
       });
       store.saveState();
 
-      const userId = hasAuthenticatedAccount ? authService.getCurrentUser()?.id : null;
+      const userId = authService.getEffectiveUserId();
       if (userId) {
         try {
           await syncService.syncProfile(userId, fullProfile);

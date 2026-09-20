@@ -6,6 +6,14 @@
 
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 import { localDate } from '../domain/actionAgent.js';
+import { getOrCreateGuestUserId } from '../utils/userId.js';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function resolveValidUserId(userId) {
+  if (userId && UUID_REGEX.test(userId)) return userId;
+  return getOrCreateGuestUserId();
+}
 
 let storeInstance = null;
 
@@ -26,13 +34,14 @@ class SyncService {
    * جلب كافة بيانات المتدرب من Supabase وتحديث الـ Store
    */
   async loadUserData(userId) {
-    if (!isSupabaseConfigured() || !userId) {
+    const store = this.getStore();
+    const effectiveUserId = (userId && userId !== 'guest') ? userId : store?.getUserId?.();
+    if (!isSupabaseConfigured() || !effectiveUserId) {
       return { success: false, reason: 'unconfigured_or_guest' };
     }
 
     try {
       this.isSyncing = true;
-      const store = this.getStore();
 
       // المحاولة الأولى: عبر خادم الأوامر واللقطة السحابية المركزية
       try {
@@ -53,49 +62,49 @@ class SyncService {
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', effectiveUserId)
         .maybeSingle();
 
       if (profile && store) {
+        const local = store.getState().userProfile || {};
         store.setUserProfile({
-          name: profile.name ?? '',
-          email: profile.email ?? '',
-          age: profile.age ?? 0,
-          gender: profile.gender ?? 'male',
-          height: profile.height ?? 0,
-          currentWeight: profile.current_weight ?? 0,
-          targetWeight: profile.target_weight ?? 0,
-          goal: profile.fitness_goal ?? 'fat_loss',
-          weeklyLossPercent: profile.weekly_loss_percent != null ? Number(profile.weekly_loss_percent) : undefined,
-          weeklyLossKg: profile.weekly_loss_kg != null ? Number(profile.weekly_loss_kg) : undefined,
-          dailyCalorieDeficit: profile.daily_calorie_deficit != null ? Number(profile.daily_calorie_deficit) : undefined,
-          requestedCalories: profile.requested_calories != null ? Number(profile.requested_calories) : undefined,
-          estimatedGoalWeeks: profile.estimated_goal_weeks != null ? Number(profile.estimated_goal_weeks) : undefined,
-          weightLossRiskLevel: profile.weight_loss_risk_level ?? undefined,
-          activityLevel: profile.activity_level ?? 'light',
-          workoutDaysCount: profile.training_days_per_week ?? 0,
-          equipment: profile.equipment ?? 'gym',
-          injuries: profile.injuries ?? [],
-          allergens: profile.allergies ?? [],
-          likedFoods: profile.liked_foods ?? [],
-          dislikedFoods: profile.disliked_foods ?? [],
-          targetCalories: profile.target_calories ?? 0,
-          targetProtein: profile.target_protein ?? 0,
-          targetCarbs: profile.target_carbs ?? 0,
-          targetFats: profile.target_fats ?? 0,
-          targetWaterLiters: profile.target_water_liters ?? 0,
-          targetGlasses: profile.target_glasses ?? 0,
-          onboardingCompleted: !!profile.onboarding_completed,
-          onboarding_completed: !!profile.onboarding_completed,
-        });
+          name: profile.name || local.name || '',
+          email: profile.email || local.email || '',
+          age: profile.age ?? local.age ?? 0,
+          gender: profile.gender || local.gender || 'male',
+          height: profile.height ?? local.height ?? 0,
+          currentWeight: profile.current_weight ?? local.currentWeight ?? 0,
+          targetWeight: profile.target_weight ?? local.targetWeight ?? 0,
+          goal: profile.fitness_goal || local.goal || 'fat_loss',
+          weeklyLossPercent: profile.weekly_loss_percent != null ? Number(profile.weekly_loss_percent) : local.weeklyLossPercent,
+          weeklyLossKg: profile.weekly_loss_kg != null ? Number(profile.weekly_loss_kg) : local.weeklyLossKg,
+          dailyCalorieDeficit: profile.daily_calorie_deficit != null ? Number(profile.daily_calorie_deficit) : local.dailyCalorieDeficit,
+          requestedCalories: profile.requested_calories != null ? Number(profile.requested_calories) : local.requestedCalories,
+          estimatedGoalWeeks: profile.estimated_goal_weeks != null ? Number(profile.estimated_goal_weeks) : local.estimatedGoalWeeks,
+          weightLossRiskLevel: profile.weight_loss_risk_level || local.weightLossRiskLevel,
+          activityLevel: profile.activity_level || local.activityLevel || 'light',
+          workoutDaysCount: profile.training_days_per_week || local.workoutDaysCount || 0,
+          equipment: profile.equipment || local.equipment || 'gym',
+          injuries: profile.injuries || local.injuries || [],
+          allergens: profile.allergies || local.allergens || [],
+          likedFoods: profile.liked_foods || local.likedFoods || [],
+          dislikedFoods: profile.disliked_foods || local.dislikedFoods || [],
+          targetCalories: profile.target_calories || local.targetCalories || 0,
+          targetProtein: profile.target_protein || local.targetProtein || 0,
+          targetCarbs: profile.target_carbs || local.targetCarbs || 0,
+          targetFats: profile.target_fats || local.targetFats || 0,
+          targetWaterLiters: profile.target_water_liters || local.targetWaterLiters || 0,
+          targetGlasses: profile.target_glasses || local.targetGlasses || 0,
+          onboardingCompleted: !!(profile.onboarding_completed || local.onboardingCompleted),
+          onboarding_completed: !!(profile.onboarding_completed || local.onboardingCompleted),
+        }, { skipSync: true });
       }
-
 
       // 2. جلب وجبات اليوم
       const { data: meals } = await supabase
         .from('meal_logs')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', effectiveUserId)
         .eq('date', todayStr);
 
       if (meals && meals.length > 0 && store) {
@@ -124,7 +133,7 @@ class SyncService {
       const { data: water } = await supabase
         .from('water_logs')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', effectiveUserId)
         .eq('date', todayStr)
         .maybeSingle();
 
@@ -143,7 +152,7 @@ class SyncService {
         const { data: workouts } = await supabase
           .from('workout_logs')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user_id', effectiveUserId)
           .order('date', { ascending: false })
           .limit(50);
 
@@ -179,7 +188,7 @@ class SyncService {
         const { data: userStateRow } = await supabase
           .from('user_state')
           .select('payload')
-          .eq('user_id', userId)
+          .eq('user_id', effectiveUserId)
           .maybeSingle();
 
         if (userStateRow?.payload) {
@@ -206,10 +215,11 @@ class SyncService {
    */
   async syncProfile(userId, profileData) {
     if (!isSupabaseConfigured() || !userId) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       // نبني الـ payload فقط بالأعمدة الموجودة فعلاً في جدول profiles
       const payload = {
-        id: userId,
+        id: validUserId,
         name: profileData.name,
         email: profileData.email,
         age: profileData.age,
@@ -260,12 +270,11 @@ class SyncService {
    */
   async syncMealLog(userId, meal) {
     if (!isSupabaseConfigured() || !userId) return null;
-    const isUserUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
-    if (!isUserUuid) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const isUuid = meal.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(meal.id);
       const payload = {
-        user_id: userId,
+        user_id: validUserId,
         date: meal.date || localDate(),
         meal_type: meal.meal_type || 'meal',
         name: meal.name || meal.titleAr || 'وجبة جديدة',
@@ -293,9 +302,9 @@ class SyncService {
 
   async persistManualMeal(userId, id, update = null) {
     if (!isSupabaseConfigured() || !userId) return null;
-    const isUserUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    const validUserId = resolveValidUserId(userId);
     const isMealUuid = id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    if (!isUserUuid || !isMealUuid) return null;
+    if (!isMealUuid) return null;
 
     try {
       const query = update 
@@ -309,7 +318,7 @@ class SyncService {
           }) 
         : supabase.from('meal_logs').delete();
 
-      const { data, error } = await query.eq('user_id', userId).eq('id', id).select('id');
+      const { data, error } = await query.eq('user_id', validUserId).eq('id', id).select('id');
       if (error) {
         console.warn('خطأ في مزامنة الوجبة سحابياً:', error);
         return null;
@@ -326,12 +335,13 @@ class SyncService {
    */
   async syncWaterLog(userId, consumedMl, glassesCount, targetGlasses = 10) {
     if (!isSupabaseConfigured() || !userId) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const todayStr = localDate();
       const { data, error } = await supabase
         .from('water_logs')
         .upsert({
-          user_id: userId,
+          user_id: validUserId,
           date: todayStr,
           consumed_ml: consumedMl,
           consumed_glasses: glassesCount,
@@ -351,11 +361,12 @@ class SyncService {
    */
   async syncWorkoutLog(userId, workout) {
     if (!isSupabaseConfigured() || !userId) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const { data, error } = await supabase
         .from('workout_logs')
         .insert({
-          user_id: userId,
+          user_id: validUserId,
           workout_title: workout.title || workout.workout_title || 'جلسة تدريبية',
           program_type: workout.programType || workout.program_type || 'hasm',
           date: workout.date || localDate(),
@@ -379,11 +390,12 @@ class SyncService {
    */
   async syncExerciseRecord(userId, record) {
     if (!isSupabaseConfigured() || !userId || !record?.exercise_id) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const { data, error } = await supabase
         .from('exercise_records')
         .upsert({
-          user_id: userId,
+          user_id: validUserId,
           exercise_id: record.exercise_id,
           exercise_name: record.exercise_name || 'تمرين',
           max_weight_kg: Number(record.max_weight_kg || 0),
@@ -407,9 +419,10 @@ class SyncService {
    */
   async syncExerciseRecords(userId, records) {
     if (!isSupabaseConfigured() || !userId || !Array.isArray(records) || records.length === 0) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const rows = records.map(r => ({
-        user_id: userId,
+        user_id: validUserId,
         exercise_id: r.exercise_id,
         exercise_name: r.exercise_name || 'تمرين',
         max_weight_kg: Number(r.max_weight_kg || 0),
@@ -436,12 +449,13 @@ class SyncService {
    */
   async syncUserState(userId, payload) {
     if (!isSupabaseConfigured() || !userId || !payload) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const safePayload = typeof payload === 'object' ? payload : { data: payload };
       const { data, error } = await supabase
         .from('user_state')
         .upsert({
-          user_id: userId,
+          user_id: validUserId,
           payload: safePayload,
           revision: Date.now(),
           updated_at: new Date().toISOString(),
@@ -459,11 +473,12 @@ class SyncService {
    */
   async syncInbodyRecord(userId, record) {
     if (!isSupabaseConfigured() || !userId) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const { data, error } = await supabase
         .from('inbody_records')
         .insert({
-          user_id: userId,
+          user_id: validUserId,
           date: record.date || localDate(),
           weight: record.weight,
           body_fat_pct: record.bodyFatPct || null,
@@ -548,23 +563,34 @@ class SyncService {
    */
   async saveCustomFood(food) {
     if (!isSupabaseConfigured() || !food) return null;
-    const user = this.getStore()?.state?.auth?.user;
-    if (!user?.id) return null;
+    const userId = this.getStore()?.getUserId?.() || this.getStore()?.state?.auth?.user?.id;
+    if (!userId) return null;
 
     try {
+      const cal = Math.round(Number(food.per100?.kcal ?? food.caloriesPer100g ?? 0));
+      const p = Number(food.per100?.p ?? food.proteinPer100g ?? 0);
+      const c = Number(food.per100?.c ?? food.carbsPer100g ?? 0);
+      const f = Number(food.per100?.f ?? food.fatsPer100g ?? 0);
+      const size = Number(food.baseWeight ?? food.servingSize ?? 100);
+
       const { data, error } = await supabase
         .from('custom_foods')
         .insert({
           id: food.id,
-          user_id: user.id,
+          user_id: userId,
           name: food.nameAr || food.name,
           category: food.category || 'عام',
-          calories: food.per100?.kcal || food.caloriesPer100g || 0,
-          protein: food.per100?.p || food.proteinPer100g || 0,
-          carbs: food.per100?.c || food.carbsPer100g || 0,
-          fats: food.per100?.f || food.fatsPer100g || 0,
-          serving_size: food.baseWeight || 100,
-          serving_unit: 'g'
+          calories: cal,
+          calories_per_100g: cal,
+          protein: p,
+          protein_per_100g: p,
+          carbs: c,
+          carbs_per_100g: c,
+          fats: f,
+          fats_per_100g: f,
+          serving_size: size,
+          serving_size_g: size,
+          serving_unit: food.servingUnit || 'g'
         });
       if (error) throw error;
       return data;
@@ -579,8 +605,8 @@ class SyncService {
    */
   async updateCustomFood(foodId, food) {
     if (!isSupabaseConfigured() || !foodId || !food) return null;
-    const user = this.getStore()?.state?.auth?.user;
-    if (!user?.id) return null;
+    const userId = this.getStore()?.getUserId?.() || this.getStore()?.state?.auth?.user?.id;
+    if (!userId) return null;
 
     try {
       const { data, error } = await supabase
@@ -594,7 +620,7 @@ class SyncService {
           fats: food.per100?.f || food.fatsPer100g || 0,
           serving_size: food.baseWeight || 100
         })
-        .match({ id: foodId, user_id: user.id });
+        .match({ id: foodId, user_id: userId });
       if (error) throw error;
       return data;
     } catch (err) {
@@ -608,14 +634,14 @@ class SyncService {
    */
   async deleteCustomFood(foodId) {
     if (!isSupabaseConfigured() || !foodId) return null;
-    const user = this.getStore()?.state?.auth?.user;
-    if (!user?.id) return null;
+    const userId = this.getStore()?.getUserId?.() || this.getStore()?.state?.auth?.user?.id;
+    if (!userId) return null;
 
     try {
       const { data, error } = await supabase
         .from('custom_foods')
         .delete()
-        .match({ id: foodId, user_id: user.id });
+        .match({ id: foodId, user_id: userId });
       if (error) throw error;
       return data;
     } catch (err) {

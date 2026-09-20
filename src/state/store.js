@@ -8,6 +8,7 @@ import { calculateAge, calculateNutritionTargets, filterStrongestExercisePerMusc
 import { syncService } from '../services/syncService.js';
 import { executeActionTools, shoppingItemsFor, localDate } from '../domain/actionAgent.js';
 import { rolloverDailyState } from '../domain/dailyCycle.js';
+import { getOrCreateGuestUserId } from '../utils/userId.js';
 
 const STORAGE_KEY = 'neon_coach_app_state_v1';
 
@@ -176,7 +177,16 @@ class Store {
     this.saveState();
   }
 
-  setUserProfile(profile) {
+  getUserId() {
+    const authId = this.state?.auth?.user?.id;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (authId && uuidRegex.test(authId)) {
+      return authId;
+    }
+    return getOrCreateGuestUserId();
+  }
+
+  setUserProfile(profile, { skipSync = false } = {}) {
     this.state.userProfile = { ...this.state.userProfile, ...profile };
     if (profile.birthDate !== undefined) {
       this.state.userProfile.age = profile.birthDate ? calculateAge(profile.birthDate) : 0;
@@ -191,9 +201,11 @@ class Store {
     }
     this.saveState();
 
-    const userId = this.state.auth?.user?.id;
-    if (userId) {
-      syncService.syncProfile(userId, this.state.userProfile);
+    if (!skipSync) {
+      const userId = this.getUserId();
+      if (userId) {
+        syncService.syncProfile(userId, this.state.userProfile);
+      }
     }
   }
 
@@ -274,7 +286,7 @@ class Store {
     this.state.today.consumedGlasses = (this.state.today.consumedGlasses || 0) + glassDelta;
     this.saveState();
 
-    const userId = this.state.auth?.user?.id;
+    const userId = this.getUserId();
     if (userId) {
       syncService.syncWaterLog(userId, Math.round(newLiters * 1000), this.state.today.consumedGlasses, this.state.today.targetGlasses || 10);
     }
@@ -289,6 +301,11 @@ class Store {
     const glassDelta = amountMl >= 400 ? 2 : 1;
     this.state.today.consumedGlasses = Math.max(0, (this.state.today.consumedGlasses || glassDelta) - glassDelta);
     this.saveState();
+
+    const userId = this.getUserId();
+    if (userId) {
+      syncService.syncWaterLog(userId, Math.round(newLiters * 1000), this.state.today.consumedGlasses, this.state.today.targetGlasses || 10);
+    }
   }
 
   // --- تتبع المكملات القديم والتوافق ---
@@ -619,7 +636,7 @@ class Store {
 
     // مزامنة الجلسة في قاعدة البيانات سحابياً
     if (!customData?.skipSync) {
-      const userId = this.state?.auth?.user?.id;
+      const userId = this.getUserId();
       if (userId) {
         syncService.syncWorkoutLog(userId, {
           title: newSessionRecord.title,
@@ -749,7 +766,7 @@ class Store {
     this.recalculateDailyNutrition();
     this.saveState();
 
-    const userId = this.state.auth?.user?.id;
+    const userId = this.getUserId();
     if (userId) {
       syncService.syncMealLog(userId, {
         id: newLog.id,
@@ -773,7 +790,7 @@ class Store {
       this.recalculateDailyNutrition();
       this.saveState();
     }
-    const userId = this.state.auth?.user?.id;
+    const userId = this.getUserId();
     if (userId) {
       try {
         await syncService.persistManualMeal(userId, logId, updatedData);
@@ -788,7 +805,7 @@ class Store {
     this.recalculateDailyNutrition();
     this.saveState();
 
-    const userId = this.state.auth?.user?.id;
+    const userId = this.getUserId();
     if (userId) {
       try {
         await syncService.persistManualMeal(userId, logId);
@@ -896,7 +913,7 @@ class Store {
       rep.strengthTrendData.push({ day: rep.periodDays || 90, weight: b });
     }
 
-    const userId = this.state?.auth?.user?.id;
+    const userId = this.getUserId();
     if (userId) {
       syncService.syncInbodyRecord(userId, {
         weight: weight !== undefined && weight !== '' && !isNaN(Number(weight)) ? Number(weight) : null,
@@ -921,7 +938,7 @@ class Store {
       visceralFatLevel: Number(visceralFatLevel) || 0
     };
 
-    const userId = this.state?.auth?.user?.id;
+    const userId = this.getUserId();
     if (userId) {
       syncService.syncInbodyRecord(userId, {
         bodyFatPct: Number(bodyFatPercentage) || null,

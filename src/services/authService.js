@@ -12,6 +12,9 @@
 import { store } from '../state/store.js';
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 import { syncService } from './syncService.js';
+import { getOrCreateGuestUserId } from '../utils/userId.js';
+
+export { getOrCreateGuestUserId };
 
 const SESSION_STORAGE_KEY = 'neon_auth_session_v1';
 const PASSWORD_MIN_LENGTH = 6;
@@ -265,8 +268,31 @@ class AuthService {
     return true;
   }
 
+  getEffectiveUserId() {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (this.currentSession?.user?.id && uuidRegex.test(this.currentSession.user.id)) {
+      return this.currentSession.user.id;
+    }
+    const storeAuthId = store?.getState?.()?.auth?.user?.id;
+    if (storeAuthId && uuidRegex.test(storeAuthId)) {
+      return storeAuthId;
+    }
+    return getOrCreateGuestUserId();
+  }
+
   getCurrentUser() {
-    return this.currentSession ? this.currentSession.user : null;
+    if (this.currentSession?.user) {
+      return this.currentSession.user;
+    }
+    const guestId = getOrCreateGuestUserId();
+    const localProfile = store?.getState?.()?.userProfile;
+    return {
+      id: guestId,
+      name: localProfile?.name || 'مستخدم ضيف',
+      email: localProfile?.email || '',
+      isGuest: true,
+      onboardingCompleted: !!(localProfile?.onboardingCompleted || localProfile?.onboarding_completed)
+    };
   }
 
   getCurrentSession() {

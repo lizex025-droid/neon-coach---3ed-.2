@@ -23,6 +23,7 @@ import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
 import { authService } from '../services/authService.js';
+import { syncService } from '../services/syncService.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
 import { updateVoiceTriggerVisibility } from '../components/voice/voiceTriggerBtn.js';
 
@@ -95,6 +96,14 @@ export class Router {
 
   async init() {
     await authService.whenAuthReady();
+    const effectiveUserId = authService.getEffectiveUserId?.();
+    if (effectiveUserId) {
+      try {
+        await syncService.loadUserData(effectiveUserId);
+      } catch (err) {
+        console.warn('Initial cloud sync error:', err);
+      }
+    }
     this.checkInitialAccess();
   }
 
