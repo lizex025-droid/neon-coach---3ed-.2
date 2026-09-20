@@ -7,7 +7,7 @@ import { store } from '../state/store.js';
 import { aiService } from '../services/aiService.js';
 import { speechService } from '../services/speechService.js';
 import { notificationService } from '../services/notificationService.js';
-import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, isCountBasedFood, getFoodPieceWeight, getFoodUnitLabel } from '../data/foods.js';
+import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, isCountBasedFood, isLiquidFood, getFoodPieceWeight, getFoodUnitLabel } from '../data/foods.js';
 import { mealNameFromItems } from '../domain/nutritionCalculations.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
@@ -225,7 +225,7 @@ export function renderMealLogView() {
                 ` : `
                   <div style="display: flex; align-items: center; gap: 6px;">
                     <input type="number" class="draft-item-grams-input" data-idx="${idx}" min="0" step="5" value="${item.grams}">
-                    <span style="color: #B8C0BC; font-size: 0.85rem;">غ</span>
+                    <span style="color: #B8C0BC; font-size: 0.85rem;">${uLabel || 'غ'}</span>
                   </div>
                 `}
               </div>
@@ -450,7 +450,8 @@ export function bindMealLogEvents() {
         name: food.name || food.nameAr,
         isCountBased: isCount,
         pieceWeight: isCount ? pieceWeight : null,
-        unitLabel: isCount ? unitLabel : 'غ',
+        isLiquid: isLiquidFood(food),
+        unitLabel: unitLabel || (isCount ? 'بيضة كاملة' : 'غ'),
         count: isCount ? defaultCount : null,
         grams: initialGrams,
         calories: Math.round((food.per100?.kcal || 0) * factor),
@@ -541,7 +542,7 @@ export function bindMealLogEvents() {
       const pWeight = getFoodPieceWeight(f);
       const uLabel = getFoodUnitLabel(f);
       const perUnitKcal = Math.round((f.per100?.kcal || 0) * (pWeight / 100));
-      const kcalBadge = isCount ? `~${perUnitKcal} kcal / ${uLabel} (${pWeight}غ)` : `${f.per100?.kcal || 0} kcal / 100g`;
+      const kcalBadge = isCount ? `~${perUnitKcal} kcal / ${uLabel} (${pWeight}غ)` : `${f.per100?.kcal || 0} kcal / 100${uLabel === 'مل' ? 'مل' : 'g'}`;
 
       return `
         <div class="food-search-result-row" style="display: flex; align-items: center; gap: 6px; width: 100%;">

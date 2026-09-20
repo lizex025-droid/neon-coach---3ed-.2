@@ -6,7 +6,7 @@
 import { store } from '../state/store.js';
 import { calculatePercentage } from '../domain/calculations.js';
 import { findMealSwaps } from '../domain/nutritionEngine.js';
-import { macrosFor, isCountBasedFood, getFoodPieceWeight, getFoodUnitLabel, searchFoods } from '../data/foods.js';
+import { macrosFor, isCountBasedFood, isLiquidFood, getFoodPieceWeight, getFoodUnitLabel, searchFoods } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
@@ -193,7 +193,7 @@ export function renderNutritionView() {
                   const pWeight = it.pieceWeight || getFoodPieceWeight(it.foodId || it.nameAr || it.name);
                   const uLabel = it.unitLabel || getFoodUnitLabel(it.foodId || it.nameAr || it.name);
                   const countVal = it.count || Math.max(1, Math.round((it.grams || pWeight) / pWeight));
-                  const displayQty = isCount ? `${countVal} ${uLabel} <span style="color: #8C9992; font-size: 0.72rem; font-family: monospace;">(~${it.grams}غ)</span>` : `${it.grams} غ`;
+                  const displayQty = isCount ? `${countVal} ${uLabel} <span style="color: #8C9992; font-size: 0.72rem; font-family: monospace;">(~${it.grams}${uLabel === 'مل' ? 'مل' : 'غ'})</span>` : `${it.grams} ${uLabel || 'غ'}`;
 
                   return `
                     <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: #FFFFFF; align-items: center;">
@@ -727,7 +727,7 @@ export function bindNutritionEvents() {
               ` : `
                 <div style="display: flex; align-items: center; gap: 4px;">
                   <input type="number" class="edit-logged-grams" data-idx="${idx}" value="${item.grams || 100}" min="0" step="5" style="width: 70px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 0.95rem; font-weight: 800; font-family: monospace; padding: 6px 2px;">
-                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.82rem;">غ</span>
+                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.82rem;">${uLabel || 'غ'}</span>
                 </div>
               `}
               <button type="button" class="btn-icon remove-item-from-edit-btn" data-idx="${idx}" style="color: #FF6B6B; font-size: 0.95rem; width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.25);" title="حذف هذا الصنف من الوجبة">
@@ -886,13 +886,19 @@ export function bindNutritionEvents() {
     foodSearchResults.innerHTML = results.map(f => {
       const isCount = isCountBasedFood(f.id || f.nameAr || f.name);
       const uLabel = getFoodUnitLabel(f.id || f.nameAr || f.name);
+      const cal = f.per100?.kcal ?? f.calories_kcal ?? f.caloriesPer100g ?? 0;
+      const p = f.per100?.p ?? f.protein_g ?? f.proteinPer100g ?? 0;
+      const c = f.per100?.c ?? f.carbs_g ?? f.carbsPer100g ?? 0;
+      const fat = f.per100?.f ?? f.fat_g ?? f.fatsPer100g ?? 0;
+      const unitSuffix = isCount ? `لكل ${uLabel}: ` : `لكل 100${uLabel === 'مل' ? 'مل' : 'غ'}: `;
+
       return `
         <div class="edit-food-search-item" data-food-id="${f.id}" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; cursor: pointer; border-bottom: 1px solid rgba(85,247,165,0.08); transition: background 0.15s;">
           <div style="flex: 1; min-width: 0; padding-left: 8px;">
             <div style="font-weight: 700; color: #FFFFFF; font-size: 0.88rem;">${f.nameAr || f.name}</div>
             <div style="font-size: 0.74rem; color: #8C9992; font-family: monospace;">
-              ${isCount ? `لكل ${uLabel}: ` : 'لكل 100غ: '}
-              <span style="color: #FFC83C;">${f.calories_kcal}</span> سعرة · بروتين ${f.protein_g}غ · كارب ${f.carbs_g}غ · دهون ${f.fat_g}غ
+              ${unitSuffix}
+              <span style="color: #FFC83C;">${cal}</span> سعرة · بروتين ${p}غ · كارب ${c}غ · دهون ${fat}غ
             </div>
           </div>
           <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.74rem; padding: 4px 10px; border-radius: 8px; white-space: nowrap; pointer-events: none;">
@@ -917,10 +923,10 @@ export function bindNutritionEvents() {
         const uLabel = getFoodUnitLabel(f.id || f.nameAr || f.name);
         const defaultGrams = isCount ? pWeight : 100;
         const m = macrosFor(f.id, defaultGrams) || {
-          kcal: f.calories_kcal,
-          p: f.protein_g,
-          c: f.carbs_g,
-          f: f.fat_g
+          kcal: f.per100?.kcal || f.calories_kcal || 0,
+          p: f.per100?.p || f.protein_g || 0,
+          c: f.per100?.c || f.carbs_g || 0,
+          f: f.per100?.f || f.fat_g || 0
         };
 
         // إلغاء الوضع المباشر فور إضافة صنف حقيقي
@@ -933,8 +939,9 @@ export function bindNutritionEvents() {
           grams: defaultGrams,
           count: isCount ? 1 : undefined,
           isCountBased: isCount,
+          isLiquid: isLiquidFood(f),
           pieceWeight: isCount ? pWeight : undefined,
-          unitLabel: isCount ? uLabel : undefined,
+          unitLabel: uLabel,
           calories: Math.round(m.kcal),
           protein: Math.round(m.p),
           carbs: Math.round(m.c),

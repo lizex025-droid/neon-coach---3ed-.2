@@ -149,6 +149,10 @@ export const FOOD_ITEMS = [
     nameAr: 'زيت زيتون بكر ممتاز',
     nameEn: 'Extra Virgin Olive Oil',
     state: 'raw',
+    isLiquid: true,
+    unitLabel: 'مل',
+    unitName: 'مل',
+    unit: 'ml',
     caloriesPer100g: 884,
     proteinPer100g: 0,
     carbsPer100g: 0,
@@ -306,6 +310,45 @@ export function getFoodItemById(id) {
   return FOOD_ITEMS.find(f => f.id === id) || foodById(id);
 }
 
+/**
+ * التحقق مما إذا كان الصنف سائلاً (يقاس بالمليلتر "مل" كالحليب والعصائر والزيوت والمشروبات)
+ */
+export function isLiquidFood(food) {
+  if (!food) return false;
+  const f = typeof food === 'string' ? foodById(food) : food;
+  if (!f) return false;
+  if (f.isLiquid === true || f.unit === 'ml' || f.unitLabel === 'مل') return true;
+
+  const ar = (f.arabic_name || f.nameAr || f.name || '').trim();
+  const en = (f.english_name || f.nameEn || '').toLowerCase().trim();
+
+  // استثناءات صريحة للأصناف الجافة والصلبة
+  if (ar.includes('بودرة') || ar.includes('مجفف') || ar.includes('مركز') || ar.includes('طحين') || ar.includes('دقيق')) return false;
+  if (ar.includes('حبوب') || ar.includes('بذور') || ar.includes('شوكولاتة') || ar.includes('لوح') || ar.includes('بار')) return false;
+  if (ar.includes('صلب') || ar.includes('جامد') || ar.includes('جبن') || ar.includes('جبنة') || ar.includes('قريش')) return false;
+  if (ar.includes('زبادي') || ar.includes('زبادى') || ar.includes('لبنة') || en.includes('yogurt')) return false;
+  if (ar.includes('تونا') || ar.includes('تونة') || ar.includes('سردين') || ar.includes('حمص') || ar.includes('فول') || ar.includes('روبيان') || ar.includes('جمبري')) return false;
+  if (ar.includes('بطيخ') || ar.includes('جرجير') || ar.includes('مناقيش') || ar.includes('معجون') || ar.includes('فاكهة القشطة') || ar.includes('مبيض')) return false;
+  if (en.includes('canned in water') || en.includes('without oil') || en.includes('with olive oil') || en.includes('dip') || en.includes('creamer')) return false;
+  if (ar.includes('بدون زيت') || ar.includes('بزيت')) return false;
+
+  // مؤشرات السوائل باللغة العربية
+  if (/حليب|عصير|مشروب|شوربة|مرق|قهوة|شاي|كوكا|بيبسي|مياه|ماء|مشروبات/.test(ar)) return true;
+  if (/^زيت\b/.test(ar) || /^زيت /.test(ar)) return true;
+  if (/لبن (رايب|عيران|شرب|ميجروس)/.test(ar)) return true;
+  if (/كريمة خفق سائلة|كريمة طبخ سائلة/.test(ar)) return true;
+  if (ar === 'قشطة' || ar === 'قشطة لايت') return true;
+  if (/ميلك شيك|بروتين شيك|شيك /.test(ar)) return true;
+
+  // مؤشرات السوائل باللغة الإنجليزية
+  if (/\b(juice|drink|beverage|milk|broth|soup|coffee|tea|oil|water|shake)\b/.test(en)) {
+    if (!en.includes('watermelon') && !en.includes('watercress') && !en.includes('powder') && !en.includes('dry') && !en.includes('boiled') && !en.includes('broiled')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // معالجة وتجهيز قاعدة الأطعمة الموسعة (أكثر من 600 صنف غذائي معتمد)
 const seenFoodKeys = new Set();
 export const IMPORTED_FOODS = (foodSource?.foods || []).map(row => {
@@ -320,8 +363,11 @@ export const IMPORTED_FOODS = (foodSource?.foods || []).map(row => {
   const isWholeEgg = row.id === 38 || (arName.includes('بيض') && !isEggWhite && !arName.includes('شكشوكة') && !arName.includes('سمك'));
   const isCountBased = isEggWhite || isWholeEgg;
   const pieceWeight = isEggWhite ? 33 : (isWholeEgg ? 50 : null);
-  const unitLabel = isEggWhite ? 'بياض بيض' : (isWholeEgg ? 'بيضة كاملة' : 'غ');
-  const unitName = isEggWhite ? 'بياض بيض' : (isWholeEgg ? 'بيضة كاملة' : '');
+
+  // الكشف عن السوائل (حليب، عصائر، زيوت، إلخ)
+  const isLiq = !isCountBased && isLiquidFood({ arabic_name: row.arabic_name, english_name: row.english_name });
+  const unitLabel = isEggWhite ? 'بياض بيض' : (isWholeEgg ? 'بيضة كاملة' : (isLiq ? 'مل' : 'غ'));
+  const unitName = isEggWhite ? 'بياض بيض' : (isWholeEgg ? 'بيضة كاملة' : (isLiq ? 'مل' : ''));
 
   return {
     id: `egy_${String(row.id).padStart(3, '0')}`,
@@ -331,6 +377,8 @@ export const IMPORTED_FOODS = (foodSource?.foods || []).map(row => {
     baseWeight: 100,
     isCountBased,
     pieceWeight,
+    isLiquid: isLiq,
+    unit: isLiq ? 'ml' : 'g',
     unitLabel,
     unitName,
     per100: {
@@ -350,28 +398,34 @@ export const IMPORTED_FOODS = (foodSource?.foods || []).map(row => {
 export const IMPORTED_FOOD_COUNT = IMPORTED_FOODS.length + CURATED_121_FOODS.length;
 
 // تكييف الأطعمة المعتمدة والمحلية
-const ADAPTED_FOOD_ITEMS = FOOD_ITEMS.map(f => ({
-  id: f.id,
-  name: f.nameAr,
-  nameAr: f.nameAr,
-  nameEn: f.nameEn || '',
-  category: f.category || '',
-  state: f.state || '',
-  baseWeight: 100,
-  isCountBased: f.isCountBased || false,
-  pieceWeight: f.pieceWeight || null,
-  unitLabel: f.unitLabel || 'غ',
-  unitName: f.unitName || '',
-  per100: {
-    kcal: f.caloriesPer100g,
-    p: f.proteinPer100g,
-    c: f.carbsPer100g,
-    f: f.fatsPer100g,
-    fiber: f.fiberPer100g || 0
-  },
-  allergens: f.allergens || [],
-  available: true
-}));
+const ADAPTED_FOOD_ITEMS = FOOD_ITEMS.map(f => {
+  const isLiq = f.isLiquid || isLiquidFood(f);
+  const uLabel = f.unitLabel || (isLiq ? 'مل' : 'غ');
+  return {
+    id: f.id,
+    name: f.nameAr,
+    nameAr: f.nameAr,
+    nameEn: f.nameEn || '',
+    category: f.category || '',
+    state: f.state || '',
+    baseWeight: 100,
+    isCountBased: f.isCountBased || false,
+    pieceWeight: f.pieceWeight || null,
+    isLiquid: isLiq,
+    unit: isLiq ? 'ml' : 'g',
+    unitLabel: uLabel,
+    unitName: f.unitName || (isLiq ? 'مل' : ''),
+    per100: {
+      kcal: f.caloriesPer100g,
+      p: f.proteinPer100g,
+      c: f.carbsPer100g,
+      f: f.fatsPer100g,
+      fiber: f.fiberPer100g || 0
+    },
+    allergens: f.allergens || [],
+    available: true
+  };
+});
 
 // استرجاع الأطعمة المخصصة المحفوظة محلياً بواسطة المستخدم
 let _inMemoryCustomFoods = [];
@@ -410,7 +464,7 @@ export function foodById(id) {
  * @param {number} [foodData.servingSize=100] حجم الحصة الافتراضي بالغرام
  * @returns {Object} الصنف المضاف
  */
-export function addCustomFood({ name, calories, protein, carbs, fats, servingSize = 100 }) {
+export function addCustomFood({ name, calories, protein, carbs, fats, servingSize = 100, isLiquid = false, unitLabel = null }) {
   const trimmedName = (name || '').trim();
   if (!trimmedName) {
     throw new Error('يرجى كتابة اسم الأكلة');
@@ -431,6 +485,8 @@ export function addCustomFood({ name, calories, protein, carbs, fats, servingSiz
   const baseWeight = Math.max(1, Math.round(cleanNum(servingSize) || 100));
 
   const id = `cust_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const liq = Boolean(isLiquid || (unitLabel === 'مل') || isLiquidFood({ name: trimmedName, nameAr: trimmedName }));
+  const resolvedUnitLabel = unitLabel || (liq ? 'مل' : 'غ');
 
   const newFood = {
     id,
@@ -438,6 +494,10 @@ export function addCustomFood({ name, calories, protein, carbs, fats, servingSiz
     nameAr: trimmedName,
     nameEn: '',
     baseWeight,
+    isLiquid: liq,
+    unit: liq ? 'ml' : 'g',
+    unitLabel: resolvedUnitLabel,
+    unitName: liq ? 'مل' : '',
     per100: {
       kcal,
       p,
@@ -487,7 +547,7 @@ export function addCustomFood({ name, calories, protein, carbs, fats, servingSiz
 /**
  * تعديل أكلة مخصصة محفوظة في قاعدة البيانات
  */
-export function updateCustomFood(id, { name, calories, protein, carbs, fats, servingSize = 100 }) {
+export function updateCustomFood(id, { name, calories, protein, carbs, fats, servingSize = 100, isLiquid = undefined, unitLabel = undefined }) {
   if (!id) throw new Error('معرف الصنف مطلوب للتعديل');
   const trimmedName = (name || '').trim();
   if (!trimmedName) throw new Error('يرجى كتابة اسم الأكلة');
@@ -506,12 +566,19 @@ export function updateCustomFood(id, { name, calories, protein, carbs, fats, ser
   const baseWeight = Math.max(1, Math.round(cleanNum(servingSize) || 100));
 
   const existingFood = foodById(id);
+  const liq = isLiquid !== undefined ? Boolean(isLiquid) : (existingFood?.isLiquid ?? isLiquidFood({ name: trimmedName, nameAr: trimmedName }));
+  const resolvedUnitLabel = unitLabel || (liq ? 'مل' : (existingFood?.unitLabel || 'غ'));
+
   const updatedFood = {
     ...(existingFood || {}),
     id,
     name: trimmedName,
     nameAr: trimmedName,
     baseWeight,
+    isLiquid: liq,
+    unit: liq ? 'ml' : 'g',
+    unitLabel: resolvedUnitLabel,
+    unitName: liq ? 'مل' : (existingFood?.unitName || ''),
     per100: {
       kcal,
       p,
@@ -640,16 +707,17 @@ export function getFoodPieceWeight(food) {
 }
 
 /**
- * اسم وحدة الصنف (بيضة كاملة، بياض بيض، صفار بيض، أو غ)
+ * اسم وحدة الصنف (بيضة كاملة، بياض بيض، صفار بيض، مل، أو غ)
  */
 export function getFoodUnitLabel(food) {
   const f = typeof food === 'string' ? foodById(food) : food;
   if (!f) return 'غ';
   if (f.unitLabel) return f.unitLabel;
-  const name = (f.name || f.nameAr || '').trim();
+  const name = (f.name || f.nameAr || f.arabic_name || '').trim();
   if (name.includes('بياض')) return 'بياض بيض';
   if (name.includes('صفار')) return 'صفار بيض';
   if (name.includes('بيض')) return 'بيضة كاملة';
+  if (isLiquidFood(f)) return 'مل';
   return 'غ';
 }
 

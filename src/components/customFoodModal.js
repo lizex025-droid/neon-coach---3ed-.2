@@ -3,7 +3,7 @@
  * تتيح للمستخدم إدخال وتعديل وحذف الأكلات الخاصة به وسعراتها والماكروز بكل سهولة
  */
 
-import { addCustomFood, updateCustomFood, deleteCustomFood, getCustomFoods, foodById } from '../data/foods.js';
+import { addCustomFood, updateCustomFood, deleteCustomFood, getCustomFoods, foodById, isLiquidFood } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 
@@ -71,10 +71,27 @@ export function renderCustomFoodModal(modalId = 'custom-food-modal') {
               <input type="text" class="custom-food-name-input" required placeholder="مثال: شاورما دايت، كبسة لحم بيتية، بروتين شيك..." style="width: 100%; border-radius: 12px; padding: 12px 14px; background: #030806; border: 1px solid rgba(85,247,165,0.3); color: #FFFFFF; font-size: 0.95rem; font-weight: 700;">
             </div>
 
-            <!-- السعرات الحرارية لكل 100غ -->
+            <!-- نوع القياس / الوحدة (غرام أو مليلتر) -->
+            <div>
+              <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #B8C0BC; margin-bottom: 6px;">
+                طبيعة الصنف ووحدة القياس
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <label class="custom-unit-label-g" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: rgba(85,247,165,0.15); border: 1px solid #55F7A5; border-radius: 12px; cursor: pointer; color: #FFFFFF; font-weight: 700; font-size: 0.84rem; transition: all 0.2s;">
+                  <input type="radio" name="custom-food-unit-choice" value="غ" checked style="accent-color: #55F7A5;">
+                  <span>صلب (غرام - غ)</span>
+                </label>
+                <label class="custom-unit-label-ml" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: rgba(5,13,9,0.6); border: 1px solid rgba(85,247,165,0.2); border-radius: 12px; cursor: pointer; color: #8C9992; font-weight: 700; font-size: 0.84rem; transition: all 0.2s;">
+                  <input type="radio" name="custom-food-unit-choice" value="مل" style="accent-color: #55F7A5;">
+                  <span>سائل (مليلتر - مل)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- السعرات الحرارية لكل 100غ أو 100مل -->
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label style="font-size: 0.82rem; font-weight: 700; color: #B8C0BC;">
+                <label class="custom-calories-label" style="font-size: 0.82rem; font-weight: 700; color: #B8C0BC;">
                   السعرات الحرارية (لكل 100غ) <span style="color: #FF5555;">*</span>
                 </label>
                 <button type="button" class="calc-calories-from-macros-btn" style="background: none; border: none; color: #55F7A5; font-size: 0.74rem; cursor: pointer; text-decoration: underline; padding: 0;">
@@ -172,6 +189,47 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
   const cancelBtn = modal.querySelector('.cancel-custom-food-btn');
   const closeBtn = modal.querySelector('.close-custom-food-modal-btn');
 
+  const unitRadioG = modal.querySelector('input[name="custom-food-unit-choice"][value="غ"]');
+  const unitRadioMl = modal.querySelector('input[name="custom-food-unit-choice"][value="مل"]');
+  const unitLabelG = modal.querySelector('.custom-unit-label-g');
+  const unitLabelMl = modal.querySelector('.custom-unit-label-ml');
+  const calLabel = modal.querySelector('.custom-calories-label');
+  let userManuallySetUnit = false;
+
+  const setUnitChoice = (unit, isManual = false) => {
+    if (isManual) userManuallySetUnit = true;
+    const isMl = unit === 'مل';
+    if (unitRadioG) unitRadioG.checked = !isMl;
+    if (unitRadioMl) unitRadioMl.checked = isMl;
+    if (unitLabelG) {
+      unitLabelG.style.background = isMl ? 'rgba(5,13,9,0.6)' : 'rgba(85,247,165,0.15)';
+      unitLabelG.style.borderColor = isMl ? 'rgba(85,247,165,0.2)' : '#55F7A5';
+      unitLabelG.style.color = isMl ? '#8C9992' : '#FFFFFF';
+    }
+    if (unitLabelMl) {
+      unitLabelMl.style.background = isMl ? 'rgba(85,247,165,0.15)' : 'rgba(5,13,9,0.6)';
+      unitLabelMl.style.borderColor = isMl ? '#55F7A5' : 'rgba(85,247,165,0.2)';
+      unitLabelMl.style.color = isMl ? '#FFFFFF' : '#8C9992';
+    }
+    if (calLabel) {
+      calLabel.innerHTML = `السعرات الحرارية (لكل 100${isMl ? 'مل' : 'غ'}) <span style="color: #FF5555;">*</span>`;
+    }
+  };
+
+  unitRadioG?.addEventListener('change', () => setUnitChoice('غ', true));
+  unitRadioMl?.addEventListener('change', () => setUnitChoice('مل', true));
+
+  nameInput?.addEventListener('input', () => {
+    if (!userManuallySetUnit) {
+      const val = nameInput.value.trim();
+      if (isLiquidFood({ name: val, nameAr: val })) {
+        setUnitChoice('مل', false);
+      } else {
+        setUnitChoice('غ', false);
+      }
+    }
+  });
+
   let currentTab = 'form'; // 'form' or 'list'
 
   const updateCalculatedCalories = () => {
@@ -231,7 +289,7 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
             ${escapeHtml(f.name || f.nameAr)}
           </div>
           <div style="font-size: 0.76rem; color: #55F7A5; font-family: monospace; display: flex; gap: 8px; flex-wrap: wrap;">
-            <span><b>${f.per100?.kcal || f.caloriesPer100g || 0}</b> kcal</span>
+            <span><b>${f.per100?.kcal || f.caloriesPer100g || 0}</b> kcal / 100${f.unitLabel || (f.isLiquid ? 'مل' : 'غ')}</span>
             <span style="color: #B8C0BC;">ب: <b>${f.per100?.p || f.proteinPer100g || 0}g</b></span>
             <span style="color: #B8C0BC;">ك: <b>${f.per100?.c || f.carbsPer100g || 0}g</b></span>
             <span style="color: #B8C0BC;">د: <b>${f.per100?.f || f.fatsPer100g || 0}g</b></span>
@@ -309,6 +367,9 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
     if (fInput) fInput.value = food.per100?.f || food.fatsPer100g || 0;
     updateCalculatedCalories();
 
+    const isMl = Boolean(food.isLiquid || food.unitLabel === 'مل' || isLiquidFood(food));
+    setUnitChoice(isMl ? 'مل' : 'غ', true);
+
     if (editModeBanner) editModeBanner.style.display = 'flex';
     if (editingFoodNameLabel) editingFoodNameLabel.textContent = food.name || food.nameAr || '';
     if (submitBtnLabel) submitBtnLabel.textContent = 'حفظ التعديلات في قاعدة البيانات';
@@ -324,6 +385,9 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
     if (cInput) cInput.value = '';
     if (fInput) fInput.value = '';
     updateCalculatedCalories();
+
+    userManuallySetUnit = false;
+    setUnitChoice('غ', false);
 
     if (editModeBanner) editModeBanner.style.display = 'none';
     if (submitBtnLabel) submitBtnLabel.textContent = 'حفظ في قاعدة البيانات';
@@ -444,6 +508,8 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
     }
 
     const editId = editingIdInput?.value;
+    const selectedUnit = unitRadioMl?.checked ? 'مل' : 'غ';
+    const isLiq = selectedUnit === 'مل';
 
     try {
       if (editId) {
@@ -454,7 +520,9 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
           protein: p,
           carbs: c,
           fats: f,
-          servingSize: 100
+          servingSize: 100,
+          isLiquid: isLiq,
+          unitLabel: selectedUnit
         });
 
         notificationService.showToast(`تم تعديل "${name}" في قاعدة البيانات بنجاح! `, 'success');
@@ -472,7 +540,9 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
           protein: p,
           carbs: c,
           fats: f,
-          servingSize: 100
+          servingSize: 100,
+          isLiquid: isLiq,
+          unitLabel: selectedUnit
         });
 
         notificationService.showToast(`تمت إضافة "${name}" إلى قاعدة الأطعمة بنجاح! `, 'success');
