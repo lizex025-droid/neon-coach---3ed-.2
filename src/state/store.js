@@ -523,6 +523,11 @@ class Store {
     this.ensureCurrentDay({ notify: false });
     this.state.today.energyLevel = Math.max(1, Math.min(5, level));
     this.saveState();
+
+    const userId = this.getUserId();
+    if (userId) {
+      syncService.syncEnergyLog(userId, this.state.today.energyLevel);
+    }
   }
 
   // --- إدارة جلسة التمرين النشطة ---

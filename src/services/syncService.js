@@ -516,12 +516,13 @@ class SyncService {
    */
   async syncEnergyLog(userId, energyLevel, sleepHours = null, mood = '') {
     if (!isSupabaseConfigured() || !userId) return null;
+    const validUserId = resolveValidUserId(userId);
     try {
       const todayStr = localDate();
       const { data, error } = await supabase
         .from('daily_energy_logs')
         .upsert({
-          user_id: userId,
+          user_id: validUserId,
           date: todayStr,
           energy_level: energyLevel,
           sleep_hours: sleepHours,

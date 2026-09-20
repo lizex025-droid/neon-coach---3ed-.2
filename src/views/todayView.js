@@ -8,6 +8,69 @@ import { calculatePercentage } from '../domain/calculations.js';
 import { animateCountUp, animateRingOffset } from '../utils/animUtils.js';
 import { neonIcon } from '../utils/neonIcons.js';
 
+export const ENERGY_MOTIVATION_MESSAGES = {
+  5: {
+    label: 'ممتاز',
+    emoji: '🔥',
+    quote: '«قاعدين نقرّب أكثر من هدفنا 🔥»',
+    borderColor: 'rgba(85, 247, 165, 0.4)',
+    bgGradient: 'linear-gradient(135deg, rgba(85, 247, 165, 0.14) 0%, rgba(5, 13, 9, 0.95) 100%)',
+    textColor: '#55F7A5'
+  },
+  4: {
+    label: 'جيد',
+    emoji: '💪',
+    quote: '«خطوة ثابتة اليوم بتقرّبنا من الهدف 💪»',
+    borderColor: 'rgba(85, 247, 165, 0.3)',
+    bgGradient: 'linear-gradient(135deg, rgba(85, 247, 165, 0.1) 0%, rgba(5, 13, 9, 0.95) 100%)',
+    textColor: '#55F7A5'
+  },
+  3: {
+    label: 'متوسط',
+    emoji: '🌟',
+    quote: '«حتى الطاقة المتوسطة تكفي للتقدم 🌟»',
+    borderColor: 'rgba(250, 204, 21, 0.35)',
+    bgGradient: 'linear-gradient(135deg, rgba(250, 204, 21, 0.1) 0%, rgba(5, 13, 9, 0.95) 100%)',
+    textColor: '#FACC15'
+  },
+  2: {
+    label: 'منخفض',
+    emoji: '🌱',
+    quote: '«إنجاز بسيط اليوم أفضل من التوقف 🌱»',
+    borderColor: 'rgba(251, 146, 60, 0.35)',
+    bgGradient: 'linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(5, 13, 9, 0.95) 100%)',
+    textColor: '#FB923C'
+  },
+  1: {
+    label: 'مرهق',
+    emoji: '💚',
+    quote: '«اسمع لجسمك اليوم—الراحة جزء أساسي من الوصول للهدف 💚»',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    bgGradient: 'linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(5, 13, 9, 0.95) 100%)',
+    textColor: '#34D399'
+  }
+};
+
+export function renderEnergyMotivationCard(level) {
+  const item = ENERGY_MOTIVATION_MESSAGES[level];
+  if (!item) return '';
+  return `
+    <div class="energy-motivation-card" style="background: ${item.bgGradient}; border: 1px solid ${item.borderColor};">
+      <div class="energy-motivation-badge" style="border: 1px solid ${item.borderColor};">
+        ${item.emoji}
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div class="energy-motivation-header" style="color: ${item.textColor};">
+          طاقة اليوم: ${item.label}
+        </div>
+        <div class="energy-motivation-text">
+          ${item.quote}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 export function renderTodayView() {
   const state = store.getState();
   const { today, userProfile } = state;
@@ -337,6 +400,10 @@ export function renderTodayView() {
             </button>
           `).join('')}
         </div>
+
+        <div id="energy-motivation-wrapper">
+          ${renderEnergyMotivationCard(today.energyLevel)}
+        </div>
       </div>
 
       <!-- نافذة تعديل هدف السعرات اليومي يدوياً -->
@@ -520,11 +587,18 @@ export function bindTodayViewEvents() {
     store.undoWaterCup(250);
   });
 
-  // أزرار تقييم الطاقة
+  // أزرار تقييم الطاقة وعرض بطاقة التحفيز
   document.querySelectorAll('.energy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const level = Number(btn.getAttribute('data-energy'));
       if (level) {
+        document.querySelectorAll('.energy-btn').forEach(b => {
+          b.classList.toggle('selected', Number(b.getAttribute('data-energy')) === level);
+        });
+        const wrapper = document.getElementById('energy-motivation-wrapper');
+        if (wrapper) {
+          wrapper.innerHTML = renderEnergyMotivationCard(level);
+        }
         store.setEnergyLevel(level);
       }
     });
