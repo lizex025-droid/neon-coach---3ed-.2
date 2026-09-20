@@ -166,6 +166,11 @@ export function renderNutritionView() {
             <button type="button" id="open-custom-food-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(85,247,165,0.35);" title="إضافة أو تعديل أكلة في قاعدة البيانات">
               <span> أكلاتي المخصصة</span>
             </button>
+            ${(store.getState().savedMeals || []).length > 0 ? `
+            <button type="button" id="open-saved-meals-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(255,200,60,0.4); color: #FFC83C; background: rgba(255,200,60,0.07);" title="الوجبات المحفوظة">
+              <span>⭐ وجباتي</span>
+            </button>
+            ` : ''}
             <a href="#meal-log" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 12px;">
               <span> إضافة وجبة</span>
             </a>
@@ -227,6 +232,18 @@ export function renderNutritionView() {
       </div>
 
       <!-- تم إخفاء قسم (الخطة المقترحة من المدرب وتوزيع الوجبات الموصى بها مع إمكانية التبديل) مؤقتاً بناءً على الطلب -->
+
+      <!-- نافذة الوجبات المحفوظة -->
+      <div id="saved-meals-modal" class="ai-modal-overlay">
+        <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 20px; border-radius: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="color: #FFC83C; font-size: 1.15rem; font-weight: 900; margin: 0;">⭐ وجباتي المحفوظة</h3>
+            <button type="button" id="close-saved-meals-modal-btn" class="btn-icon" aria-label="إغلاق">✕</button>
+          </div>
+          <div id="saved-meals-modal-list" style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 65vh;">
+          </div>
+        </div>
+      </div>
 
       <!-- نافذة تبديل الوجبة المنبثقة -->
       <div id="swap-modal" class="ai-modal-overlay">
@@ -458,6 +475,64 @@ export function bindNutritionEvents() {
 
   // تنظيف أي نوافذ يتيمة قديمة ملحقة بـ body مباشرة
   document.querySelectorAll('body > #edit-calorie-target-modal, body > #edit-logged-meal-modal, body > #swap-modal').forEach(el => el.remove());
+
+  // نافذة الوجبات المحفوظة
+  const savedMealsModal = document.getElementById('saved-meals-modal');
+  const openSavedMealsBtn = document.getElementById('open-saved-meals-btn');
+  const closeSavedMealsBtn = document.getElementById('close-saved-meals-modal-btn');
+
+  const openSavedMealsModal = () => {
+    const savedMeals = store.getState().savedMeals || [];
+    const listEl = document.getElementById('saved-meals-modal-list');
+    if (!listEl) return;
+
+    if (savedMeals.length === 0) {
+      listEl.innerHTML = `<div style="text-align: center; color: #8C9992; padding: 20px; font-size: 0.9rem;">لا توجد وجبات محفوظة بعد.<br><small>اذهب لسجل الوجبات واضغط ⭐ لحفظ وجبة.</small></div>`;
+    } else {
+      listEl.innerHTML = savedMeals.map(meal => `
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,200,60,0.05); border: 1px solid rgba(255,200,60,0.2); border-radius: 14px; padding: 12px 14px; gap: 10px;">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${meal.titleAr}</div>
+            <div style="font-size: 0.78rem; color: #B8C0BC; margin-top: 2px; font-family: monospace;">
+              <span style="color: #FFC83C; font-weight: 700;">${meal.calories}</span> سعرة ·
+              بروتين <span style="color: #55F7A5;">${meal.protein}غ</span> ·
+              كارب ${meal.carbs}غ · دهون ${meal.fats}غ
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm log-saved-meal-now-btn" data-saved-id="${meal.id}" style="font-size: 0.78rem; padding: 6px 14px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;">
+            + سجّل الآن
+          </button>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.log-saved-meal-now-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const savedId = btn.getAttribute('data-saved-id');
+          const saved = (store.getState().savedMeals || []).find(m => m.id === savedId);
+          if (!saved) return;
+          store.logMeal({
+            titleAr: saved.titleAr,
+            calories: saved.calories,
+            protein: saved.protein,
+            carbs: saved.carbs,
+            fats: saved.fats,
+            items: saved.items
+          });
+          notificationService.showToast(`تم تسجيل "${saved.titleAr}" في سجل اليوم ✓`, 'success');
+          savedMealsModal?.classList.remove('open');
+          refreshNutritionView();
+        });
+      });
+    }
+
+    savedMealsModal?.classList.add('open');
+  };
+
+  openSavedMealsBtn?.addEventListener('click', openSavedMealsModal);
+  closeSavedMealsBtn?.addEventListener('click', () => savedMealsModal?.classList.remove('open'));
+  savedMealsModal?.addEventListener('click', (e) => {
+    if (e.target === savedMealsModal) savedMealsModal.classList.remove('open');
+  });
 
   // عناصر نافذة تعديل الوجبة المسجلة
   const editModal = document.getElementById('edit-logged-meal-modal');
