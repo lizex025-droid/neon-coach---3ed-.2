@@ -162,15 +162,13 @@ export function renderNutritionView() {
             <h2 style="font-size: 1.25rem; font-weight: 900; color: #FFFFFF; margin: 0;">الأكلات المسجلة اليوم</h2>
             <small style="color: #8C9992; font-size: 0.8rem;">الوجبات التي أكلتها بالفعل اليوم (${loggedMeals.length})</small>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <button type="button" id="open-custom-food-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(85,247,165,0.35);" title="إضافة أو تعديل أكلة في قاعدة البيانات">
               <span> أكلاتي المخصصة</span>
             </button>
-            ${(store.getState().savedMeals || []).length > 0 ? `
-            <button type="button" id="open-saved-meals-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(255,200,60,0.4); color: #FFC83C; background: rgba(255,200,60,0.07);" title="الوجبات المحفوظة">
+            <button type="button" id="open-saved-meals-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(255,200,60,0.4); color: #FFC83C; background: rgba(255,200,60,0.07);" title="الوجبات المحفوظة والمفضلة">
               <span>⭐ وجباتي</span>
             </button>
-            ` : ''}
             <a href="#meal-log" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 12px;">
               <span> إضافة وجبة</span>
             </a>
@@ -487,7 +485,22 @@ export function bindNutritionEvents() {
     if (!listEl) return;
 
     if (savedMeals.length === 0) {
-      listEl.innerHTML = `<div style="text-align: center; color: #8C9992; padding: 20px; font-size: 0.9rem;">لا توجد وجبات محفوظة بعد.<br><small>اذهب لسجل الوجبات واضغط ⭐ لحفظ وجبة.</small></div>`;
+      listEl.innerHTML = `
+        <div style="text-align: center; color: #8C9992; padding: 26px 16px; font-size: 0.9rem;">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">⭐</div>
+          <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem; margin-bottom: 6px;">لا توجد وجبات محفوظة بعد</div>
+          <p style="margin: 0 auto 16px; font-size: 0.84rem; color: #8C9992; max-width: 280px; line-height: 1.5;">
+            يمكنك حفظ أي وجبة من شاشة "إضافة وجبة" بالضغط على <strong>⭐ حفظ كوجبة مفضلة</strong> لتسجيلها بضغطة زر لاحقاً دون الحاجة لكتابتها كل يوم.
+          </p>
+          <a href="#meal-log" id="saved-modal-go-add-meal" class="btn btn-primary btn-sm" style="border-radius: 12px; padding: 8px 18px; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+            <span>الذهاب لإضافة وجبة جديدة</span>
+            <span>←</span>
+          </a>
+        </div>
+      `;
+      document.getElementById('saved-modal-go-add-meal')?.addEventListener('click', () => {
+        savedMealsModal?.classList.remove('open');
+      });
     } else {
       listEl.innerHTML = savedMeals.map(meal => `
         <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,200,60,0.05); border: 1px solid rgba(255,200,60,0.2); border-radius: 14px; padding: 12px 14px; gap: 10px;">
@@ -499,9 +512,14 @@ export function bindNutritionEvents() {
               كارب ${meal.carbs}غ · دهون ${meal.fats}غ
             </div>
           </div>
-          <button type="button" class="btn btn-primary btn-sm log-saved-meal-now-btn" data-saved-id="${meal.id}" style="font-size: 0.78rem; padding: 6px 14px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;">
-            + سجّل الآن
-          </button>
+          <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+            <button type="button" class="btn btn-primary btn-sm log-saved-meal-now-btn" data-saved-id="${meal.id}" style="font-size: 0.78rem; padding: 6px 14px; border-radius: 10px; white-space: nowrap;">
+              + سجّل الآن
+            </button>
+            <button type="button" class="btn-icon delete-saved-from-modal-btn" data-saved-id="${meal.id}" style="color: #FF6B6B; font-size: 1rem; width: 28px; height: 28px;" title="حذف من المحفوظات">
+              🗑
+            </button>
+          </div>
         </div>
       `).join('');
 
@@ -521,6 +539,17 @@ export function bindNutritionEvents() {
           notificationService.showToast(`تم تسجيل "${saved.titleAr}" في سجل اليوم ✓`, 'success');
           savedMealsModal?.classList.remove('open');
           refreshNutritionView();
+        });
+      });
+
+      listEl.querySelectorAll('.delete-saved-from-modal-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const savedId = btn.getAttribute('data-saved-id');
+          if (confirm('هل تريد حذف هذه الوجبة من قائمة وجباتي المحفوظة؟')) {
+            store.deleteSavedMeal(savedId);
+            notificationService.showToast('تم حذف الوجبة من المحفوظات', 'info');
+            openSavedMealsModal();
+          }
         });
       });
     }
