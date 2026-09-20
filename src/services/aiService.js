@@ -291,15 +291,17 @@ ${suppsDetail}`);
 ${workoutInfo}`);
 
   // 6. سجل التقدم وفحص InBody
-  if (progress.currentDay || progress.weightChangeKg) {
-    const totalLost = progress.weightChangeKg || -11;
-    const waistDiff = (progress.firstDay?.waistCm || 122) - (progress.currentDay?.waistCm || 108);
+  if (progress.currentDay?.weight || progress.weightChangeKg) {
+    const totalLost = progress.weightChangeKg || 0;
+    const waistDiff = (progress.firstDay?.waistCm && progress.currentDay?.waistCm) 
+      ? (progress.firstDay.waistCm - progress.currentDay.waistCm) 
+      : 0;
     const inBody = progress.inBodyResult || {};
     sections.push(`[سجل التقدم والقياسات البدنية و InBody]:
-- التغير بالوزن منذ البداية: ${totalLost} كغ | انخفاض محيط الخصر: -${waistDiff} سم
-- قوة تمرين البنش برس: ارتفعت من ${progress.firstDay?.benchPressKg || 60} كغ إلى ${progress.currentDay?.benchPressKg || 82.5} كغ (+22.5 كغ)
-- نسبة الالتزام الإجمالية: التدريب ${progress.adherence?.trainingPct || 87}% | التغذية ${progress.adherence?.nutritionPct || 81}% | الماء ${progress.adherence?.waterPct || 74}%
-${inBody.hasResult ? `- آخر فحص InBody: نسبة الدهون ${inBody.bodyFatPercentage}% | الكتلة العضلية ${inBody.skeletalMuscleMassKg} كغ | الدهون الحشوية ${inBody.visceralFatLevel}` : ''}
+- التغير بالوزن منذ البداية: ${totalLost} كغ | انخفاض محيط الخصر: ${waistDiff !== 0 ? `-${waistDiff} سم` : 'لم يتم تسجيل تغير'}
+${progress.currentDay?.benchPressKg ? `- قوة تمرين البنش برس: ${progress.currentDay.benchPressKg} كغ` : ''}
+- نسبة الالتزام الإجمالية: التدريب ${progress.adherence?.trainingPct || 0}% | التغذية ${progress.adherence?.nutritionPct || 0}% | الماء ${progress.adherence?.waterPct || 0}%
+${inBody.hasResult ? `- آخر فحص InBody: نسبة الدهون ${inBody.bodyFatPercentage || 0}% | الكتلة العضلية ${inBody.skeletalMuscleMassKg || 0} كغ | الدهون الحشوية ${inBody.visceralFatLevel || 0}` : ''}
 ${weeklyCheckin.sleepHours ? `- متابعة النوم: متوسط ${weeklyCheckin.sleepHours} ساعات يومياً` : ''}`);
   }
 

@@ -73,13 +73,13 @@ export function renderProgressReportView() {
   const workoutHistory = store.getWorkoutHistory() || [];
   const dailyHistory = dailyHistoryWithin(state.dailyHistory, Number(activePeriod));
 
-  const currentWeight = user.currentWeight || report.currentDay?.weight || 118;
-  const currentWaist = report.currentDay?.waistCm || 108;
-  const currentStrength = report.currentDay?.benchPressKg || 82.5;
+  const currentWeight = Number(user.currentWeight) || Number(report.currentDay?.weight) || 0;
+  const currentWaist = Number(report.currentDay?.waistCm) || 0;
+  const currentStrength = Number(report.currentDay?.benchPressKg) || 0;
 
   const periodData = getPeriodMetrics(report, activePeriod, currentWeight, currentWaist, currentStrength);
   const smartInsight = generateProgressInsight(periodData.weightChange, periodData.strengthChange, report.adherence);
-  const inBody = report.inBodyResult || {};
+  const inBody = report.inBodyResult || report.inBody || {};
 
   return `
     <div class="progress-report-container" style="padding: 16px 16px 110px; display: flex; flex-direction: column; gap: 16px; max-width: 780px; margin: 0 auto;">
@@ -238,12 +238,12 @@ export function renderProgressReportView() {
           <!-- التغيير الإجمالي في الوزن -->
           <div style="text-align: center; border-inline-end: 1px solid rgba(85,247,165,0.18); padding-inline-end: 20px; min-width: 120px;">
             <div style="font-size: 0.82rem; color: #8C9992; margin-bottom: 2px;">تغير الوزن الإجمالي</div>
-            <div style="font-size: 3rem; font-weight: 900; color: ${periodData.weightChange <= 0 ? '#55F7A5' : '#ff6b6b'}; font-family: monospace; line-height: 1; letter-spacing: -1px;">
+            <div style="font-size: 3rem; font-weight: 900; color: ${periodData.weightChange < 0 ? '#55F7A5' : (periodData.weightChange > 0 ? '#ff6b6b' : '#FFFFFF')}; font-family: monospace; line-height: 1; letter-spacing: -1px;">
               <span id="stat-weight-change-num">${periodData.weightChange > 0 ? '+' : ''}${periodData.weightChange}</span>
             </div>
             <div style="font-size: 1rem; font-weight: 800; color: #55F7A5; margin: 2px 0;">كغ</div>
-            <div style="font-size: 0.74rem; padding: 2px 8px; border-radius: 999px; background: rgba(85,247,165,0.15); color: #55F7A5; display: inline-block;">
-              ${periodData.weightChange <= 0 ? ' خسارة وزن ممتازة' : ' زيادة وزن'}
+            <div style="font-size: 0.74rem; padding: 2px 8px; border-radius: 999px; background: ${periodData.weightChange < 0 ? 'rgba(85,247,165,0.15)' : (periodData.weightChange > 0 ? 'rgba(255,107,107,0.15)' : 'rgba(255,255,255,0.08)')}; color: ${periodData.weightChange < 0 ? '#55F7A5' : (periodData.weightChange > 0 ? '#ff6b6b' : '#B8C0BC')}; display: inline-block;">
+              ${periodData.weightChange < 0 ? 'خسارة وزن ممتازة' : (periodData.weightChange > 0 ? 'زيادة وزن' : 'لا يوجد تغير بعد')}
             </div>
           </div>
 
@@ -269,7 +269,7 @@ export function renderProgressReportView() {
               <div style="text-align: center; color: #8C9992; font-family: monospace;">
                 ${periodData.startWeight} كغ
               </div>
-              <div style="text-align: center; color: ${periodData.weightChange <= 0 ? '#55F7A5' : '#ff6b6b'}; font-weight: 800; font-family: monospace;">
+              <div style="text-align: center; color: ${periodData.weightChange < 0 ? '#55F7A5' : (periodData.weightChange > 0 ? '#ff6b6b' : '#8C9992')}; font-weight: 800; font-family: monospace;">
                 ${periodData.weightChange > 0 ? '+' : ''}${periodData.weightChange}
               </div>
             </div>
@@ -286,7 +286,7 @@ export function renderProgressReportView() {
               <div style="text-align: center; color: #8C9992; font-family: monospace;">
                 ${periodData.startWaist} سم
               </div>
-              <div style="text-align: center; color: ${periodData.waistChange <= 0 ? '#55F7A5' : '#ff6b6b'}; font-weight: 800; font-family: monospace;">
+              <div style="text-align: center; color: ${periodData.waistChange < 0 ? '#55F7A5' : (periodData.waistChange > 0 ? '#ff6b6b' : '#8C9992')}; font-weight: 800; font-family: monospace;">
                 ${periodData.waistChange > 0 ? '+' : ''}${periodData.waistChange}
               </div>
             </div>
@@ -303,7 +303,7 @@ export function renderProgressReportView() {
               <div style="text-align: center; color: #8C9992; font-family: monospace;">
                 ${periodData.startStrength} كغ
               </div>
-              <div style="text-align: center; color: ${periodData.strengthChange >= 0 ? '#55F7A5' : '#ff6b6b'}; font-weight: 800; font-family: monospace;">
+              <div style="text-align: center; color: ${periodData.strengthChange > 0 ? '#55F7A5' : (periodData.strengthChange < 0 ? '#ff6b6b' : '#8C9992')}; font-weight: 800; font-family: monospace;">
                 ${periodData.strengthChange > 0 ? '+' : ''}${periodData.strengthChange}
               </div>
             </div>
@@ -370,10 +370,10 @@ export function renderProgressReportView() {
             <svg width="76" height="76" viewBox="0 0 76 76">
               <circle class="neon-ring-track" cx="38" cy="38" r="30" stroke-width="6" />
               <circle id="ring-training-circle" class="neon-ring-fill" cx="38" cy="38" r="30" stroke-width="6"
-                stroke-dasharray="188.5" stroke-dashoffset="${188.5 - ((report.adherence?.trainingPct || 87) / 100) * 188.5}" />
+                stroke-dasharray="188.5" stroke-dashoffset="${188.5 - ((report.adherence?.trainingPct || 0) / 100) * 188.5}" />
             </svg>
             <div class="neon-ring-content">
-              <span id="ring-training-val" style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${report.adherence?.trainingPct || 87}%</span>
+              <span id="ring-training-val" style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${report.adherence?.trainingPct || 0}%</span>
             </div>
           </div>
         </div>
@@ -388,10 +388,10 @@ export function renderProgressReportView() {
             <svg width="76" height="76" viewBox="0 0 76 76">
               <circle class="neon-ring-track" cx="38" cy="38" r="30" stroke-width="6" />
               <circle id="ring-nutrition-circle" class="neon-ring-fill" cx="38" cy="38" r="30" stroke-width="6"
-                stroke-dasharray="188.5" stroke-dashoffset="${188.5 - ((report.adherence?.nutritionPct || 81) / 100) * 188.5}" />
+                stroke-dasharray="188.5" stroke-dashoffset="${188.5 - ((report.adherence?.nutritionPct || 0) / 100) * 188.5}" />
             </svg>
             <div class="neon-ring-content">
-              <span id="ring-nutrition-val" style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${report.adherence?.nutritionPct || 81}%</span>
+              <span id="ring-nutrition-val" style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${report.adherence?.nutritionPct || 0}%</span>
             </div>
           </div>
         </div>
@@ -406,11 +406,11 @@ export function renderProgressReportView() {
             <svg width="76" height="76" viewBox="0 0 76 76">
               <circle class="neon-ring-track" cx="38" cy="38" r="30" stroke-width="6" />
               <circle id="ring-water-circle" cx="38" cy="38" r="30" stroke-width="6" fill="transparent" stroke="#38BDF8"
-                stroke-dasharray="188.5" stroke-dashoffset="${188.5 - ((report.adherence?.waterPct || 74) / 100) * 188.5}"
+                stroke-dasharray="188.5" stroke-dashoffset="${188.5 - ((report.adherence?.waterPct || 0) / 100) * 188.5}"
                 stroke-linecap="round" style="transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);" />
             </svg>
             <div class="neon-ring-content">
-              <span id="ring-water-val" style="font-size: 1.15rem; font-weight: 900; color: #38BDF8; font-family: monospace;">${report.adherence?.waterPct || 74}%</span>
+              <span id="ring-water-val" style="font-size: 1.15rem; font-weight: 900; color: #38BDF8; font-family: monospace;">${report.adherence?.waterPct || 0}%</span>
             </div>
           </div>
         </div>
@@ -430,7 +430,7 @@ export function renderProgressReportView() {
             </div>
             <div style="font-size: 0.84rem; color: #B8C0BC; margin-top: 2px;">
               ${inBody.hasResult 
-                ? `دهون: <b id="inbody-fat-val" style="color: #55F7A5;">${inBody.bodyFatPercentage}%</b> · عضلات: <b id="inbody-muscle-val" style="color: #FFFFFF;">${inBody.skeletalMuscleMassKg} كغ</b> · حشوية: <b style="color: #55F7A5;">مستوى <span id="inbody-visceral-val">${inBody.visceralFatLevel || 9}</span></b>` 
+                ? `دهون: <b id="inbody-fat-val" style="color: #55F7A5;">${inBody.bodyFatPercentage || 0}%</b> · عضلات: <b id="inbody-muscle-val" style="color: #FFFFFF;">${inBody.skeletalMuscleMassKg || 0} كغ</b> · حشوية: <b style="color: #55F7A5;">مستوى <span id="inbody-visceral-val">${inBody.visceralFatLevel || 0}</span></b>` 
                 : 'اضغط لإدخال نسبة الدهون والكتلة العضلية من فحصك الأخير'}
             </div>
           </div>
@@ -564,21 +564,21 @@ export function renderProgressReportView() {
               <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #8C9992; margin-bottom: 6px;">
                 الوزن الحالي (كغ)
               </label>
-              <input type="number" id="input-measure-weight" class="stack-field" step="0.1" value="${periodData.currentWeight}" placeholder="مثال: 118" />
+              <input type="number" id="input-measure-weight" class="stack-field" step="0.1" value="${periodData.currentWeight || ''}" placeholder="مثال: 75.0" />
             </div>
 
             <div>
               <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #8C9992; margin-bottom: 6px;">
                 محيط الخصر (سم)
               </label>
-              <input type="number" id="input-measure-waist" class="stack-field" step="0.5" value="${periodData.currentWaist}" placeholder="مثال: 108" />
+              <input type="number" id="input-measure-waist" class="stack-field" step="0.5" value="${periodData.currentWaist || ''}" placeholder="مثال: 85.0" />
             </div>
 
             <div>
               <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #8C9992; margin-bottom: 6px;">
                 قوة الصدر Bench Press (كغ)
               </label>
-              <input type="number" id="input-measure-bench" class="stack-field" step="0.5" value="${periodData.currentStrength}" placeholder="مثال: 82.5" />
+              <input type="number" id="input-measure-bench" class="stack-field" step="0.5" value="${periodData.currentStrength || ''}" placeholder="مثال: 60.0" />
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -609,28 +609,28 @@ export function renderProgressReportView() {
               <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #8C9992; margin-bottom: 6px;">
                 نسبة الدهون في الجسم (%)
               </label>
-              <input type="number" id="input-inbody-fat" class="stack-field" step="0.1" value="${inBody.bodyFatPercentage || 21.4}" placeholder="مثال: 21.4" />
+              <input type="number" id="input-inbody-fat" class="stack-field" step="0.1" value="${inBody.bodyFatPercentage ?? ''}" placeholder="مثال: 21.4" />
             </div>
 
             <div>
               <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #8C9992; margin-bottom: 6px;">
                 الكتلة العضلية الهيكلية (كغ)
               </label>
-              <input type="number" id="input-inbody-muscle" class="stack-field" step="0.1" value="${inBody.skeletalMuscleMassKg || 44.2}" placeholder="مثال: 44.2" />
+              <input type="number" id="input-inbody-muscle" class="stack-field" step="0.1" value="${inBody.skeletalMuscleMassKg ?? ''}" placeholder="مثال: 44.2" />
             </div>
 
             <div>
               <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #8C9992; margin-bottom: 6px;">
                 مستوى الدهون الحشوية (1–20)
               </label>
-              <input type="number" id="input-inbody-visceral" class="stack-field" step="1" value="${inBody.visceralFatLevel || 9}" placeholder="مثال: 9" />
+              <input type="number" id="input-inbody-visceral" class="stack-field" step="1" value="${inBody.visceralFatLevel ?? ''}" placeholder="مثال: 9" />
             </div>
 
             <div>
               <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #8C9992; margin-bottom: 6px;">
                 جهة الفحص أو الجهاز (اختياري)
               </label>
-              <input type="text" id="input-inbody-provider" class="stack-field" value="${escapeHtml(inBody.provider || 'InBody 770')}" placeholder="مثال: InBody Clinic" />
+              <input type="text" id="input-inbody-provider" class="stack-field" value="${escapeHtml(inBody.provider || '')}" placeholder="مثال: InBody Clinic" />
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -1090,8 +1090,8 @@ function initPhotosUI(units, getWtEntries) {
 }
 
 function initWeightTrackerAndPhotos(state, report, user) {
-  const currentWeight = user.currentWeight || report.currentDay?.weight || 129;
-  let wtEntries = wtLoad(currentWeight);
+  const currentWeight = Number(user.currentWeight) || Number(report.currentDay?.weight) || 0;
+  let wtEntries = wtLoad(currentWeight > 0 ? currentWeight : null);
   const units = user.units || 'kg';
 
   function renderWt() {
@@ -1290,9 +1290,9 @@ export function bindProgressReportEvents() {
 
   // تهيئة وتفعيل مراقب الوزن والصور المحلية المطابقة لـ gym.html
   initWeightTrackerAndPhotos(state, report, user);
-  const currentWeight = user.currentWeight || report.currentDay?.weight || 118;
-  const currentWaist = report.currentDay?.waistCm || 108;
-  const currentStrength = report.currentDay?.benchPressKg || 82.5;
+  const currentWeight = Number(user.currentWeight) || Number(report.currentDay?.weight) || 0;
+  const currentWaist = Number(report.currentDay?.waistCm) || 0;
+  const currentStrength = Number(report.currentDay?.benchPressKg) || 0;
 
   const periodData = getPeriodMetrics(report, activePeriod, currentWeight, currentWaist, currentStrength);
 
@@ -1310,9 +1310,9 @@ export function bindProgressReportEvents() {
   animateCountUp('stat-current-bench-num', periodData.currentStrength, { decimals: 1 });
 
   // 2. تحريك حلقات نسب الالتزام المئوية من الصفر
-  const trPct = report.adherence?.trainingPct || 87;
-  const nuPct = report.adherence?.nutritionPct || 81;
-  const waPct = report.adherence?.waterPct || 74;
+  const trPct = report.adherence?.trainingPct || 0;
+  const nuPct = report.adherence?.nutritionPct || 0;
+  const waPct = report.adherence?.waterPct || 0;
 
   animateRingOffset('ring-training-circle', 188.5 - (trPct / 100) * 188.5, 188.5);
   animateRingOffset('ring-nutrition-circle', 188.5 - (nuPct / 100) * 188.5, 188.5);
@@ -1323,7 +1323,7 @@ export function bindProgressReportEvents() {
   animateCountUp('ring-water-val', waPct, { suffix: '%' });
 
   // 3. تحريك مؤشرات InBody إن وجدت
-  const inBodyData = report.inBody || {};
+  const inBodyData = report.inBodyResult || report.inBody || {};
   if (inBodyData.hasResult) {
     if (inBodyData.bodyFatPercentage) {
       animateCountUp('inbody-fat-val', Number(inBodyData.bodyFatPercentage) || 0, { decimals: 1, suffix: '%' });
@@ -1332,7 +1332,7 @@ export function bindProgressReportEvents() {
       animateCountUp('inbody-muscle-val', Number(inBodyData.skeletalMuscleMassKg) || 0, { decimals: 1, suffix: ' كغ' });
     }
     if (inBodyData.visceralFatLevel) {
-      animateCountUp('inbody-visceral-val', Number(inBodyData.visceralFatLevel) || 9, { decimals: 0 });
+      animateCountUp('inbody-visceral-val', Number(inBodyData.visceralFatLevel) || 0, { decimals: 0 });
     }
   }
 
@@ -1436,84 +1436,70 @@ function refreshView() {
  * حساب مقاييس الفترة المحددة
  */
 function getPeriodMetrics(report, period, currentWeight, currentWaist, currentStrength) {
-  if (period === '7') {
-    const startWeight = Math.round((currentWeight + 0.9) * 10) / 10;
-    const startWaist = Math.round((currentWaist + 1.0) * 10) / 10;
-    const startStrength = Math.round((currentStrength - 2.5) * 10) / 10;
-    return {
-      startWeight,
-      currentWeight,
-      weightChange: -0.9,
-      startWaist,
-      currentWaist,
-      waistChange: -1.0,
-      startStrength,
-      currentStrength,
-      strengthChange: +2.5,
-      weightPoints: [startWeight, startWeight - 0.2, startWeight - 0.3, startWeight - 0.5, startWeight - 0.6, startWeight - 0.8, currentWeight],
-      strengthPoints: [startStrength, startStrength, startStrength + 1, startStrength + 1, startStrength + 1.5, startStrength + 2, currentStrength],
-      labels: ['اليوم 1', 'اليوم 4', 'اليوم 7']
-    };
-  } else if (period === '30') {
-    const startWeight = Math.round((currentWeight + 3.8) * 10) / 10;
-    const startWaist = Math.round((currentWaist + 4.0) * 10) / 10;
-    const startStrength = Math.round((currentStrength - 8.5) * 10) / 10;
-    return {
-      startWeight,
-      currentWeight,
-      weightChange: -3.8,
-      startWaist,
-      currentWaist,
-      waistChange: -4.0,
-      startStrength,
-      currentStrength,
-      strengthChange: +8.5,
-      weightPoints: [startWeight, startWeight - 0.8, startWeight - 1.5, startWeight - 2.2, startWeight - 2.9, startWeight - 3.4, currentWeight],
-      strengthPoints: [startStrength, startStrength + 1.5, startStrength + 3, startStrength + 4.5, startStrength + 6, startStrength + 7.5, currentStrength],
-      labels: ['أول يوم', '15 يوم', '30 يوم']
-    };
+  const userProfile = store.getState()?.userProfile || {};
+  const cWeight = Number(currentWeight) || Number(userProfile.currentWeight) || 0;
+  const cWaist = Number(currentWaist) || 0;
+  const cStrength = Number(currentStrength) || 0;
+
+  // البداية المعتمدة
+  const sWeight = Number(report.firstDay?.weight) || Number(userProfile.startWeight) || cWeight || 0;
+  const sWaist = Number(report.firstDay?.waistCm) || cWaist || 0;
+  const sStrength = Number(report.firstDay?.benchPressKg) || cStrength || 0;
+
+  const weightChange = (cWeight > 0 && sWeight > 0) ? Math.round((cWeight - sWeight) * 10) / 10 : 0;
+  const waistChange = (cWaist > 0 && sWaist > 0) ? Math.round((cWaist - sWaist) * 10) / 10 : 0;
+  const strengthChange = (cStrength > 0 && sStrength > 0) ? Math.round((cStrength - sStrength) * 10) / 10 : 0;
+
+  const wDiff = cWeight - sWeight;
+  const sDiff = cStrength - sStrength;
+
+  let weightPoints = [];
+  let strengthPoints = [];
+
+  if (cWeight > 0) {
+    weightPoints = [
+      sWeight,
+      Math.round((sWeight + wDiff * 0.2) * 10) / 10,
+      Math.round((sWeight + wDiff * 0.4) * 10) / 10,
+      Math.round((sWeight + wDiff * 0.6) * 10) / 10,
+      Math.round((sWeight + wDiff * 0.8) * 10) / 10,
+      cWeight
+    ];
   } else {
-    // 90 يوم
-    const userProfile = store.getState()?.userProfile;
-    const startWeight = report.firstDay?.weight || userProfile?.startWeight || currentWeight;
-    const startWaist = report.firstDay?.waistCm || currentWaist;
-    const startStrength = report.firstDay?.benchPressKg || currentStrength;
-    const weightChange = Math.round((currentWeight - startWeight) * 10) / 10;
-    const waistChange = Math.round((currentWaist - startWaist) * 10) / 10;
-    const strengthChange = Math.round((currentStrength - startStrength) * 10) / 10;
-
-    const wDiff = currentWeight - startWeight;
-    const sDiff = currentStrength - startStrength;
-
-    return {
-      startWeight,
-      currentWeight,
-      weightChange,
-      startWaist,
-      currentWaist,
-      waistChange,
-      startStrength,
-      currentStrength,
-      strengthChange,
-      weightPoints: [
-        startWeight,
-        Math.round((startWeight + wDiff * 0.2) * 10) / 10,
-        Math.round((startWeight + wDiff * 0.4) * 10) / 10,
-        Math.round((startWeight + wDiff * 0.6) * 10) / 10,
-        Math.round((startWeight + wDiff * 0.8) * 10) / 10,
-        currentWeight
-      ],
-      strengthPoints: [
-        startStrength,
-        Math.round((startStrength + sDiff * 0.2) * 10) / 10,
-        Math.round((startStrength + sDiff * 0.4) * 10) / 10,
-        Math.round((startStrength + sDiff * 0.6) * 10) / 10,
-        Math.round((startStrength + sDiff * 0.8) * 10) / 10,
-        currentStrength
-      ],
-      labels: ['أول يوم', '45 يوم', '90 يوم']
-    };
+    weightPoints = [0, 0, 0, 0, 0, 0];
   }
+
+  if (cStrength > 0) {
+    strengthPoints = [
+      sStrength,
+      Math.round((sStrength + sDiff * 0.2) * 10) / 10,
+      Math.round((sStrength + sDiff * 0.4) * 10) / 10,
+      Math.round((sStrength + sDiff * 0.6) * 10) / 10,
+      Math.round((sStrength + sDiff * 0.8) * 10) / 10,
+      cStrength
+    ];
+  } else {
+    strengthPoints = [0, 0, 0, 0, 0, 0];
+  }
+
+  const labels = period === '7' ? ['اليوم 1', 'اليوم 4', 'اليوم 7']
+               : period === '30' ? ['أول يوم', '15 يوم', '30 يوم']
+               : ['أول يوم', '45 يوم', '90 يوم'];
+
+  return {
+    startWeight: sWeight,
+    currentWeight: cWeight,
+    weightChange,
+    startWaist: sWaist,
+    currentWaist: cWaist,
+    waistChange,
+    startStrength: sStrength,
+    currentStrength: cStrength,
+    strengthChange,
+    weightPoints,
+    strengthPoints,
+    labels
+  };
 }
 
 /**

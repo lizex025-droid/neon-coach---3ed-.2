@@ -82,6 +82,27 @@ class Store {
           const parsed = JSON.parse(stored);
           // رفض الحالات القديمة التي تحتوي على بيانات وضع تجريبي
           if (parsed && parsed.auth?.user?.id !== 'demo_user_01') {
+            // تنظيف أي بيانات وهمية قديمة لتقرير التقدم من الوضع التجريبي السابق (مثل 129 كغ أو InBody 770 Clinic)
+            if (parsed.progressReport) {
+              const rep = parsed.progressReport;
+              const isLegacyMock =
+                rep.firstDay?.weight === 129 ||
+                rep.currentDay?.weight === 118 ||
+                rep.firstDay?.waistCm === 122 ||
+                rep.currentDay?.waistCm === 108 ||
+                rep.firstDay?.benchPressKg === 60 ||
+                rep.currentDay?.benchPressKg === 82.5 ||
+                rep.inBodyResult?.provider === 'InBody 770 Clinic' ||
+                rep.inBodyResult?.bodyFatPercentage === 21.4 ||
+                (rep.adherence?.trainingPct === 87 && rep.adherence?.nutritionPct === 81);
+
+              if (isLegacyMock) {
+                parsed.progressReport = JSON.parse(JSON.stringify(EMPTY_INITIAL_STATE.progressReport));
+                try {
+                  localStorage.removeItem('po_coach_weights');
+                } catch {}
+              }
+            }
             return parsed;
           }
           // مسح الجلسة التجريبية القديمة
