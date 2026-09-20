@@ -53,11 +53,34 @@ export class Router {
     this.currentRoute = '';
     window.addEventListener('hashchange', () => this.handleRoute());
     
-    // ضمان بدء كل تابة وشاشة من أعلى الصفحة (من فوق لتحت) عند النقر على أي تابة أو زر تنقل
+    // معالج عام لإغلاق أي نافذة منبثقة عند الضغط على زر الإغلاق ✕ أو النقر خارج النافذة
     document.addEventListener('click', (e) => {
-      const navTarget = e.target.closest('a[href^="#"], .nav-item, .btn-icon, .client-tab-btn, .ws-view-tab, .auth-tab-btn');
-      if (navTarget) {
+      const modalClose = e.target.closest('[data-action="close"], [aria-label="إغلاق"], [id^="close-"], .close-custom-food-modal-btn, .close-btn, .btn-close');
+      if (modalClose) {
+        e.preventDefault();
+        e.stopPropagation();
+        const modal = modalClose.closest('.ai-modal-overlay, .modal');
+        if (modal) {
+          modal.classList.remove('open', 'is-open');
+          return;
+        }
+      }
+
+      if (e.target.classList && (e.target.classList.contains('ai-modal-overlay') || e.target.classList.contains('modal'))) {
+        e.target.classList.remove('open', 'is-open');
+        return;
+      }
+
+      const navTarget = e.target.closest('a[href^="#"], .nav-item, .client-tab-btn, .ws-view-tab, .auth-tab-btn');
+      if (navTarget && !navTarget.closest('.ai-modal-overlay, .modal')) {
         this.scrollToTop();
+      }
+    });
+
+    // إغلاق أي نافذة منبثقة بمفتاح Escape
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.ai-modal-overlay.open, .modal.open, .modal.is-open').forEach(m => m.classList.remove('open', 'is-open'));
       }
     });
 

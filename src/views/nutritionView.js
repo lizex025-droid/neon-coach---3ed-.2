@@ -6,7 +6,7 @@
 import { store } from '../state/store.js';
 import { calculatePercentage } from '../domain/calculations.js';
 import { findMealSwaps } from '../domain/nutritionEngine.js';
-import { macrosFor, isCountBasedFood, getFoodPieceWeight, getFoodUnitLabel } from '../data/foods.js';
+import { macrosFor, isCountBasedFood, getFoodPieceWeight, getFoodUnitLabel, searchFoods } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
@@ -213,7 +213,10 @@ export function renderNutritionView() {
               <div><b style="color: #FFFFFF; font-family: monospace;">${meal.items?.length || 1}</b><div style="color: #B8C0BC; font-size: 0.7rem;">أصناف</div></div>
             </div>
 
-            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary save-logged-to-fav-btn" data-meal-id="${meal.id}" style="padding: 6px 12px; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; color: #FFC83C; border-color: rgba(255,200,60,0.35); background: rgba(255,200,60,0.06);" title="حفظ هذه الوجبة في وجباتي المفضلة">
+                <span>⭐ للمفضلة</span>
+              </button>
               <button type="button" class="btn btn-secondary edit-logged-meal-btn" data-meal-id="${meal.id}" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;">
                 ${neonIcon('pencil', 14)} تعديل
               </button>
@@ -236,7 +239,7 @@ export function renderNutritionView() {
         <div class="ai-modal-panel" style="height: auto; max-height: 85vh; padding: 20px; border-radius: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h3 style="color: #FFC83C; font-size: 1.15rem; font-weight: 900; margin: 0;">⭐ وجباتي المحفوظة</h3>
-            <button type="button" id="close-saved-meals-modal-btn" class="btn-icon" aria-label="إغلاق">✕</button>
+            <button type="button" id="close-saved-meals-modal-btn" class="btn-icon" data-action="close" aria-label="إغلاق">✕</button>
           </div>
           <div id="saved-meals-modal-list" style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 65vh;">
           </div>
@@ -257,7 +260,7 @@ export function renderNutritionView() {
 
       <!-- نافذة تعديل الوجبة المسجلة المنبثقة -->
       <div id="edit-logged-meal-modal" class="ai-modal-overlay">
-        <div class="ai-modal-panel" style="height: auto; max-height: 88vh; padding: 22px; border-radius: 24px; max-width: 460px; margin: auto;">
+        <div class="ai-modal-panel" style="height: auto; max-height: 88vh; padding: 22px; border-radius: 24px; max-width: 470px; margin: auto;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
             <h3 style="color: #55F7A5; font-size: 1.25rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
               ${neonIcon('pencil', 20)}
@@ -294,15 +297,33 @@ export function renderNutritionView() {
               </div>
             </div>
 
-            <!-- حقول المكونات أو الماكروز المباشرة -->
-            <div id="edit-logged-meal-fields" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 2px;"></div>
+            <!-- أصناف الوجبة الحالية مع إمكانية حذف أو تعديل أي صنف -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="font-size: 0.82rem; font-weight: 700; color: #B8C0BC;">مكونات الوجبة</label>
+                <small id="edit-items-count-label" style="color: #55F7A5; font-size: 0.75rem;"></small>
+              </div>
+              <div id="edit-logged-meal-fields" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 2px;"></div>
+            </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 6px;">
-              <button type="button" id="save-edited-logged-meal-btn" class="btn btn-primary" style="flex: 1; border-radius: 14px; font-weight: 800; padding: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            <!-- إضافة صنف جديد من قاعدة البيانات -->
+            <div style="position: relative; border-top: 1px dashed rgba(85,247,165,0.2); padding-top: 10px;">
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #55F7A5; margin-bottom: 6px;">
+                + إضافة صنف جديد من قاعدة البيانات:
+              </label>
+              <input type="text" id="edit-meal-food-search-input" class="stack-field" style="width: 100%; border-radius: 12px; padding: 9px 12px; font-size: 0.85rem; background: #020704; border: 1px solid rgba(85,247,165,0.3); color: #FFFFFF;" placeholder="ابحث في قاعدة البيانات (شوفان، دجاج، موز، رز...)">
+              <div id="edit-meal-food-search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: #08130F; border: 1px solid rgba(85,247,165,0.3); border-radius: 12px; max-height: 190px; overflow-y: auto; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.95); margin-top: 4px;"></div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+              <button type="button" id="save-edited-logged-meal-btn" class="btn btn-primary" style="flex: 1; min-width: 120px; border-radius: 14px; font-weight: 800; padding: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
                 <span>حفظ التعديل</span>
                 ${neonIcon('check', 16)}
               </button>
-              <button type="button" id="cancel-edit-logged-meal-btn" class="btn btn-secondary" data-action="close" style="border-radius: 14px; padding: 12px 18px;">
+              <button type="button" id="save-edited-as-fav-btn" class="btn btn-secondary" style="border-radius: 14px; padding: 12px 14px; color: #FFC83C; border-color: rgba(255,200,60,0.4); background: rgba(255,200,60,0.07); display: inline-flex; align-items: center; justify-content: center; gap: 4px;" title="حفظ هذه الوجبة كما هي في الوجبات المفضلة">
+                <span>⭐ للمفضلة</span>
+              </button>
+              <button type="button" id="cancel-edit-logged-meal-btn" class="btn btn-secondary" data-action="close" style="border-radius: 14px; padding: 12px 16px;">
                 إلغاء
               </button>
             </div>
@@ -416,7 +437,7 @@ export function renderNutritionView() {
 }
 
 function removeDetachedModals() {
-  ['edit-logged-meal-modal', 'edit-calorie-target-modal', 'swap-modal', 'nutrition-custom-food-modal'].forEach(id => {
+  ['saved-meals-modal', 'edit-logged-meal-modal', 'edit-calorie-target-modal', 'swap-modal', 'nutrition-custom-food-modal'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.parentElement === document.body) {
       el.remove();
@@ -472,7 +493,24 @@ export function bindNutritionEvents() {
   });
 
   // تنظيف أي نوافذ يتيمة قديمة ملحقة بـ body مباشرة
-  document.querySelectorAll('body > #edit-calorie-target-modal, body > #edit-logged-meal-modal, body > #swap-modal').forEach(el => el.remove());
+  document.querySelectorAll('body > #saved-meals-modal, body > #edit-calorie-target-modal, body > #edit-logged-meal-modal, body > #swap-modal, body > #nutrition-custom-food-modal').forEach(el => el.remove());
+
+  // حفظ وجبة مسجلة مباشرة إلى الوجبات المفضلة من بطاقة الوجبة
+  document.querySelectorAll('.save-logged-to-fav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const mealId = btn.getAttribute('data-meal-id');
+      const meal = (store.getState().loggedMeals || []).find(m => m.id === mealId);
+      if (!meal) return;
+      const res = store.saveToFavorites(meal);
+      if (res && res.success) {
+        notificationService.showToast(`تم حفظ "${meal.titleAr || 'الوجبة'}" في وجباتي المفضلة ⭐`, 'success');
+      } else {
+        notificationService.showToast('هذه الوجبة موجودة بالفعل في وجباتك المفضلة', 'info');
+      }
+    });
+  });
 
   // نافذة الوجبات المحفوظة
   const savedMealsModal = document.getElementById('saved-meals-modal');
@@ -490,7 +528,7 @@ export function bindNutritionEvents() {
           <div style="font-size: 2.2rem; margin-bottom: 8px;">⭐</div>
           <div style="color: #FFFFFF; font-weight: 800; font-size: 1.05rem; margin-bottom: 6px;">لا توجد وجبات محفوظة بعد</div>
           <p style="margin: 0 auto 16px; font-size: 0.84rem; color: #8C9992; max-width: 280px; line-height: 1.5;">
-            يمكنك حفظ أي وجبة من شاشة "إضافة وجبة" بالضغط على <strong>⭐ حفظ كوجبة مفضلة</strong> لتسجيلها بضغطة زر لاحقاً دون الحاجة لكتابتها كل يوم.
+            يمكنك حفظ أي وجبة مسجلة بالضغط على <strong>⭐ للمفضلة</strong> لتسجيلها بضغطة زر لاحقاً دون الحاجة لكتابتها كل يوم.
           </p>
           <a href="#meal-log" id="saved-modal-go-add-meal" class="btn btn-primary btn-sm" style="border-radius: 12px; padding: 8px 18px; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
             <span>الذهاب لإضافة وجبة جديدة</span>
@@ -524,7 +562,9 @@ export function bindNutritionEvents() {
       `).join('');
 
       listEl.querySelectorAll('.log-saved-meal-now-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           const savedId = btn.getAttribute('data-saved-id');
           const saved = (store.getState().savedMeals || []).find(m => m.id === savedId);
           if (!saved) return;
@@ -543,7 +583,9 @@ export function bindNutritionEvents() {
       });
 
       listEl.querySelectorAll('.delete-saved-from-modal-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           const savedId = btn.getAttribute('data-saved-id');
           if (confirm('هل تريد حذف هذه الوجبة من قائمة وجباتي المحفوظة؟')) {
             store.deleteSavedMeal(savedId);
@@ -557,10 +599,22 @@ export function bindNutritionEvents() {
     savedMealsModal?.classList.add('open');
   };
 
-  openSavedMealsBtn?.addEventListener('click', openSavedMealsModal);
-  closeSavedMealsBtn?.addEventListener('click', () => savedMealsModal?.classList.remove('open'));
+  openSavedMealsBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openSavedMealsModal();
+  });
+  closeSavedMealsBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    savedMealsModal?.classList.remove('open');
+  });
   savedMealsModal?.addEventListener('click', (e) => {
-    if (e.target === savedMealsModal) savedMealsModal.classList.remove('open');
+    if (e.target === savedMealsModal || e.target.closest('[data-action="close"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      savedMealsModal.classList.remove('open');
+    }
   });
 
   // عناصر نافذة تعديل الوجبة المسجلة
@@ -570,14 +624,27 @@ export function bindNutritionEvents() {
   const editTitleInput = document.getElementById('edit-logged-title-input');
   const editFieldsContainer = document.getElementById('edit-logged-meal-fields');
   const saveEditedBtn = document.getElementById('save-edited-logged-meal-btn');
+  const saveEditedAsFavBtn = document.getElementById('save-edited-as-fav-btn');
+  const foodSearchInput = document.getElementById('edit-meal-food-search-input');
+  const foodSearchResults = document.getElementById('edit-meal-food-search-results');
   const calModal = document.getElementById('edit-calorie-target-modal');
   const swapModal = document.getElementById('swap-modal');
+
   let currentEditingMealId = null;
+  let currentEditingItems = [];
+  let directFallbackData = null;
 
   const closeEditModal = () => {
     editModal?.classList.remove('open');
     document.querySelectorAll('#edit-logged-meal-modal').forEach(m => m.classList.remove('open'));
     currentEditingMealId = null;
+    currentEditingItems = [];
+    directFallbackData = null;
+    if (foodSearchInput) foodSearchInput.value = '';
+    if (foodSearchResults) {
+      foodSearchResults.style.display = 'none';
+      foodSearchResults.innerHTML = '';
+    }
   };
 
   closeEditModalBtn?.addEventListener('click', (e) => {
@@ -591,16 +658,302 @@ export function bindNutritionEvents() {
     closeEditModal();
   });
   editModal?.addEventListener('click', (e) => {
-    if (e.target === editModal || e.target.closest('[data-action="close"]') || e.target.closest('#close-edit-logged-meal-modal-btn') || e.target.closest('#cancel-edit-logged-meal-btn')) {
+    if (e.target === editModal || e.target.closest('[data-action="close"]')) {
       e.preventDefault();
       e.stopPropagation();
       closeEditModal();
     }
   });
 
+  // حساب وتحديث الملخص الحي للماكروز والسعرات في نافذة التعديل
+  const updateEditSummary = () => {
+    let totalC = 0, totalP = 0, totalCarb = 0, totalF = 0;
+    if (currentEditingItems.length > 0) {
+      currentEditingItems.forEach(it => {
+        totalC += (it.calories || 0);
+        totalP += (it.protein || 0);
+        totalCarb += (it.carbs || 0);
+        totalF += (it.fats || 0);
+      });
+    } else if (directFallbackData) {
+      totalC = Number(document.getElementById('edit-direct-cals')?.value) || 0;
+      totalP = Number(document.getElementById('edit-direct-protein')?.value) || 0;
+      totalCarb = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
+      totalF = Number(document.getElementById('edit-direct-fats')?.value) || 0;
+    }
+
+    const sumC = document.getElementById('edit-summary-cals');
+    const sumP = document.getElementById('edit-summary-protein');
+    const sumCarb = document.getElementById('edit-summary-carbs');
+    const sumF = document.getElementById('edit-summary-fats');
+    if (sumC) sumC.textContent = Math.round(totalC).toLocaleString('en-US');
+    if (sumP) sumP.textContent = `${Math.round(totalP)}غ`;
+    if (sumCarb) sumCarb.textContent = `${Math.round(totalCarb)}غ`;
+    if (sumF) sumF.textContent = `${Math.round(totalF)}غ`;
+
+    const countBadge = document.getElementById('edit-items-count-label');
+    if (countBadge) {
+      countBadge.textContent = currentEditingItems.length > 0 ? `(${currentEditingItems.length} صنف)` : '';
+    }
+  };
+
+  // إعادة رسم محتويات أصناف الوجبة داخل نافذة التعديل
+  const renderEditModalContent = () => {
+    if (!editFieldsContainer) return;
+
+    if (currentEditingItems.length > 0) {
+      editFieldsContainer.innerHTML = currentEditingItems.map((item, idx) => {
+        const isCount = item.isCountBased || isCountBasedFood(item.foodId || item.nameAr || item.name);
+        const pWeight = item.pieceWeight || getFoodPieceWeight(item.foodId || item.nameAr || item.name);
+        const uLabel = item.unitLabel || getFoodUnitLabel(item.foodId || item.nameAr || item.name);
+        const countVal = item.count || Math.max(1, Math.round((item.grams || pWeight) / pWeight));
+
+        return `
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(85,247,165,0.15); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="flex: 1; min-width: 0;">
+              <span style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nameAr || item.name}</span>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                <small class="item-cal-badge" id="item-cal-${idx}" style="color: #55F7A5; font-size: 0.76rem; font-family: monospace;">${item.calories || 0} سعرة</small>
+                ${isCount ? `<small style="color: #8C9992; font-size: 0.72rem;">(${pWeight}غ / ${uLabel})</small>` : ''}
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+              ${isCount ? `
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <input type="number" class="edit-logged-count" data-idx="${idx}" data-weight="${pWeight}" data-unit="${uLabel}" value="${countVal}" min="1" step="1" style="width: 58px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.4); color: #55F7A5; font-size: 0.95rem; font-weight: 800; font-family: monospace; padding: 6px 2px;">
+                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.8rem; white-space: nowrap;">${uLabel}</span>
+                  <span class="edit-item-grams-hint-${idx}" style="color: #8C9992; font-size: 0.72rem; font-family: monospace;">(~${countVal * pWeight}غ)</span>
+                </div>
+              ` : `
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <input type="number" class="edit-logged-grams" data-idx="${idx}" value="${item.grams || 100}" min="0" step="5" style="width: 70px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 0.95rem; font-weight: 800; font-family: monospace; padding: 6px 2px;">
+                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.82rem;">غ</span>
+                </div>
+              `}
+              <button type="button" class="btn-icon remove-item-from-edit-btn" data-idx="${idx}" style="color: #FF6B6B; font-size: 0.95rem; width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.25);" title="حذف هذا الصنف من الوجبة">
+                🗑
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // مستمعي التعديل للغرامات
+      editFieldsContainer.querySelectorAll('.edit-logged-grams').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const idx = Number(inp.getAttribute('data-idx'));
+          const newG = Math.max(0, Number(inp.value) || 0);
+          const it = currentEditingItems[idx];
+          if (it) {
+            it.grams = newG;
+            const m = it.foodId ? macrosFor(it.foodId, newG) : null;
+            if (m) {
+              it.calories = Math.round(m.kcal);
+              it.protein = Math.round(m.p);
+              it.carbs = Math.round(m.c);
+              it.fats = Math.round(m.f);
+            } else {
+              const ratio = (it.grams && it.grams > 0) ? (newG / it.grams) : 1;
+              it.calories = Math.round((it.calories || 0) * ratio);
+              it.protein = Math.round((it.protein || 0) * ratio);
+              it.carbs = Math.round((it.carbs || 0) * ratio);
+              it.fats = Math.round((it.fats || 0) * ratio);
+            }
+            const badge = document.getElementById(`item-cal-${idx}`);
+            if (badge) badge.textContent = `${it.calories} سعرة`;
+            updateEditSummary();
+          }
+        });
+      });
+
+      // مستمعي التعديل للعدد
+      editFieldsContainer.querySelectorAll('.edit-logged-count').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const idx = Number(inp.getAttribute('data-idx'));
+          const count = Math.max(1, Number(inp.value) || 1);
+          const pWeight = Number(inp.getAttribute('data-weight')) || 50;
+          const uLabel = inp.getAttribute('data-unit') || 'بيضة';
+          const newG = count * pWeight;
+          const it = currentEditingItems[idx];
+          if (it) {
+            it.count = count;
+            it.grams = newG;
+            it.isCountBased = true;
+            it.pieceWeight = pWeight;
+            it.unitLabel = uLabel;
+            const m = it.foodId ? macrosFor(it.foodId, newG) : null;
+            if (m) {
+              it.calories = Math.round(m.kcal);
+              it.protein = Math.round(m.p);
+              it.carbs = Math.round(m.c);
+              it.fats = Math.round(m.f);
+            } else {
+              const ratio = (it.grams && it.grams > 0) ? (newG / it.grams) : 1;
+              it.calories = Math.round((it.calories || 0) * ratio);
+              it.protein = Math.round((it.protein || 0) * ratio);
+              it.carbs = Math.round((it.carbs || 0) * ratio);
+              it.fats = Math.round((it.fats || 0) * ratio);
+            }
+            const badge = document.getElementById(`item-cal-${idx}`);
+            if (badge) badge.textContent = `${it.calories} سعرة`;
+            const hint = editFieldsContainer.querySelector(`.edit-item-grams-hint-${idx}`);
+            if (hint) hint.textContent = `(~${newG}غ)`;
+            updateEditSummary();
+          }
+        });
+      });
+
+      // مستمعي زر حذف صنف
+      editFieldsContainer.querySelectorAll('.remove-item-from-edit-btn').forEach(delBtn => {
+        delBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const idx = Number(delBtn.getAttribute('data-idx'));
+          const removed = currentEditingItems.splice(idx, 1)[0];
+          renderEditModalContent();
+          if (removed) {
+            notificationService.showToast(`تم حذف "${removed.nameAr || removed.name}" من الوجبة`, 'info');
+          }
+        });
+      });
+    } else if (directFallbackData) {
+      // إدخال مباشر بدون أصناف
+      editFieldsContainer.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div style="grid-column: span 2;">
+            <label style="font-size: 0.78rem; color: #B8C0BC; display: block; margin-bottom: 4px;">السعرات الإجمالية (سعرة)</label>
+            <input type="number" id="edit-direct-cals" class="stack-field" style="width: 100%; padding: 8px 12px; font-size: 1.1rem; font-weight: 800; font-family: monospace; color: #55F7A5; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px;" value="${directFallbackData.calories || 0}">
+          </div>
+          <div>
+            <label style="font-size: 0.74rem; color: #B8C0BC; display: block; margin-bottom: 4px;">بروتين (غ)</label>
+            <input type="number" id="edit-direct-protein" class="stack-field" style="width: 100%; padding: 8px; font-size: 0.95rem; font-family: monospace; text-align: center; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px; color: #FFFFFF;" value="${directFallbackData.protein || 0}">
+          </div>
+          <div>
+            <label style="font-size: 0.74rem; color: #B8C0BC; display: block; margin-bottom: 4px;">كارب (غ)</label>
+            <input type="number" id="edit-direct-carbs" class="stack-field" style="width: 100%; padding: 8px; font-size: 0.95rem; font-family: monospace; text-align: center; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px; color: #FFFFFF;" value="${directFallbackData.carbs || 0}">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="font-size: 0.74rem; color: #B8C0BC; display: block; margin-bottom: 4px;">دهون (غ)</label>
+            <input type="number" id="edit-direct-fats" class="stack-field" style="width: 100%; padding: 8px; font-size: 0.95rem; font-family: monospace; text-align: center; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px; color: #FFFFFF;" value="${directFallbackData.fats || 0}">
+          </div>
+        </div>
+      `;
+      editFieldsContainer.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          directFallbackData.calories = Number(document.getElementById('edit-direct-cals')?.value) || 0;
+          directFallbackData.protein = Number(document.getElementById('edit-direct-protein')?.value) || 0;
+          directFallbackData.carbs = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
+          directFallbackData.fats = Number(document.getElementById('edit-direct-fats')?.value) || 0;
+          updateEditSummary();
+        });
+      });
+    } else {
+      // حُذفت جميع الأصناف
+      editFieldsContainer.innerHTML = `
+        <div style="text-align: center; padding: 14px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(85,247,165,0.2); border-radius: 12px; color: #8C9992; font-size: 0.82rem;">
+          لا توجد أصناف في هذه الوجبة حالياً.<br>
+          <span style="color: #55F7A5; font-weight: 700;">استخدم خانة البحث بالأسفل لإضافة أي صنف من قاعدة البيانات!</span>
+        </div>
+      `;
+    }
+
+    updateEditSummary();
+  };
+
+  // ربط البحث في قاعدة بيانات الأطعمة داخل نافذة تعديل الوجبة
+  foodSearchInput?.addEventListener('input', () => {
+    const query = foodSearchInput.value.trim();
+    if (!query) {
+      if (foodSearchResults) {
+        foodSearchResults.style.display = 'none';
+        foodSearchResults.innerHTML = '';
+      }
+      return;
+    }
+    const results = searchFoods(query, 10);
+    if (!foodSearchResults) return;
+
+    if (!results || results.length === 0) {
+      foodSearchResults.innerHTML = `
+        <div style="padding: 10px 12px; text-align: center; color: #8C9992; font-size: 0.82rem;">
+          لم يتم العثور على أطعمة مطابقة في قاعدة البيانات
+        </div>
+      `;
+      foodSearchResults.style.display = 'block';
+      return;
+    }
+
+    foodSearchResults.innerHTML = results.map(f => {
+      const isCount = isCountBasedFood(f.id || f.nameAr || f.name);
+      const uLabel = getFoodUnitLabel(f.id || f.nameAr || f.name);
+      return `
+        <div class="edit-food-search-item" data-food-id="${f.id}" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; cursor: pointer; border-bottom: 1px solid rgba(85,247,165,0.08); transition: background 0.15s;">
+          <div style="flex: 1; min-width: 0; padding-left: 8px;">
+            <div style="font-weight: 700; color: #FFFFFF; font-size: 0.88rem;">${f.nameAr || f.name}</div>
+            <div style="font-size: 0.74rem; color: #8C9992; font-family: monospace;">
+              ${isCount ? `لكل ${uLabel}: ` : 'لكل 100غ: '}
+              <span style="color: #FFC83C;">${f.calories_kcal}</span> سعرة · بروتين ${f.protein_g}غ · كارب ${f.carbs_g}غ · دهون ${f.fat_g}غ
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.74rem; padding: 4px 10px; border-radius: 8px; white-space: nowrap; pointer-events: none;">
+            + إضافة
+          </button>
+        </div>
+      `;
+    }).join('');
+    foodSearchResults.style.display = 'block';
+
+    foodSearchResults.querySelectorAll('.edit-food-search-item').forEach(itemEl => {
+      itemEl.addEventListener('mouseenter', () => { itemEl.style.background = 'rgba(85,247,165,0.1)'; });
+      itemEl.addEventListener('mouseleave', () => { itemEl.style.background = 'transparent'; });
+      itemEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const fid = itemEl.getAttribute('data-food-id');
+        const f = results.find(x => x.id === fid);
+        if (!f) return;
+        const isCount = isCountBasedFood(f.id || f.nameAr || f.name);
+        const pWeight = getFoodPieceWeight(f.id || f.nameAr || f.name);
+        const uLabel = getFoodUnitLabel(f.id || f.nameAr || f.name);
+        const defaultGrams = isCount ? pWeight : 100;
+        const m = macrosFor(f.id, defaultGrams) || {
+          kcal: f.calories_kcal,
+          p: f.protein_g,
+          c: f.carbs_g,
+          f: f.fat_g
+        };
+
+        // إلغاء الوضع المباشر فور إضافة صنف حقيقي
+        directFallbackData = null;
+
+        currentEditingItems.push({
+          foodId: f.id,
+          name: f.name,
+          nameAr: f.nameAr || f.name,
+          grams: defaultGrams,
+          count: isCount ? 1 : undefined,
+          isCountBased: isCount,
+          pieceWeight: isCount ? pWeight : undefined,
+          unitLabel: isCount ? uLabel : undefined,
+          calories: Math.round(m.kcal),
+          protein: Math.round(m.p),
+          carbs: Math.round(m.c),
+          fats: Math.round(m.f)
+        });
+
+        foodSearchInput.value = '';
+        foodSearchResults.style.display = 'none';
+        foodSearchResults.innerHTML = '';
+        renderEditModalContent();
+        notificationService.showToast(`تمت إضافة "${f.nameAr || f.name}" للوجبة ✓`, 'success');
+      });
+    });
+  });
+
   // فتح وتعبئة نافذة تعديل الوجبة
   document.querySelectorAll('.edit-logged-meal-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
       e.stopPropagation();
       const mealId = btn.getAttribute('data-meal-id');
       const meal = (store.getState().loggedMeals || []).find(m => m.id === mealId);
@@ -609,227 +962,110 @@ export function bindNutritionEvents() {
 
       if (editTitleInput) editTitleInput.value = meal.titleAr || 'وجبة مسجلة';
 
-      const items = meal.items || [];
-      if (items.length > 0) {
-        editFieldsContainer.innerHTML = items.map((item, idx) => {
-          const isCount = item.isCountBased || isCountBasedFood(item.foodId || item.nameAr || item.name);
-          const pWeight = item.pieceWeight || getFoodPieceWeight(item.foodId || item.nameAr || item.name);
-          const uLabel = item.unitLabel || getFoodUnitLabel(item.foodId || item.nameAr || item.name);
-          const countVal = item.count || Math.max(1, Math.round((item.grams || pWeight) / pWeight));
+      // استنساخ عميق للأصناف
+      currentEditingItems = (meal.items && meal.items.length > 0)
+        ? JSON.parse(JSON.stringify(meal.items))
+        : [];
 
-          return `
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(85,247,165,0.15); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-              <div style="flex: 1;">
-                <span style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; display: block;">${item.nameAr || item.name}</span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <small class="item-cal-badge" id="item-cal-${idx}" style="color: #55F7A5; font-size: 0.76rem;">${item.calories || 0} سعرة</small>
-                  ${isCount ? `<small style="color: #8C9992; font-size: 0.72rem;">(${pWeight}غ / ${uLabel})</small>` : ''}
-                </div>
-              </div>
-              ${isCount ? `
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <input type="number" class="edit-logged-count" data-idx="${idx}" data-weight="${pWeight}" data-unit="${uLabel}" value="${countVal}" min="1" step="1" style="width: 70px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.4); color: #55F7A5; font-size: 1rem; font-weight: 800; font-family: monospace; padding: 8px 4px;">
-                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.82rem; white-space: nowrap;">${uLabel}</span>
-                  <span class="edit-item-grams-hint-${idx}" style="color: #8C9992; font-size: 0.75rem; font-family: monospace;">(~${countVal * pWeight}غ)</span>
-                </div>
-              ` : `
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <input type="number" class="edit-logged-grams" data-idx="${idx}" value="${item.grams || 100}" min="0" step="5" style="width: 85px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 1rem; font-weight: 800; font-family: monospace; padding: 8px 4px;">
-                  <span style="color: #55F7A5; font-weight: 700; font-size: 0.85rem;">غ</span>
-                </div>
-              `}
-            </div>
-          `;
-        }).join('');
+      if (currentEditingItems.length === 0) {
+        directFallbackData = {
+          calories: meal.calories || 0,
+          protein: meal.protein || 0,
+          carbs: meal.carbs || 0,
+          fats: meal.fats || 0
+        };
       } else {
-        // وجبة مباشرة بدون تفصيل أصناف
-        editFieldsContainer.innerHTML = `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div style="grid-column: span 2;">
-              <label style="font-size: 0.78rem; color: #B8C0BC; display: block; margin-bottom: 4px;">السعرات الإجمالية (سعرة)</label>
-              <input type="number" id="edit-direct-cals" class="stack-field" style="width: 100%; padding: 8px 12px; font-size: 1.1rem; font-weight: 800; font-family: monospace; color: #55F7A5; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px;" value="${meal.calories || 0}">
-            </div>
-            <div>
-              <label style="font-size: 0.74rem; color: #B8C0BC; display: block; margin-bottom: 4px;">بروتين (غ)</label>
-              <input type="number" id="edit-direct-protein" class="stack-field" style="width: 100%; padding: 8px; font-size: 0.95rem; font-family: monospace; text-align: center; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px; color: #FFFFFF;" value="${meal.protein || 0}">
-            </div>
-            <div>
-              <label style="font-size: 0.74rem; color: #B8C0BC; display: block; margin-bottom: 4px;">كارب (غ)</label>
-              <input type="number" id="edit-direct-carbs" class="stack-field" style="width: 100%; padding: 8px; font-size: 0.95rem; font-family: monospace; text-align: center; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px; color: #FFFFFF;" value="${meal.carbs || 0}">
-            </div>
-            <div style="grid-column: span 2;">
-              <label style="font-size: 0.74rem; color: #B8C0BC; display: block; margin-bottom: 4px;">دهون (غ)</label>
-              <input type="number" id="edit-direct-fats" class="stack-field" style="width: 100%; padding: 8px; font-size: 0.95rem; font-family: monospace; text-align: center; background: #020704; border: 1px solid rgba(85,247,165,0.3); border-radius: 10px; color: #FFFFFF;" value="${meal.fats || 0}">
-            </div>
-          </div>
-        `;
+        directFallbackData = null;
       }
 
-      // حساب وتحديث الملخص اللحظي
-      const updateLiveEditSummary = () => {
-        let totalC = 0, totalP = 0, totalCarb = 0, totalF = 0;
-        if (items.length > 0) {
-          // حساب مدخلات الغرامات
-          editFieldsContainer.querySelectorAll('.edit-logged-grams').forEach(inp => {
-            const idx = Number(inp.getAttribute('data-idx'));
-            const newG = Math.max(0, Number(inp.value) || 0);
-            const it = items[idx];
-            if (it) {
-              const m = it.foodId ? macrosFor(it.foodId, newG) : null;
-              let itemCal = 0;
-              if (m) {
-                itemCal = Math.round(m.kcal);
-                totalP += Math.round(m.p);
-                totalCarb += Math.round(m.c);
-                totalF += Math.round(m.f);
-              } else {
-                const ratio = (it.grams && it.grams > 0) ? (newG / it.grams) : 1;
-                itemCal = Math.round((it.calories || 0) * ratio);
-                totalP += Math.round((it.protein || 0) * ratio);
-                totalCarb += Math.round((it.carbs || 0) * ratio);
-                totalF += Math.round((it.fats || 0) * ratio);
-              }
-              totalC += itemCal;
-              const badge = document.getElementById(`item-cal-${idx}`);
-              if (badge) badge.textContent = `${itemCal} سعرة`;
-            }
-          });
+      if (foodSearchInput) foodSearchInput.value = '';
+      if (foodSearchResults) {
+        foodSearchResults.style.display = 'none';
+        foodSearchResults.innerHTML = '';
+      }
 
-          // حساب مدخلات العدد للبيض
-          editFieldsContainer.querySelectorAll('.edit-logged-count').forEach(inp => {
-            const idx = Number(inp.getAttribute('data-idx'));
-            const count = Math.max(1, Number(inp.value) || 1);
-            const pWeight = Number(inp.getAttribute('data-weight')) || 50;
-            const newG = count * pWeight;
-            const it = items[idx];
-            if (it) {
-              const m = it.foodId ? macrosFor(it.foodId, newG) : null;
-              let itemCal = 0;
-              if (m) {
-                itemCal = Math.round(m.kcal);
-                totalP += Math.round(m.p);
-                totalCarb += Math.round(m.c);
-                totalF += Math.round(m.f);
-              } else {
-                const ratio = (it.grams && it.grams > 0) ? (newG / it.grams) : 1;
-                itemCal = Math.round((it.calories || 0) * ratio);
-                totalP += Math.round((it.protein || 0) * ratio);
-                totalCarb += Math.round((it.carbs || 0) * ratio);
-                totalF += Math.round((it.fats || 0) * ratio);
-              }
-              totalC += itemCal;
-              const badge = document.getElementById(`item-cal-${idx}`);
-              if (badge) badge.textContent = `${itemCal} سعرة`;
-              const hint = editFieldsContainer.querySelector(`.edit-item-grams-hint-${idx}`);
-              if (hint) hint.textContent = `(~${newG}غ)`;
-            }
-          });
-        } else {
-          totalC = Number(document.getElementById('edit-direct-cals')?.value) || 0;
-          totalP = Number(document.getElementById('edit-direct-protein')?.value) || 0;
-          totalCarb = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
-          totalF = Number(document.getElementById('edit-direct-fats')?.value) || 0;
-        }
-
-        const sumC = document.getElementById('edit-summary-cals');
-        const sumP = document.getElementById('edit-summary-protein');
-        const sumCarb = document.getElementById('edit-summary-carbs');
-        const sumF = document.getElementById('edit-summary-fats');
-        if (sumC) sumC.textContent = totalC.toLocaleString('en-US');
-        if (sumP) sumP.textContent = `${totalP}غ`;
-        if (sumCarb) sumCarb.textContent = `${totalCarb}غ`;
-        if (sumF) sumF.textContent = `${totalF}غ`;
-      };
-
-      editFieldsContainer.querySelectorAll('input').forEach(inp => {
-        inp.addEventListener('input', updateLiveEditSummary);
-      });
-
-      updateLiveEditSummary();
+      renderEditModalContent();
       editModal?.classList.add('open');
     });
   });
 
-  saveEditedBtn?.addEventListener('click', async () => {
+  // حفظ الوجبة الحالية في الوجبات المفضلة من داخل نافذة التعديل
+  saveEditedAsFavBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const titleAr = editTitleInput?.value.trim() || 'وجبة مفضلة';
+    let totalC = 0, totalP = 0, totalCarb = 0, totalF = 0;
+    if (currentEditingItems.length > 0) {
+      currentEditingItems.forEach(it => {
+        totalC += (it.calories || 0);
+        totalP += (it.protein || 0);
+        totalCarb += (it.carbs || 0);
+        totalF += (it.fats || 0);
+      });
+    } else if (directFallbackData) {
+      totalC = Number(document.getElementById('edit-direct-cals')?.value) || 0;
+      totalP = Number(document.getElementById('edit-direct-protein')?.value) || 0;
+      totalCarb = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
+      totalF = Number(document.getElementById('edit-direct-fats')?.value) || 0;
+    }
+
+    const res = store.saveToFavorites({
+      titleAr,
+      calories: Math.round(totalC),
+      protein: Math.round(totalP),
+      carbs: Math.round(totalCarb),
+      fats: Math.round(totalF),
+      items: currentEditingItems
+    });
+
+    if (res && res.success) {
+      notificationService.showToast(`تم حفظ "${titleAr}" في وجباتي المفضلة ⭐`, 'success');
+    } else {
+      notificationService.showToast('هذه الوجبة محفوظة بالفعل في وجباتك المفضلة', 'info');
+    }
+  });
+
+  // حفظ التعديلات على الوجبة وتحديث السجل اليومي
+  saveEditedBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!currentEditingMealId) return;
     const meal = (store.getState().loggedMeals || []).find(m => m.id === currentEditingMealId);
     if (!meal) return;
 
     const copy = JSON.parse(JSON.stringify(meal));
-    if (editTitleInput) {
-      const newTitle = editTitleInput.value.trim();
-      if (newTitle) copy.titleAr = newTitle;
-    }
+    const titleAr = editTitleInput?.value.trim();
+    if (titleAr) copy.titleAr = titleAr;
 
-    const items = copy.items || [];
-    if (items.length > 0) {
-      // حفظ الغرامات للأصناف العادية
-      editFieldsContainer?.querySelectorAll('.edit-logged-grams').forEach(input => {
-        const idx = Number(input.getAttribute('data-idx'));
-        const newGrams = Math.max(0, Number(input.value) || 0);
-        const item = copy.items[idx];
-        if (item) {
-          item.grams = newGrams;
-          const m = item.foodId ? macrosFor(item.foodId, newGrams) : null;
-          if (m) {
-            item.calories = Math.round(m.kcal);
-            item.protein = Math.round(m.p);
-            item.carbs = Math.round(m.c);
-            item.fats = Math.round(m.f);
-          } else {
-            const ratio = (item.grams && item.grams > 0) ? (newGrams / item.grams) : 1;
-            item.calories = Math.round((item.calories || 0) * ratio);
-            item.protein = Math.round((item.protein || 0) * ratio);
-            item.carbs = Math.round((item.carbs || 0) * ratio);
-            item.fats = Math.round((item.fats || 0) * ratio);
-          }
-        }
-      });
-
-      // حفظ العدد للأصناف المعتمدة على العدد كأصناف البيض
-      editFieldsContainer?.querySelectorAll('.edit-logged-count').forEach(input => {
-        const idx = Number(input.getAttribute('data-idx'));
-        const count = Math.max(1, Number(input.value) || 1);
-        const pWeight = Number(input.getAttribute('data-weight')) || 50;
-        const uLabel = input.getAttribute('data-unit') || 'بيضة كاملة';
-        const newGrams = count * pWeight;
-        const item = copy.items[idx];
-        if (item) {
-          item.count = count;
-          item.isCountBased = true;
-          item.pieceWeight = pWeight;
-          item.unitLabel = uLabel;
-          item.grams = newGrams;
-          const m = item.foodId ? macrosFor(item.foodId, newGrams) : null;
-          if (m) {
-            item.calories = Math.round(m.kcal);
-            item.protein = Math.round(m.p);
-            item.carbs = Math.round(m.c);
-            item.fats = Math.round(m.f);
-          } else {
-            const ratio = (item.grams && item.grams > 0) ? (newGrams / item.grams) : 1;
-            item.calories = Math.round((item.calories || 0) * ratio);
-            item.protein = Math.round((item.protein || 0) * ratio);
-            item.carbs = Math.round((item.carbs || 0) * ratio);
-            item.fats = Math.round((item.fats || 0) * ratio);
-          }
-        }
-      });
-
-      copy.calories = copy.items.reduce((s, i) => s + (i.calories || 0), 0);
-      copy.protein = copy.items.reduce((s, i) => s + (i.protein || 0), 0);
-      copy.carbs = copy.items.reduce((s, i) => s + (i.carbs || 0), 0);
-      copy.fats = copy.items.reduce((s, i) => s + (i.fats || 0), 0);
-    } else {
+    if (currentEditingItems.length > 0) {
+      copy.items = currentEditingItems;
+      copy.calories = currentEditingItems.reduce((s, i) => s + (i.calories || 0), 0);
+      copy.protein = currentEditingItems.reduce((s, i) => s + (i.protein || 0), 0);
+      copy.carbs = currentEditingItems.reduce((s, i) => s + (i.carbs || 0), 0);
+      copy.fats = currentEditingItems.reduce((s, i) => s + (i.fats || 0), 0);
+    } else if (directFallbackData) {
+      copy.items = [];
       copy.calories = Number(document.getElementById('edit-direct-cals')?.value) || 0;
       copy.protein = Number(document.getElementById('edit-direct-protein')?.value) || 0;
       copy.carbs = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
       copy.fats = Number(document.getElementById('edit-direct-fats')?.value) || 0;
+    } else {
+      copy.items = [];
+      copy.calories = 0;
+      copy.protein = 0;
+      copy.carbs = 0;
+      copy.fats = 0;
     }
 
-    try { await store.updateLoggedMeal(currentEditingMealId, copy); } catch (e) { notificationService.showToast(e.message, 'error'); return; }
+    try {
+      await store.updateLoggedMeal(currentEditingMealId, copy);
+    } catch (err) {
+      notificationService.showToast(err.message, 'error');
+      return;
+    }
+
     closeEditModal();
-    notificationService.showToast('تم تعديل الوجبة وتحديث السعرات اليومية بنجاح ', 'success');
+    notificationService.showToast('تم تعديل الوجبة وتحديث السعرات اليومية بنجاح ✓', 'success');
     refreshNutritionView();
   });
 
@@ -850,8 +1086,11 @@ export function bindNutritionEvents() {
   const closeSwapBtn = document.getElementById('close-swap-modal-btn');
   const swapList = document.getElementById('swap-options-list');
 
-  closeSwapBtn?.addEventListener('click', () => {
+  closeSwapBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     swapModal?.classList.remove('open');
+    document.querySelectorAll('#swap-modal').forEach(m => m.classList.remove('open'));
   });
 
   document.querySelectorAll('.swap-meal-btn').forEach(btn => {
@@ -966,9 +1205,12 @@ export function bindNutritionEvents() {
   // صمام أمان: زر Esc للإغلاق الفوري لأي نافذة منبثقة مفتوحة
   const handleEscModalClose = (e) => {
     if (e.key === 'Escape') {
+      savedMealsModal?.classList.remove('open');
       closeCalModal();
       closeEditModal();
       closeSwapModal();
+      document.getElementById('nutrition-custom-food-modal')?.classList.remove('open');
+      document.querySelectorAll('.ai-modal-overlay.open').forEach(m => m.classList.remove('open'));
     }
   };
   document.removeEventListener('keydown', handleEscModalClose);
