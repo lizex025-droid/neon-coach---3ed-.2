@@ -149,10 +149,10 @@ export const FOOD_ITEMS = [
     nameAr: 'زيت زيتون بكر ممتاز',
     nameEn: 'Extra Virgin Olive Oil',
     state: 'raw',
-    isLiquid: true,
-    unitLabel: 'مل',
-    unitName: 'مل',
-    unit: 'ml',
+    isLiquid: false,
+    unitLabel: 'غ',
+    unitName: 'غ',
+    unit: 'g',
     caloriesPer100g: 884,
     proteinPer100g: 0,
     carbsPer100g: 0,
@@ -317,10 +317,14 @@ export function isLiquidFood(food) {
   if (!food) return false;
   const f = typeof food === 'string' ? foodById(food) : food;
   if (!f) return false;
+  if (f.isLiquid === false || f.unit === 'g' || f.unitLabel === 'غ') return false;
   if (f.isLiquid === true || f.unit === 'ml' || f.unitLabel === 'مل') return true;
 
   const ar = (f.arabic_name || f.nameAr || f.name || '').trim();
   const en = (f.english_name || f.nameEn || '').toLowerCase().trim();
+
+  // استبعاد الزيوت صراحة لتقاس بالغرام (غ)
+  if (ar.includes('زيت') || en.includes('oil')) return false;
 
   // استثناءات صريحة للأصناف الجافة والصلبة
   if (ar.includes('بودرة') || ar.includes('مجفف') || ar.includes('مركز') || ar.includes('طحين') || ar.includes('دقيق')) return false;
@@ -334,14 +338,13 @@ export function isLiquidFood(food) {
 
   // مؤشرات السوائل باللغة العربية
   if (/حليب|عصير|مشروب|شوربة|مرق|قهوة|شاي|كوكا|بيبسي|مياه|ماء|مشروبات/.test(ar)) return true;
-  if (/^زيت\b/.test(ar) || /^زيت /.test(ar)) return true;
   if (/لبن (رايب|عيران|شرب|ميجروس)/.test(ar)) return true;
   if (/كريمة خفق سائلة|كريمة طبخ سائلة/.test(ar)) return true;
   if (ar === 'قشطة' || ar === 'قشطة لايت') return true;
   if (/ميلك شيك|بروتين شيك|شيك /.test(ar)) return true;
 
   // مؤشرات السوائل باللغة الإنجليزية
-  if (/\b(juice|drink|beverage|milk|broth|soup|coffee|tea|oil|water|shake)\b/.test(en)) {
+  if (/\b(juice|drink|beverage|milk|broth|soup|coffee|tea|water|shake)\b/.test(en)) {
     if (!en.includes('watermelon') && !en.includes('watercress') && !en.includes('powder') && !en.includes('dry') && !en.includes('boiled') && !en.includes('broiled')) {
       return true;
     }
