@@ -239,19 +239,64 @@ export function renderMealLogView() {
           `}
         </div>
 
-        <!-- زر تأكيد وحفظ الوجبة -->
+        <!-- أزرار الحفظ والتأكيد -->
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <button id="confirm-save-meal-btn" class="btn btn-primary btn-lg btn-block" style="border-radius: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <span>تأكيد وحفظ الوجبة كاملة</span>
             ${neonIcon('check', 18)}
           </button>
+          <button id="save-to-favorites-btn" class="btn btn-outline-neon btn-block" style="border-radius: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border-color: rgba(255,200,60,0.5); color: #FFC83C; background: rgba(255,200,60,0.07);">
+            <span>⭐ حفظ كوجبة مفضلة</span>
+          </button>
         </div>
 
       </div>
 
+      <!-- قسم الوجبات المحفوظة -->
+      ${renderSavedMealsSection()}
+
       <!-- نافذة إضافة أكلة يدوياً لقاعدة البيانات -->
       ${renderCustomFoodModal('meallog-custom-food-modal')}
 
+    </div>
+  `;
+}
+
+function renderSavedMealsSection() {
+  const savedMeals = store.getState().savedMeals || [];
+  if (savedMeals.length === 0) return '';
+
+  return `
+    <div class="neon-card" style="padding: 18px 20px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <h3 style="font-size: 1.05rem; font-weight: 900; color: #FFC83C; margin: 0; display: flex; align-items: center; gap: 8px;">
+          ⭐ وجباتي المحفوظة
+        </h3>
+        <span class="badge" style="background: rgba(255,200,60,0.12); color: #FFC83C; border: 1px solid rgba(255,200,60,0.3); font-size: 0.72rem; padding: 2px 8px;">${savedMeals.length} وجبة</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        ${savedMeals.map(meal => `
+          <div class="saved-meal-card" data-saved-id="${meal.id}" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,200,60,0.05); border: 1px solid rgba(255,200,60,0.2); border-radius: 14px; padding: 12px 14px; gap: 10px;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(meal.titleAr)}</div>
+              <div style="font-size: 0.78rem; color: #B8C0BC; margin-top: 2px; font-family: monospace;">
+                <span style="color: #FFC83C; font-weight: 700;">${meal.calories}</span> سعرة ·
+                <span style="color: #55F7A5;">بروتين ${meal.protein}غ</span> ·
+                <span style="color: #B8C0BC;">كارب ${meal.carbs}غ</span> ·
+                <span style="color: #FFB347;">دهون ${meal.fats}غ</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+              <button type="button" class="btn btn-primary btn-sm add-saved-meal-btn" data-saved-id="${meal.id}" style="font-size: 0.78rem; padding: 5px 12px; border-radius: 10px; white-space: nowrap;">
+                + أضف للوجبة
+              </button>
+              <button type="button" class="btn-icon delete-saved-meal-btn" data-saved-id="${meal.id}" style="color: #FF6B6B; font-size: 1rem; width: 30px; height: 30px;" title="حذف من المحفوظات">
+                🗑
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
     </div>
   `;
 }
@@ -310,6 +355,7 @@ export function bindMealLogEvents() {
   const textInput = document.getElementById('meal-quick-input');
   const sendBtn = document.getElementById('send-meal-input-btn');
   const confirmBtn = document.getElementById('confirm-save-meal-btn');
+  const saveFavBtn = document.getElementById('save-to-favorites-btn');
 
   const foodSearchInput = document.getElementById('food-search-input');
   const foodSearchResults = document.getElementById('food-search-results');
@@ -322,6 +368,57 @@ export function bindMealLogEvents() {
   // زر المحادثة
   chatBtn?.addEventListener('click', () => {
     window.location.hash = '#neon-ai';
+  });
+
+  // زر حفظ كوجبة مفضلة
+  saveFavBtn?.addEventListener('click', () => {
+    if (!activeDraft.items.length) {
+      notificationService.showToast('أضف صنفاً واحداً على الأقل قبل الحفظ في المفضلة', 'error');
+      return;
+    }
+    recalcDraft(activeDraft);
+    const result = store.saveToFavorites(activeDraft);
+    if (result.success) {
+      notificationService.showToast(`تم حفظ "${activeDraft.titleAr}" في المفضلة ⭐`, 'success');
+      refreshMealLogView();
+    } else {
+      notificationService.showToast('هذه الوجبة محفوظة بالفعل في المفضلة', 'info');
+    }
+  });
+
+  // أزرار الوجبات المحفوظة
+  document.querySelectorAll('.add-saved-meal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const savedId = btn.getAttribute('data-saved-id');
+      const saved = (store.getState().savedMeals || []).find(m => m.id === savedId);
+      if (!saved || !saved.items.length) {
+        notificationService.showToast('لا توجد مكونات لهذه الوجبة', 'error');
+        return;
+      }
+      // أضف كل مكونات الوجبة المحفوظة إلى المسودة الحالية
+      for (const item of saved.items) {
+        const existingIdx = activeDraft.items.findIndex(i => i.foodId && i.foodId === item.foodId);
+        if (existingIdx !== -1) {
+          activeDraft.items[existingIdx].grams = (Number(activeDraft.items[existingIdx].grams) || 0) + (Number(item.grams) || 0);
+        } else {
+          activeDraft.items.push({ ...item, id: `food_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` });
+        }
+      }
+      recalcDraft(activeDraft);
+      notificationService.showToast(`تمت إضافة "${saved.titleAr}" إلى وجبتك الحالية ✓`, 'success');
+      refreshMealLogView(0);
+    });
+  });
+
+  document.querySelectorAll('.delete-saved-meal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const savedId = btn.getAttribute('data-saved-id');
+      if (confirm('هل تريد حذف هذه الوجبة من المحفوظات؟')) {
+        store.deleteSavedMeal(savedId);
+        notificationService.showToast('تم حذف الوجبة من المحفوظات', 'info');
+        refreshMealLogView();
+      }
+    });
   });
 
   // دالة إضافة صنف إلى مسودة الوجبة وتحديث الشاشة مع التمرير للصنف المضاف لضبط أرقامه

@@ -777,6 +777,35 @@ class Store {
     }
   }
 
+  // --- الوجبات المحفوظة (المفضلة) ---
+  saveToFavorites(meal) {
+    if (!this.state.savedMeals) this.state.savedMeals = [];
+    // تجنب الحفظ المكرر بنفس الاسم والسعرات
+    const isDuplicate = this.state.savedMeals.some(
+      m => m.titleAr === meal.titleAr && m.calories === meal.calories
+    );
+    if (isDuplicate) return { success: false, reason: 'duplicate' };
+    const saved = {
+      id: generateUUID(),
+      savedAt: new Date().toISOString(),
+      titleAr: meal.titleAr || 'وجبة محفوظة',
+      calories: meal.calories || 0,
+      protein: meal.protein || 0,
+      carbs: meal.carbs || 0,
+      fats: meal.fats || 0,
+      items: meal.items || []
+    };
+    this.state.savedMeals.unshift(saved);
+    this.saveState();
+    return { success: true, saved };
+  }
+
+  deleteSavedMeal(savedId) {
+    if (!this.state.savedMeals) return;
+    this.state.savedMeals = this.state.savedMeals.filter(m => m.id !== savedId);
+    this.saveState();
+  }
+
   recalculateDailyNutrition() {
     let cals = 0;
     let p = 0;
