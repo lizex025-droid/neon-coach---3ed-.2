@@ -43,9 +43,7 @@ export function renderNutritionView() {
             ${neonIcon('shield', 14)} خطة معتمدة
           </span>
         </div>
-        <button id="shopping-list-btn" class="btn-icon" title="قائمة المشتريات" aria-label="قائمة المشتريات">
-
-        </button>
+        <div style="width: 38px;"></div>
       </div>
 
       <!-- بطاقة الهدف اليومي الكلي -->
@@ -468,11 +466,6 @@ export function bindNutritionEvents() {
   // زر الرجوع
   document.getElementById('nutrition-back-btn')?.addEventListener('click', () => {
     window.location.hash = '#today';
-  });
-
-  // زر قائمة المشتريات
-  document.getElementById('shopping-list-btn')?.addEventListener('click', () => {
-    window.location.hash = '#shopping-list';
   });
 
   // حذف وجبة مسجلة فوراً

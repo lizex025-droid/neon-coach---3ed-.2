@@ -17,7 +17,6 @@ import { renderWeeklyCheckinView, bindWeeklyCheckinEvents } from '../views/weekl
 import { renderProgressReportView, bindProgressReportEvents } from '../views/progressReportView.js';
 import { renderRecipesView, bindRecipesEvents } from '../views/recipesView.js';
 import { renderCoachDashboardView, bindCoachDashboardEvents } from '../views/coachDashboardView.js';
-import { renderShoppingListView, bindShoppingListEvents } from '../views/shoppingListView.js';
 import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
 
 import { store } from '../state/store.js';
@@ -37,7 +36,6 @@ export const ROUTES = {
   recipes: { render: renderRecipesView, bind: bindRecipesEvents, showNav: true, showHeader: true },
   progress: { render: renderProgressReportView, bind: bindProgressReportEvents, showNav: true, showHeader: true },
   coach: { render: renderCoachDashboardView, bind: bindCoachDashboardEvents, showNav: true, showHeader: true },
-  'shopping-list': { render: renderShoppingListView, bind: bindShoppingListEvents, showNav: true, showHeader: true },
   profile: { render: renderProfileView, bind: bindProfileEvents, showNav: true, showHeader: true }
 };
 
@@ -166,6 +164,11 @@ export class Router {
 
     if (routeKey === 'neon-ai') {
       window.location.hash = hasCompletedOnboarding ? '#today' : '#questionnaire';
+      return;
+    }
+
+    if (routeKey === 'shopping-list' || routeKey === 'shopping') {
+      window.location.hash = hasCompletedOnboarding ? '#nutrition' : '#questionnaire';
       return;
     }
 

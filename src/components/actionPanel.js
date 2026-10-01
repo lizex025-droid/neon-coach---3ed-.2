@@ -42,7 +42,7 @@ export function bindActionPanel({ onCommand }) {
     const lastSet = state.exerciseSetLogs?.at(-1);
     root.querySelector('#action-live-summary').innerHTML = `<div class="action-metrics">
       <a href="#meal-log"><b>${today.calories}</b><span>سعرة مسجلة اليوم</span></a><a href="#nutrition"><b>${today.remainingProtein} غ</b><span>بروتين متبقي</span></a><a href="#water-supps"><b>${today.waterMl} مل</b><span>ماء اليوم</span></a><a href="#water-supps"><b>${taken} / ${state.supplementsSchedule.length}</b><span>مكملات مأخوذة</span></a>
-    </div><p class="action-context">التمرين: ${escapeActionHtml(today.workout || 'غير محدد')}${today.workoutCompleted ? ' · مكتمل ✓' : ''} · الوزن: ${escapeActionHtml(state.userProfile?.currentWeight || '—')} كغ · <a href="#shopping-list">المشتريات (${store.getShoppingItems().length})</a></p>
+    </div><p class="action-context">التمرين: ${escapeActionHtml(today.workout || 'غير محدد')}${today.workoutCompleted ? ' · مكتمل ✓' : ''} · الوزن: ${escapeActionHtml(state.userProfile?.currentWeight || '—')} كغ</p>
     ${lastSet ? `<p class="action-context">آخر مجموعة: ${escapeActionHtml(lastSet.nameAr)} · ${lastSet.weight} كغ × ${lastSet.reps} · <a href="#progress">سجل القوة وPR</a></p>` : ''}
     ${renderTodayPriorities(state)}`;
     root.querySelector('#action-undo').disabled = !state.actionHistory?.length;

@@ -81,11 +81,6 @@ export function initCrossTabActionToastListener(getCurrentRoute) {
         moduleName = 'Progress';
         targetHash = '#progress';
         details = act.arguments?.weightKg ? `${act.arguments.weightKg} kg` : `الخصر: ${act.arguments?.waistCm} سم`;
-      } else if (act.tool === 'addShoppingItems' || act.tool === 'removeShoppingItem') {
-        targetRoute = 'shopping-list';
-        moduleName = 'Shopping';
-        targetHash = '#shopping-list';
-        details = (act.arguments?.names || [act.arguments?.name]).join(', ');
       }
 
       if (targetRoute && targetRoute !== current) {
