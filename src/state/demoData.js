@@ -107,6 +107,25 @@ export const EMPTY_INITIAL_STATE = {
     meals: DEFAULT_MEALS
   },
 
+  // تفضيلات خطة التغذية الأسبوعية
+  nutritionPlanPreferences: {
+    adherence: 'high',
+    mealSlots: 'breakfast_lunch_dinner',
+    offPlanMealsCount: 0,
+    sweets: {
+      enabled: false,
+      item: null,
+      portion: 50,
+      unit: 'غم',
+      servingsPerWeek: 0
+    },
+    dietStyle: 'flexible',
+    planFormat: 'multiple_options'
+  },
+
+  // الخطة الغذائية الأسبوعية المولدة (7 أيام)
+  nutritionPlan: null,
+
   // سجل الوجبات المؤكدة — فارغ
   loggedMeals: [],
 

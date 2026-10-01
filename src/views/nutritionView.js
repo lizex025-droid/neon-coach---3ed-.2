@@ -10,6 +10,9 @@ import { macrosFor, isCountBasedFood, isLiquidFood, getFoodPieceWeight, getFoodU
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
+import { nutritionPlanService } from '../services/nutritionPlanService.js';
+
+let activePlanDayIndex = (new Date().getDay() + 1) % 7;
 
 export function renderNutritionView() {
   const state = store.getState();
@@ -230,7 +233,8 @@ export function renderNutritionView() {
         `}
       </div>
 
-      <!-- تم إخفاء قسم (الخطة المقترحة من المدرب وتوزيع الوجبات الموصى بها مع إمكانية التبديل) مؤقتاً بناءً على الطلب -->
+      <!-- خطتي الغذائية الأسبوعية (محسوبة ومفصلة لـ 7 أيام) -->
+      ${renderWeeklyPlanSection(state)}
 
       <!-- نافذة الوجبات المحفوظة -->
       <div id="saved-meals-modal" class="ai-modal-overlay">
@@ -434,6 +438,170 @@ export function renderNutritionView() {
   `;
 }
 
+function renderWeeklyPlanSection(state) {
+  const weeklyPlan = nutritionPlanService.getWeeklyPlan();
+  if (!weeklyPlan || !weeklyPlan.days || weeklyPlan.days.length === 0) {
+    return `
+      <div class="neon-card" style="padding: 22px; text-align: center; border-color: rgba(85,247,165,0.25);">
+        <div style="font-size: 2.4rem; margin-bottom: 8px;">📋</div>
+        <h3 style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">خطتي الغذائية الأسبوعية</h3>
+        <p style="color: #8C9992; font-size: 0.86rem; margin: 0 auto 16px; max-width: 320px; line-height: 1.5;">
+          لم يتم توليد خطة أسبوعية محسوبة بعد. يمكنك توليد خطتك الذكية الآن الموزونة لـ 7 أيام بناءً على أهدافك الحالية.
+        </p>
+        <button type="button" id="generate-first-plan-btn" class="btn btn-primary" style="padding: 10px 22px; border-radius: 14px; font-size: 0.92rem; font-weight: 800; display: inline-flex; align-items: center; gap: 8px;">
+          ${neonIcon('dumbbell', 18)}
+          <span>توليد خطتي الأسبوعية الآن</span>
+        </button>
+      </div>
+    `;
+  }
+
+  const days = weeklyPlan.days;
+  const currentDayIndex = Math.max(0, Math.min(6, activePlanDayIndex));
+  const activeDay = days[currentDayIndex] || days[0];
+
+  return `
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+      
+      <!-- رأس قسم الخطة الأسبوعية -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <h2 style="font-size: 1.25rem; font-weight: 900; color: #FFFFFF; margin: 0;">خطتي الغذائية الأسبوعية</h2>
+            <span class="badge" style="background: rgba(85,247,165,0.12); color: #55F7A5; border: 1px solid rgba(85,247,165,0.3); font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">7 أيام</span>
+          </div>
+          <small style="color: #8C9992; font-size: 0.8rem;">وجباتك المحسوبة والموزونة بدقة لتصل لهدفك</small>
+        </div>
+        <button type="button" id="regen-nutrition-plan-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(85,247,165,0.3);" title="إعادة حساب وتوليد الخطة">
+          <span>تحديث الخطة</span>
+          ${neonIcon('refresh', 14)}
+        </button>
+      </div>
+
+      <!-- شريط تبديل أيام الأسبوع الـ 7 -->
+      <div class="plan-days-tabs" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+        ${days.map(d => {
+          const isAct = d.dayIndex === currentDayIndex;
+          return `
+            <button type="button" class="btn btn-secondary plan-day-tab-btn ${isAct ? 'active' : ''}" data-day-index="${d.dayIndex}" style="flex: 1; min-width: 52px; padding: 8px 4px; text-align: center; border-radius: 12px; border-color: ${isAct ? '#55F7A5' : 'rgba(85,247,165,0.18)'}; background: ${isAct ? 'rgba(85,247,165,0.18)' : 'rgba(255,255,255,0.02)'}; color: ${isAct ? '#55F7A5' : '#FFFFFF'};">
+              <div style="font-size: 0.72rem; color: ${isAct ? '#55F7A5' : '#8C9992'}; font-weight: 700;">${d.shortNameAr}</div>
+              <div style="font-size: 0.86rem; font-weight: 800; font-family: monospace; margin-top: 2px;">يوم ${d.dayIndex + 1}</div>
+              ${d.hasOffPlanMeal ? `<div style="font-size: 0.65rem; color: #FFC83C; margin-top: 2px;">حر</div>` : ''}
+            </button>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- ملخص اليوم المختار -->
+      <div class="neon-card" style="padding: 14px 16px; background: rgba(85,247,165,0.03); border-color: rgba(85,247,165,0.25);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+          <div>
+            <span style="font-size: 0.75rem; color: #55F7A5; font-weight: 700;">خطة يوم ${activeDay.dayNameAr}</span>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">
+              ${(activeDay.plannedCalories || 0).toLocaleString('en-US')} <span style="font-size: 0.75rem; color: #8C9992; font-weight: normal;">سعرة مخططة</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            ${activeDay.hasOffPlanMeal ? `
+              <span class="badge" style="background: rgba(255,200,60,0.15); color: #FFC83C; border: 1px solid rgba(255,200,60,0.3); font-size: 0.75rem; padding: 4px 8px; border-radius: 8px;">
+                🎉 وجبة مفتوحة
+              </span>
+            ` : ''}
+            ${activeDay.sweetServingData ? `
+              <span class="badge" style="background: rgba(236,72,153,0.15); color: #F472B6; border: 1px solid rgba(236,72,153,0.3); font-size: 0.75rem; padding: 4px 8px; border-radius: 8px;">
+                🍰 ${activeDay.sweetServingData.name} (${activeDay.sweetServingData.portion}${activeDay.sweetServingData.unit})
+              </span>
+            ` : ''}
+            <span class="badge" style="background: rgba(85,247,165,0.12); color: #55F7A5; font-family: monospace; font-size: 0.78rem; padding: 4px 8px; border-radius: 8px;">
+              بروتين: ${activeDay.plannedProtein || 0}غ
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- بطاقات الوجبات المخططة لهذا اليوم -->
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        ${(activeDay.meals || []).map(meal => {
+          const activeOpt = meal.options[meal.activeOptionIndex] || meal.options[0];
+          if (!activeOpt) return '';
+
+          return `
+            <div class="neon-card" style="padding: 16px; border-color: ${meal.isOffPlan ? 'rgba(255,200,60,0.35)' : 'rgba(85,247,165,0.2)'}; background: ${meal.isOffPlan ? 'rgba(255,200,60,0.03)' : ''}">
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 0.74rem; font-weight: 800; color: ${meal.isOffPlan ? '#FFC83C' : '#55F7A5'}; background: ${meal.isOffPlan ? 'rgba(255,200,60,0.15)' : 'rgba(85,247,165,0.12)'}; padding: 2px 8px; border-radius: 6px;">
+                      ${meal.slotNameAr}
+                    </span>
+                    ${meal.options.length > 1 ? `
+                      <span style="font-size: 0.7rem; color: #8C9992;">خيار ${meal.activeOptionIndex + 1} من ${meal.options.length}</span>
+                    ` : ''}
+                  </div>
+                  <h3 style="font-size: 1.05rem; font-weight: 800; color: #FFFFFF; margin: 4px 0 0;">
+                    ${activeOpt.titleAr}
+                  </h3>
+                </div>
+                <strong style="color: ${meal.isOffPlan ? '#FFC83C' : '#55F7A5'}; font-size: 1.15rem; font-family: monospace;">
+                  ${activeOpt.calories} سعرة
+                </strong>
+              </div>
+
+              ${activeOpt.note ? `
+                <div style="font-size: 0.82rem; color: #FFC83C; background: rgba(255,200,60,0.08); padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; line-height: 1.4;">
+                  💡 ${activeOpt.note}
+                </div>
+              ` : ''}
+
+              <!-- المكونات بالغرامات الدقيقة -->
+              ${activeOpt.ingredients && activeOpt.ingredients.length && !meal.isOffPlan ? `
+                <div style="display: flex; flex-direction: column; gap: 5px; margin: 8px 0; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(85,247,165,0.08);">
+                  ${activeOpt.ingredients.map(ing => `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.86rem; color: #FFFFFF; align-items: center;">
+                      <span>${ing.name}</span>
+                      <b style="color: #55F7A5; font-family: monospace;">${ing.amount || `${ing.grams}غ`}</b>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+
+              <!-- ماكروز الوجبة المخططة -->
+              ${!meal.isOffPlan ? `
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; font-size: 0.78rem; padding: 8px 0; border-top: 1px solid rgba(85,247,165,0.1); border-bottom: 1px solid rgba(85,247,165,0.1); margin-bottom: 10px;">
+                  <div><b style="color: #FFFFFF; font-family: monospace;">${activeOpt.protein}g</b><div style="color: #B8C0BC; font-size: 0.7rem;">بروتين</div></div>
+                  <div><b style="color: #FFFFFF; font-family: monospace;">${activeOpt.carbs}g</b><div style="color: #B8C0BC; font-size: 0.7rem;">كارب</div></div>
+                  <div><b style="color: #FFFFFF; font-family: monospace;">${activeOpt.fats}g</b><div style="color: #B8C0BC; font-size: 0.7rem;">دهون</div></div>
+                </div>
+              ` : ''}
+
+              <!-- أزرار الإجراءات: بدائل الوجبة وتسجيلها -->
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                
+                <!-- تبديل الخيارات في حال وجود أكثر من خيار -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  ${meal.options.length > 1 ? meal.options.map((_, optIdx) => `
+                    <button type="button" class="btn btn-secondary plan-opt-switch-btn ${optIdx === meal.activeOptionIndex ? 'active' : ''}" data-day="${currentDayIndex}" data-slot="${meal.slot}" data-opt="${optIdx}" style="padding: 4px 10px; font-size: 0.76rem; border-radius: 8px; border-color: ${optIdx === meal.activeOptionIndex ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${optIdx === meal.activeOptionIndex ? 'rgba(85,247,165,0.18)' : 'transparent'}; color: ${optIdx === meal.activeOptionIndex ? '#55F7A5' : '#fff'};">
+                      خيار ${optIdx + 1}
+                    </button>
+                  `).join('') : ''}
+                </div>
+
+                <!-- زر تسجيل الوجبة في اليوم -->
+                <button type="button" class="btn btn-primary log-planned-to-today-btn" data-day="${currentDayIndex}" data-slot="${meal.slot}" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;">
+                  <span>أكلت هذه الوجبة</span>
+                  ${neonIcon('plate', 14)}
+                </button>
+              </div>
+
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+    </div>
+  `;
+}
+
 function removeDetachedModals() {
   ['saved-meals-modal', 'edit-logged-meal-modal', 'edit-calorie-target-modal', 'swap-modal', 'nutrition-custom-food-modal'].forEach(id => {
     const el = document.getElementById(id);
@@ -467,6 +635,57 @@ export function bindNutritionEvents() {
   document.getElementById('nutrition-back-btn')?.addEventListener('click', () => {
     window.location.hash = '#today';
   });
+
+  // أحداث الخطة الأسبوعية: تبديل أيام الأسبوع
+  document.querySelectorAll('.plan-day-tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      activePlanDayIndex = Number(btn.getAttribute('data-day-index')) || 0;
+      refreshNutritionView();
+    });
+  });
+
+  // تبديل خيارات الوجبة في الخطة
+  document.querySelectorAll('.plan-opt-switch-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const day = Number(btn.getAttribute('data-day')) || 0;
+      const slot = btn.getAttribute('data-slot');
+      const opt = Number(btn.getAttribute('data-opt')) || 0;
+      nutritionPlanService.replaceMeal(day, slot, opt);
+      refreshNutritionView();
+    });
+  });
+
+  // تسجيل وجبة من الخطة في استهلاك اليوم الفعلي
+  document.querySelectorAll('.log-planned-to-today-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const dayIdx = Number(btn.getAttribute('data-day')) || 0;
+      const slot = btn.getAttribute('data-slot');
+      const plan = nutritionPlanService.getWeeklyPlan();
+      const day = plan?.days?.[dayIdx];
+      const meal = day?.meals?.find(m => m.slot === slot);
+      if (!meal) return;
+      const activeOpt = meal.options[meal.activeOptionIndex] || meal.options[0];
+      if (!activeOpt) return;
+
+      nutritionPlanService.logPlannedMealToToday(activeOpt, meal.slotNameAr);
+      notificationService.showToast(`تم تسجيل "${activeOpt.titleAr}" في وجبات اليوم بنجاح!`, 'success');
+      refreshNutritionView();
+    });
+  });
+
+  // إعادة توليد أو إنشاء الخطة الأسبوعية
+  const handleRegenPlan = (e) => {
+    e.preventDefault();
+    const state = store.getState();
+    nutritionPlanService.generateAndSavePlan(state.userProfile, state.nutritionPlanPreferences);
+    notificationService.showToast('تم تحديث وهندسة خطتك الأسبوعية بنجاح!', 'success');
+    refreshNutritionView();
+  };
+  document.getElementById('regen-nutrition-plan-btn')?.addEventListener('click', handleRegenPlan);
+  document.getElementById('generate-first-plan-btn')?.addEventListener('click', handleRegenPlan);
 
   // حذف وجبة مسجلة فوراً
   document.querySelectorAll('.delete-logged-meal-btn').forEach(btn => {

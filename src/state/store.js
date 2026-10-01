@@ -199,6 +199,12 @@ class Store {
       if (profile.targetWaterLiters !== undefined) this.state.today.targetWaterLiters = profile.targetWaterLiters;
       if (profile.targetGlasses !== undefined) this.state.today.targetGlasses = profile.targetGlasses;
     }
+    if (profile.nutritionPlanPreferences) {
+      this.state.nutritionPlanPreferences = {
+        ...(this.state.nutritionPlanPreferences || {}),
+        ...profile.nutritionPlanPreferences
+      };
+    }
     this.saveState();
 
     if (!skipSync) {
@@ -878,6 +884,28 @@ class Store {
       meal.fats = newSwap.fats;
       this.saveState();
     }
+  }
+
+  // --- إدارة خطة التغذية الأسبوعية المولدة (7 أيام) ---
+  getNutritionPlan() {
+    return this.state.nutritionPlan || null;
+  }
+
+  setNutritionPlan(plan) {
+    this.state.nutritionPlan = plan;
+    this.saveState();
+  }
+
+  getNutritionPlanPreferences() {
+    return this.state.nutritionPlanPreferences || null;
+  }
+
+  setNutritionPlanPreferences(preferences) {
+    this.state.nutritionPlanPreferences = {
+      ...(this.state.nutritionPlanPreferences || {}),
+      ...preferences
+    };
+    this.saveState();
   }
 
   // --- المتابعة الأسبوعية ---

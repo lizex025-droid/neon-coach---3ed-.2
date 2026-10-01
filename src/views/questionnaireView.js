@@ -33,6 +33,8 @@ import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { searchFoods } from '../data/foods.js';
 import { SUPPLEMENT_DB, searchSupplementsDb } from '../data/supplementsDb.js';
+import { nutritionPlanService } from '../services/nutritionPlanService.js';
+import { DEFAULT_PLAN_PREFERENCES } from '../domain/nutritionPlanPolicy.js';
 
 const QUICK_SUPPLEMENT_NAMES = [
   'Creatine monohydrate',
@@ -52,6 +54,7 @@ export const STEP_KEYS = {
   WEEKLY_LOSS_RATE: 'weekly_loss_rate',
   WEEKLY_GAIN_RATE: 'weekly_gain_rate',
   NUTRITION: 'nutrition',
+  PLAN_PREFERENCES: 'plan_preferences',
   HEALTH: 'health',
   TRAINING: 'training',
   SUPPLEMENTS: 'supplements',
@@ -65,6 +68,7 @@ export function getActiveSteps() {
       STEP_KEYS.GOAL,
       STEP_KEYS.WEEKLY_LOSS_RATE,
       STEP_KEYS.NUTRITION,
+      STEP_KEYS.PLAN_PREFERENCES,
       STEP_KEYS.HEALTH,
       STEP_KEYS.TRAINING,
       STEP_KEYS.SUPPLEMENTS,
@@ -77,6 +81,7 @@ export function getActiveSteps() {
       STEP_KEYS.GOAL,
       STEP_KEYS.WEEKLY_GAIN_RATE,
       STEP_KEYS.NUTRITION,
+      STEP_KEYS.PLAN_PREFERENCES,
       STEP_KEYS.HEALTH,
       STEP_KEYS.TRAINING,
       STEP_KEYS.SUPPLEMENTS,
@@ -87,6 +92,7 @@ export function getActiveSteps() {
     STEP_KEYS.MEASUREMENTS,
     STEP_KEYS.GOAL,
     STEP_KEYS.NUTRITION,
+    STEP_KEYS.PLAN_PREFERENCES,
     STEP_KEYS.HEALTH,
     STEP_KEYS.TRAINING,
     STEP_KEYS.SUPPLEMENTS,
@@ -132,6 +138,20 @@ let formData = {
   likedFoods: [],
   dislikedFoods: [],
   allergens: [],
+  nutritionPlanPreferences: {
+    adherence: 'high',
+    mealSlots: 'breakfast_lunch_dinner',
+    offPlanMealsCount: 0,
+    sweets: {
+      enabled: false,
+      item: null,
+      portion: 50,
+      unit: 'غم',
+      servingsPerWeek: 0
+    },
+    dietStyle: 'flexible',
+    planFormat: 'multiple_options'
+  },
   supplements: QUICK_SUPPLEMENT_NAMES.slice(0, 3),
   injuries: [],
   workoutDaysCount: 4,
@@ -1137,6 +1157,178 @@ function renderStepContent(step) {
         </button>
       `;
 
+    case STEP_KEYS.PLAN_PREFERENCES: {
+      const prefs = formData.nutritionPlanPreferences || DEFAULT_PLAN_PREFERENCES;
+      return `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="font-size: 1.6rem; color: #55F7A5; margin-bottom: 6px; font-weight: 800;">نظامك اليومي وشكل خطتك</h2>
+          <p style="font-size: 0.95rem; color: #B8C0BC;">نخصص خطتك لتناسب وتيرة يومك وأسلوب حياتك</p>
+        </div>
+
+        <!-- 1. مستوى الالتزام المتوقع -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
+            1. ما هو مستوى التزامك المتوقع بالخطة؟
+          </label>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+            <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'high' ? 'active' : ''}" data-val="high" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'high' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'high' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
+              <div style="font-size: 1.2rem; margin-bottom: 4px;">🎯</div>
+              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'high' ? '#55F7A5' : '#fff'};">عالي</div>
+              <div style="font-size: 0.7rem; color: #8C9992;">دقة قصوى</div>
+            </button>
+            <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'medium' ? 'active' : ''}" data-val="medium" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'medium' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'medium' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
+              <div style="font-size: 1.2rem; margin-bottom: 4px;">⚖️</div>
+              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'medium' ? '#55F7A5' : '#fff'};">متوسط</div>
+              <div style="font-size: 0.7rem; color: #8C9992;">توازن ومرونة</div>
+            </button>
+            <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'low' ? 'active' : ''}" data-val="low" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'low' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'low' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
+              <div style="font-size: 1.2rem; margin-bottom: 4px;">🌱</div>
+              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'low' ? '#55F7A5' : '#fff'};">بسيط</div>
+              <div style="font-size: 0.7rem; color: #8C9992;">سهولة تحضير</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. توزيع الوجبات الرئيسية -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
+            2. كيف تفضل توزيع وجباتك الرئيسية في اليوم؟
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn btn-secondary q-mealslots-btn ${prefs.mealSlots === 'breakfast_lunch_dinner' ? 'active' : ''}" data-val="breakfast_lunch_dinner" style="padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; text-align: right; border-color: ${prefs.mealSlots === 'breakfast_lunch_dinner' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.mealSlots === 'breakfast_lunch_dinner' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div>
+                <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">3 وجبات رئيسية (فطور، غداء، عشاء)</div>
+                <div style="font-size: 0.74rem; color: #8C9992;">النظام الكلاسيكي المتوازن للطاقة والشبع طوال اليوم</div>
+              </div>
+              <span style="color: ${prefs.mealSlots === 'breakfast_lunch_dinner' ? '#55F7A5' : 'transparent'}; font-size: 1.1rem; font-weight: 900;">✓</span>
+            </button>
+            <button type="button" class="btn btn-secondary q-mealslots-btn ${prefs.mealSlots === 'breakfast_lunch' ? 'active' : ''}" data-val="breakfast_lunch" style="padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; text-align: right; border-color: ${prefs.mealSlots === 'breakfast_lunch' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.mealSlots === 'breakfast_lunch' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div>
+                <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">وجبتان (فطور وغداء - صيام مسائي)</div>
+                <div style="font-size: 0.74rem; color: #8C9992;">تناول السعرات نهاراً والتوقف مبكراً في المساء</div>
+              </div>
+              <span style="color: ${prefs.mealSlots === 'breakfast_lunch' ? '#55F7A5' : 'transparent'}; font-size: 1.1rem; font-weight: 900;">✓</span>
+            </button>
+            <button type="button" class="btn btn-secondary q-mealslots-btn ${prefs.mealSlots === 'lunch_dinner' ? 'active' : ''}" data-val="lunch_dinner" style="padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; text-align: right; border-color: ${prefs.mealSlots === 'lunch_dinner' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.mealSlots === 'lunch_dinner' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div>
+                <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">وجبتان (غداء وعشاء - تخطي الفطور)</div>
+                <div style="font-size: 0.74rem; color: #8C9992;">مثالي للصيام المتقطع الكلاسيكي 16/8 وتأخير أول وجبة</div>
+              </div>
+              <span style="color: ${prefs.mealSlots === 'lunch_dinner' ? '#55F7A5' : 'transparent'}; font-size: 1.1rem; font-weight: 900;">✓</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. عدد الوجبات المفتوحة بالأسبوع -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin: 0;">
+              3. كم وجبة مفتوحة (Free Meal) تريد في الأسبوع؟
+            </label>
+            <span id="offplan-count-badge" style="font-size: 0.88rem; font-weight: 900; color: #55F7A5; font-family: monospace;">
+              ${prefs.offPlanMealsCount} ${prefs.offPlanMealsCount === 0 ? '(بدون وجبات مفتوحة)' : 'وجبة أسبوعياً'}
+            </span>
+          </div>
+          <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;">
+            ${[0, 1, 2, 3, 4, 5, 6, 7].map(num => `
+              <button type="button" class="btn btn-secondary q-offplan-chip ${prefs.offPlanMealsCount === num ? 'active' : ''}" data-val="${num}" style="flex: 1; min-width: 36px; height: 42px; border-radius: 12px; font-weight: 800; font-family: monospace; font-size: 1rem; border-color: ${prefs.offPlanMealsCount === num ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.offPlanMealsCount === num ? 'rgba(85,247,165,0.2)' : 'rgba(255,255,255,0.02)'}; color: ${prefs.offPlanMealsCount === num ? '#55F7A5' : '#fff'};">
+                ${num}
+              </button>
+            `).join('')}
+          </div>
+          <small style="color: #8C9992; font-size: 0.74rem; display: block; margin-top: 4px;">
+            الوجبة المفتوحة تتيح لك تناول ما تحب بحرية واعتدال مع الحفاظ على التوازن الكلي.
+          </small>
+        </div>
+
+        <!-- 4. تناول الحلويات والسكريات -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin: 0;">
+              4. هل تتناول حلويات أو سكريات وتريد إدراجها؟
+            </label>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" id="q-sweets-toggle-no" class="btn btn-secondary ${!prefs.sweets.enabled ? 'active' : ''}" style="padding: 4px 14px; font-size: 0.8rem; border-radius: 10px; border-color: ${!prefs.sweets.enabled ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${!prefs.sweets.enabled ? 'rgba(85,247,165,0.15)' : 'transparent'}; color: #fff;">لا</button>
+              <button type="button" id="q-sweets-toggle-yes" class="btn btn-secondary ${prefs.sweets.enabled ? 'active' : ''}" style="padding: 4px 14px; font-size: 0.8rem; border-radius: 10px; border-color: ${prefs.sweets.enabled ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.sweets.enabled ? 'rgba(85,247,165,0.15)' : 'transparent'}; color: #fff;">نعم 🍰</button>
+            </div>
+          </div>
+
+          <div id="q-sweets-details-panel" style="display: ${prefs.sweets.enabled ? 'block' : 'none'}; background: rgba(85,247,165,0.04); border: 1px solid rgba(85,247,165,0.2); border-radius: 16px; padding: 14px; margin-top: 10px;">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 0.8rem; color: #B8C0BC; display: block; margin-bottom: 4px;">ابحث عن صنف الحلى المفضل:</label>
+              <div style="position: relative;">
+                <input type="text" id="q-sweets-search-input" value="${prefs.sweets.item ? (prefs.sweets.item.nameAr || prefs.sweets.item.name) : ''}" placeholder="اكتب للبحث (كنافة، شوكولاتة، كيك، معمول...)" class="food-tag-input" style="width: 100%; border-radius: 10px; padding: 8px 12px; background: rgba(0,0,0,0.6); border: 1px solid rgba(85,247,165,0.3); color: #fff;" autocomplete="off">
+                <div id="q-sweets-dropdown" class="food-autocomplete-dropdown" style="display: none; position: absolute; z-index: 50; width: 100%; max-height: 180px; overflow-y: auto; background: #07150E; border: 1px solid #55F7A5; border-radius: 10px;"></div>
+              </div>
+              ${prefs.sweets.item ? `
+                <div id="q-sweets-selected-badge" style="margin-top: 6px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; background: rgba(85,247,165,0.12); border: 1px solid #55F7A5; color: #55F7A5; font-size: 0.82rem; font-weight: 700;">
+                  <span>✓ تم اختيار: ${prefs.sweets.item.nameAr || prefs.sweets.item.name} (~${prefs.sweets.item.caloriesPer100g || prefs.sweets.item.calories || 350} سعرة/100غ)</span>
+                </div>
+              ` : ''}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label style="font-size: 0.8rem; color: #B8C0BC; display: block; margin-bottom: 4px;">حجم الحصة (${prefs.sweets.unit || 'غم'}):</label>
+                <input type="number" id="q-sweets-portion" value="${prefs.sweets.portion || 50}" min="5" max="500" step="5" style="width: 100%; padding: 8px; border-radius: 10px; text-align: center; background: rgba(0,0,0,0.6); border: 1px solid rgba(85,247,165,0.3); color: #fff; font-family: monospace;">
+              </div>
+              <div>
+                <label style="font-size: 0.8rem; color: #B8C0BC; display: block; margin-bottom: 4px;">كم مرة في الأسبوع:</label>
+                <select id="q-sweets-frequency" style="width: 100%; padding: 8px; border-radius: 10px; background: rgba(0,0,0,0.6); border: 1px solid rgba(85,247,165,0.3); color: #fff; text-align: center;">
+                  ${[1, 2, 3, 4, 5, 6, 7].map(n => `<option value="${n}" ${prefs.sweets.servingsPerWeek === n ? 'selected' : ''}>${n} مرات أسبوعياً</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.76rem; color: #55F7A5; font-weight: 700;">
+              💡 يتم حسم سعرات الحصة تلقائياً وتوزيعها على مدار الأسبوع دون الإخلال بهدفك الأساسي.
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. نمط الدايت -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
+            5. ما هو أسلوب الدايت المفضل لديك؟
+          </label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'flexible' ? 'active' : ''}" data-val="flexible" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.dietStyle === 'flexible' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'flexible' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.2rem; margin-bottom: 4px;">🥗</div>
+              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">دايت مرن (متنوع)</div>
+              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">تنوع يومي واسع في الوجبات والوصفات لمنع الملل</div>
+            </button>
+            <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'strict' ? 'active' : ''}" data-val="strict" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.dietStyle === 'strict' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'strict' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.2rem; margin-bottom: 4px;">⚡</div>
+              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">دايت صارم (ثابت)</div>
+              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">وجبات متكررة وثابتة لتسهيل التحضير والانضباط</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6. شكل الخطة -->
+        <div class="form-group" style="margin-bottom: 22px;">
+          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
+            6. كيف تريد شكل وتنسيق وجباتك اليومية؟
+          </label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button type="button" class="btn btn-secondary q-planformat-btn ${prefs.planFormat === 'multiple_options' ? 'active' : ''}" data-val="multiple_options" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.planFormat === 'multiple_options' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.planFormat === 'multiple_options' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.2rem; margin-bottom: 4px;">📋</div>
+              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">خيارات متعددة</div>
+              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">2-3 بدائل محسوبة لكل وجبة تختار بينها بمرونة</div>
+            </button>
+            <button type="button" class="btn btn-secondary q-planformat-btn ${prefs.planFormat === 'fixed' ? 'active' : ''}" data-val="fixed" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.planFormat === 'fixed' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.planFormat === 'fixed' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.2rem; margin-bottom: 4px;">🎯</div>
+              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">خيار واحد محدد</div>
+              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">وجبة واحدة محددة ومباشرة بدون حيرة</div>
+            </button>
+          </div>
+        </div>
+
+        <button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 24px; border-radius: 22px;">
+          متابعة
+        </button>
+      `;
+    }
+
     case STEP_KEYS.HEALTH:
     case 4:
       // الصحة ونمط الحياة والنوم
@@ -1316,6 +1508,25 @@ function renderStepContent(step) {
           </div>
 
           <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
+            <span style="color: #B8C0BC;">توزيع وشكل الخطة</span>
+            <span style="font-weight: 800; color: #FFFFFF;">${(formData.nutritionPlanPreferences?.mealSlots === 'breakfast_lunch_dinner' ? '3 وجبات' : 'وجبتان')} (${formData.nutritionPlanPreferences?.dietStyle === 'flexible' ? 'مرن' : 'صارم'} - ${formData.nutritionPlanPreferences?.planFormat === 'multiple_options' ? 'بدائل متعددة' : 'خيار ثابت'})</span>
+          </div>
+
+          ${formData.nutritionPlanPreferences?.offPlanMealsCount > 0 ? `
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
+              <span style="color: #B8C0BC;">الوجبات المفتوحة</span>
+              <span style="font-weight: 800; color: #55F7A5;">${formData.nutritionPlanPreferences.offPlanMealsCount} وجبات حرة بالأسبوع</span>
+            </div>
+          ` : ''}
+
+          ${formData.nutritionPlanPreferences?.sweets?.enabled && formData.nutritionPlanPreferences.sweets.servingsPerWeek > 0 ? `
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
+              <span style="color: #B8C0BC;">حصة الحلويات المحسوبة</span>
+              <span style="font-weight: 800; color: #FFC83C;">${formData.nutritionPlanPreferences.sweets.item?.nameAr || 'حلويات'} (${formData.nutritionPlanPreferences.sweets.portion || 50}غم) × ${formData.nutritionPlanPreferences.sweets.servingsPerWeek} أسبوعياً</span>
+            </div>
+          ` : ''}
+
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
             <span style="color: #B8C0BC;">أيام التدريب</span>
             <span style="font-weight: 800; color: #FFFFFF;">${formData.workoutDaysCount} أيام بالأسبوع (${eqText})</span>
           </div>
@@ -1442,6 +1653,8 @@ export function bindQuestionnaireEvents() {
     initWeeklyGainRateEvents();
   } else if (currentStepKey === STEP_KEYS.NUTRITION) {
     initNutritionStepEvents();
+  } else if (currentStepKey === STEP_KEYS.PLAN_PREFERENCES) {
+    initPlanPreferencesStepEvents();
   } else if (currentStepKey === STEP_KEYS.SUPPLEMENTS) {
     initSupplementsStepEvents();
   }
@@ -1625,6 +1838,7 @@ export function bindQuestionnaireEvents() {
       targetFats: targets.fats,
       targetWaterLiters: Number((targets.waterMl / 1000).toFixed(1)),
       targetGlasses: targets.waterGlasses,
+      nutritionPlanPreferences: formData.nutritionPlanPreferences,
       onboardingCompleted: true,
       onboarding_completed: true
       };
@@ -1642,6 +1856,7 @@ export function bindQuestionnaireEvents() {
       showStage(step4, 'حفظ الخطة وتجهيز صفحة اليوم...', 95);
       store.setUserProfile(fullProfile);
       store.setDailyStackItems(selectedStackItems);
+      nutritionPlanService.generateAndSavePlan(fullProfile, formData.nutritionPlanPreferences);
 
       const state = store.getState();
       state.onboardingAuthPending = !hasAuthenticatedAccount;
@@ -2830,6 +3045,196 @@ export function bindQuestionnaireEvents() {
     setupFoodAutocomplete('disliked');
   }
 
+  function initPlanPreferencesStepEvents() {
+    // 1. Adherence buttons
+    document.querySelectorAll('.q-adherence-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const val = btn.dataset.val;
+        formData.nutritionPlanPreferences.adherence = val;
+        document.querySelectorAll('.q-adherence-btn').forEach(b => {
+          const isAct = b.dataset.val === val;
+          b.classList.toggle('active', isAct);
+          b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
+          b.style.background = isAct ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)';
+          const label = b.querySelector('div:nth-child(2)');
+          if (label) label.style.color = isAct ? '#55F7A5' : '#fff';
+        });
+      };
+    });
+
+    // 2. Meal slots buttons
+    document.querySelectorAll('.q-mealslots-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const val = btn.dataset.val;
+        formData.nutritionPlanPreferences.mealSlots = val;
+        document.querySelectorAll('.q-mealslots-btn').forEach(b => {
+          const isAct = b.dataset.val === val;
+          b.classList.toggle('active', isAct);
+          b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
+          b.style.background = isAct ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)';
+          const check = b.querySelector('span');
+          if (check) check.style.color = isAct ? '#55F7A5' : 'transparent';
+        });
+      };
+    });
+
+    // 3. Off-plan chips
+    document.querySelectorAll('.q-offplan-chip').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const count = Number(btn.dataset.val) || 0;
+        formData.nutritionPlanPreferences.offPlanMealsCount = count;
+        document.querySelectorAll('.q-offplan-chip').forEach(b => {
+          const isAct = Number(b.dataset.val) === count;
+          b.classList.toggle('active', isAct);
+          b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
+          b.style.background = isAct ? 'rgba(85,247,165,0.2)' : 'rgba(255,255,255,0.02)';
+          b.style.color = isAct ? '#55F7A5' : '#fff';
+        });
+        const badge = document.getElementById('offplan-count-badge');
+        if (badge) {
+          badge.textContent = `${count} ${count === 0 ? '(بدون وجبات مفتوحة)' : 'وجبة أسبوعياً'}`;
+        }
+      };
+    });
+
+    // 4. Sweets toggle & search
+    const toggleNo = document.getElementById('q-sweets-toggle-no');
+    const toggleYes = document.getElementById('q-sweets-toggle-yes');
+    const detailsPanel = document.getElementById('q-sweets-details-panel');
+
+    if (toggleNo && toggleYes) {
+      toggleNo.onclick = (e) => {
+        e.preventDefault();
+        formData.nutritionPlanPreferences.sweets.enabled = false;
+        toggleNo.classList.add('active');
+        toggleNo.style.borderColor = '#55F7A5';
+        toggleNo.style.background = 'rgba(85,247,165,0.15)';
+        toggleYes.classList.remove('active');
+        toggleYes.style.borderColor = 'rgba(85,247,165,0.2)';
+        toggleYes.style.background = 'transparent';
+        if (detailsPanel) detailsPanel.style.display = 'none';
+      };
+      toggleYes.onclick = (e) => {
+        e.preventDefault();
+        formData.nutritionPlanPreferences.sweets.enabled = true;
+        toggleYes.classList.add('active');
+        toggleYes.style.borderColor = '#55F7A5';
+        toggleYes.style.background = 'rgba(85,247,165,0.15)';
+        toggleNo.classList.remove('active');
+        toggleNo.style.borderColor = 'rgba(85,247,165,0.2)';
+        toggleNo.style.background = 'transparent';
+        if (detailsPanel) detailsPanel.style.display = 'block';
+      };
+    }
+
+    const sweetsInput = document.getElementById('q-sweets-search-input');
+    const sweetsDropdown = document.getElementById('q-sweets-dropdown');
+    if (sweetsInput && sweetsDropdown) {
+      sweetsInput.addEventListener('input', () => {
+        const q = sweetsInput.value.trim();
+        if (!q) {
+          sweetsDropdown.style.display = 'none';
+          return;
+        }
+        const results = searchFoods(q, 10);
+        if (results.length === 0) {
+          sweetsDropdown.innerHTML = `<div style="padding: 10px; color: #8C9992; font-size: 0.85rem; text-align: center;">لم يتم العثور على أطعمة مطابقة</div>`;
+          sweetsDropdown.style.display = 'block';
+          return;
+        }
+        sweetsDropdown.innerHTML = results.map(item => `
+          <div class="food-autocomplete-item" data-id="${item.id}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid rgba(85,247,165,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: #fff; font-size: 0.88rem;">${item.nameAr || item.name}</span>
+            <span style="color: #55F7A5; font-size: 0.78rem; font-family: monospace;">${item.caloriesPer100g || item.calories || 300} سعرة/100غ</span>
+          </div>
+        `).join('');
+        sweetsDropdown.style.display = 'block';
+
+        sweetsDropdown.querySelectorAll('.food-autocomplete-item').forEach(div => {
+          div.onclick = () => {
+            const id = div.dataset.id;
+            const selectedFood = results.find(f => f.id === id);
+            if (selectedFood) {
+              formData.nutritionPlanPreferences.sweets.item = selectedFood;
+              sweetsInput.value = selectedFood.nameAr || selectedFood.name;
+              sweetsDropdown.style.display = 'none';
+              let badge = document.getElementById('q-sweets-selected-badge');
+              if (!badge) {
+                badge = document.createElement('div');
+                badge.id = 'q-sweets-selected-badge';
+                badge.style.marginTop = '6px';
+                badge.style.display = 'inline-flex';
+                badge.style.alignItems = 'center';
+                badge.style.gap = '6px';
+                badge.style.padding = '4px 10px';
+                badge.style.borderRadius = '8px';
+                badge.style.background = 'rgba(85,247,165,0.12)';
+                badge.style.border = '1px solid #55F7A5';
+                badge.style.color = '#55F7A5';
+                badge.style.fontSize = '0.82rem';
+                badge.style.fontWeight = '700';
+                sweetsInput.parentElement.parentElement.appendChild(badge);
+              }
+              badge.textContent = `✓ تم اختيار: ${selectedFood.nameAr || selectedFood.name} (~${selectedFood.caloriesPer100g || selectedFood.calories || 300} سعرة/100غ)`;
+            }
+          };
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!sweetsInput.contains(e.target) && !sweetsDropdown.contains(e.target)) {
+          sweetsDropdown.style.display = 'none';
+        }
+      });
+    }
+
+    const portionEl = document.getElementById('q-sweets-portion');
+    if (portionEl) {
+      portionEl.onchange = () => {
+        formData.nutritionPlanPreferences.sweets.portion = Math.max(5, Number(portionEl.value) || 50);
+      };
+    }
+    const freqEl = document.getElementById('q-sweets-frequency');
+    if (freqEl) {
+      freqEl.onchange = () => {
+        formData.nutritionPlanPreferences.sweets.servingsPerWeek = Number(freqEl.value) || 1;
+      };
+    }
+
+    // 5. Diet style buttons
+    document.querySelectorAll('.q-dietstyle-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const val = btn.dataset.val;
+        formData.nutritionPlanPreferences.dietStyle = val;
+        document.querySelectorAll('.q-dietstyle-btn').forEach(b => {
+          const isAct = b.dataset.val === val;
+          b.classList.toggle('active', isAct);
+          b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
+          b.style.background = isAct ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)';
+        });
+      };
+    });
+
+    // 6. Plan format buttons
+    document.querySelectorAll('.q-planformat-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const val = btn.dataset.val;
+        formData.nutritionPlanPreferences.planFormat = val;
+        document.querySelectorAll('.q-planformat-btn').forEach(b => {
+          const isAct = b.dataset.val === val;
+          b.classList.toggle('active', isAct);
+          b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
+          b.style.background = isAct ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)';
+        });
+      };
+    });
+  }
+
   function saveCurrentStepInputs() {
     const activeSteps = getActiveSteps();
     const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
@@ -2933,6 +3338,15 @@ export function bindQuestionnaireEvents() {
           formData.dislikedFoods.push(val);
         }
         dislikedInput.value = '';
+      }
+    } else if (currentStepKey === STEP_KEYS.PLAN_PREFERENCES) {
+      const portionInput = document.getElementById('q-sweets-portion');
+      const freqSelect = document.getElementById('q-sweets-frequency');
+      if (portionInput && !isNaN(Number(portionInput.value))) {
+        formData.nutritionPlanPreferences.sweets.portion = Math.max(5, Number(portionInput.value));
+      }
+      if (freqSelect && !isNaN(Number(freqSelect.value))) {
+        formData.nutritionPlanPreferences.sweets.servingsPerWeek = Number(freqSelect.value);
       }
     } else if (currentStepKey === STEP_KEYS.HEALTH) {
       const sleep = Number(document.getElementById('q-sleep')?.value);
