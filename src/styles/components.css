@@ -3313,4 +3313,92 @@ a:hover .neon-icon,
   background: rgba(85, 247, 165, 0.25) !important;
 }
 
+/* ==========================================================================
+   Image Anti-Theft & Digital Protection System (درع حماية الصور والوسائط)
+   ========================================================================== */
+
+/* درع الحماية الشفاف الموضوع فوق الصورة مباشرة لمنع النقر باليمين والسحب واللمس المطول */
+.img-protection-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: transparent;
+  pointer-events: auto;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+}
+
+/* تعطيل كافة أحداث الفأرة والتحديد على عنصر الصورة الحقيقي */
+.recipe-dish-preview img,
+.recipe-modal-poster-wrap img {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+}
+
+/* طبقة العلامة المائية والحماية الرقمية على بوستر الوصفة بالكامل */
+.recipe-watermark-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+  background: radial-gradient(circle at center, transparent 45%, rgba(2, 7, 4, 0.35) 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* نمط مائي مائل خفيف جداً يثبت ملكية نيون كوتش ويمنع تصوير الشاشة دون أثر */
+.watermark-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(85, 247, 165, 0.04) 0,
+    rgba(85, 247, 165, 0.04) 1px,
+    transparent 1px,
+    transparent 85px
+  );
+  pointer-events: none;
+}
+
+/* شارة العلامة المائية العلوية بتصميم نيون زجاجي أنيق */
+.watermark-brand-tag {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(2, 7, 4, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(85, 247, 165, 0.28);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #55F7A5;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  z-index: 6;
+}
+
+/* منع تصدير أو طباعة الصور إلى ملفات PDF أو الطابعة */
+@media print {
+  .recipe-dish-preview,
+  .recipe-modal-poster-wrap,
+  .recipe-dish-preview img,
+  .recipe-modal-poster-wrap img {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+
 

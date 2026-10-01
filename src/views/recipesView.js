@@ -7,6 +7,7 @@ import { RECIPE_CATEGORIES, RECIPES_DATA } from '../data/recipesData.js';
 import { store } from '../state/store.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
+import { initImageProtectionGuard } from '../utils/imageSecurity.js';
 
 let activeCategory = 'all';
 let searchQuery = '';
@@ -162,14 +163,19 @@ function renderRecipeCard(recipe) {
         <!-- صورة عرض الطبق النهائي مقتصة ومظبوطة النسبة من بوستر الوصفة -->
         ${recipe.imageUrl ? `
           <div class="recipe-dish-preview btn-open-recipe" data-recipe-id="${recipe.id}" style="width: 100%; aspect-ratio: 16 / 9.2; border-radius: 14px; margin-bottom: 6px; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;" title="انقر لعرض المقادير وطريقة التحضير بالكامل">
+            <!-- درع الحماية الشفاف لمنع النقر باليمين والحفظ والسحب والتحديد -->
+            <div class="img-protection-shield" aria-hidden="true" oncontextmenu="return false;"></div>
+
             <img
               src="${escapeHtml(recipe.imageUrl)}"
               alt="${escapeHtml(recipe.titleAr)}"
               loading="lazy"
               decoding="async"
+              draggable="false"
+              oncontextmenu="return false;"
               onload="this.classList.add('is-loaded'); this.parentElement.classList.add('is-ready');"
               onerror="this.style.display='none'; this.parentElement.classList.add('is-error');"
-              style="position: absolute; width: 200%; left: -3%; right: auto; top: 0; transform: translateY(-69.5%) translateZ(0); display: block; pointer-events: none; max-width: none; border-radius: 0;"
+              style="position: absolute; width: 200%; left: -3%; right: auto; top: 0; transform: translateY(-69.5%) translateZ(0); display: block; pointer-events: none; max-width: none; border-radius: 0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none;"
             />
           </div>
         ` : `
@@ -248,15 +254,29 @@ function renderRecipeModalDetail(recipe) {
         </button>
       </div>
 
-      <!-- صورة الوصفة الكاملة (المقادير والتحضير المصورة) -->
-      <div style="position: relative; width: 100%; min-height: 200px; border-radius: 16px; overflow: hidden; background: #030806; border: 1px solid rgba(85,247,165,0.22); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <!-- صورة الوصفة الكاملة (المقادير والتحضير المصورة) المحمية -->
+      <div class="recipe-modal-poster-wrap" style="position: relative; width: 100%; min-height: 200px; border-radius: 16px; overflow: hidden; background: #030806; border: 1px solid rgba(85,247,165,0.22); box-shadow: 0 10px 30px rgba(0,0,0,0.5); -webkit-user-select: none; user-select: none;">
+        <!-- درع الحماية الشفاف لمنع النقر باليمين أو اللمس المطول أو السحب -->
+        <div class="img-protection-shield" aria-hidden="true" oncontextmenu="return false;"></div>
+
+        <!-- طبقة العلامة المائية والحماية الرقمية لمنع تصوير الشاشة دون إثبات الملكية -->
+        <div class="recipe-watermark-overlay" aria-hidden="true">
+          <div class="watermark-brand-tag">
+            <span>🔒</span>
+            <span>محتوى حصري محفوظ الحقوق · NEON COACH</span>
+          </div>
+          <div class="watermark-pattern"></div>
+        </div>
+
         <img
           src="${escapeHtml(recipe.imageUrl)}"
           alt="${escapeHtml(recipe.titleAr)}"
           loading="eager"
           decoding="async"
+          draggable="false"
+          oncontextmenu="return false;"
           onload="this.style.opacity='1';"
-          style="width: 100%; height: auto; display: block; border-radius: 15px; opacity: 0; transition: opacity 0.25s ease-in;"
+          style="width: 100%; height: auto; display: block; border-radius: 15px; opacity: 0; transition: opacity 0.25s ease-in; pointer-events: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none;"
         />
       </div>
 
@@ -348,6 +368,9 @@ function checkCachedImages(rootEl) {
 export function bindRecipesEvents() {
   const container = document.querySelector('.recipes-view-container');
   if (!container) return;
+
+  // تفعيل منظومة حماية الوسائط ومنع السرقة وحظر الحفظ
+  initImageProtectionGuard(container);
 
   const countBadge = container.querySelector('#recipes-count-badge');
   const cardsGrid = container.querySelector('#recipes-cards-grid');
