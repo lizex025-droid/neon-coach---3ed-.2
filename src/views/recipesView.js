@@ -163,19 +163,13 @@ function renderRecipeCard(recipe) {
         <!-- صورة عرض الطبق النهائي مقتصة ومظبوطة النسبة من بوستر الوصفة -->
         ${recipe.imageUrl ? `
           <div class="recipe-dish-preview btn-open-recipe" data-recipe-id="${recipe.id}" style="width: 100%; aspect-ratio: 16 / 9.2; border-radius: 14px; margin-bottom: 6px; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;" title="انقر لعرض المقادير وطريقة التحضير بالكامل">
-            <!-- درع الحماية الشفاف لمنع النقر باليمين والحفظ والسحب والتحديد -->
-            <div class="img-protection-shield" aria-hidden="true" oncontextmenu="return false;"></div>
-
             <img
               src="${escapeHtml(recipe.imageUrl)}"
               alt="${escapeHtml(recipe.titleAr)}"
               loading="lazy"
               decoding="async"
               draggable="false"
-              oncontextmenu="return false;"
-              onload="this.classList.add('is-loaded'); this.parentElement.classList.add('is-ready');"
-              onerror="this.style.display='none'; this.parentElement.classList.add('is-error');"
-              style="position: absolute; width: 200%; left: -3%; right: auto; top: 0; transform: translateY(-69.5%) translateZ(0); display: block; pointer-events: none; max-width: none; border-radius: 0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none;"
+              style="position: absolute; width: 200%; left: -3%; right: auto; top: 0; transform: translateY(-69.5%) translateZ(0); display: block; max-width: none; border-radius: 0;"
             />
           </div>
         ` : `
@@ -254,20 +248,15 @@ function renderRecipeModalDetail(recipe) {
         </button>
       </div>
 
-      <!-- صورة الوصفة الكاملة (المقادير والتحضير المصورة) المحمية -->
-      <div class="recipe-modal-poster-wrap" style="position: relative; width: 100%; min-height: 200px; border-radius: 16px; overflow: hidden; background: #030806; border: 1px solid rgba(85,247,165,0.22); box-shadow: 0 10px 30px rgba(0,0,0,0.5); -webkit-user-select: none; user-select: none;">
-        <!-- درع الحماية الشفاف لمنع النقر باليمين أو اللمس المطول أو السحب -->
-        <div class="img-protection-shield" aria-hidden="true" oncontextmenu="return false;"></div>
-
+      <!-- صورة الوصفة الكاملة (المقادير والتحضير المصورة) -->
+      <div class="recipe-modal-poster-wrap" style="position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #030806; border: 1px solid rgba(85,247,165,0.22); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <img
           src="${escapeHtml(recipe.imageUrl)}"
           alt="${escapeHtml(recipe.titleAr)}"
           loading="eager"
           decoding="async"
           draggable="false"
-          oncontextmenu="return false;"
-          onload="this.style.opacity='1';"
-          style="width: 100%; height: auto; display: block; border-radius: 15px; opacity: 0; transition: opacity 0.25s ease-in; pointer-events: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none;"
+          style="width: 100%; height: auto; display: block; border-radius: 15px;"
         />
       </div>
 
@@ -345,22 +334,11 @@ function saveRecipeToFavorites(recipe) {
   }
 }
 
-function checkCachedImages(rootEl) {
-  if (!rootEl) return;
-  const images = rootEl.querySelectorAll('.recipe-dish-preview img');
-  images.forEach(img => {
-    if (img.complete && img.naturalWidth > 0) {
-      img.classList.add('is-loaded');
-      img.parentElement?.classList.add('is-ready');
-    }
-  });
-}
-
 export function bindRecipesEvents() {
   const container = document.querySelector('.recipes-view-container');
   if (!container) return;
 
-  // تفعيل منظومة حماية الوسائط ومنع السرقة وحظر الحفظ
+  // تفعيل حماية الصور من النقر بزر الفأرة الأيمن والسحب
   initImageProtectionGuard(container);
 
   const countBadge = container.querySelector('#recipes-count-badge');
@@ -371,12 +349,8 @@ export function bindRecipesEvents() {
     if (countBadge) countBadge.textContent = filtered.length;
     if (cardsGrid) {
       cardsGrid.innerHTML = renderCardsHtml(filtered);
-      checkCachedImages(cardsGrid);
     }
   };
-
-  // فحص الصور التي تم تخزينها بالكاش مسبقاً لعرضها فورياً دون تأخير
-  checkCachedImages(cardsGrid);
 
   // 1. فلتر التصنيفات
   container.querySelectorAll('.recipe-cat-chip').forEach(chip => {
