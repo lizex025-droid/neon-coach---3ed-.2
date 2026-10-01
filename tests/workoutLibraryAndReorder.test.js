@@ -116,3 +116,23 @@ test('fortyDayWorkoutService: reorderDayExercises swaps exercises without losing
   assert.equal(tracker1.sets[0].kg, 85);
   assert.equal(tracker1.sets[0].reps, 10);
 });
+
+test('fortyDayWorkoutService: quick move reorders exercises sequentially up and down', () => {
+  const day = fortyDayWorkoutService.getDay('chestBiceps');
+  const count = day.exercises.length;
+  assert.ok(count >= 3);
+
+  const originalOrder = day.exercises.map(e => e.title);
+
+  // Quick move down: index 0 -> 1
+  fortyDayWorkoutService.reorderDayExercises('chestBiceps', 0, 1);
+  const afterDown = fortyDayWorkoutService.getDay('chestBiceps').exercises.map(e => e.title);
+  assert.equal(afterDown[0], originalOrder[1]);
+  assert.equal(afterDown[1], originalOrder[0]);
+
+  // Quick move up: index 1 -> 0
+  fortyDayWorkoutService.reorderDayExercises('chestBiceps', 1, 0);
+  const afterUp = fortyDayWorkoutService.getDay('chestBiceps').exercises.map(e => e.title);
+  assert.deepEqual(afterUp, originalOrder);
+});
+

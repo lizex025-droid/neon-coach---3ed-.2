@@ -144,17 +144,22 @@ function renderDay(dayKey) {
       <strong>${day.exercises.length} تمارين</strong>
     </header>
     <div class="forty-exercise-grid">
-      ${day.exercises.map((exercise, index) => renderExerciseCard(day, exercise, index, trackers[index])).join('')}
+      ${day.exercises.map((exercise, index) => renderExerciseCard(day, exercise, index, trackers[index], day.exercises.length)).join('')}
     </div>
   `;
 }
 
-function renderExerciseCard(day, exercise, exerciseIndex, tracker) {
+function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 0) {
   const completed = tracker && tracker.sets.length > 0 && tracker.sets.every(set => set.done);
+  const total = totalCount || (day?.exercises?.length ?? 1);
   return `
     <article class="forty-exercise-card ${completed ? 'is-completed' : ''}" data-exercise-card="${exerciseIndex}" data-index="${exerciseIndex}">
       <div class="forty-exercise-head">
-        <div style="display: flex; align-items: center; gap: 4px;">
+        <div class="forty-exercise-reorder-wrap">
+          <div class="forty-reorder-arrows">
+            <button type="button" class="forty-quick-move-btn" data-action="quick-move-up" data-index="${exerciseIndex}" title="تقديم التمرين للأعلى" ${exerciseIndex === 0 ? 'disabled' : ''} aria-label="تقديم التمرين للأعلى">▲</button>
+            <button type="button" class="forty-quick-move-btn" data-action="quick-move-down" data-index="${exerciseIndex}" title="تأخير التمرين للأسفل" ${exerciseIndex === total - 1 ? 'disabled' : ''} aria-label="تأخير التمرين للأسفل">▼</button>
+          </div>
           <span class="forty-drag-handle" title="اضغط مطولاً واسحب للترتيب">⋮⋮</span>
           <span class="forty-exercise-number">${exercise.number}</span>
         </div>
@@ -434,141 +439,214 @@ function initDragAndReorder(container, onReorder) {
   let currentTargetIndex = -1;
   let startX = 0;
   let startY = 0;
+  let grabOffsetY = 0;
+  let initialRects = [];
+  let allCards = [];
+
+  const resetAllCardStyles = () => {
+    allCards.forEach(card => {
+      card.style.transform = '';
+      card.style.transition = '';
+      card.style.zIndex = '';
+      card.classList.remove('is-dragging');
+    });
+  };
 
   const cleanup = () => {
     if (pressTimer) {
       clearTimeout(pressTimer);
       pressTimer = null;
     }
-    if (draggedCard) {
-      draggedCard.classList.remove('is-dragging');
-      draggedCard = null;
-    }
-    container.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
-      el.classList.remove('drag-over-above', 'drag-over-below');
-    });
+    resetAllCardStyles();
     isDragging = false;
+    draggedCard = null;
     draggedIndex = -1;
     currentTargetIndex = -1;
+    initialRects = [];
+    allCards = [];
     document.body.style.userSelect = '';
   };
 
+  const startDrag = (card, clientX, clientY) => {
+    allCards = Array.from(container.querySelectorAll('.forty-exercise-card'));
+    if (allCards.length <= 1) return;
+
+    draggedCard = card;
+    draggedIndex = allCards.indexOf(card);
+    if (draggedIndex === -1) return;
+
+    currentTargetIndex = draggedIndex;
+    initialRects = allCards.map(c => c.getBoundingClientRect());
+
+    const cardMidY = initialRects[draggedIndex].top + initialRects[draggedIndex].height / 2;
+    grabOffsetY = clientY - cardMidY;
+
+    isDragging = true;
+    draggedCard.classList.add('is-dragging');
+    draggedCard.style.zIndex = '9999';
+    draggedCard.style.transition = 'none';
+    draggedCard.style.transform = 'translateY(0px) scale(1.035)';
+    document.body.style.userSelect = 'none';
+
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(30);
+    }
+  };
+
+  const updateDragPosition = (clientY) => {
+    if (!isDragging || !draggedCard || draggedIndex === -1) return;
+
+    const deltaY = clientY - startY;
+    draggedCard.style.transform = `translateY(${deltaY}px) scale(1.035)`;
+
+    const currentCardCenterY = clientY - grabOffsetY;
+    let closestIndex = draggedIndex;
+    let minDistance = Infinity;
+
+    for (let i = 0; i < initialRects.length; i++) {
+      const midY = initialRects[i].top + initialRects[i].height / 2;
+      const dist = Math.abs(currentCardCenterY - midY);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestIndex = i;
+      }
+    }
+
+    if (closestIndex !== currentTargetIndex) {
+      currentTargetIndex = closestIndex;
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(18);
+      }
+    }
+
+    const draggedHeight = initialRects[draggedIndex].height + 18;
+
+    allCards.forEach((card, idx) => {
+      if (idx === draggedIndex) return;
+      card.style.transition = 'transform 0.25s cubic-bezier(0.2, 0, 0, 1)';
+
+      if (draggedIndex < currentTargetIndex) {
+        if (idx > draggedIndex && idx <= currentTargetIndex) {
+          card.style.transform = `translateY(-${draggedHeight}px)`;
+        } else {
+          card.style.transform = 'translateY(0px)';
+        }
+      } else if (draggedIndex > currentTargetIndex) {
+        if (idx < draggedIndex && idx >= currentTargetIndex) {
+          card.style.transform = `translateY(${draggedHeight}px)`;
+        } else {
+          card.style.transform = 'translateY(0px)';
+        }
+      } else {
+        card.style.transform = 'translateY(0px)';
+      }
+    });
+  };
+
+  const endDrag = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+
+    if (!isDragging) {
+      cleanup();
+      return;
+    }
+
+    const fromIdx = draggedIndex;
+    const toIdx = currentTargetIndex;
+
+    if (fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx && initialRects[toIdx] && initialRects[fromIdx]) {
+      const finalDeltaY = initialRects[toIdx].top - initialRects[fromIdx].top;
+      draggedCard.style.transition = 'transform 0.22s cubic-bezier(0.2, 0, 0, 1)';
+      draggedCard.style.transform = `translateY(${finalDeltaY}px) scale(1)`;
+
+      setTimeout(() => {
+        cleanup();
+        onReorder(fromIdx, toIdx);
+      }, 230);
+    } else {
+      if (draggedCard) {
+        draggedCard.style.transition = 'transform 0.2s ease';
+        draggedCard.style.transform = 'translateY(0px) scale(1)';
+      }
+      setTimeout(() => {
+        cleanup();
+      }, 210);
+    }
+  };
+
+  // Touch Events (Mobile)
   container.addEventListener('touchstart', (e) => {
     const card = e.target.closest('.forty-exercise-card');
     if (!card) return;
-    if (e.target.closest('input, button, a, label, .forty-sets')) return;
+    if (e.target.closest('input, button, a, label, .forty-sets, .forty-card-actions, .forty-tracker-actions')) return;
 
     const touch = e.touches[0];
     startX = touch.clientX;
     startY = touch.clientY;
-    draggedIndex = Number(card.dataset.index ?? card.dataset.exerciseCard);
 
     pressTimer = setTimeout(() => {
-      isDragging = true;
-      draggedCard = card;
-      draggedCard.classList.add('is-dragging');
-      document.body.style.userSelect = 'none';
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(35);
-      }
-    }, 320);
+      startDrag(card, touch.clientX, touch.clientY);
+    }, 280);
   }, { passive: true });
 
   container.addEventListener('touchmove', (e) => {
-    if (!pressTimer && !isDragging) return;
     const touch = e.touches[0];
-    const dx = Math.abs(touch.clientX - startX);
-    const dy = Math.abs(touch.clientY - startY);
-
     if (!isDragging) {
-      if (dx > 10 || dy > 10) {
-        clearTimeout(pressTimer);
-        pressTimer = null;
+      if (pressTimer) {
+        const dx = Math.abs(touch.clientX - startX);
+        const dy = Math.abs(touch.clientY - startY);
+        if (dx > 8 || dy > 8) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
       }
       return;
     }
 
     if (e.cancelable) e.preventDefault();
-
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    const targetCard = element?.closest('.forty-exercise-card');
-
-    container.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
-      if (el !== targetCard) el.classList.remove('drag-over-above', 'drag-over-below');
-    });
-
-    if (targetCard && targetCard !== draggedCard) {
-      const targetIdx = Number(targetCard.dataset.index ?? targetCard.dataset.exerciseCard);
-      currentTargetIndex = targetIdx;
-      const rect = targetCard.getBoundingClientRect();
-      if (touch.clientY < rect.top + rect.height / 2) {
-        targetCard.classList.add('drag-over-above');
-        targetCard.classList.remove('drag-over-below');
-      } else {
-        targetCard.classList.add('drag-over-below');
-        targetCard.classList.remove('drag-over-above');
-      }
-    }
+    updateDragPosition(touch.clientY);
   }, { passive: false });
 
-  const handleEnd = () => {
-    if (isDragging && draggedIndex >= 0 && currentTargetIndex >= 0 && draggedIndex !== currentTargetIndex) {
-      onReorder(draggedIndex, currentTargetIndex);
-    }
-    cleanup();
-  };
-
-  container.addEventListener('touchend', handleEnd);
+  container.addEventListener('touchend', endDrag);
   container.addEventListener('touchcancel', cleanup);
 
-  // Mouse support for desktop
+  // Mouse / Pointer Events (Desktop)
   container.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
     const card = e.target.closest('.forty-exercise-card');
     if (!card) return;
-    if (e.target.closest('input, button, a, label, .forty-sets')) return;
+    if (e.target.closest('input, button, a, label, .forty-sets, .forty-card-actions, .forty-tracker-actions')) return;
 
     startX = e.clientX;
     startY = e.clientY;
-    draggedIndex = Number(card.dataset.index ?? card.dataset.exerciseCard);
 
     pressTimer = setTimeout(() => {
-      isDragging = true;
-      draggedCard = card;
-      draggedCard.classList.add('is-dragging');
-      document.body.style.userSelect = 'none';
-    }, 320);
+      startDrag(card, e.clientX, e.clientY);
+    }, 280);
 
     const onMouseMove = (me) => {
       if (!isDragging) {
-        if (Math.abs(me.clientX - startX) > 8 || Math.abs(me.clientY - startY) > 8) {
-          clearTimeout(pressTimer);
-          pressTimer = null;
+        if (pressTimer) {
+          const dx = Math.abs(me.clientX - startX);
+          const dy = Math.abs(me.clientY - startY);
+          if (dx > 8 || dy > 8) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
         }
         return;
       }
       me.preventDefault();
-      const element = document.elementFromPoint(me.clientX, me.clientY);
-      const targetCard = element?.closest('.forty-exercise-card');
-      container.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
-        if (el !== targetCard) el.classList.remove('drag-over-above', 'drag-over-below');
-      });
-      if (targetCard && targetCard !== draggedCard) {
-        currentTargetIndex = Number(targetCard.dataset.index ?? targetCard.dataset.exerciseCard);
-        const rect = targetCard.getBoundingClientRect();
-        if (me.clientY < rect.top + rect.height / 2) {
-          targetCard.classList.add('drag-over-above');
-          targetCard.classList.remove('drag-over-below');
-        } else {
-          targetCard.classList.add('drag-over-below');
-          targetCard.classList.remove('drag-over-above');
-        }
-      }
+      updateDragPosition(me.clientY);
     };
 
     const onMouseUp = () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
-      handleEnd();
+      endDrag();
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -706,6 +784,25 @@ export function bindFortyDayWorkoutEvents() {
         updateTimers();
       } else {
         notificationService.showToast('هذا يوم راحة. اختر مجموعة عضلية لبدء التمرين.', 'info');
+      }
+      return;
+    }
+    if (button.dataset.action === 'quick-move-up') {
+      const curIndex = Number(button.dataset.index);
+      if (curIndex > 0) {
+        fortyDayWorkoutService.reorderDayExercises(activeDay, curIndex, curIndex - 1);
+        renderActiveDay();
+        notificationService.showToast('تم تقديم التمرين للأعلى ⬆', 'info');
+      }
+      return;
+    }
+    if (button.dataset.action === 'quick-move-down') {
+      const curIndex = Number(button.dataset.index);
+      const curDay = fortyDayWorkoutService.getDay(activeDay);
+      if (curDay?.exercises && curIndex < curDay.exercises.length - 1) {
+        fortyDayWorkoutService.reorderDayExercises(activeDay, curIndex, curIndex + 1);
+        renderActiveDay();
+        notificationService.showToast('تم تأخير التمرين للأسفل ⬇', 'info');
       }
       return;
     }
