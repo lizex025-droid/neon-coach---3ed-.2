@@ -252,3 +252,273 @@
   .forty-history-summary { grid-template-columns: repeat(2,minmax(0,1fr)); row-gap: 18px; }
   .forty-history-ranges { grid-template-columns: repeat(6,minmax(0,1fr)); }
 }
+
+/* =========================================================
+   Drag and Drop Reordering (Long Press + Drag)
+   ========================================================= */
+.forty-exercise-card {
+  position: relative;
+  touch-action: pan-y;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.forty-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(110, 231, 183, 0.45);
+  font-size: 1.15rem;
+  cursor: grab;
+  user-select: none;
+  padding: 0 4px;
+  margin-inline-end: 2px;
+}
+.forty-drag-handle:active {
+  cursor: grabbing;
+}
+.forty-exercise-card.is-dragging {
+  opacity: 0.92;
+  transform: scale(1.025);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.7), 0 0 24px rgba(85, 247, 165, 0.35);
+  border-color: #55f7a5 !important;
+  z-index: 100;
+  cursor: grabbing;
+}
+.forty-exercise-card.drag-over-above {
+  border-top: 3px solid #55f7a5 !important;
+  box-shadow: 0 -8px 20px rgba(85, 247, 165, 0.25);
+}
+.forty-exercise-card.drag-over-below {
+  border-bottom: 3px solid #55f7a5 !important;
+  box-shadow: 0 8px 20px rgba(85, 247, 165, 0.25);
+}
+
+/* =========================================================
+   Exercise Library Modal & 2-Column Muscle Grid
+   ========================================================= */
+.forty-add-exercise-btn {
+  margin-bottom: 12px;
+  width: 100%;
+  border: 1.5px solid rgba(85, 247, 165, 0.4);
+  background: rgba(85, 247, 165, 0.08);
+  color: #55f7a5;
+  font-weight: 800;
+  font-size: 0.96rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 16px;
+  padding: 12px 18px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.forty-add-exercise-btn:hover {
+  background: rgba(85, 247, 165, 0.16);
+  border-color: #55f7a5;
+  box-shadow: 0 0 20px rgba(85, 247, 165, 0.25);
+  transform: translateY(-1px);
+}
+
+.library-sheet {
+  max-width: 680px !important;
+  width: 100%;
+  background: #091310 !important;
+  border: 1px solid rgba(110, 231, 183, 0.25) !important;
+  border-radius: 24px !important;
+  padding: 20px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+}
+.library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.library-head-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.library-head-title h2 {
+  margin: 0;
+  font-size: 1.22rem;
+  font-weight: 900;
+  color: #ffffff;
+  font-family: 'Cairo', sans-serif;
+}
+.library-head-title p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+.library-search-box {
+  position: relative;
+  width: 100%;
+}
+.library-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(110, 231, 183, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+.library-search-input:focus {
+  border-color: #55f7a5;
+  box-shadow: 0 0 14px rgba(85, 247, 165, 0.2);
+}
+
+/* 2-Column Muscle Grid matching screenshot */
+.library-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+@media (max-width: 480px) {
+  .library-groups-grid {
+    gap: 8px;
+  }
+}
+.lib-muscle-card {
+  position: relative;
+  background: #061812;
+  border: 1px solid rgba(110, 231, 183, 0.2);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, box-shadow 0.2s;
+}
+.lib-muscle-card:hover {
+  transform: translateY(-3px);
+  border-color: #55f7a5;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(85, 247, 165, 0.2);
+}
+.lib-muscle-img-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #b4d936;
+  overflow: hidden;
+  position: relative;
+}
+.lib-muscle-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.lib-muscle-card-footer {
+  padding: 8px 10px 10px;
+  background: #091714;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.lib-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.lib-card-count {
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'JetBrains Mono', sans-serif;
+}
+.lib-card-badge {
+  background: #ffffff;
+  color: #03140e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  font-family: 'Cairo', sans-serif;
+}
+.lib-card-sub {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.42);
+  text-align: right;
+  line-height: 1.2;
+}
+
+/* Exercise item inside a muscle group */
+.library-exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.lib-exercise-item {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(110, 231, 183, 0.15);
+  border-radius: 16px;
+  transition: all 0.18s ease;
+}
+.lib-exercise-item:hover {
+  background: rgba(85, 247, 165, 0.04);
+  border-color: rgba(85, 247, 165, 0.35);
+}
+.lib-exercise-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.lib-exercise-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.lib-exercise-info h4 {
+  margin: 0 0 3px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.35;
+  font-family: 'Cairo', sans-serif;
+}
+.lib-exercise-info small {
+  display: block;
+  font-size: 0.72rem;
+  color: #55f7a5;
+  font-family: 'JetBrains Mono', monospace;
+}
+.lib-exercise-info p {
+  margin: 3px 0 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+.lib-add-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+

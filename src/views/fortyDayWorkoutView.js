@@ -1,5 +1,12 @@
 import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 import { notificationService } from '../services/notificationService.js';
+import {
+  EXERCISE_GROUPS,
+  ALL_LIBRARY_EXERCISES,
+  getExerciseGroups,
+  getExercisesByGroup,
+  searchExercises
+} from '../data/exerciseLibrary.js';
 import '../styles/fortyDayWorkout.css';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
@@ -91,6 +98,10 @@ export function renderFortyDayWorkoutView() {
       <section class="forty-day-content" id="forty-day-content" aria-live="polite"></section>
 
       <div class="forty-finish-wrap">
+        <button type="button" id="open-exercise-library-btn" class="forty-add-exercise-btn">
+          <span style="font-size: 1.25rem; font-weight: 900; line-height: 1;">＋</span>
+          <span>إضافة تمارين من المكتبة الشاملة</span>
+        </button>
         <button type="button" id="forty-finish-btn" class="btn btn-primary btn-lg" ${snapshot.session && hasCompletedSet(snapshot) ? '' : 'disabled'}>إنهاء التمرين وعرض الملخص</button>
         <small>أكمل جولة واحدة على الأقل لتفعيل إنهاء الجلسة</small>
       </div>
@@ -107,6 +118,7 @@ export function renderFortyDayWorkoutView() {
         </div>
       </div>
       <div class="forty-modal" id="forty-detail-modal" aria-hidden="true"><div class="forty-modal-sheet" id="forty-detail-sheet"></div></div>
+      <div class="forty-modal" id="forty-library-modal" aria-hidden="true"><div class="forty-modal-sheet library-sheet" id="forty-library-sheet"></div></div>
       <div class="workout-summary-modal" id="forty-summary-modal" aria-hidden="true">
         <section class="workout-summary-sheet" role="dialog" aria-modal="true" aria-label="Workout summary">
           <div class="summary-top-actions">
@@ -140,9 +152,12 @@ function renderDay(dayKey) {
 function renderExerciseCard(day, exercise, exerciseIndex, tracker) {
   const completed = tracker && tracker.sets.length > 0 && tracker.sets.every(set => set.done);
   return `
-    <article class="forty-exercise-card ${completed ? 'is-completed' : ''}" data-exercise-card="${exerciseIndex}">
+    <article class="forty-exercise-card ${completed ? 'is-completed' : ''}" data-exercise-card="${exerciseIndex}" data-index="${exerciseIndex}">
       <div class="forty-exercise-head">
-        <span class="forty-exercise-number">${exercise.number}</span>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <span class="forty-drag-handle" title="اضغط مطولاً واسحب للترتيب">⋮⋮</span>
+          <span class="forty-exercise-number">${exercise.number}</span>
+        </div>
         <div><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
         <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" aria-label="عرض صورة التمرين">ⓘ</button>
       </div>
@@ -160,6 +175,114 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker) {
       </div>
       <div class="forty-tracker-actions"><button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button><button type="button" data-action="reset" data-index="${exerciseIndex}">Reset This Exercise</button></div>
     </article>
+  `;
+}
+
+function renderLibrarySheet(activeGroupKey = null, searchQuery = '') {
+  // 1. عرض نتائج البحث النصي الحي
+  if (searchQuery && searchQuery.trim()) {
+    const results = searchExercises(searchQuery);
+    return `
+      <div class="library-head">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="btn-icon" data-lib-action="back-to-groups" aria-label="الرجوع للقائمة" style="width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(110,231,183,0.3); color: #fff; cursor: pointer;">
+            ❯
+          </button>
+          <div class="library-head-title">
+            <h2>نتائج البحث (${results.length})</h2>
+            <p>اختر أي تمرين لإضافته إلى جدولك الحالي</p>
+          </div>
+        </div>
+        <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
+      </div>
+
+      <div class="library-search-box">
+        <input type="text" id="lib-search-input" value="${escapeHtml(searchQuery)}" placeholder="ابحث عن أي تمرين بالاسم..." class="library-search-input">
+      </div>
+
+      <div class="library-exercises-list">
+        ${results.length ? results.map(ex => renderLibraryExerciseItem(ex)).join('') : `
+          <div style="text-align: center; padding: 40px 10px; color: rgba(255,255,255,0.5);">
+            لا توجد تمارين مطابقة لبحثك. جرب اسم عضلة أو تمرين آخر.
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  // 2. عرض تمارين عضلة محددة
+  if (activeGroupKey) {
+    const group = EXERCISE_GROUPS.find(g => g.key === activeGroupKey);
+    const exercises = getExercisesByGroup(activeGroupKey);
+
+    return `
+      <div class="library-head">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="btn-icon" data-lib-action="back-to-groups" aria-label="الرجوع لكافة العضلات" style="width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(110,231,183,0.3); color: #fff; cursor: pointer;">
+            ❯
+          </button>
+          <div class="library-head-title">
+            <h2>${escapeHtml(group?.nameAr || 'التمارين')} (${exercises.length} تمرين)</h2>
+            <p>${escapeHtml(group?.description || 'اختر تمريناً لإضافته')}</p>
+          </div>
+        </div>
+        <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
+      </div>
+
+      <div class="library-exercises-list">
+        ${exercises.map(ex => renderLibraryExerciseItem(ex)).join('')}
+      </div>
+    `;
+  }
+
+  // 3. العرض الرئيسي: شبكة ثنائية الأعمدة للمجموعات العضلية الثمانية مطابقة للصورة المرفقة
+  return `
+    <div class="library-head">
+      <div class="library-head-title">
+        <h2>مكتبة التمارين الشاملة وشروحاتها</h2>
+        <p>اختر العضلة لعرض كافة تمارينها وإضافتها لخطة تمرينك</p>
+      </div>
+      <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
+    </div>
+
+    <div class="library-search-box">
+      <input type="text" id="lib-search-input" placeholder="ابحث بالاسم عن أي تمرين (مثال: بنش، سكوات، ديدليفت)..." class="library-search-input">
+    </div>
+
+    <div class="library-groups-grid">
+      ${EXERCISE_GROUPS.map(g => `
+        <div class="lib-muscle-card" data-lib-group="${g.key}" role="button" tabindex="0">
+          <div class="lib-muscle-img-wrap">
+            <img src="${g.cover}" alt="${escapeHtml(g.nameAr)}" loading="lazy">
+          </div>
+          <div class="lib-muscle-card-footer">
+            <div class="lib-card-meta-row">
+              <span class="lib-card-count">${g.count} EXERCISE</span>
+              <div class="lib-card-badge">${escapeHtml(g.nameAr)}</div>
+            </div>
+            <span class="lib-card-sub">إضغط للتوجه إلى صفحة التمارين</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderLibraryExerciseItem(ex) {
+  return `
+    <div class="lib-exercise-item" data-lib-item-id="${ex.id}">
+      <div class="lib-exercise-thumb">
+        <img src="${ex.image}" alt="${escapeHtml(ex.nameAr)}" loading="lazy">
+      </div>
+      <div class="lib-exercise-info">
+        <h4>${escapeHtml(ex.nameAr)}</h4>
+        <small>${escapeHtml(ex.nameEn)}</small>
+        <p>معدة: ${escapeHtml(ex.equipment)} · ${ex.sets} جولات × ${ex.reps}</p>
+      </div>
+      <button type="button" class="btn btn-primary lib-add-btn" data-lib-add-id="${ex.id}">
+        ＋ إضافة
+      </button>
+    </div>
   `;
 }
 
@@ -303,6 +426,156 @@ function renderSummary(summary) {
   `;
 }
 
+function initDragAndReorder(container, onReorder) {
+  let pressTimer = null;
+  let isDragging = false;
+  let draggedCard = null;
+  let draggedIndex = -1;
+  let currentTargetIndex = -1;
+  let startX = 0;
+  let startY = 0;
+
+  const cleanup = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+    if (draggedCard) {
+      draggedCard.classList.remove('is-dragging');
+      draggedCard = null;
+    }
+    container.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
+      el.classList.remove('drag-over-above', 'drag-over-below');
+    });
+    isDragging = false;
+    draggedIndex = -1;
+    currentTargetIndex = -1;
+    document.body.style.userSelect = '';
+  };
+
+  container.addEventListener('touchstart', (e) => {
+    const card = e.target.closest('.forty-exercise-card');
+    if (!card) return;
+    if (e.target.closest('input, button, a, label, .forty-sets')) return;
+
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    draggedIndex = Number(card.dataset.index ?? card.dataset.exerciseCard);
+
+    pressTimer = setTimeout(() => {
+      isDragging = true;
+      draggedCard = card;
+      draggedCard.classList.add('is-dragging');
+      document.body.style.userSelect = 'none';
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(35);
+      }
+    }, 320);
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressTimer && !isDragging) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - startX);
+    const dy = Math.abs(touch.clientY - startY);
+
+    if (!isDragging) {
+      if (dx > 10 || dy > 10) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+      return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetCard = element?.closest('.forty-exercise-card');
+
+    container.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
+      if (el !== targetCard) el.classList.remove('drag-over-above', 'drag-over-below');
+    });
+
+    if (targetCard && targetCard !== draggedCard) {
+      const targetIdx = Number(targetCard.dataset.index ?? targetCard.dataset.exerciseCard);
+      currentTargetIndex = targetIdx;
+      const rect = targetCard.getBoundingClientRect();
+      if (touch.clientY < rect.top + rect.height / 2) {
+        targetCard.classList.add('drag-over-above');
+        targetCard.classList.remove('drag-over-below');
+      } else {
+        targetCard.classList.add('drag-over-below');
+        targetCard.classList.remove('drag-over-above');
+      }
+    }
+  }, { passive: false });
+
+  const handleEnd = () => {
+    if (isDragging && draggedIndex >= 0 && currentTargetIndex >= 0 && draggedIndex !== currentTargetIndex) {
+      onReorder(draggedIndex, currentTargetIndex);
+    }
+    cleanup();
+  };
+
+  container.addEventListener('touchend', handleEnd);
+  container.addEventListener('touchcancel', cleanup);
+
+  // Mouse support for desktop
+  container.addEventListener('mousedown', (e) => {
+    const card = e.target.closest('.forty-exercise-card');
+    if (!card) return;
+    if (e.target.closest('input, button, a, label, .forty-sets')) return;
+
+    startX = e.clientX;
+    startY = e.clientY;
+    draggedIndex = Number(card.dataset.index ?? card.dataset.exerciseCard);
+
+    pressTimer = setTimeout(() => {
+      isDragging = true;
+      draggedCard = card;
+      draggedCard.classList.add('is-dragging');
+      document.body.style.userSelect = 'none';
+    }, 320);
+
+    const onMouseMove = (me) => {
+      if (!isDragging) {
+        if (Math.abs(me.clientX - startX) > 8 || Math.abs(me.clientY - startY) > 8) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+        return;
+      }
+      me.preventDefault();
+      const element = document.elementFromPoint(me.clientX, me.clientY);
+      const targetCard = element?.closest('.forty-exercise-card');
+      container.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
+        if (el !== targetCard) el.classList.remove('drag-over-above', 'drag-over-below');
+      });
+      if (targetCard && targetCard !== draggedCard) {
+        currentTargetIndex = Number(targetCard.dataset.index ?? targetCard.dataset.exerciseCard);
+        const rect = targetCard.getBoundingClientRect();
+        if (me.clientY < rect.top + rect.height / 2) {
+          targetCard.classList.add('drag-over-above');
+          targetCard.classList.remove('drag-over-below');
+        } else {
+          targetCard.classList.add('drag-over-below');
+          targetCard.classList.remove('drag-over-above');
+        }
+      }
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      handleEnd();
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  });
+}
+
 export function bindFortyDayWorkoutEvents() {
   const root = document.getElementById('forty-workout-root');
   if (!root) return;
@@ -311,6 +584,8 @@ export function bindFortyDayWorkoutEvents() {
   const detailSheet = document.getElementById('forty-detail-sheet');
   const imageModal = document.getElementById('forty-image-modal');
   const summaryModal = document.getElementById('forty-summary-modal');
+  const libraryModal = document.getElementById('forty-library-modal');
+  const librarySheet = document.getElementById('forty-library-sheet');
 
   let activePlan = fortyDayWorkoutService.getActivePlan();
   let days = fortyDayWorkoutService.getDays(activePlan);
@@ -320,9 +595,35 @@ export function bindFortyDayWorkoutEvents() {
     fortyDayWorkoutService.setActiveDay(activeDay);
   }
   let latestSummary = null;
+  let currentLibGroup = null;
+  let currentLibSearch = '';
 
   const openModal = modal => { modal?.classList.add('is-open'); modal?.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; };
   const closeModals = () => { root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }); document.body.style.overflow = ''; };
+
+  const updateLibraryView = (groupKey = currentLibGroup, search = currentLibSearch) => {
+    currentLibGroup = groupKey;
+    currentLibSearch = search;
+    if (librarySheet) {
+      librarySheet.innerHTML = renderLibrarySheet(groupKey, search);
+      const searchInput = librarySheet.querySelector('#lib-search-input');
+      if (searchInput && search) {
+        searchInput.focus();
+        searchInput.selectionStart = searchInput.selectionEnd = searchInput.value.length;
+      }
+    }
+  };
+
+  const openLibraryBtn = document.getElementById('open-exercise-library-btn');
+  if (openLibraryBtn) {
+    openLibraryBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentLibGroup = null;
+      currentLibSearch = '';
+      updateLibraryView(null, '');
+      openModal(libraryModal);
+    });
+  }
 
   const renderActiveDay = () => {
     if (dayContent) dayContent.innerHTML = renderDay(activeDay);
@@ -330,49 +631,46 @@ export function bindFortyDayWorkoutEvents() {
     updateSessionUI();
   };
 
-  const updateSessionUI = () => {
-    const snapshot = fortyDayWorkoutService.getSnapshot();
-    const start = document.getElementById('forty-start-btn');
-    const status = document.getElementById('forty-session-status');
-    const finish = document.getElementById('forty-finish-btn');
-    if (start) {
-      start.disabled = Boolean(snapshot.session);
-      start.classList.toggle('is-running', Boolean(snapshot.session));
-      start.textContent = snapshot.session ? 'التمرين قيد التشغيل' : 'ابدأ التمرين · Start Workout';
-    }
-    if (status) {
-      status.textContent = snapshot.session ? `جلسة ${fortyDayWorkoutService.getDay(snapshot.session.dayKey).short} قيد التشغيل` : 'جاهز لبدء التمرين';
-    }
-    if (finish) finish.disabled = !(snapshot.session && hasCompletedSet(snapshot));
-  };
-
-  const updateTimers = () => {
-    const snapshot = fortyDayWorkoutService.getSnapshot();
-    const timer = document.getElementById('forty-session-timer');
-    if (timer) timer.textContent = snapshot.session ? formatDuration((Date.now() - snapshot.session.startedAt) / 1000) : '00:00:00';
-    const restBar = document.getElementById('forty-rest-bar');
-    const restTimer = document.getElementById('forty-rest-timer');
-    const restProgress = document.getElementById('forty-rest-progress');
-    const remaining = snapshot.restUntil ? Math.max(0, Math.ceil((snapshot.restUntil - Date.now()) / 1000)) : 0;
-    if (!remaining && snapshot.restUntil) fortyDayWorkoutService.skipRest();
-    if (restBar) restBar.hidden = remaining <= 0;
-    if (restTimer) restTimer.textContent = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
-    if (restProgress) restProgress.style.width = `${snapshot.restDuration ? Math.min(100, (remaining / snapshot.restDuration) * 100) : 0}%`;
-  };
-
-  renderActiveDay();
-  updateTimers();
-  const timerInterval = window.setInterval(updateTimers, 1000);
-  setTimeout(() => window.dismissNeonSplash?.(), 80);
-
-  root.addEventListener('input', event => {
-    const input = event.target.closest('input[data-field]');
-    if (!input) return;
-    fortyDayWorkoutService.updateSet(activeDay, Number(input.dataset.index), Number(input.dataset.set), input.dataset.field, input.value);
-    updateSessionUI();
-  });
+  if (dayContent) {
+    initDragAndReorder(dayContent, (fromIndex, toIndex) => {
+      fortyDayWorkoutService.reorderDayExercises(activeDay, fromIndex, toIndex);
+      renderActiveDay();
+      notificationService.showToast('تم تغيير ترتيب التمرين بنجاح ✓', 'success');
+    });
+  }
 
   root.addEventListener('click', async event => {
+    // 1. النقر على كارت عضلة في مكتبة التمارين
+    const muscleCard = event.target.closest('[data-lib-group]');
+    if (muscleCard) {
+      const groupKey = muscleCard.dataset.libGroup;
+      updateLibraryView(groupKey, '');
+      return;
+    }
+
+    // 2. زر العودة لكافة مجموعات العضلات
+    if (event.target.closest('[data-lib-action="back-to-groups"]')) {
+      updateLibraryView(null, '');
+      return;
+    }
+
+    // 3. زر إضافة تمرين من المكتبة إلى خطة تمرين اليوم
+    const addLibBtn = event.target.closest('[data-lib-add-id]');
+    if (addLibBtn) {
+      const exId = addLibBtn.dataset.libAddId;
+      const exercise = ALL_LIBRARY_EXERCISES.find(e => e.id === exId);
+      if (exercise) {
+        fortyDayWorkoutService.addExerciseToDay(activeDay, exercise);
+        addLibBtn.textContent = '✓ تمّت الإضافة';
+        addLibBtn.style.background = '#22c55e';
+        addLibBtn.style.borderColor = '#22c55e';
+        addLibBtn.disabled = true;
+        renderActiveDay();
+        notificationService.showToast(`تمت إضافة "${exercise.nameAr}" إلى تمارين اليوم بنجاح `, 'success');
+      }
+      return;
+    }
+
     const dayButton = event.target.closest('[data-day]');
     if (dayButton) {
       activeDay = dayButton.dataset.day;
