@@ -99,6 +99,10 @@ export function renderFortyDayWorkoutView() {
       <section class="forty-day-content" id="forty-day-content" aria-live="polite"></section>
 
       <div class="forty-finish-wrap">
+        <button type="button" id="reset-plan-default-btn" class="forty-reset-default-btn">
+          <span style="font-size: 1.15rem; line-height: 1;">↺</span>
+          <span>استعادة الخطة الافتراضية الأصلية</span>
+        </button>
         <button type="button" id="open-exercise-library-btn" class="forty-add-exercise-btn">
           <span style="font-size: 1.25rem; font-weight: 900; line-height: 1;">＋</span>
           <span>إضافة تمارين من المكتبة الشاملة</span>
@@ -271,6 +275,59 @@ function renderDeleteConfirmSheet(dayKey, exerciseIndex) {
           تراجع
         </button>
       </div>
+    </div>
+  `;
+}
+
+function renderResetPlanConfirmSheet(dayKey, activePlan) {
+  const planName = activePlan === 'anas' ? 'نظام أنس' : (activePlan === 'hasm' ? 'نظام الحسم' : 'Push Pull Legs');
+  const day = fortyDayWorkoutService.getDay(dayKey);
+  const dayName = day?.label || day?.short || 'اليوم الحالي';
+
+  return `
+    <div class="manage-sheet-head">
+      <div>
+        <span class="manage-sheet-tag" style="color: #fbbf24;">استعادة الضبط الافتراضي</span>
+        <h3 class="manage-sheet-title">استعادة الخطة الافتراضية الأصلية</h3>
+      </div>
+      <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
+    </div>
+
+    <div class="manage-confirm-body">
+      <div class="manage-confirm-box" style="background: rgba(251, 191, 36, 0.08); border-color: rgba(251, 191, 36, 0.3);">
+        <p style="color: rgba(255, 255, 255, 0.9);">
+          هل ترغب في التراجع عن التعديلات وإرجاع التمارين إلى تشكيلتها وترتيبها الافتراضي الأصلي كما كانت بالبداية؟
+        </p>
+        <small style="color: rgba(255, 255, 255, 0.6);">
+          الخطة النشطة: <strong>${escapeHtml(planName)}</strong> (${escapeHtml(dayName)})
+        </small>
+      </div>
+
+      <div class="manage-sheet-options" style="gap: 10px; margin-bottom: 14px;">
+        <button type="button" class="manage-option-card" data-confirm-reset-scope="day">
+          <div class="manage-option-icon icon-reset">↺</div>
+          <div class="manage-option-content">
+            <div class="manage-option-title-row">
+              <strong>استعادة تمارين اليوم الحالي فقط</strong>
+            </div>
+            <p>إرجاع تمارين (${escapeHtml(dayName)}) إلى التشكيلة والترتيب الأصلي المعتمد.</p>
+          </div>
+        </button>
+
+        <button type="button" class="manage-option-card" data-confirm-reset-scope="plan">
+          <div class="manage-option-icon icon-reset" style="background: rgba(251, 191, 36, 0.12); color: #fbbf24; border-color: rgba(251, 191, 36, 0.3);">↺</div>
+          <div class="manage-option-content">
+            <div class="manage-option-title-row">
+              <strong>استعادة كامل خطة (${escapeHtml(planName)})</strong>
+            </div>
+            <p>إرجاع كافة أيام وأسابيع الخطة للوضع الافتراضي الأولي بالكامل.</p>
+          </div>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-secondary confirm-cancel-btn" data-close-modal style="width: 100%;">
+        إلغاء وتراجع
+      </button>
     </div>
   `;
 }
@@ -812,6 +869,17 @@ export function bindFortyDayWorkoutEvents() {
     }
   };
 
+  const resetPlanDefaultBtn = document.getElementById('reset-plan-default-btn');
+  if (resetPlanDefaultBtn) {
+    resetPlanDefaultBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (manageSheet) {
+        manageSheet.innerHTML = renderResetPlanConfirmSheet(activeDay, activePlan);
+      }
+      openModal(manageModal);
+    });
+  }
+
   const openLibraryBtn = document.getElementById('open-exercise-library-btn');
   if (openLibraryBtn) {
     openLibraryBtn.addEventListener('click', (e) => {
@@ -910,6 +978,24 @@ export function bindFortyDayWorkoutEvents() {
       bindFortyDayWorkoutEvents();
       const planName = targetPlan === 'anas' ? 'نظام أنس' : (targetPlan === 'hasm' ? 'نظام الحسم' : 'Push Pull Legs');
       notificationService.showToast(`تم التبديل إلى ${planName} بنجاح`, 'info');
+      return;
+    }
+
+    // تأكيد استعادة الخطة الافتراضية (Reset Plan / Day to Default)
+    const resetScopeBtn = event.target.closest('[data-confirm-reset-scope]');
+    if (resetScopeBtn) {
+      const scope = resetScopeBtn.dataset.confirmResetScope;
+      if (scope === 'plan') {
+        fortyDayWorkoutService.resetPlanToDefault(activePlan);
+        closeModals();
+        renderActiveDay();
+        notificationService.showToast('تمت استعادة كامل الخطة الافتراضية الأصلية بنجاح ✓', 'success');
+      } else {
+        fortyDayWorkoutService.resetDayToDefault(activeDay);
+        closeModals();
+        renderActiveDay();
+        notificationService.showToast('تمت استعادة تمارين اليوم الافتراضية بنجاح ✓', 'success');
+      }
       return;
     }
 

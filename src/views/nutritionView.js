@@ -479,14 +479,14 @@ function renderWeeklyPlanSection(state) {
       </div>
 
       <!-- شريط تبديل أيام الأسبوع الـ 7 -->
-      <div class="plan-days-tabs" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+      <div class="plan-days-tabs" style="display: flex; gap: 6px; overflow-x: auto; padding: 6px 2px 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
         ${days.map(d => {
           const isAct = d.dayIndex === currentDayIndex;
           return `
-            <button type="button" class="btn btn-secondary plan-day-tab-btn ${isAct ? 'active' : ''}" data-day-index="${d.dayIndex}" style="flex: 1; min-width: 52px; padding: 8px 4px; text-align: center; border-radius: 12px; border-color: ${isAct ? '#55F7A5' : 'rgba(85,247,165,0.18)'}; background: ${isAct ? 'rgba(85,247,165,0.18)' : 'rgba(255,255,255,0.02)'}; color: ${isAct ? '#55F7A5' : '#FFFFFF'};">
+            <button type="button" class="btn btn-secondary plan-day-tab-btn ${isAct ? 'active' : ''}" data-day-index="${d.dayIndex}" style="flex: 0 0 auto; width: 52px; padding: 8px 4px; text-align: center; border-radius: 12px; border-color: ${isAct ? '#55F7A5' : 'rgba(85,247,165,0.18)'}; background: ${isAct ? 'rgba(85,247,165,0.18)' : 'rgba(255,255,255,0.02)'}; color: ${isAct ? '#55F7A5' : '#FFFFFF'};">
               <div style="font-size: 0.72rem; color: ${isAct ? '#55F7A5' : '#8C9992'}; font-weight: 700;">${d.shortNameAr}</div>
-              <div style="font-size: 0.86rem; font-weight: 800; font-family: monospace; margin-top: 2px;">يوم ${d.dayIndex + 1}</div>
-              ${d.hasOffPlanMeal ? `<div style="font-size: 0.65rem; color: #FFC83C; margin-top: 2px;">حر</div>` : ''}
+              <div style="font-size: 0.82rem; font-weight: 800; font-family: monospace; margin-top: 2px;">${d.dayIndex + 1}</div>
+              ${d.hasOffPlanMeal ? `<div style="font-size: 0.6rem; color: #FFC83C; margin-top: 2px;">حر</div>` : ''}
             </button>
           `;
         }).join('')}

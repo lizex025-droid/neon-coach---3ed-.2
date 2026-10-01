@@ -366,6 +366,31 @@ class FortyDayWorkoutService {
     return true;
   }
 
+  resetDayToDefault(dayKey) {
+    const state = this.load();
+    if (state.customExercises && state.customExercises[dayKey]) {
+      delete state.customExercises[dayKey];
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  resetPlanToDefault(planKey = this.getActivePlan()) {
+    const state = this.load();
+    if (!state.customExercises) return false;
+    const days = this.getDays(planKey);
+    let removedAny = false;
+    days.forEach(d => {
+      if (state.customExercises[d.key]) {
+        delete state.customExercises[d.key];
+        removedAny = true;
+      }
+    });
+    if (removedAny) this.save();
+    return removedAny;
+  }
+
   setActiveDay(dayKey) {
     const allDays = [...ANAS_DAYS, ...HASM_GROUPS, ...FORTY_DAY_DAYS];
     if (!allDays.some(day => day.key === dayKey)) return;

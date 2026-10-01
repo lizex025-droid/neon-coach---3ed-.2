@@ -219,4 +219,47 @@ test('fortyDayWorkoutService: deleteExerciseFromDay removes exercise and re-inde
   assert.equal(dayAfter.exercises[0].number, 1); // Re-indexed to 1!
 });
 
+test('fortyDayWorkoutService: resetDayToDefault restores default exercises after additions and modifications', () => {
+  const dayKey = 'backTriceps';
+  const originalExercises = fortyDayWorkoutService.getDay(dayKey).exercises.map(e => e.title);
+
+  // Add a custom exercise
+  fortyDayWorkoutService.addExerciseToDay(dayKey, {
+    title: 'Custom Add Test Exercise',
+    sets: 3,
+    reps: '10'
+  });
+  assert.equal(fortyDayWorkoutService.getDay(dayKey).exercises.length, originalExercises.length + 1);
+
+  // Now reset day to default
+  const resetSuccess = fortyDayWorkoutService.resetDayToDefault(dayKey);
+  assert.equal(resetSuccess, true);
+
+  const restoredDay = fortyDayWorkoutService.getDay(dayKey);
+  assert.equal(restoredDay.exercises.length, originalExercises.length);
+  assert.deepEqual(restoredDay.exercises.map(e => e.title), originalExercises);
+});
+
+test('fortyDayWorkoutService: resetPlanToDefault resets all customized days of the active plan', () => {
+  const planKey = 'hasm';
+  const dayKey1 = 'chestBiceps';
+  const dayKey2 = 'backAbs';
+
+  // Customize day1
+  fortyDayWorkoutService.addExerciseToDay(dayKey1, { title: 'Test 1' });
+  // Customize day2
+  fortyDayWorkoutService.addExerciseToDay(dayKey2, { title: 'Test 2' });
+
+  assert.ok(fortyDayWorkoutService.load().customExercises?.[dayKey1]);
+  assert.ok(fortyDayWorkoutService.load().customExercises?.[dayKey2]);
+
+  // Reset plan to default
+  const resetPlanSuccess = fortyDayWorkoutService.resetPlanToDefault(planKey);
+  assert.equal(resetPlanSuccess, true);
+
+  assert.equal(fortyDayWorkoutService.load().customExercises?.[dayKey1], undefined);
+  assert.equal(fortyDayWorkoutService.load().customExercises?.[dayKey2], undefined);
+});
+
+
 

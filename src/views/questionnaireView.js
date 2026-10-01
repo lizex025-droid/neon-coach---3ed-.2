@@ -55,6 +55,7 @@ export const STEP_KEYS = {
   WEEKLY_GAIN_RATE: 'weekly_gain_rate',
   NUTRITION: 'nutrition',
   PLAN_PREFERENCES: 'plan_preferences',
+  PLAN_PREFERENCES_2: 'plan_preferences_2',
   HEALTH: 'health',
   TRAINING: 'training',
   SUPPLEMENTS: 'supplements',
@@ -69,6 +70,7 @@ export function getActiveSteps() {
       STEP_KEYS.WEEKLY_LOSS_RATE,
       STEP_KEYS.NUTRITION,
       STEP_KEYS.PLAN_PREFERENCES,
+      STEP_KEYS.PLAN_PREFERENCES_2,
       STEP_KEYS.HEALTH,
       STEP_KEYS.TRAINING,
       STEP_KEYS.SUPPLEMENTS,
@@ -82,6 +84,7 @@ export function getActiveSteps() {
       STEP_KEYS.WEEKLY_GAIN_RATE,
       STEP_KEYS.NUTRITION,
       STEP_KEYS.PLAN_PREFERENCES,
+      STEP_KEYS.PLAN_PREFERENCES_2,
       STEP_KEYS.HEALTH,
       STEP_KEYS.TRAINING,
       STEP_KEYS.SUPPLEMENTS,
@@ -93,6 +96,7 @@ export function getActiveSteps() {
     STEP_KEYS.GOAL,
     STEP_KEYS.NUTRITION,
     STEP_KEYS.PLAN_PREFERENCES,
+    STEP_KEYS.PLAN_PREFERENCES_2,
     STEP_KEYS.HEALTH,
     STEP_KEYS.TRAINING,
     STEP_KEYS.SUPPLEMENTS,
@@ -1286,39 +1290,58 @@ function renderStepContent(step) {
         </div>
 
         <!-- 5. نمط الدايت -->
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
+        <div class="form-group" style="display: none;"></div>
+        <!-- 6. شكل الخطة -->
+        <div class="form-group" style="display: none;"></div>
+
+        <button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 24px; border-radius: 22px;">
+          متابعة
+        </button>
+      `;
+    }
+
+    case STEP_KEYS.PLAN_PREFERENCES_2: {
+      const prefs = formData.nutritionPlanPreferences || DEFAULT_PLAN_PREFERENCES;
+      return `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="font-size: 1.6rem; color: #55F7A5; margin-bottom: 6px; font-weight: 800;">أسلوب خطتك الغذائية</h2>
+          <p style="font-size: 0.95rem; color: #B8C0BC;">اختر النمط الذي يناسب شخصيتك وأسلوبك</p>
+        </div>
+
+        <!-- 5. نمط الدايت -->
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 10px; display: block;">
             5. ما هو أسلوب الدايت المفضل لديك؟
           </label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'flexible' ? 'active' : ''}" data-val="flexible" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.dietStyle === 'flexible' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'flexible' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
-              <div style="font-size: 1.2rem; margin-bottom: 4px;">🥗</div>
-              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">دايت مرن (متنوع)</div>
-              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">تنوع يومي واسع في الوجبات والوصفات لمنع الملل</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'flexible' ? 'active' : ''}" data-val="flexible" style="padding: 18px 10px; border-radius: 16px; text-align: center; border-color: ${prefs.dietStyle === 'flexible' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'flexible' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.6rem; margin-bottom: 8px;">🥗</div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: ${prefs.dietStyle === 'flexible' ? '#55F7A5' : '#fff'};">دايت مرن</div>
+              <div style="font-size: 0.75rem; color: #8C9992; margin-top: 4px;">تنوع يومي واسع في الوجبات والوصفات لمنع الملل</div>
             </button>
-            <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'strict' ? 'active' : ''}" data-val="strict" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.dietStyle === 'strict' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'strict' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
-              <div style="font-size: 1.2rem; margin-bottom: 4px;">⚡</div>
-              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">دايت صارم (ثابت)</div>
-              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">وجبات متكررة وثابتة لتسهيل التحضير والانضباط</div>
+            <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'strict' ? 'active' : ''}" data-val="strict" style="padding: 18px 10px; border-radius: 16px; text-align: center; border-color: ${prefs.dietStyle === 'strict' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'strict' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.6rem; margin-bottom: 8px;">⚡</div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: ${prefs.dietStyle === 'strict' ? '#55F7A5' : '#fff'};">دايت صارم</div>
+              <div style="font-size: 0.75rem; color: #8C9992; margin-top: 4px;">وجبات متكررة وثابتة لتسهيل التحضير والانضباط</div>
             </button>
           </div>
         </div>
 
         <!-- 6. شكل الخطة -->
-        <div class="form-group" style="margin-bottom: 22px;">
-          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 10px; display: block;">
             6. كيف تريد شكل وتنسيق وجباتك اليومية؟
           </label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button type="button" class="btn btn-secondary q-planformat-btn ${prefs.planFormat === 'multiple_options' ? 'active' : ''}" data-val="multiple_options" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.planFormat === 'multiple_options' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.planFormat === 'multiple_options' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
-              <div style="font-size: 1.2rem; margin-bottom: 4px;">📋</div>
-              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">خيارات متعددة</div>
-              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">2-3 بدائل محسوبة لكل وجبة تختار بينها بمرونة</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <button type="button" class="btn btn-secondary q-planformat-btn ${prefs.planFormat === 'multiple_options' ? 'active' : ''}" data-val="multiple_options" style="padding: 18px 10px; border-radius: 16px; text-align: center; border-color: ${prefs.planFormat === 'multiple_options' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.planFormat === 'multiple_options' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.6rem; margin-bottom: 8px;">📋</div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: ${prefs.planFormat === 'multiple_options' ? '#55F7A5' : '#fff'};">خيارات متعددة</div>
+              <div style="font-size: 0.75rem; color: #8C9992; margin-top: 4px;">2-3 بدائل محسوبة لكل وجبة تختار بينها بمرونة</div>
             </button>
-            <button type="button" class="btn btn-secondary q-planformat-btn ${prefs.planFormat === 'fixed' ? 'active' : ''}" data-val="fixed" style="padding: 14px 10px; border-radius: 14px; text-align: right; border-color: ${prefs.planFormat === 'fixed' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.planFormat === 'fixed' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
-              <div style="font-size: 1.2rem; margin-bottom: 4px;">🎯</div>
-              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">خيار واحد محدد</div>
-              <div style="font-size: 0.72rem; color: #8C9992; margin-top: 2px;">وجبة واحدة محددة ومباشرة بدون حيرة</div>
+            <button type="button" class="btn btn-secondary q-planformat-btn ${prefs.planFormat === 'fixed' ? 'active' : ''}" data-val="fixed" style="padding: 18px 10px; border-radius: 16px; text-align: center; border-color: ${prefs.planFormat === 'fixed' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.planFormat === 'fixed' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
+              <div style="font-size: 1.6rem; margin-bottom: 8px;">🎯</div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: ${prefs.planFormat === 'fixed' ? '#55F7A5' : '#fff'};">خيار واحد محدد</div>
+              <div style="font-size: 0.75rem; color: #8C9992; margin-top: 4px;">وجبة واحدة محددة ومباشرة بدون حيرة</div>
             </button>
           </div>
         </div>
