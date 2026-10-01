@@ -498,7 +498,7 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchConte
       ${EXERCISE_GROUPS.map(g => `
         <div class="lib-muscle-card" data-lib-group="${g.key}" role="button" tabindex="0">
           <div class="lib-muscle-img-wrap">
-            <img src="${g.cover}" alt="${escapeHtml(g.nameAr)}" loading="lazy">
+            <img src="${g.cover}" alt="${escapeHtml(g.nameAr)}" loading="lazy" decoding="async">
           </div>
           <div class="lib-muscle-card-footer">
             <div class="lib-card-meta-row">
@@ -517,7 +517,7 @@ function renderLibraryExerciseItem(ex, isSwitchMode = false) {
   return `
     <div class="lib-exercise-item" data-lib-item-id="${ex.id}">
       <div class="lib-exercise-thumb">
-        <img src="${ex.image}" alt="${escapeHtml(ex.nameAr)}" loading="lazy">
+        <img src="${ex.image}" alt="${escapeHtml(ex.nameAr)}" loading="lazy" decoding="async">
       </div>
       <div class="lib-exercise-info">
         <h4>${escapeHtml(ex.nameAr)}</h4>

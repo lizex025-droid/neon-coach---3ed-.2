@@ -36,6 +36,6 @@ export function neonIcon(name, size = 20, extraClass = '', alt = '') {
   const src = NEON_ICONS[name] || NEON_ICONS.flame;
   const localFallback = `./icons/neon/neon-${name}.png`;
   const s = typeof size === 'number' ? `${size}px` : size;
-  return `<img src="${src}" onerror="this.onerror=null;this.src='${localFallback}'" class="neon-icon ${extraClass}" alt="${alt || name}" style="width: ${s}; height: ${s}; object-fit: contain; vertical-align: middle; display: inline-block; filter: drop-shadow(0 0 6px rgba(85,247,165,0.45));" loading="lazy" />`;
+  return `<img src="${src}" onerror="this.onerror=null;this.src='${localFallback}'" class="neon-icon ${extraClass}" alt="${alt || name}" style="width: ${s}; height: ${s}; object-fit: contain; vertical-align: middle; display: inline-block; filter: drop-shadow(0 0 6px rgba(85,247,165,0.45));" loading="lazy" decoding="async" />`;
 }
 

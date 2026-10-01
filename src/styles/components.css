@@ -3231,7 +3231,53 @@ a:hover .neon-icon,
 }
 
 .recipe-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 380px;
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.recipe-dish-preview {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #020704 0%, #06190e 50%, #020704 100%);
+  background-size: 200% 100%;
+  animation: recipeShimmer 1.8s ease-in-out infinite;
+  contain: paint;
+}
+
+.recipe-dish-preview.is-ready {
+  animation: none;
+  background: #020704;
+}
+
+.recipe-dish-preview img {
+  opacity: 0;
+  transition: opacity 0.28s ease-in;
+  will-change: opacity;
+}
+
+.recipe-dish-preview img.is-loaded {
+  opacity: 1;
+}
+
+.recipe-dish-preview.is-error {
+  animation: none;
+  background: #030d07;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recipe-dish-preview.is-error::after {
+  content: '🥗 اضغط لعرض مقادير وتحضير الوجبة';
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #8C9992;
+}
+
+@keyframes recipeShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .recipe-card:hover {
@@ -3266,4 +3312,5 @@ a:hover .neon-icon,
   transform: scale(0.92);
   background: rgba(85, 247, 165, 0.25) !important;
 }
+
 

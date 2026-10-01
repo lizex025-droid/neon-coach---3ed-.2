@@ -1,5 +1,6 @@
-// NEON COACH - Service Worker (Offline-First Cache for App Shell)
-const CACHE_NAME = 'neon-coach-v1.1.0';
+// NEON COACH - Service Worker (Offline-First Cache for App Shell & Lightning Fast Images)
+const CACHE_NAME = 'neon-coach-v1.2.0';
+const IMAGES_CACHE_NAME = 'neon-coach-images-v1';
 const NAVIGATION_FALLBACK = './index.html';
 
 const STATIC_ASSETS = [
@@ -27,7 +28,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== IMAGES_CACHE_NAME) {
             return caches.delete(key);
           }
         })
@@ -86,6 +87,42 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // 1. استراتيجية Cache-First فائقة السرعة للصور الثابتة وصور الوجبات والتمارين
+  const isImage = event.request.destination === 'image' ||
+                  /\.(jpg|jpeg|png|gif|webp|svg|ico)(\?.*)?$/i.test(url.pathname) ||
+                  url.hostname.includes('r2.dev');
+
+  if (isImage) {
+    // لا نخزن بيانات المستخدم الحساسة blob: أو data:
+    if (event.request.url.startsWith('blob:') || event.request.url.startsWith('data:')) {
+      return;
+    }
+
+    event.respondWith(
+      caches.open(IMAGES_CACHE_NAME).then(async (imgCache) => {
+        const cached = await imgCache.match(event.request);
+        if (cached) {
+          return cached; // كاش فوري فائق السرعة 0ms بدون استهلاك الشبكة أو البطارية
+        }
+
+        try {
+          const networkResponse = await fetch(event.request);
+          if (
+            networkResponse &&
+            (networkResponse.status === 200 || networkResponse.type === 'opaque')
+          ) {
+            imgCache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (err) {
+          return cached || Response.error();
+        }
+      })
+    );
+    return;
+  }
+
+  // 2. باقي الأصول الثابتة: Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       // إطلاق طلب شبكي في الخلفية لتحديث الكاش للزيارات القادمة
