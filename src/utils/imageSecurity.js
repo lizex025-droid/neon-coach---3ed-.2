@@ -22,18 +22,17 @@ export function getStorageHost() {
 }
 
 /**
- * توليد رابط الصورة المحمي بدلاً من كشف الرابط المباشر في ملفات البيانات
- * @param {string} key - اسم الملف أو الهاش أو الرابط
+ * توليد رابط الصورة المحمي عبر وسيط السيرفر /api/media لإخفاء رابط التخزين بالكامل من المتصفح والـ Network Tab
+ * @param {string} key - معرف الوصفة أو الرمز المحمي
  * @returns {string}
  */
 export function resolveProtectedUrl(key) {
   if (!key) return '';
-  if (key.startsWith('http://') || key.startsWith('https://')) {
+  if (key.startsWith('./api/media') || key.startsWith('/api/media')) {
     return key;
   }
-  const host = getStorageHost();
   const cleanKey = key.replace(/^\/+/, '');
-  return `${host}/${cleanKey}`;
+  return `./api/media?id=${encodeURIComponent(cleanKey)}`;
 }
 
 /**

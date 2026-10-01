@@ -1,6 +1,6 @@
 // NEON COACH - Service Worker (Offline-First Cache for App Shell & Lightning Fast Images)
-const CACHE_NAME = 'neon-coach-v1.2.0';
-const IMAGES_CACHE_NAME = 'neon-coach-images-v1';
+const CACHE_NAME = 'neon-coach-v1.3.0';
+const IMAGES_CACHE_NAME = 'neon-coach-images-v2';
 const NAVIGATION_FALLBACK = './index.html';
 
 const STATIC_ASSETS = [
@@ -69,9 +69,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // استبعاد طلبات Supabase والـ API والذكاء الاصطناعي من الكاش لحماية الخصوصية وحداثة البيانات
+  // استبعاد طلبات Supabase والـ API والذكاء الاصطناعي من الكاش (باستثناء وسائط الصور المحمية /api/media)
   if (
-    url.pathname.includes('/api/') ||
+    (url.pathname.includes('/api/') && !url.pathname.includes('/api/media')) ||
     url.hostname.includes('supabase.co') ||
     url.origin.includes('generativelanguage') ||
     url.origin.includes('openai')
@@ -87,9 +87,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. استراتيجية Cache-First فائقة السرعة للصور الثابتة وصور الوجبات والتمارين
+  // 1. استراتيجية Cache-First فائقة السرعة للصور الثابتة وصور الوجبات والتمارين ومحول الوسائط
   const isImage = event.request.destination === 'image' ||
                   /\.(jpg|jpeg|png|gif|webp|svg|ico)(\?.*)?$/i.test(url.pathname) ||
+                  url.pathname.includes('/api/media') ||
                   url.hostname.includes('r2.dev');
 
   if (isImage) {

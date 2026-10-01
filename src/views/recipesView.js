@@ -259,15 +259,6 @@ function renderRecipeModalDetail(recipe) {
         <!-- درع الحماية الشفاف لمنع النقر باليمين أو اللمس المطول أو السحب -->
         <div class="img-protection-shield" aria-hidden="true" oncontextmenu="return false;"></div>
 
-        <!-- طبقة العلامة المائية والحماية الرقمية لمنع تصوير الشاشة دون إثبات الملكية -->
-        <div class="recipe-watermark-overlay" aria-hidden="true">
-          <div class="watermark-brand-tag">
-            <span>🔒</span>
-            <span>محتوى حصري محفوظ الحقوق · NEON COACH</span>
-          </div>
-          <div class="watermark-pattern"></div>
-        </div>
-
         <img
           src="${escapeHtml(recipe.imageUrl)}"
           alt="${escapeHtml(recipe.titleAr)}"

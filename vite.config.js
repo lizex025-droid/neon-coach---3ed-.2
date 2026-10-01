@@ -138,6 +138,31 @@ export default defineConfig(({ mode }) => {
 
       server.middlewares.use(async (req, res, next) => {
         const parsedUrl = req.url ? req.url.split('?')[0] : '';
+        if (parsedUrl !== '/api/media' && parsedUrl !== '/api/media/') {
+          return next();
+        }
+
+        const apiRes = {
+          statusCode: 200,
+          setHeader(k, v) { res.setHeader(k, v); },
+          status(code) { this.statusCode = code; return this; },
+          end(data) {
+            res.statusCode = this.statusCode;
+            res.end(data);
+          }
+        };
+
+        try {
+          const { default: handler } = await import('./api/media.js');
+          await handler(req, apiRes);
+        } catch {
+          res.statusCode = 500;
+          res.end('Media proxy error');
+        }
+      });
+
+      server.middlewares.use(async (req, res, next) => {
+        const parsedUrl = req.url ? req.url.split('?')[0] : '';
         if (parsedUrl !== '/api/gemini' && parsedUrl !== '/api/gemini/') {
           return next();
         }
