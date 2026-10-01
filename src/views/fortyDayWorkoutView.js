@@ -866,6 +866,55 @@ export function bindFortyDayWorkoutEvents() {
     }
   };
 
+  const updateSessionUI = () => {
+    const snapshot = fortyDayWorkoutService.getSnapshot();
+    const sessionDay = snapshot.session
+      ? fortyDayWorkoutService.getDay(snapshot.session.dayKey)
+      : null;
+    const start = root.querySelector('#forty-start-btn');
+    const status = root.querySelector('#forty-session-status');
+    const finish = root.querySelector('#forty-finish-btn');
+
+    if (start) {
+      start.disabled = Boolean(snapshot.session);
+      start.classList.toggle('is-running', Boolean(snapshot.session));
+      start.textContent = snapshot.session
+        ? 'التمرين قيد التشغيل'
+        : 'ابدأ التمرين · Start Workout';
+    }
+    if (status) {
+      status.textContent = snapshot.session
+        ? `جلسة ${sessionDay?.short || ''} قيد التشغيل`
+        : 'جاهز لبدء التمرين';
+    }
+    if (finish) finish.disabled = !(snapshot.session && hasCompletedSet(snapshot));
+  };
+
+  const updateTimers = () => {
+    const snapshot = fortyDayWorkoutService.getSnapshot();
+    const timer = root.querySelector('#forty-session-timer');
+    const restBar = root.querySelector('#forty-rest-bar');
+    const restTimer = root.querySelector('#forty-rest-timer');
+    const restProgress = root.querySelector('#forty-rest-progress');
+    const remaining = snapshot.restUntil
+      ? Math.max(0, Math.ceil((snapshot.restUntil - Date.now()) / 1000))
+      : 0;
+
+    if (timer) {
+      timer.textContent = snapshot.session
+        ? formatDuration((Date.now() - snapshot.session.startedAt) / 1000)
+        : '00:00:00';
+    }
+    if (!remaining && snapshot.restUntil) fortyDayWorkoutService.skipRest();
+    if (restBar) restBar.hidden = remaining <= 0;
+    if (restTimer) restTimer.textContent = formatRest(remaining);
+    if (restProgress) {
+      restProgress.style.width = `${snapshot.restDuration
+        ? Math.min(100, (remaining / snapshot.restDuration) * 100)
+        : 0}%`;
+    }
+  };
+
   const resetPlanDefaultBtn = document.getElementById('reset-plan-default-btn');
   if (resetPlanDefaultBtn) {
     resetPlanDefaultBtn.addEventListener('click', (e) => {
@@ -902,6 +951,24 @@ export function bindFortyDayWorkoutEvents() {
       notificationService.showToast('تم تغيير ترتيب التمرين بنجاح ✓', 'success');
     });
   }
+
+  renderActiveDay();
+  updateTimers();
+  const timerInterval = window.setInterval(updateTimers, 1000);
+  setTimeout(() => window.dismissNeonSplash?.(), 80);
+
+  root.addEventListener('input', event => {
+    const input = event.target.closest('input[data-field]');
+    if (!input) return;
+    fortyDayWorkoutService.updateSet(
+      activeDay,
+      Number(input.dataset.index),
+      Number(input.dataset.set),
+      input.dataset.field,
+      input.value
+    );
+    updateSessionUI();
+  });
 
   root.addEventListener('click', async event => {
     // 1. النقر على كارت عضلة في مكتبة التمارين

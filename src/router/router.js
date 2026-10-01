@@ -203,8 +203,14 @@ export class Router {
   }
 
   renderRoute(route, routeKey) {
-    this.cleanupView?.();
-    this.cleanupView = null;
+    try {
+      this.cleanupView?.();
+    } catch (error) {
+      // A view cleanup must never trap the user on the current tab.
+      console.error('Failed to clean up the previous route:', error);
+    } finally {
+      this.cleanupView = null;
+    }
     // تنظيف أي نوافذ منبثقة ملحقة بـ body مباشرة قبل التبديل
     document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
 
