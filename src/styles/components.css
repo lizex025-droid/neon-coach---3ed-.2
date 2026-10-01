@@ -77,12 +77,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 5px 4px;
-  border-radius: 14px;
+  padding: 4px 2px;
+  border-radius: 12px;
   border: 1px solid transparent;
   transition: all var(--transition-fast);
   cursor: pointer;
@@ -90,7 +90,8 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  height: 100%;
+  height: 52px;
+  max-height: 100%;
 }
 
 .nav-item span {
@@ -109,8 +110,8 @@
 .nav-item.active {
   color: var(--neon-primary);
   background: rgba(85, 247, 165, 0.12);
-  border-color: rgba(85, 247, 165, 0.38);
-  box-shadow: inset 0 0 12px rgba(85, 247, 165, 0.15);
+  border-color: rgba(85, 247, 165, 0.35);
+  box-shadow: 0 0 10px rgba(85, 247, 165, 0.15);
 }
 
 .nav-item svg {
@@ -3154,11 +3155,79 @@ a:hover .neon-icon,
    Recipes View (شاشة الوصفات الرياضية)
 ---------------------------------------------------- */
 .recipes-category-scroll {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 6px 4px 12px 4px !important;
+  scroll-behavior: smooth !important;
 }
+
 .recipes-category-scroll::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.recipe-cat-chip {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 9px 18px !important;
+  min-height: 42px !important;
+  border-radius: 999px !important;
+  font-size: 0.86rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  border: 1px solid rgba(85, 247, 165, 0.18) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #B8C0BC !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.recipe-cat-chip:hover {
+  background: rgba(85, 247, 165, 0.08) !important;
+  border-color: rgba(85, 247, 165, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+.recipe-cat-chip.active {
+  background: rgba(85, 247, 165, 0.18) !important;
+  border-color: #55F7A5 !important;
+  color: #55F7A5 !important;
+  box-shadow: 0 0 14px rgba(85, 247, 165, 0.3) !important;
+}
+
+.recipe-cat-chip:active {
+  transform: scale(0.96);
+}
+
+.recipe-cat-chip .chip-icon {
+  font-size: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.recipe-cat-chip .chip-label {
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .recipe-card {
@@ -3174,5 +3243,27 @@ a:hover .neon-icon,
 .recipe-ingredient-item:hover {
   background: rgba(85, 247, 165, 0.08) !important;
   border-color: rgba(85, 247, 165, 0.35) !important;
+}
+
+.btn-open-recipe {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-open-recipe:active {
+  transform: scale(0.97);
+  background: rgba(85, 247, 165, 0.14) !important;
+}
+
+.btn-log-recipe-meal {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-log-recipe-meal:active {
+  transform: scale(0.92);
+  background: rgba(85, 247, 165, 0.25) !important;
 }
 

@@ -37,23 +37,23 @@ export function renderRecipesView() {
   });
 
   return `
-    <div class="recipes-view-container view-fade-slide" style="max-width: 900px; margin: 0 auto; padding: 16px 14px 100px; display: flex; flex-direction: column; gap: 18px;">
+    <div class="recipes-view-container view-fade-slide" style="max-width: 900px; margin: 0 auto; padding: 14px 12px 105px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
       
       <!-- ترويسة الصفحة -->
-      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px;">
-        <div>
-          <h1 style="font-size: 1.8rem; font-weight: 900; color: #FFFFFF; margin: 0; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.9rem;">📖</span>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-top: 2px;">
+        <div style="flex: 1; min-width: 0;">
+          <h1 style="font-size: 1.55rem; font-weight: 900; color: #FFFFFF; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.65rem;">📖</span>
             <span>وصفات نيون الصحية</span>
           </h1>
-          <div style="font-size: 0.84rem; color: #8C9992; margin-top: 3px;">
-            وجبات رياضية محسوبة السعرات والماكروز لدعم أهدافك الرياضية وبناء العضلات
+          <div style="font-size: 0.82rem; color: #8C9992; margin-top: 3px; line-height: 1.4;">
+            وجبات رياضية محسوبة السعرات والماكروز لدعم أهدافك الرياضية
           </div>
         </div>
 
-        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(85,247,165,0.08); border: 1px solid rgba(85,247,165,0.25); border-radius: 20px; font-size: 0.8rem; font-weight: 800; color: #55F7A5;">
+        <div style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; background: rgba(85,247,165,0.08); border: 1px solid rgba(85,247,165,0.25); border-radius: 20px; font-size: 0.76rem; font-weight: 800; color: #55F7A5; flex-shrink: 0; margin-top: 4px;">
           <span>${filteredRecipes.length}</span>
-          <span style="color: #B8C0BC;">وصفة متاحة</span>
+          <span style="color: #B8C0BC;">وصفة</span>
         </div>
       </div>
 
@@ -64,20 +64,20 @@ export function renderRecipesView() {
           id="recipes-search-input"
           value="${escapeHtml(searchQuery)}"
           placeholder="ابحث عن أكلة، مكون (دجاج، شوفان، تونة...)"
-          style="width: 100%; padding: 12px 42px 12px 16px; background: #07100D; border: 1px solid rgba(85,247,165,0.22); border-radius: 14px; color: #FFFFFF; font-size: 0.92rem; outline: none; transition: border-color 0.2s;"
+          style="width: 100%; min-height: 46px; padding: 12px 42px 12px 36px; background: #07100D; border: 1px solid rgba(85,247,165,0.22); border-radius: 14px; color: #FFFFFF; font-size: 0.92rem; outline: none; transition: border-color 0.2s;"
         />
-        <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; pointer-events: none; opacity: 0.7;">
+        <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 1.05rem; pointer-events: none; opacity: 0.7;">
           🔍
         </span>
         ${searchQuery ? `
-          <button id="recipes-clear-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #8C9992; font-size: 1.1rem; cursor: pointer; padding: 4px;">
+          <button id="recipes-clear-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #8C9992; font-size: 1.1rem; cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center;">
             ✕
           </button>
         ` : ''}
       </div>
 
       <!-- فلاتر التصنيفات (Category Chips) -->
-      <div class="recipes-category-scroll" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+      <div class="recipes-category-scroll">
         ${RECIPE_CATEGORIES.map(cat => {
           const isSelected = activeCategory === cat.id;
           return `
@@ -85,10 +85,9 @@ export function renderRecipesView() {
               type="button"
               class="recipe-cat-chip ${isSelected ? 'active' : ''}"
               data-cat="${cat.id}"
-              style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; font-size: 0.84rem; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${isSelected ? '#55F7A5' : 'rgba(255,255,255,0.08)'}; background: ${isSelected ? 'rgba(85,247,165,0.18)' : 'rgba(255,255,255,0.03)'}; color: ${isSelected ? '#55F7A5' : '#B8C0BC'}; box-shadow: ${isSelected ? '0 0 12px rgba(85,247,165,0.25)' : 'none'};"
             >
-              <span>${cat.icon}</span>
-              <span>${cat.label}</span>
+              <span class="chip-icon">${cat.icon}</span>
+              <span class="chip-label">${cat.label}</span>
             </button>
           `;
         }).join('')}
@@ -174,15 +173,15 @@ function renderRecipeCard(recipe) {
       </div>
 
       <!-- أزرار الإجراءات -->
-      <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
         <button
           type="button"
           class="btn btn-secondary btn-open-recipe"
           data-recipe-id="${recipe.id}"
-          style="flex: 1; border-radius: 10px; padding: 8px; font-size: 0.82rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 4px;"
+          style="flex: 1; min-height: 44px; border-radius: 12px; padding: 10px 14px; font-size: 0.88rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(85,247,165,0.25); background: rgba(85,247,165,0.06); color: #FFFFFF;"
         >
           <span>المقادير والتحضير</span>
-          <span>←</span>
+          <span style="color: #55F7A5; font-size: 1.05rem;">←</span>
         </button>
 
         <button
@@ -190,7 +189,8 @@ function renderRecipeCard(recipe) {
           class="btn-icon btn-log-recipe-meal"
           data-recipe-id="${recipe.id}"
           title="إضافة هذه الوجبة إلى سجل اليوم"
-          style="width: 38px; height: 38px; border-radius: 10px; background: rgba(85,247,165,0.12); border: 1px solid rgba(85,247,165,0.35); color: #55F7A5; flex-shrink: 0; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"
+          aria-label="إضافة هذه الوجبة إلى سجل اليوم"
+          style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 12px; background: rgba(85,247,165,0.12); border: 1px solid rgba(85,247,165,0.35); color: #55F7A5; flex-shrink: 0; font-size: 1.35rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"
         >
           +
         </button>
