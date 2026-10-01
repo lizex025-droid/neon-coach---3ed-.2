@@ -148,12 +148,25 @@ function renderRecipeCard(recipe) {
           </div>
         </div>
 
-        <h3 style="font-size: 1.05rem; font-weight: 800; color: #FFFFFF; margin: 0 0 6px; line-height: 1.35;">
+        <h3 style="font-size: 1.05rem; font-weight: 800; color: #FFFFFF; margin: 0 0 10px; line-height: 1.35;">
           ${escapeHtml(recipe.titleAr)}
         </h3>
-        <p style="font-size: 0.78rem; color: #8C9992; margin: 0; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-          ${escapeHtml(recipe.description || recipe.categoryRaw || 'وجبة رياضية متوازنة محسوبة السعرات')}
-        </p>
+
+        <!-- صورة عرض الطبق النهائي مقتصة ومظبوطة النسبة من بوستر الوصفة -->
+        ${recipe.imageUrl ? `
+          <div class="recipe-dish-preview btn-open-recipe" data-recipe-id="${recipe.id}" style="width: 100%; aspect-ratio: 2.1 / 1; min-height: 130px; border-radius: 14px; overflow: hidden; position: relative; background: #020704; border: 1px solid rgba(85,247,165,0.22); margin-bottom: 6px; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;" title="انقر لعرض المقادير وطريقة التحضير بالكامل">
+            <img
+              src="${escapeHtml(recipe.imageUrl)}"
+              alt="${escapeHtml(recipe.titleAr)}"
+              loading="lazy"
+              style="position: absolute; width: 210%; left: -4%; right: auto; top: 0; transform: translateY(-74%); display: block; pointer-events: none; max-width: none; border-radius: 0;"
+            />
+          </div>
+        ` : `
+          <p style="font-size: 0.78rem; color: #8C9992; margin: 0; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            ${escapeHtml(recipe.description || recipe.categoryRaw || 'وجبة رياضية متوازنة محسوبة السعرات')}
+          </p>
+        `}
       </div>
 
       <!-- الماكروز والسعرات -->
