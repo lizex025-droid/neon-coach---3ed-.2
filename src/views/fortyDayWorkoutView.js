@@ -204,7 +204,7 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
           <span class="forty-exercise-number forty-drag-handle">${exercise.number}</span>
           <button type="button" class="forty-quick-move-btn forty-move-down" data-action="quick-move-down" data-index="${exerciseIndex}" ${exerciseIndex === total - 1 ? 'disabled' : ''} aria-label="تأخير التمرين للأسفل">▼</button>
         </div>
-        <div><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
+        <div class="forty-exercise-title-block"><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
         <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" data-image-url="${escapeHtml(exercise.image || '')}" aria-label="عرض صورة التمرين">ⓘ</button>
       </div>
       <div class="forty-card-actions"><button type="button" data-action="history" data-index="${exerciseIndex}">history</button><button type="button" data-action="tune" data-index="${exerciseIndex}">tune</button></div>
