@@ -76,9 +76,47 @@ if ('serviceWorker' in navigator) {
       });
     }
   } else {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => {
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let isRefreshing = false;
+
+    if (hadController) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (isRefreshing) return;
+        isRefreshing = true;
+        window.location.reload();
+      });
+    }
+
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+      .then(async reg => {
         console.log('NEON COACH PWA ServiceWorker مسجل بنجاح:', reg.scope);
+        const activateWorker = (worker) => {
+          worker?.postMessage({ type: 'SKIP_WAITING' });
+        };
+
+        if (reg.waiting) {
+          activateWorker(reg.waiting);
+        }
+
+        reg.addEventListener('updatefound', () => {
+          const installingWorker = reg.installing;
+          if (!installingWorker) return;
+
+          installingWorker.addEventListener('statechange', () => {
+            if (
+              installingWorker.state === 'installed' &&
+              navigator.serviceWorker.controller
+            ) {
+              activateWorker(installingWorker);
+            }
+          });
+        });
+
+        try {
+          await reg.update();
+        } catch (err) {
+          console.warn('ServiceWorker update check failed:', err);
+        }
       })
       .catch(err => {
         console.warn('تعذر تسجيل ServiceWorker:', err);

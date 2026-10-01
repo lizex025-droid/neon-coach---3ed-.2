@@ -1,9 +1,9 @@
 // NEON COACH - Service Worker (Offline-First Cache for App Shell)
-const CACHE_NAME = 'neon-coach-v1.0.2';
+const CACHE_NAME = 'neon-coach-v1.1.0';
+const NAVIGATION_FALLBACK = './index.html';
 
 const STATIC_ASSETS = [
-  './',
-  './index.html',
+  NAVIGATION_FALLBACK,
   './manifest.json',
   './icons/workout-neon-180.png',
   './icons/workout-neon-192.png',
@@ -38,8 +38,35 @@ self.addEventListener('activate', (event) => {
 
 // استراتيجية الاستجابة: Stale-While-Revalidate للأصول الثابتة والخطوط والأيقونات
 // تنبيه أمان وخصوصية: لا يتم تخزين استجابات تحوي بيانات صحية أو صور تقدم مستخدم أو اتصالات Supabase
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+const getNavigationResponse = async (request) => {
+  try {
+    // A stale app shell can load old JavaScript and leave the URL and tab out of sync.
+    const response = await fetch(request, { cache: 'no-store' });
+
+    if (response?.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(NAVIGATION_FALLBACK, response.clone());
+    }
+
+    return response;
+  } catch (error) {
+    const cachedResponse = await caches.match(NAVIGATION_FALLBACK);
+    return cachedResponse || Response.error();
+  }
+};
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  if (event.request.method !== 'GET') {
+    return;
+  }
 
   // استبعاد طلبات Supabase والـ API والذكاء الاصطناعي من الكاش لحماية الخصوصية وحداثة البيانات
   if (
@@ -52,6 +79,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   // للأصول الثابتة والخطوط والأيقونات وصفحات التطبيق
+  // Fetch documents from the network first so a deployment cannot be hidden
+  // by an older cached index.html. The cached copy remains available offline.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(getNavigationResponse(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       // إطلاق طلب شبكي في الخلفية لتحديث الكاش للزيارات القادمة
