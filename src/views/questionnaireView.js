@@ -26,7 +26,7 @@ import {
   calculateFatLossPlan,
   evaluateWeightLossTarget
 } from '../domain/calculations.js';
-import { generateTrainingPlan } from '../domain/planner.js';
+import { generatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
 import { syncService } from '../services/syncService.js';
 import { authService } from '../services/authService.js';
 import { notificationService } from '../services/notificationService.js';
@@ -35,6 +35,7 @@ import { searchFoods } from '../data/foods.js';
 import { SUPPLEMENT_DB, searchSupplementsDb } from '../data/supplementsDb.js';
 import { nutritionPlanService } from '../services/nutritionPlanService.js';
 import { DEFAULT_PLAN_PREFERENCES } from '../domain/nutritionPlanPolicy.js';
+import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 
 const QUICK_SUPPLEMENT_NAMES = [
   'Creatine monohydrate',
@@ -47,6 +48,7 @@ let currentStep = 1;
 let showWelcomeScreen = true;
 let extremeConfirmed = false;
 let extremeGainConfirmed = false;
+let approvedTrainingDraft = null;
 
 export const STEP_KEYS = {
   MEASUREMENTS: 'measurements',
@@ -158,8 +160,15 @@ let formData = {
   },
   supplements: QUICK_SUPPLEMENT_NAMES.slice(0, 3),
   injuries: [],
+  injuryDetails: {},
   workoutDaysCount: 4,
   equipment: 'gym',
+  availableEquipment: ['machines', 'barbell', 'dumbbells', 'cables', 'bodyweight'],
+  trainingLevel: 'beginner',
+  trainingExperienceMonths: 0,
+  trainingBreakMonths: 0,
+  trainingGoal: 'hypertrophy',
+  focusAreas: [],
   sessionDurationMin: 50,
   sleepHours: 7,
   benchPressRecord: '',
@@ -544,6 +553,30 @@ export function renderQuestionnaireView() {
       ${showWelcomeScreen ? renderWelcomeScreenHTML() : renderStepWorkflowHTML(currentStep, totalSteps, currentStepKey)}
     </div>
   `;
+}
+
+const INJURY_REGION_LABELS = { shoulder: 'الكتف', knee: 'الركبة', lower_back: 'أسفل الظهر' };
+const escapeAttr = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+
+function renderInjuryDetailFields() {
+  return (formData.injuries || []).filter(region => INJURY_REGION_LABELS[region]).map(region => {
+    const detail = formData.injuryDetails?.[region] || {};
+    return `<section data-injury-region="${region}" style="border:1px solid rgba(85,247,165,.2);border-radius:14px;padding:14px;background:rgba(255,255,255,.02);">
+      <strong style="color:#55F7A5;">تفاصيل ${INJURY_REGION_LABELS[region]}</strong>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px;">
+        <label style="color:#B8C0BC;font-size:.8rem;">الحالة أو التشخيص إن وُجد<input data-injury-field="status" value="${escapeAttr(detail.status)}" placeholder="مثال: ألم قديم / تشخيص الطبيب" style="margin-top:4px;"></label>
+        <label style="color:#B8C0BC;font-size:.8rem;">الجهة<select data-injury-field="side" style="margin-top:4px;"><option value="unspecified">غير محدد</option><option value="right" ${detail.side === 'right' ? 'selected' : ''}>يمين</option><option value="left" ${detail.side === 'left' ? 'selected' : ''}>يسار</option><option value="both" ${detail.side === 'both' ? 'selected' : ''}>الجهتان</option></select></label>
+        <label style="color:#B8C0BC;font-size:.8rem;">شدة الألم 0–10<input data-injury-field="painSeverity" type="number" min="0" max="10" value="${detail.painSeverity ?? 0}" style="margin-top:4px;"></label>
+        <label style="color:#B8C0BC;font-size:.8rem;">المنع الطبي<select data-injury-field="medicalBan" style="margin-top:4px;"><option value="none">لا يوجد منع مسجل</option><option value="region" ${detail.medicalBan === 'region' ? 'selected' : ''}>منع تحميل المنطقة</option><option value="all" ${detail.medicalBan === 'all' ? 'selected' : ''}>منع التدريب كلياً</option></select></label>
+      </div>
+      <label style="display:block;color:#B8C0BC;font-size:.8rem;margin-top:9px;">الحركات التي تزيد الألم<input data-injury-field="triggerMovements" value="${escapeAttr(detail.triggerMovements)}" placeholder="مثال: ضغط فوق الرأس، سكوات" style="margin-top:4px;"></label>
+      <label style="display:block;color:#B8C0BC;font-size:.8rem;margin-top:9px;">تعليمات المختص إن وجدت<input data-injury-field="clinicianInstructions" value="${escapeAttr(detail.clinicianInstructions)}" style="margin-top:4px;"></label>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;color:#fff;font-size:.82rem;">
+        <label><input data-injury-field="worsening" type="checkbox" ${detail.worsening ? 'checked' : ''} style="width:auto;"> الألم يتفاقم</label>
+        <label><input data-injury-field="recentUnevaluated" type="checkbox" ${detail.recentUnevaluated ? 'checked' : ''} style="width:auto;"> إصابة حديثة غير مقيّمة</label>
+      </div>
+    </section>`;
+  }).join('');
 }
 
 function renderHorizontalPickerHTML(id, min, max, step, currentVal, unit) {
@@ -1374,15 +1407,17 @@ function renderStepContent(step) {
         </div>
 
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px;">
-          <div style="font-weight: 700; color: #FFFFFF; margin-bottom: 8px;">إصابات سابقة أو آلام مفاصل:</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            ${['لا يوجد', 'الكتف', 'الركبة', 'أسفل الظهر'].map(inj => `
-              <label class="badge badge-neon" style="cursor: pointer; padding: 8px 14px;">
-                <input type="checkbox" name="q-injuries" value="${inj}" style="width: auto; margin-inline-end: 6px;">
-                ${inj}
+          <div style="font-weight:800;color:#fff;margin-bottom:6px;">هل لديك إصابة أو ألم يؤثر على التدريب؟</div>
+          <p style="color:#8C9992;font-size:.82rem;margin:0 0 12px;">اختر كل المناطق المتأثرة. هذه المعلومات لتعديل الخطة وليست تشخيصاً طبياً.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${[['none','لا يوجد'],['shoulder','الكتف'],['knee','الركبة'],['lower_back','أسفل الظهر']].map(([value,label]) => `
+              <label class="badge badge-neon" style="cursor:pointer;padding:8px 14px;">
+                <input type="checkbox" name="q-injuries" value="${value}" ${(value === 'none' ? formData.injuries.length === 0 : formData.injuries.includes(value)) ? 'checked' : ''} style="width:auto;margin-inline-end:6px;">
+                ${label}
               </label>
             `).join('')}
           </div>
+          <div id="q-injury-details" style="margin-top:14px;display:grid;gap:12px;">${renderInjuryDetailFields()}</div>
         </div>
 
         <button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 24px; border-radius: 22px;">
@@ -1399,6 +1434,18 @@ function renderStepContent(step) {
           <p style="font-size: 0.95rem; color: #B8C0BC;">نصمم البرنامج بعدد الأيام الفعلي (1 - 6 أيام)</p>
         </div>
 
+        <div class="neon-card" style="padding:16px 18px;margin-bottom:14px;">
+          <div style="font-weight:800;color:#fff;margin-bottom:10px;">مستواك التدريبي الذي تختاره</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            ${[['beginner','مبتدئ','تعلّم الحركة وحجم محافظ'],['intermediate','متوسط','خبرة منتظمة وتدرّج'],['advanced','متقدم','خبرة قوية وتحكم بالحمل']].map(([value,label,note]) => `<label style="border:1px solid ${formData.trainingLevel === value ? '#55F7A5' : 'rgba(85,247,165,.18)'};background:${formData.trainingLevel === value ? 'rgba(85,247,165,.12)' : 'rgba(255,255,255,.02)'};padding:12px 8px;border-radius:14px;text-align:center;cursor:pointer;"><input type="radio" name="q-training-level" value="${value}" ${formData.trainingLevel === value ? 'checked' : ''} style="width:auto;"><strong style="display:block;color:#fff;margin-top:5px;">${label}</strong><small style="color:#8C9992;">${note}</small></label>`).join('')}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+            <label style="color:#B8C0BC;font-size:.82rem;">أشهر الخبرة<input id="q-training-experience" type="number" min="0" max="600" value="${formData.trainingExperienceMonths}" style="margin-top:5px;"></label>
+            <label style="color:#B8C0BC;font-size:.82rem;">أشهر الانقطاع<input id="q-training-break" type="number" min="0" max="120" value="${formData.trainingBreakMonths}" style="margin-top:5px;"></label>
+          </div>
+          <p style="color:#8C9992;font-size:.78rem;margin:10px 0 0;">نحفظ المستوى الذي اخترته كما هو، وقد نقترح بداية محافظة منفصلة عند العودة بعد انقطاع.</p>
+        </div>
+
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
           <div>
             <div style="font-weight: 700; color: #FFFFFF;">عدد أيام التمرين بالأسبوع</div>
@@ -1407,6 +1454,20 @@ function renderStepContent(step) {
           <select id="q-workout-days" style="width: 110px; padding: 8px; border-radius: 10px; text-align: center;">
             ${[1, 2, 3, 4, 5, 6].map(d => `<option value="${d}" ${d === formData.workoutDaysCount ? 'selected' : ''}>${d} أيام</option>`).join('')}
           </select>
+        </div>
+
+        <div class="neon-card" style="padding:16px 18px;margin-bottom:14px;">
+          <div style="font-weight:800;color:#fff;margin-bottom:10px;">المعدات المتاحة فعلياً</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${[['machines','أجهزة'],['barbell','بار وأوزان'],['dumbbells','دمبل'],['cables','كيبل'],['bands','حبال مقاومة'],['bodyweight','وزن الجسم']].map(([value,label]) => `<label class="badge badge-neon" style="cursor:pointer;padding:8px 12px;"><input type="checkbox" name="q-available-equipment" value="${value}" ${formData.availableEquipment.includes(value) ? 'checked' : ''} style="width:auto;margin-inline-end:5px;">${label}</label>`).join('')}
+          </div>
+        </div>
+
+        <div class="neon-card" style="padding:16px 18px;margin-bottom:14px;">
+          <div style="font-weight:800;color:#fff;margin-bottom:10px;">أولوية عضلية اختيارية</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${[['chest','صدر'],['back','ظهر'],['legs','أرجل'],['shoulders','أكتاف'],['biceps','بايسبس'],['triceps','ترايسبس'],['abs','بطن']].map(([value,label]) => `<label class="badge badge-neon" style="cursor:pointer;padding:8px 12px;"><input type="checkbox" name="q-focus-areas" value="${value}" ${formData.focusAreas.includes(value) ? 'checked' : ''} style="width:auto;margin-inline-end:5px;">${label}</label>`).join('')}
+          </div>
         </div>
 
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
@@ -1420,9 +1481,9 @@ function renderStepContent(step) {
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
           <span style="font-weight: 700; color: #FFFFFF;">مدة الجلسة المناسبة</span>
           <select id="q-session-duration" style="width: 140px; padding: 8px; border-radius: 10px;">
-            <option value="40">35 - 45 دقيقة</option>
-            <option value="50" selected>45 - 60 دقيقة</option>
-            <option value="75">60 - 75 دقيقة</option>
+            <option value="40" ${formData.sessionDurationMin === 40 ? 'selected' : ''}>35 - 45 دقيقة</option>
+            <option value="50" ${formData.sessionDurationMin === 50 ? 'selected' : ''}>45 - 60 دقيقة</option>
+            <option value="75" ${formData.sessionDurationMin === 75 ? 'selected' : ''}>60 - 75 دقيقة</option>
           </select>
         </div>
 
@@ -1630,6 +1691,49 @@ function renderStepContent(step) {
   }
 }
 
+function showTrainingPlanPreview(draft, createPlanBtn) {
+  document.getElementById('training-plan-preview-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'training-plan-preview-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10050;background:rgba(0,8,5,.92);display:flex;align-items:flex-end;justify-content:center;padding:12px;backdrop-filter:blur(10px);';
+  const issues = [...(draft.blockers || []), ...(draft.warnings || [])];
+  modal.innerHTML = `<section role="dialog" aria-modal="true" aria-labelledby="training-preview-title" style="width:min(920px,100%);max-height:92vh;overflow:auto;background:#03120c;border:1px solid rgba(85,247,165,.35);border-radius:24px;padding:20px;box-shadow:0 0 45px rgba(85,247,165,.14);direction:rtl;">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+      <div><span style="color:#55F7A5;font-size:.8rem;font-weight:800;">معاينة قبل الاعتماد · ${escapeAttr(draft.splitName)}</span><h2 id="training-preview-title" style="color:#fff;margin:6px 0;">خطتك التدريبية الشخصية</h2><p style="color:#9BA9A2;margin:0;">لن تتغير خطتك الحالية قبل الضغط على «اعتماد الخطة».</p></div>
+      <button type="button" data-preview-action="cancel" aria-label="إغلاق" style="background:transparent;border:0;color:#fff;font-size:1.7rem;cursor:pointer;">×</button>
+    </div>
+    <div style="margin:14px 0;padding:12px;border-radius:14px;background:rgba(85,247,165,.07);border:1px solid rgba(85,247,165,.18);color:#D8E3DE;">
+      <strong style="color:#55F7A5;">المستوى المختار محفوظ: ${escapeAttr(draft.selectedLevel)}</strong><div style="margin-top:5px;">${escapeAttr(draft.suggestedStartingPoint)}</div>
+    </div>
+    ${issues.length ? `<div style="display:grid;gap:7px;margin-bottom:14px;">${issues.map((issue, index) => `<div style="padding:10px 12px;border-radius:12px;background:${index < draft.blockers.length ? 'rgba(248,113,113,.1)' : 'rgba(251,191,36,.09)'};border:1px solid ${index < draft.blockers.length ? 'rgba(248,113,113,.35)' : 'rgba(251,191,36,.28)'};color:#fff;">${escapeAttr(issue)}</div>`).join('')}</div>` : ''}
+    ${draft.scheduleConflict ? `<div style="margin-bottom:14px;"><strong style="color:#fff;">اختر عدداً متوافقاً مع نفس النظام:</strong><div style="display:flex;gap:8px;margin-top:8px;">${draft.scheduleConflict.supportedDays.map(days => `<button type="button" data-preview-days="${days}" class="btn btn-secondary">${days} أيام</button>`).join('')}</div></div>` : ''}
+    <div style="display:grid;gap:12px;">
+      ${draft.days.map(day => `<article style="border:1px solid rgba(85,247,165,.18);border-radius:16px;padding:14px;background:rgba(255,255,255,.02);"><div style="display:flex;justify-content:space-between;gap:8px;"><strong style="color:#55F7A5;">${escapeAttr(day.label)}</strong><span style="color:#9BA9A2;">≈ ${day.estimatedMinutes} دقيقة</span></div><p style="color:#9BA9A2;font-size:.82rem;">${escapeAttr(day.warmup)}</p><div style="display:grid;gap:7px;">${day.exercises.map(exercise => `<div style="display:grid;grid-template-columns:44px 1fr auto;gap:9px;align-items:center;padding:8px;border-radius:10px;background:rgba(0,0,0,.22);"><img src="${escapeAttr(exercise.image)}" alt="" loading="lazy" style="width:44px;height:44px;border-radius:9px;object-fit:cover;"><div><strong style="color:#fff;font-size:.88rem;">${escapeAttr(exercise.title)}</strong><small style="display:block;color:#8C9992;margin-top:3px;">${escapeAttr(exercise.reason)}</small></div><span style="color:#55F7A5;font-weight:800;white-space:nowrap;">${exercise.sets} × ${escapeAttr(exercise.reps)}<small style="display:block;color:#9BA9A2;">راحة ${exercise.restSeconds}ث · RIR ${exercise.rir}</small></span></div>`).join('')}</div></article>`).join('')}
+    </div>
+    <div style="position:sticky;bottom:-20px;background:linear-gradient(transparent,#03120c 18%);padding:28px 0 2px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button type="button" data-preview-action="approve" class="btn btn-primary" ${draft.canApprove ? '' : 'disabled'}>اعتماد الخطة</button>
+      <button type="button" data-preview-action="cancel" class="btn btn-secondary">إبقاء الخطة الحالية</button>
+    </div>
+  </section>`;
+  document.body.appendChild(modal);
+  modal.querySelectorAll('[data-preview-action="cancel"]').forEach(button => button.addEventListener('click', () => {
+    fortyDayWorkoutService.discardPendingPlanDraft(draft.id);
+    modal.remove();
+    createPlanBtn.disabled = false;
+  }));
+  modal.querySelectorAll('[data-preview-days]').forEach(button => button.addEventListener('click', () => {
+    formData.workoutDaysCount = Number(button.dataset.previewDays);
+    const nextDraft = generatePersonalizedTrainingDraft({ ...formData, trainingGoal: formData.goal }, { splitKey: fortyDayWorkoutService.getActivePlan() });
+    fortyDayWorkoutService.savePlanDraft(nextDraft);
+    showTrainingPlanPreview(nextDraft, createPlanBtn);
+  }));
+  modal.querySelector('[data-preview-action="approve"]')?.addEventListener('click', () => {
+    approvedTrainingDraft = draft;
+    modal.remove();
+    createPlanBtn.click();
+  });
+}
+
 export function bindQuestionnaireEvents() {
   const welcomeStartBtn = document.getElementById('q-welcome-start-btn');
   if (welcomeStartBtn) {
@@ -1685,6 +1789,8 @@ export function bindQuestionnaireEvents() {
     currentStepKey === STEP_KEYS.PLAN_PREFERENCES_2
   ) {
     initPlanPreferencesStepEvents();
+  } else if (currentStepKey === STEP_KEYS.HEALTH) {
+    initHealthStepEvents();
   } else if (currentStepKey === STEP_KEYS.SUPPLEMENTS) {
     initSupplementsStepEvents();
   }
@@ -1782,6 +1888,16 @@ export function bindQuestionnaireEvents() {
 
   // زر إنشاء الخطة النهائي
   createPlanBtn?.addEventListener('click', async () => {
+    if (!approvedTrainingDraft) {
+      const draft = generatePersonalizedTrainingDraft(
+        { ...formData, trainingGoal: formData.goal },
+        { splitKey: fortyDayWorkoutService.getActivePlan() }
+      );
+      fortyDayWorkoutService.savePlanDraft(draft);
+      showTrainingPlanPreview(draft, createPlanBtn);
+      return;
+    }
+    const trainingDraftToActivate = approvedTrainingDraft;
     const overlay = document.getElementById('plan-gen-overlay');
     const coreIcon = document.getElementById('plan-gen-core-icon');
     const actionLabel = document.getElementById('plan-gen-action-label');
@@ -1877,13 +1993,17 @@ export function bindQuestionnaireEvents() {
 
       startedAt = Date.now();
       showStage(step3, `هندسة جدول التمارين لـ ${formData.workoutDaysCount || 4} أيام وتفصيل العضلات...`, 80);
-      const trainingPlan = generateTrainingPlan(formData);
+      const trainingPlan = trainingDraftToActivate;
       await finishAfterMinimum(startedAt);
       setStepState(step3, 'completed');
 
       startedAt = Date.now();
       const hasAuthenticatedAccount = authService.isAuthenticated();
       showStage(step4, 'حفظ الخطة وتجهيز صفحة اليوم...', 95);
+      const activation = await fortyDayWorkoutService.activatePersonalizedPlan(trainingPlan, { requestId: trainingPlan.requestId });
+      if (!activation.ok) throw new Error((activation.errors || ['تعذر اعتماد الخطة التدريبية.']).join(' '));
+      fullProfile.workoutPlan = trainingPlan.splitKey;
+      fullProfile.activeTrainingPlanVersionId = activation.versionId;
       store.setUserProfile(fullProfile);
       store.setDailyStackItems(selectedStackItems);
       nutritionPlanService.generateAndSavePlan(fullProfile, formData.nutritionPlanPreferences);
@@ -1926,12 +2046,14 @@ export function bindQuestionnaireEvents() {
       await sleep(450);
       currentStep = 1;
       showWelcomeScreen = true;
+      approvedTrainingDraft = null;
       window.location.hash = '#today'; // [مؤقت] لا يُطلب تسجيل الدخول
     } catch (error) {
       console.error('Plan generation failed:', error);
       if (actionLabel) actionLabel.textContent = 'تعذر إكمال إنشاء الحساب. أعد المحاولة.';
       if (percentLabel) percentLabel.textContent = 'خطأ';
       createPlanBtn.disabled = false;
+      approvedTrainingDraft = null;
       notificationService.showToast('تعذر إنشاء الخطة. لم يتم نقلك قبل اكتمال الحفظ.', 'error');
     }
   });
@@ -3269,6 +3391,44 @@ export function bindQuestionnaireEvents() {
     });
   }
 
+  function collectInjuryDetailsFromDom() {
+    const next = { ...(formData.injuryDetails || {}) };
+    document.querySelectorAll('[data-injury-region]').forEach(section => {
+      const region = section.dataset.injuryRegion;
+      const value = field => section.querySelector(`[data-injury-field="${field}"]`);
+      next[region] = {
+        status: value('status')?.value?.trim() || '',
+        side: value('side')?.value || 'unspecified',
+        painSeverity: Math.min(10, Math.max(0, Number(value('painSeverity')?.value) || 0)),
+        medicalBan: value('medicalBan')?.value || 'none',
+        triggerMovements: value('triggerMovements')?.value?.trim() || '',
+        clinicianInstructions: value('clinicianInstructions')?.value?.trim() || '',
+        worsening: Boolean(value('worsening')?.checked),
+        recentUnevaluated: Boolean(value('recentUnevaluated')?.checked)
+      };
+    });
+    formData.injuryDetails = next;
+  }
+
+  function initHealthStepEvents() {
+    document.querySelectorAll('input[name="q-injuries"]').forEach(input => {
+      input.addEventListener('change', () => {
+        collectInjuryDetailsFromDom();
+        const all = [...document.querySelectorAll('input[name="q-injuries"]')];
+        if (input.value === 'none' && input.checked) {
+          all.filter(item => item.value !== 'none').forEach(item => { item.checked = false; });
+        } else if (input.checked) {
+          const none = all.find(item => item.value === 'none');
+          if (none) none.checked = false;
+        }
+        const selected = all.filter(item => item.checked && item.value !== 'none').map(item => item.value);
+        formData.injuries = selected;
+        const details = document.getElementById('q-injury-details');
+        if (details) details.innerHTML = renderInjuryDetailFields();
+      });
+    });
+  }
+
   function saveCurrentStepInputs() {
     const activeSteps = getActiveSteps();
     const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
@@ -3385,7 +3545,8 @@ export function bindQuestionnaireEvents() {
     } else if (currentStepKey === STEP_KEYS.HEALTH) {
       const sleep = Number(document.getElementById('q-sleep')?.value);
       if (sleep > 0) formData.sleepHours = sleep;
-      const checkedInjuries = Array.from(document.querySelectorAll('input[name="q-injuries"]:checked')).map(el => el.value);
+      collectInjuryDetailsFromDom();
+      const checkedInjuries = Array.from(document.querySelectorAll('input[name="q-injuries"]:checked')).map(el => el.value).filter(value => value !== 'none');
       formData.injuries = checkedInjuries;
     } else if (currentStepKey === STEP_KEYS.TRAINING) {
       const days = Number(document.getElementById('q-workout-days')?.value);
@@ -3394,6 +3555,11 @@ export function bindQuestionnaireEvents() {
       if (days > 0) formData.workoutDaysCount = days;
       if (eq) formData.equipment = eq;
       if (dur > 0) formData.sessionDurationMin = dur;
+      formData.trainingLevel = document.querySelector('input[name="q-training-level"]:checked')?.value || formData.trainingLevel;
+      formData.trainingExperienceMonths = Math.max(0, Number(document.getElementById('q-training-experience')?.value) || 0);
+      formData.trainingBreakMonths = Math.max(0, Number(document.getElementById('q-training-break')?.value) || 0);
+      formData.availableEquipment = Array.from(document.querySelectorAll('input[name="q-available-equipment"]:checked')).map(el => el.value);
+      formData.focusAreas = Array.from(document.querySelectorAll('input[name="q-focus-areas"]:checked')).map(el => el.value);
     }
   }
 

@@ -5,6 +5,7 @@ import { store } from '../state/store.js';
 import { syncService } from './syncService.js';
 import { localDate } from '../domain/actionAgent.js';
 import { notificationService } from './notificationService.js';
+import { validatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
 
 const STATE_KEY = 'neon_forty_day_workout_v2';
 const LEGACY_SESSION_KEY = 'fortyDay_active_workout_v1';
@@ -38,7 +39,12 @@ function defaultState() {
     restDuration: 0,
     trackers: {},
     customExercises: {},
-    history: []
+    history: [],
+    planVersions: [],
+    pendingPlanDraft: null,
+    activePlanVersionBySystem: {},
+    activationRequests: {},
+    updatedAt: null
   };
 }
 
@@ -87,7 +93,11 @@ class FortyDayWorkoutService {
       ...saved,
       trackers: saved?.trackers || {},
       customExercises: saved?.customExercises || {},
-      history: Array.isArray(saved?.history) ? saved.history : []
+      history: Array.isArray(saved?.history) ? saved.history : [],
+      planVersions: Array.isArray(saved?.planVersions) ? saved.planVersions : [],
+      pendingPlanDraft: saved?.pendingPlanDraft || null,
+      activePlanVersionBySystem: saved?.activePlanVersionBySystem || {},
+      activationRequests: saved?.activationRequests || {}
     };
     if (!this.state.session) {
       const legacy = readJson(LEGACY_SESSION_KEY, null);
@@ -110,6 +120,7 @@ class FortyDayWorkoutService {
 
   save() {
     if (typeof localStorage === 'undefined') return;
+    this.load().updatedAt = new Date().toISOString();
     localStorage.setItem(STATE_KEY, JSON.stringify(this.load()));
     this._debouncedCloudSync();
   }
@@ -164,12 +175,135 @@ class FortyDayWorkoutService {
       }
       local.history.sort((a, b) => (b.finishedAt || 0) - (a.finishedAt || 0));
     }
+    if (Array.isArray(remotePayload.planVersions)) {
+      const versionIds = new Set(local.planVersions.map(version => version.id));
+      remotePayload.planVersions.forEach(version => {
+        if (version?.id && !versionIds.has(version.id)) local.planVersions.push(version);
+      });
+      local.planVersions.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    }
+    const remoteIsNewer = String(remotePayload.updatedAt || '') > String(local.updatedAt || '');
+    if (remoteIsNewer) {
+      if (remotePayload.customExercises && typeof remotePayload.customExercises === 'object') {
+        local.customExercises = { ...local.customExercises, ...remotePayload.customExercises };
+      }
+      local.activePlanVersionBySystem = { ...local.activePlanVersionBySystem, ...(remotePayload.activePlanVersionBySystem || {}) };
+      local.activationRequests = { ...local.activationRequests, ...(remotePayload.activationRequests || {}) };
+      local.pendingPlanDraft = remotePayload.pendingPlanDraft || local.pendingPlanDraft;
+      local.updatedAt = remotePayload.updatedAt;
+    }
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STATE_KEY, JSON.stringify(local));
     }
   }
 
   getSnapshot() { return structuredClone(this.load()); }
+
+  getPendingPlanDraft() { return structuredClone(this.load().pendingPlanDraft); }
+
+  savePlanDraft(draft) {
+    const state = this.load();
+    state.pendingPlanDraft = structuredClone(draft);
+    this.save();
+    return this.getPendingPlanDraft();
+  }
+
+  discardPendingPlanDraft(draftId = null) {
+    const state = this.load();
+    if (draftId && state.pendingPlanDraft?.id !== draftId) return false;
+    state.pendingPlanDraft = null;
+    this.save();
+    return true;
+  }
+
+  getPlanVersions(planKey = null) {
+    const versions = this.load().planVersions || [];
+    return structuredClone(planKey ? versions.filter(version => version.splitKey === planKey) : versions);
+  }
+
+  getActivePlanVersion(planKey = this.getActivePlan()) {
+    const state = this.load();
+    const id = state.activePlanVersionBySystem?.[planKey];
+    return structuredClone(state.planVersions.find(version => version.id === id) || null);
+  }
+
+  async activatePersonalizedPlan(draft, { requestId = draft?.requestId } = {}) {
+    const validation = validatePersonalizedTrainingDraft(draft);
+    if (!validation.valid || !draft?.canApprove) {
+      return { ok: false, code: 'invalid_draft', errors: validation.errors };
+    }
+    const state = this.load();
+    if (state.session) {
+      return { ok: false, code: 'active_session', errors: ['أنهِ جلسة التدريب الحالية أو ألغها قبل اعتماد خطة جديدة.'] };
+    }
+    if (draft.splitKey !== this.getActivePlan()) {
+      return { ok: false, code: 'split_changed', errors: ['تغير نظام التدريب منذ إنشاء المعاينة. أنشئ معاينة جديدة للنظام النشط.'] };
+    }
+    if (requestId && state.activationRequests[requestId]?.ok) {
+      const existingVersion = state.planVersions.find(version => version.id === state.activationRequests[requestId].versionId);
+      return { ...state.activationRequests[requestId], idempotent: true, version: structuredClone(existingVersion || null) };
+    }
+
+    const previousVersionId = state.activePlanVersionBySystem[draft.splitKey] || null;
+    const versionId = `plan_${draft.splitKey}_${Date.now()}_${String(draft.id).slice(-7)}`;
+    const version = {
+      id: versionId,
+      draftId: draft.id,
+      requestId: requestId || null,
+      splitKey: draft.splitKey,
+      splitName: draft.splitName,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      previousVersionId,
+      rulesVersion: draft.rulesVersion,
+      selectedLevel: draft.selectedLevel,
+      suggestedStartingPoint: draft.suggestedStartingPoint,
+      inputSnapshot: structuredClone(draft.inputSnapshot),
+      reasons: [...(draft.reasons || [])],
+      warnings: [...(draft.warnings || [])],
+      days: structuredClone(draft.days)
+    };
+    state.planVersions.forEach(item => {
+      if (item.splitKey === draft.splitKey && item.status === 'active') item.status = 'archived';
+    });
+    for (const day of draft.days) {
+      state.customExercises[day.key] = day.exercises.map((exercise, index) => ({
+        ...structuredClone(exercise),
+        number: index + 1,
+        rest: exercise.restSeconds
+      }));
+      for (const exercise of state.customExercises[day.key]) {
+        state.trackers[exercise.id] = normalizeTracker(state.trackers[exercise.id], exercise);
+        state.trackers[exercise.id].rest = exercise.restSeconds;
+      }
+    }
+    state.planVersions.push(version);
+    state.activePlanVersionBySystem[draft.splitKey] = versionId;
+    state.pendingPlanDraft = null;
+    const result = { ok: true, versionId, requestId: requestId || null, savedLocally: true, cloudSynced: false };
+    if (requestId) state.activationRequests[requestId] = result;
+    this.save();
+
+    const verified = readJson(STATE_KEY, null);
+    if (!verified?.planVersions?.some(item => item.id === versionId) || verified?.activePlanVersionBySystem?.[draft.splitKey] !== versionId) {
+      return { ok: false, code: 'verification_failed', errors: ['تعذر التحقق من حفظ نسخة الخطة محلياً. أعد المحاولة.'] };
+    }
+    const user = store.getState()?.auth?.user;
+    if (user?.id) {
+      const cloudResult = await syncService.syncUserState(user.id, state);
+      result.cloudSynced = Boolean(cloudResult);
+      if (requestId) state.activationRequests[requestId] = result;
+      if (typeof localStorage !== 'undefined') localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    }
+    return { ...result, version: structuredClone(version) };
+  }
+
+  async restorePlanVersion(versionId, { requestId = `restore_${versionId}_${Date.now()}` } = {}) {
+    const version = this.load().planVersions.find(item => item.id === versionId);
+    if (!version) return { ok: false, code: 'not_found', errors: ['نسخة الخطة غير موجودة.'] };
+    const draft = { ...structuredClone(version), id: `restore_${version.id}`, requestId, status: 'draft', canApprove: true, blockers: [] };
+    return this.activatePersonalizedPlan(draft, { requestId });
+  }
 
   getActivePlan() {
     const profilePlan = store.getState()?.userProfile?.workoutPlan;
@@ -630,7 +764,8 @@ class FortyDayWorkoutService {
       finishedAt,
       durationSeconds: Math.max(1, Math.round((finishedAt - session.startedAt) / 1000)),
       dateLabel: new Intl.DateTimeFormat('ar-JO', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(finishedAt)),
-      exercises, totalSets, totalReps, totalVolume: Math.round(totalVolume), totalVolumeKg: Math.round(totalVolume), personalRecords
+      exercises, totalSets, totalReps, totalVolume: Math.round(totalVolume), totalVolumeKg: Math.round(totalVolume), personalRecords,
+      planVersionId: state.activePlanVersionBySystem?.[this.getActivePlan()] || null
     };
     state.history = [...state.history, summary].slice(-100);
     state.session = null;

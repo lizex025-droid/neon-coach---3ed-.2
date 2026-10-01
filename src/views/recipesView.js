@@ -23,15 +23,15 @@ export function renderRecipesView() {
       ? true
       : activeCategory === 'high_protein'
         ? recipe.isHighProtein
-        : recipe.category === activeCategory;
+        : (recipe.category === activeCategory || recipe.categoryRaw === activeCategory);
 
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch = !q
       ? true
       : (recipe.titleAr.toLowerCase().includes(q) ||
-         recipe.titleEn.toLowerCase().includes(q) ||
-         recipe.description.toLowerCase().includes(q) ||
-         recipe.ingredients.some(ing => ing.toLowerCase().includes(q)));
+         (recipe.titleEn && recipe.titleEn.toLowerCase().includes(q)) ||
+         (recipe.categoryRaw && recipe.categoryRaw.toLowerCase().includes(q)) ||
+         (recipe.description && recipe.description.toLowerCase().includes(q)));
 
     return matchesCategory && matchesSearch;
   });
@@ -111,7 +111,7 @@ export function renderRecipesView() {
 
       <!-- مودال عرض تفاصيل الوصفة والمقادير والتحضير -->
       <div id="recipe-detail-modal" class="ai-modal-overlay" style="display: none;">
-        <div class="ai-modal-box" id="recipe-modal-content" style="max-width: 560px; max-height: 88vh; overflow-y: auto; text-align: right;">
+        <div class="ai-modal-panel" id="recipe-modal-content" style="max-width: 580px; max-height: 90vh; overflow-y: auto; padding: 18px; text-align: right; box-sizing: border-box;">
           <!-- محتوى المودال يتم تحديثه ديناميكياً -->
         </div>
       </div>
@@ -121,6 +121,12 @@ export function renderRecipesView() {
 }
 
 function renderRecipeCard(recipe) {
+  const isHighProt = typeof recipe.protein === 'number' ? recipe.protein >= 25 : (parseFloat(recipe.protein) >= 25);
+  const calText = recipe.calories !== undefined && recipe.calories !== null ? recipe.calories : '—';
+  const protText = recipe.protein !== undefined && recipe.protein !== null ? `${recipe.protein}${recipe.protein !== '—' && !String(recipe.protein).includes('غ') ? 'غ' : ''}` : '—';
+  const carbText = recipe.carbs !== undefined && recipe.carbs !== null ? `${recipe.carbs}${recipe.carbs !== '—' && !String(recipe.carbs).includes('غ') ? 'غ' : ''}` : '—';
+  const fatText = recipe.fats !== undefined && recipe.fats !== null ? `${recipe.fats}${recipe.fats !== '—' && !String(recipe.fats).includes('غ') ? 'غ' : ''}` : '—';
+
   return `
     <div class="neon-card recipe-card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; border-radius: 18px; position: relative; overflow: hidden; transition: transform 0.2s ease, border-color 0.2s ease;">
       
@@ -128,13 +134,13 @@ function renderRecipeCard(recipe) {
       <div>
         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
           <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(85,247,165,0.08); border: 1px solid rgba(85,247,165,0.22); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
-            ${recipe.image}
+            ${recipe.image || '🥗'}
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #B8C0BC; border: 1px solid rgba(255,255,255,0.08);">
-              ⏱️ ${recipe.prepTime}
+              ⏱️ ${escapeHtml(recipe.prepTime)}
             </span>
-            ${recipe.isHighProtein ? `
+            ${isHighProt ? `
               <span style="font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(85,247,165,0.15); color: #55F7A5; border: 1px solid rgba(85,247,165,0.3);">
                 💪 بروتين
               </span>
@@ -146,7 +152,7 @@ function renderRecipeCard(recipe) {
           ${escapeHtml(recipe.titleAr)}
         </h3>
         <p style="font-size: 0.78rem; color: #8C9992; margin: 0; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-          ${escapeHtml(recipe.description)}
+          ${escapeHtml(recipe.description || recipe.categoryRaw || 'وجبة رياضية متوازنة محسوبة السعرات')}
         </p>
       </div>
 
@@ -155,19 +161,19 @@ function renderRecipeCard(recipe) {
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; gap: 4px;">
           <div>
             <div style="font-size: 0.66rem; color: #8C9992;">سعرات</div>
-            <div style="font-size: 1.05rem; font-weight: 900; color: #55F7A5; font-family: monospace;">${recipe.calories}</div>
+            <div style="font-size: 1.05rem; font-weight: 900; color: #55F7A5; font-family: monospace;">${calText}</div>
           </div>
           <div>
             <div style="font-size: 0.66rem; color: #8C9992;">بروتين</div>
-            <div style="font-size: 0.95rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${recipe.protein}غ</div>
+            <div style="font-size: 0.95rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${protText}</div>
           </div>
           <div>
             <div style="font-size: 0.66rem; color: #8C9992;">كارب</div>
-            <div style="font-size: 0.95rem; font-weight: 900; color: #38BDF8; font-family: monospace;">${recipe.carbs}غ</div>
+            <div style="font-size: 0.95rem; font-weight: 900; color: #38BDF8; font-family: monospace;">${carbText}</div>
           </div>
           <div>
             <div style="font-size: 0.66rem; color: #8C9992;">دهون</div>
-            <div style="font-size: 0.95rem; font-weight: 900; color: #F59E0B; font-family: monospace;">${recipe.fats}غ</div>
+            <div style="font-size: 0.95rem; font-weight: 900; color: #F59E0B; font-family: monospace;">${fatText}</div>
           </div>
         </div>
       </div>
@@ -178,7 +184,7 @@ function renderRecipeCard(recipe) {
           type="button"
           class="btn btn-secondary btn-open-recipe"
           data-recipe-id="${recipe.id}"
-          style="flex: 1; min-height: 44px; border-radius: 12px; padding: 10px 14px; font-size: 0.88rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(85,247,165,0.25); background: rgba(85,247,165,0.06); color: #FFFFFF;"
+          style="flex: 1; min-height: 44px; border-radius: 12px; padding: 10px 14px; font-size: 0.88rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(85,247,165,0.25); background: rgba(85,247,165,0.06); color: #FFFFFF; cursor: pointer;"
         >
           <span>المقادير والتحضير</span>
           <span style="color: #55F7A5; font-size: 1.05rem;">←</span>
@@ -201,99 +207,45 @@ function renderRecipeCard(recipe) {
 }
 
 function renderRecipeModalDetail(recipe) {
+  const calBadge = recipe.calories && recipe.calories !== '—' ? `(${recipe.calories} سعرة)` : '';
   return `
-    <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 14px; direction: rtl; text-align: right;">
       
       <!-- ترويسة المودال -->
-      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 12px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(85,247,165,0.1); border: 1px solid rgba(85,247,165,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
-            ${recipe.image}
-          </div>
-          <div>
-            <h2 style="font-size: 1.25rem; font-weight: 900; color: #FFFFFF; margin: 0 0 4px;">
-              ${escapeHtml(recipe.titleAr)}
-            </h2>
-            <div style="font-size: 0.78rem; color: #8C9992;">
-              ${escapeHtml(recipe.titleEn)} • ${recipe.servings} • صعوبة: ${recipe.difficulty}
-            </div>
-          </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(85,247,165,0.15); padding-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+          <span style="font-size: 1.5rem; flex-shrink: 0;">${recipe.image || '🥗'}</span>
+          <h2 style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${escapeHtml(recipe.titleAr)}
+          </h2>
         </div>
 
-        <button type="button" id="btn-close-recipe-modal" class="btn-icon" style="width: 34px; height: 34px; border-radius: 10px; color: #8C9992; font-size: 1rem; cursor: pointer;">
+        <button type="button" id="btn-close-recipe-modal" class="btn-icon" aria-label="إغلاق" style="width: 36px; height: 36px; min-width: 36px; border-radius: 10px; color: #B8C0BC; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">
           ✕
         </button>
       </div>
 
-      <!-- بطاقة الماكروز التفصيلية -->
-      <div style="background: rgba(85,247,165,0.06); padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(85,247,165,0.2);">
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; gap: 6px;">
-          <div>
-            <div style="font-size: 0.72rem; color: #8C9992; margin-bottom: 2px;">السعرات</div>
-            <div style="font-size: 1.25rem; font-weight: 900; color: #55F7A5; font-family: monospace;">${recipe.calories}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.72rem; color: #8C9992; margin-bottom: 2px;">البروتين</div>
-            <div style="font-size: 1.15rem; font-weight: 900; color: #FFFFFF; font-family: monospace;">${recipe.protein}غ</div>
-          </div>
-          <div>
-            <div style="font-size: 0.72rem; color: #8C9992; margin-bottom: 2px;">الكارب</div>
-            <div style="font-size: 1.15rem; font-weight: 900; color: #38BDF8; font-family: monospace;">${recipe.carbs}غ</div>
-          </div>
-          <div>
-            <div style="font-size: 0.72rem; color: #8C9992; margin-bottom: 2px;">الدهون</div>
-            <div style="font-size: 1.15rem; font-weight: 900; color: #F59E0B; font-family: monospace;">${recipe.fats}غ</div>
-          </div>
-        </div>
+      <!-- صورة الوصفة الكاملة (المقادير والتحضير المصورة) -->
+      <div style="position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #030806; border: 1px solid rgba(85,247,165,0.22); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <img
+          src="${escapeHtml(recipe.imageUrl)}"
+          alt="${escapeHtml(recipe.titleAr)}"
+          loading="eager"
+          style="width: 100%; height: auto; display: block; border-radius: 15px;"
+        />
       </div>
 
-      <!-- قائمة المكونات والمقادير -->
-      <div>
-        <h4 style="font-size: 0.95rem; font-weight: 800; color: #55F7A5; margin: 0 0 8px; display: flex; align-items: center; gap: 6px;">
-          <span>🛒</span>
-          <span>المكونات والمقادير (${recipe.ingredients.length})</span>
-        </h4>
-        <div style="display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
-          ${recipe.ingredients.map((ing, idx) => `
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #E0E5E2; cursor: pointer; user-select: none;">
-              <input type="checkbox" style="accent-color: #55F7A5; width: 16px; height: 16px; cursor: pointer;" />
-              <span>${escapeHtml(ing)}</span>
-            </label>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- خطوات التحضير -->
-      <div>
-        <h4 style="font-size: 0.95rem; font-weight: 800; color: #55F7A5; margin: 0 0 8px; display: flex; align-items: center; gap: 6px;">
-          <span>👨‍🍳</span>
-          <span>طريقة التحضير بالخطوات</span>
-        </h4>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${recipe.steps.map((step, idx) => `
-            <div style="display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-              <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(85,247,165,0.15); color: #55F7A5; font-weight: 900; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">
-                ${idx + 1}
-              </div>
-              <div style="font-size: 0.84rem; color: #E0E5E2; line-height: 1.5;">
-                ${escapeHtml(step)}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- أزرار الإجراء السريع -->
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+      <!-- أزرار الإجراء السريع: زر الإضافة وزر الحفظ -->
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
         <button
           type="button"
           id="btn-modal-add-to-today"
           data-recipe-id="${recipe.id}"
           class="btn btn-primary btn-block"
-          style="border-radius: 12px; padding: 12px; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;"
+          style="border-radius: 14px; padding: 13px; font-size: 0.96rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;"
         >
           <span>➕</span>
-          <span>إضافة هذه الوجبة إلى سجل اليوم (${recipe.calories} سعرة)</span>
+          <span>إضافة هذه الوجبة إلى سجل اليوم ${calBadge}</span>
         </button>
 
         <button
@@ -301,7 +253,7 @@ function renderRecipeModalDetail(recipe) {
           id="btn-modal-save-fav"
           data-recipe-id="${recipe.id}"
           class="btn btn-secondary btn-block"
-          style="border-radius: 12px; padding: 10px; font-size: 0.88rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;"
+          style="border-radius: 14px; padding: 11px; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; background: rgba(85,247,165,0.08); border: 1px solid rgba(85,247,165,0.28); color: #FFFFFF;"
         >
           <span>⭐</span>
           <span>حفظ في وجباتي المفضلة</span>
@@ -314,15 +266,20 @@ function renderRecipeModalDetail(recipe) {
 
 function logRecipeToStore(recipe) {
   if (!recipe) return;
+  const numCal = typeof recipe.calories === 'number' ? recipe.calories : (parseFloat(recipe.calories) || 0);
+  const numProt = typeof recipe.protein === 'number' ? recipe.protein : (parseFloat(recipe.protein) || 0);
+  const numCarb = typeof recipe.carbs === 'number' ? recipe.carbs : (parseFloat(recipe.carbs) || 0);
+  const numFat = typeof recipe.fats === 'number' ? recipe.fats : (parseFloat(recipe.fats) || 0);
+
   const newMeal = {
     id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'rec_' + Date.now(),
     titleAr: recipe.titleAr,
-    calories: recipe.calories,
-    protein: recipe.protein,
-    carbs: recipe.carbs,
-    fats: recipe.fats,
+    calories: numCal,
+    protein: numProt,
+    carbs: numCarb,
+    fats: numFat,
     time: new Date().toLocaleTimeString('ar-JO', { hour: '2-digit', minute: '2-digit' }),
-    items: recipe.ingredients.map(ing => ({ name: ing, weight: 100, calories: 0 }))
+    items: [{ name: recipe.titleAr, weight: 1, calories: numCal }]
   };
 
   store.logMeal(newMeal);
@@ -331,13 +288,18 @@ function logRecipeToStore(recipe) {
 
 function saveRecipeToFavorites(recipe) {
   if (!recipe) return;
+  const numCal = typeof recipe.calories === 'number' ? recipe.calories : (parseFloat(recipe.calories) || 0);
+  const numProt = typeof recipe.protein === 'number' ? recipe.protein : (parseFloat(recipe.protein) || 0);
+  const numCarb = typeof recipe.carbs === 'number' ? recipe.carbs : (parseFloat(recipe.carbs) || 0);
+  const numFat = typeof recipe.fats === 'number' ? recipe.fats : (parseFloat(recipe.fats) || 0);
+
   const favDraft = {
     titleAr: recipe.titleAr,
-    calories: recipe.calories,
-    protein: recipe.protein,
-    carbs: recipe.carbs,
-    fats: recipe.fats,
-    items: recipe.ingredients.map(ing => ({ name: ing, weight: 100 }))
+    calories: numCal,
+    protein: numProt,
+    carbs: numCarb,
+    fats: numFat,
+    items: [{ name: recipe.titleAr, weight: 1 }]
   };
   const res = store.saveToFavorites(favDraft);
   if (res.success) {

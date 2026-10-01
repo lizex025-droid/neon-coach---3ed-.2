@@ -109,9 +109,8 @@
 .forty-finish-wrap .btn { width: 100%; border-radius: 17px; }
 .forty-finish-wrap small { color: rgba(255,255,255,.4); }
 .forty-scroll-top { position: fixed; left: 18px; bottom: 102px; z-index: 40; width: 43px; height: 43px; border: 1px solid var(--forty-line); border-radius: 50%; color: var(--forty-mint); background: rgba(2,16,10,.9); opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s; }
-.forty-scroll-top.is-visible { opacity: 1; pointer-events: auto; transform: none; }
-.forty-modal { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 16px; background: rgba(0,7,4,.9); opacity: 0; pointer-events: none; transition: opacity .2s; direction: ltr; text-align: left; }
-.forty-modal.is-open { opacity: 1; pointer-events: auto; }
+.forty-modal { position: fixed; inset: 0; z-index: 1200; display: none; place-items: center; padding: 16px; background: rgba(0,7,4,.9); opacity: 0; pointer-events: none; transition: opacity .2s; direction: ltr; text-align: left; }
+.forty-modal.is-open { display: grid; opacity: 1; pointer-events: auto; }
 .forty-modal-sheet { position: relative; width: min(100%,680px); max-height: min(92vh,850px); overflow: auto; padding: 29px; border: 1px solid rgba(110,231,183,.32); border-radius: 24px; background: #010905; box-shadow: 0 30px 100px rgba(0,0,0,.7); }
 #forty-detail-modal .forty-modal-sheet { direction: rtl; text-align: right; }
 .forty-modal-title { justify-content: center; margin: 8px 36px 22px; font-size: clamp(1.65rem,5vw,2.25rem); text-align: center; direction: ltr; }
@@ -166,7 +165,7 @@
   position: fixed;
   inset: 0;
   z-index: 1400;
-  display: grid;
+  display: none;
   place-items: center;
   padding: 18px;
   background: rgba(0,8,5,.88);
@@ -175,7 +174,7 @@
   transition: opacity .2s ease;
   direction: rtl;
 }
-.workout-summary-modal.is-open { opacity: 1; pointer-events: auto; }
+.workout-summary-modal.is-open { display: grid; opacity: 1; pointer-events: auto; }
 .workout-summary-sheet {
   position: relative;
   width: min(100%,620px);

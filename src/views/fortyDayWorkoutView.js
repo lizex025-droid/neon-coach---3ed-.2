@@ -72,6 +72,7 @@ export function renderFortyDayWorkoutView() {
   const progress = Math.round((Math.min(snapshot.history.length, program.durationDays) / program.durationDays) * 100);
   const activeDay = days.some(d => d.key === snapshot.activeDay) ? snapshot.activeDay : days[0].key;
   const activeDayObj = fortyDayWorkoutService.getDay(activeDay, activePlan);
+  const activeVersion = fortyDayWorkoutService.getActivePlanVersion(activePlan);
 
   return `
     <div class="forty-workout" id="forty-workout-root">
@@ -94,6 +95,13 @@ export function renderFortyDayWorkoutView() {
           <div class="forty-progress-track"><span style="width:${progress}%"></span></div>
         </div>
       </section>
+
+      ${activeVersion ? `<section class="forty-session-bar" style="display:block;">
+        <small>الخطة الشخصية المعتمدة · النسخة ${escapeHtml(activeVersion.id)}</small>
+        <strong style="display:block;margin:6px 0;">${escapeHtml(activeVersion.selectedLevel)} · قواعد ${escapeHtml(activeVersion.rulesVersion)}</strong>
+        <span>${escapeHtml(activeVersion.suggestedStartingPoint || activeVersion.reasons?.[0] || '')}</span>
+        ${activeVersion.warnings?.length ? `<p style="color:#fbbf24;margin:8px 0 0;font-size:.82rem;">${escapeHtml(activeVersion.warnings[0])}</p>` : ''}
+      </section>` : ''}
 
       <section class="forty-session-bar">
         <div>
@@ -204,7 +212,7 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
           <span class="forty-exercise-number forty-drag-handle">${exercise.number}</span>
           <button type="button" class="forty-quick-move-btn forty-move-down" data-action="quick-move-down" data-index="${exerciseIndex}" ${exerciseIndex === total - 1 ? 'disabled' : ''} aria-label="تأخير التمرين للأسفل">▼</button>
         </div>
-        <div class="forty-exercise-title-block"><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
+        <div class="forty-exercise-title-block"><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}${exercise.reason ? `<p><span>سبب الاختيار:</span> ${escapeHtml(exercise.reason)}</p>` : ''}${exercise.restSeconds != null ? `<p><span>الجرعة:</span> ${exercise.sets} مجموعات · ${escapeHtml(exercise.reps)} · راحة ${exercise.restSeconds}ث · RIR ${exercise.rir}</p>` : ''}</div>
         <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" data-image-url="${escapeHtml(exercise.image || '')}" aria-label="عرض صورة التمرين">ⓘ</button>
       </div>
       <div class="forty-card-actions"><button type="button" data-action="history" data-index="${exerciseIndex}">history</button><button type="button" data-action="tune" data-index="${exerciseIndex}">tune</button></div>
@@ -1142,6 +1150,11 @@ export function bindFortyDayWorkoutEvents() {
     // تبديل الخطة بين نظام الحسم و PPL مباشرة من شاشة التمرين
     if (button.dataset.action === 'switch-plan') {
       const targetPlan = button.dataset.plan;
+      if (targetPlan === activePlan) return;
+      const targetProgram = fortyDayWorkoutService.getProgram(targetPlan);
+      const targetDays = fortyDayWorkoutService.getDays(targetPlan).filter(day => day.exercises?.length).length;
+      const confirmed = window.confirm(`تغيير نظام التدريب إلى ${targetProgram.title}\n\n${targetProgram.description}\nعدد أيام/مجموعات التدريب: ${targetDays}\n\nلن تُحذف سجلاتك أو أوزانك السابقة، لكن النظام النشط سيتغير الآن. هل تريد المتابعة؟`);
+      if (!confirmed) return;
       fortyDayWorkoutService.setActivePlan(targetPlan);
       root.outerHTML = renderFortyDayWorkoutView();
       bindFortyDayWorkoutEvents();
@@ -1367,5 +1380,6 @@ export function bindFortyDayWorkoutEvents() {
     root.removeEventListener('pointerdown', onImageIntent);
     root.removeEventListener('focusin', onImageIntent);
     document.body.style.overflow = '';
+    document.body.style.userSelect = '';
   };
 }

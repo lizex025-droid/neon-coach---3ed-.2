@@ -47,7 +47,7 @@
   left: 0;
   right: 0;
   /* Keep page content from creating a click-blocking layer above the tabs. */
-  z-index: 900;
+  z-index: 1100;
   isolation: isolate;
   pointer-events: auto;
   background: rgba(4, 12, 9, 0.94);
