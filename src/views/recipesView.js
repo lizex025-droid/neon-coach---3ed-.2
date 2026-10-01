@@ -154,12 +154,12 @@ function renderRecipeCard(recipe) {
 
         <!-- صورة عرض الطبق النهائي مقتصة ومظبوطة النسبة من بوستر الوصفة -->
         ${recipe.imageUrl ? `
-          <div class="recipe-dish-preview btn-open-recipe" data-recipe-id="${recipe.id}" style="width: 100%; aspect-ratio: 2.1 / 1; min-height: 130px; border-radius: 14px; overflow: hidden; position: relative; background: #020704; border: 1px solid rgba(85,247,165,0.22); margin-bottom: 6px; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;" title="انقر لعرض المقادير وطريقة التحضير بالكامل">
+          <div class="recipe-dish-preview btn-open-recipe" data-recipe-id="${recipe.id}" style="width: 100%; aspect-ratio: 16 / 9.2; border-radius: 14px; overflow: hidden; position: relative; background: #020704; border: 1px solid rgba(85,247,165,0.22); margin-bottom: 6px; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease;" title="انقر لعرض المقادير وطريقة التحضير بالكامل">
             <img
               src="${escapeHtml(recipe.imageUrl)}"
               alt="${escapeHtml(recipe.titleAr)}"
               loading="lazy"
-              style="position: absolute; width: 210%; left: -4%; right: auto; top: 0; transform: translateY(-74%); display: block; pointer-events: none; max-width: none; border-radius: 0;"
+              style="position: absolute; width: 200%; left: -3%; right: auto; top: 0; transform: translateY(-69.5%); display: block; pointer-events: none; max-width: none; border-radius: 0;"
             />
           </div>
         ` : `
