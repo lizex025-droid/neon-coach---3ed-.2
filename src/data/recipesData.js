@@ -1,4 +1,3 @@
-import { resolveProtectedUrl } from '../utils/imageSecurity.js';
 /**
  * NEON COACH - قاعدة بيانات الوصفات الصحية والرياضية
  * وصفات محسوبة السعرات والماكروز بدقة، مصنفة حسب الوجبات ونوع الهدف
@@ -29,7 +28,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍲",
-    "imageUrl": resolveProtectedUrl('recipe-1'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/16d2b39c-385a-4920-ba4a-4b47f646f0b1.jpg",
     "description": "وجبة «طاجن الدجاج المغربي بالأرز والخضار» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "طاجن الدجاج المغربي بالأرز والخضار"
@@ -53,7 +52,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-2'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/1a1e70e8-fc9d-43de-a06c-c083a38d2c66.jpg",
     "description": "وجبة «صدر دجاج مشوي ببطاطا بومباي والليمون» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "صدر دجاج مشوي ببطاطا بومباي والليمون"
@@ -77,7 +76,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥗",
-    "imageUrl": resolveProtectedUrl('recipe-3'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/2cca7084-6512-4c94-a5d6-33607815834f.jpg",
     "description": "وجبة «سلطة دجاج الباربكيو والخضار» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "سلطة دجاج الباربكيو والخضار"
@@ -101,7 +100,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥗",
-    "imageUrl": resolveProtectedUrl('recipe-4'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/33fff8ab-e759-4b53-b88e-6556f3590669.jpg",
     "description": "وجبة «فتوش بخبز القمح الكامل المحمص» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "فتوش بخبز القمح الكامل المحمص"
@@ -125,7 +124,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥗",
-    "imageUrl": resolveProtectedUrl('recipe-5'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/4c1a2f59-a915-436a-be61-0c008fdd7036.jpg",
     "description": "وجبة «تبولة البرغل والخضار» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "تبولة البرغل والخضار"
@@ -149,7 +148,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥗",
-    "imageUrl": resolveProtectedUrl('recipe-6'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/58f17f94-aa47-4b4a-873a-a1373acb396a.jpg",
     "description": "وجبة «سلطة الكينوا بالخيار والطماطم والفيتا» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "سلطة الكينوا بالخيار والطماطم والفيتا"
@@ -173,7 +172,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍤",
-    "imageUrl": resolveProtectedUrl('recipe-7'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/5cd1d372-55c6-4aa6-ab8b-57de4bf26ea5.jpg",
     "description": "وجبة «سلطة الجمبري والمعكرونة بالشبت» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "سلطة الجمبري والمعكرونة بالشبت"
@@ -197,7 +196,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥘",
-    "imageUrl": resolveProtectedUrl('recipe-8'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/6233536a-f72e-491d-951c-1b30a3a3fbfa.jpg",
     "description": "وجبة «صينية دجاج سريراتشا وخضار مع الكينوا» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "صينية دجاج سريراتشا وخضار مع الكينوا"
@@ -221,7 +220,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🌯",
-    "imageUrl": resolveProtectedUrl('recipe-9'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/6b95a9f7-d46b-4a74-ab20-248a8e7274b1.jpg",
     "description": "وجبة «شاورما أفخاذ الدجاج بالمقلاة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "شاورما أفخاذ الدجاج بالمقلاة"
@@ -245,7 +244,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-10'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/8c11236b-730d-4265-82ad-27ead6da8107.jpg",
     "description": "وجبة «دجاج الكركم مع الكسكس والخضار» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دجاج الكركم مع الكسكس والخضار"
@@ -269,7 +268,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍔",
-    "imageUrl": resolveProtectedUrl('recipe-11'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/9f514dce-4615-408e-aecc-ac44164dc233.jpg",
     "description": "وجبة «برغر الدجاج المسحب المدخن والبطاطا الحلوة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "برغر الدجاج المسحب المدخن والبطاطا الحلوة"
@@ -293,7 +292,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🌮",
-    "imageUrl": resolveProtectedUrl('recipe-12'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/c9ca49bb-5c3e-4bda-8ce7-5039bedb6616.jpg",
     "description": "وجبة «فاهيتا دجاج وخضار بتورتيلا كاملة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "فاهيتا دجاج وخضار بتورتيلا كاملة"
@@ -317,7 +316,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-13'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/cb519285-c2e3-463b-98a6-4f39c2601aa4.jpg",
     "description": "وجبة «شرائح صدر الدجاج تحت الشواية» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "شرائح صدر الدجاج تحت الشواية"
@@ -341,7 +340,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍛",
-    "imageUrl": resolveProtectedUrl('recipe-14'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/cd2ede6f-0128-4e48-b816-e79ee7fe06a1.jpg",
     "description": "وجبة «كاري الدجاج بالكاجو والزبادي» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كاري الدجاج بالكاجو والزبادي"
@@ -365,7 +364,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥗",
-    "imageUrl": resolveProtectedUrl('recipe-15'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/d728d86f-a5c5-4bab-b6ba-87c9a940a058.jpg",
     "description": "وجبة «سلطة التونة والفاصوليا البيضاء» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "سلطة التونة والفاصوليا البيضاء"
@@ -389,7 +388,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥗",
-    "imageUrl": resolveProtectedUrl('recipe-16'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/da2e69f8-ff06-446d-a03a-1f712adb5335.jpg",
     "description": "وجبة «سلطة شاورما الدجاج بالطحينة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "سلطة شاورما الدجاج بالطحينة"
@@ -413,7 +412,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-17'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_bwt189bwt189bwt1.jpg",
     "description": "وجبة «دجاج الليمون والطحينة مع الفاصوليا» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دجاج الليمون والطحينة مع الفاصوليا"
@@ -437,7 +436,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🧁",
-    "imageUrl": resolveProtectedUrl('recipe-18'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_ggwcepggwcepggwc.jpg",
     "description": "وجبة «مافن البروتين بالليمون والخشخاش» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "مافن البروتين بالليمون والخشخاش"
@@ -461,7 +460,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍕",
-    "imageUrl": resolveProtectedUrl('recipe-19'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_la2pnwla2pnwla2p%20%281%29.jpg",
     "description": "وجبة «بيتزا صغيرة بالسبانخ والريكوتا والبيض» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بيتزا صغيرة بالسبانخ والريكوتا والبيض"
@@ -485,7 +484,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍧",
-    "imageUrl": resolveProtectedUrl('recipe-20'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_la2pnwla2pnwla2p%20%282%29.jpg",
     "description": "وجبة «بودينغ الشيا بحليب اللوز والعسل» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بودينغ الشيا بحليب اللوز والعسل"
@@ -509,7 +508,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍪",
-    "imageUrl": resolveProtectedUrl('recipe-21'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_la2pnwla2pnwla2p%20%283%29.jpg",
     "description": "وجبة «كوكيز البروتين والموز والشوفان» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كوكيز البروتين والموز والشوفان"
@@ -533,7 +532,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥞",
-    "imageUrl": resolveProtectedUrl('recipe-22'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_la2pnwla2pnwla2p.jpg",
     "description": "وجبة «بان كيك الموز بثلاثة مكونات» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بان كيك الموز بثلاثة مكونات"
@@ -557,7 +556,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍞",
-    "imageUrl": resolveProtectedUrl('recipe-23'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_yto4e3yto4e3yto4.jpg",
     "description": "وجبة «خبز الشوفان والجبنة القريش» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "خبز الشوفان والجبنة القريش"
@@ -581,7 +580,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-24'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/Gemini_Generated_Image_n77rsfn77rsfn77r.jpg",
     "description": "وجبة «دجاج بالبقسماط والفاصوليا والثوم والبروكلي» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دجاج بالبقسماط والفاصوليا والثوم والبروكلي"
@@ -605,7 +604,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥞",
-    "imageUrl": resolveProtectedUrl('recipe-25'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_16%20PM-1.png",
     "description": "وجبة «بان كيك Whey بالماء» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بان كيك Whey بالماء"
@@ -629,7 +628,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍫",
-    "imageUrl": resolveProtectedUrl('recipe-26'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_17%20PM-2.png",
     "description": "وجبة «براوني/حلى بروتين بالمقلاة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "براوني/حلى بروتين بالمقلاة"
@@ -653,7 +652,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🧁",
-    "imageUrl": resolveProtectedUrl('recipe-27'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_18%20PM-3.png",
     "description": "وجبة «براوني كيتو طري» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "براوني كيتو طري"
@@ -677,7 +676,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍪",
-    "imageUrl": resolveProtectedUrl('recipe-28'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_18%20PM-4.png",
     "description": "وجبة «كوكيز كيتو» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كوكيز كيتو"
@@ -701,7 +700,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍨",
-    "imageUrl": resolveProtectedUrl('recipe-29'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_19%20PM-5.png",
     "description": "وجبة «بوظة البروتين الأصلية» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بوظة البروتين الأصلية"
@@ -725,7 +724,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍦",
-    "imageUrl": resolveProtectedUrl('recipe-30'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_21%20PM-6.png",
     "description": "وجبة «بوظة البروتين المفضلة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بوظة البروتين المفضلة"
@@ -749,7 +748,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍨",
-    "imageUrl": resolveProtectedUrl('recipe-31'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_22%20PM-7.png",
     "description": "وجبة «بوظة البروتين 50غ تفورك» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بوظة البروتين 50غ تفورك"
@@ -773,7 +772,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍦",
-    "imageUrl": resolveProtectedUrl('recipe-32'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_23%20PM-8.png",
     "description": "وجبة «بوظة البروتين مع Xanthan» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بوظة البروتين مع Xanthan"
@@ -797,7 +796,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍫",
-    "imageUrl": resolveProtectedUrl('recipe-33'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_25%20PM-9.png",
     "description": "وجبة «كريم نوتيلا كيتو بزبدة الفول السوداني» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كريم نوتيلا كيتو بزبدة الفول السوداني"
@@ -821,7 +820,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥜",
-    "imageUrl": resolveProtectedUrl('recipe-34'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_10%20PM-1.png",
     "description": "وجبة «كريمة بروتين بزبدة الفول السوداني» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كريمة بروتين بزبدة الفول السوداني"
@@ -845,7 +844,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍮",
-    "imageUrl": resolveProtectedUrl('recipe-35'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_11%20PM-2.png",
     "description": "وجبة «موس شوكولاتة وزبدة فول سوداني» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "موس شوكولاتة وزبدة فول سوداني"
@@ -869,7 +868,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🎂",
-    "imageUrl": resolveProtectedUrl('recipe-36'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_13%20PM-3.png",
     "description": "وجبة «توبينغ كيكة عيد الميلاد بدون زبدة فول سوداني» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "توبينغ كيكة عيد الميلاد بدون زبدة فول سوداني"
@@ -893,7 +892,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🎂",
-    "imageUrl": resolveProtectedUrl('recipe-37'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_14%20PM-4.png",
     "description": "وجبة «توبينغ كيكة عيد الميلاد بزبدة فول سوداني» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "توبينغ كيكة عيد الميلاد بزبدة فول سوداني"
@@ -917,7 +916,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍞",
-    "imageUrl": resolveProtectedUrl('recipe-38'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_16%20PM-5.png",
     "description": "وجبة «خبز التونة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "خبز التونة"
@@ -941,7 +940,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍞",
-    "imageUrl": resolveProtectedUrl('recipe-39'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_18%20PM-6.png",
     "description": "وجبة «خبز بياض البيض» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "خبز بياض البيض"
@@ -965,7 +964,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍞",
-    "imageUrl": resolveProtectedUrl('recipe-40'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_19%20PM-7.png",
     "description": "وجبة «خبز بياض البيض والموزاريلا» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "خبز بياض البيض والموزاريلا"
@@ -989,7 +988,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍞",
-    "imageUrl": resolveProtectedUrl('recipe-41'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_21%20PM-8.png",
     "description": "وجبة «خبز كيتو بالجبنة الكريمية» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "خبز كيتو بالجبنة الكريمية"
@@ -1013,7 +1012,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍞",
-    "imageUrl": resolveProtectedUrl('recipe-42'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_22%20PM-9.png",
     "description": "وجبة «خبز كيتو بالدجاج والبيض» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "خبز كيتو بالدجاج والبيض"
@@ -1037,7 +1036,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥪",
-    "imageUrl": resolveProtectedUrl('recipe-43'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_17_24%20PM-10.png",
     "description": "وجبة «نسخة المدرسة بالدجاج والبيض» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "نسخة المدرسة بالدجاج والبيض"
@@ -1061,7 +1060,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍩",
-    "imageUrl": resolveProtectedUrl('recipe-44'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_35%20PM-1.png",
     "description": "وجبة «دونات بروتين شوكولاتة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دونات بروتين شوكولاتة"
@@ -1085,7 +1084,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍩",
-    "imageUrl": resolveProtectedUrl('recipe-45'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_36%20PM-2.png",
     "description": "وجبة «دونات بروتين – 3 حبات» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دونات بروتين – 3 حبات"
@@ -1109,7 +1108,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍩",
-    "imageUrl": resolveProtectedUrl('recipe-46'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_38%20PM-3.png",
     "description": "وجبة «دونات كيتو بروتين» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دونات كيتو بروتين"
@@ -1133,7 +1132,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥪",
-    "imageUrl": resolveProtectedUrl('recipe-47'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_39%20PM-4.png",
     "description": "وجبة «ساندويتش خبز التونة للمدرسة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "ساندويتش خبز التونة للمدرسة"
@@ -1157,7 +1156,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍢",
-    "imageUrl": resolveProtectedUrl('recipe-48'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_41%20PM-5.png",
     "description": "وجبة «كفتة وتفورك كوجبة خفيفة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كفتة وتفورك كوجبة خفيفة"
@@ -1181,7 +1180,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍫",
-    "imageUrl": resolveProtectedUrl('recipe-49'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_42%20PM-6.png",
     "description": "وجبة «فادج بروتين بالشوكولاتة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "فادج بروتين بالشوكولاتة"
@@ -1205,7 +1204,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥜",
-    "imageUrl": resolveProtectedUrl('recipe-50'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_44%20PM-7.png",
     "description": "وجبة «Reese’s كيتو» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "Reese’s كيتو"
@@ -1229,7 +1228,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍮",
-    "imageUrl": resolveProtectedUrl('recipe-51'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_46%20PM-8.png",
     "description": "وجبة «حلى الجيلاتين والطحينة مع 20غ زبدة فول سوداني» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "حلى الجيلاتين والطحينة مع 20غ زبدة فول سوداني"
@@ -1253,7 +1252,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍮",
-    "imageUrl": resolveProtectedUrl('recipe-52'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_48%20PM-9.png",
     "description": "وجبة «حلى الجيلاتين والطحينة مع 25غ زبدة فول سوداني» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "حلى الجيلاتين والطحينة مع 25غ زبدة فول سوداني"
@@ -1277,7 +1276,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥥",
-    "imageUrl": resolveProtectedUrl('recipe-53'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_49%20PM-10.png",
     "description": "وجبة «كرات طاقة كيتو» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كرات طاقة كيتو"
@@ -1301,7 +1300,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "☕",
-    "imageUrl": resolveProtectedUrl('recipe-54'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_03%20PM-1.png",
     "description": "وجبة «Mug Cake كيتو شوكولاتة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "Mug Cake كيتو شوكولاتة"
@@ -1325,7 +1324,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "☕",
-    "imageUrl": resolveProtectedUrl('recipe-55'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_04%20PM-2.png",
     "description": "وجبة «Mug Cake كيتو فانيلا» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "Mug Cake كيتو فانيلا"
@@ -1349,7 +1348,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥥",
-    "imageUrl": resolveProtectedUrl('recipe-56'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_06%20PM-3.png",
     "description": "وجبة «حلى بياض البيض وجوز الهند» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "حلى بياض البيض وجوز الهند"
@@ -1373,7 +1372,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍫",
-    "imageUrl": resolveProtectedUrl('recipe-57'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_07%20PM-4.png",
     "description": "وجبة «سناك شوكولاتة بروتين» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "سناك شوكولاتة بروتين"
@@ -1397,7 +1396,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍰",
-    "imageUrl": resolveProtectedUrl('recipe-58'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_08%20PM-5.png",
     "description": "وجبة «كيكة SynPro السريعة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة SynPro السريعة"
@@ -1421,7 +1420,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥤",
-    "imageUrl": resolveProtectedUrl('recipe-59'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_10%20PM-6.png",
     "description": "وجبة «كيكة أو سلاشي بروتين بالشوكولاتة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة أو سلاشي بروتين بالشوكولاتة"
@@ -1445,7 +1444,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍰",
-    "imageUrl": resolveProtectedUrl('recipe-60'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_11%20PM-7.png",
     "description": "وجبة «كيكة البروتين بالتفورك» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة البروتين بالتفورك"
@@ -1469,7 +1468,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🎂",
-    "imageUrl": resolveProtectedUrl('recipe-61'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_13%20PM-8.png",
     "description": "وجبة «كيكة الشوكولاتة المنفذة فعليًا» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة الشوكولاتة المنفذة فعليًا"
@@ -1493,7 +1492,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍰",
-    "imageUrl": resolveProtectedUrl('recipe-62'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_14%20PM-9.png",
     "description": "وجبة «كيكة بروتين بالشوكولاتة والجوز» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة بروتين بالشوكولاتة والجوز"
@@ -1517,7 +1516,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍰",
-    "imageUrl": resolveProtectedUrl('recipe-63'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_15%20PM-10.png",
     "description": "وجبة «كيكة بروتين ببياض البيض» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة بروتين ببياض البيض"
@@ -1541,7 +1540,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍫",
-    "imageUrl": resolveProtectedUrl('recipe-64'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_32%20PM-1.png",
     "description": "وجبة «كيكة شوكولاتة بروتين بالطحينة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة شوكولاتة بروتين بالطحينة"
@@ -1565,7 +1564,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍰",
-    "imageUrl": resolveProtectedUrl('recipe-65'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_33%20PM-2.png",
     "description": "وجبة «كيكة شوكولاتة بروتين – 40غ Whey» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة شوكولاتة بروتين – 40غ Whey"
@@ -1589,7 +1588,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🎂",
-    "imageUrl": resolveProtectedUrl('recipe-66'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_34%20PM-3.png",
     "description": "وجبة «كيكة عيد الميلاد الكيتو – القاعدة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "كيكة عيد الميلاد الكيتو – القاعدة"
@@ -1613,7 +1612,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-67'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_35%20PM-4.png",
     "description": "وجبة «دجاج وموزاريلا وآيسبرغ» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دجاج وموزاريلا وآيسبرغ"
@@ -1637,7 +1636,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-68'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_36%20PM-5.png",
     "description": "وجبة «دجاج وموزاريلا ولبنة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "دجاج وموزاريلا ولبنة"
@@ -1661,7 +1660,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-69'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_37%20PM-6.png",
     "description": "وجبة «وجبة دجاج وبيض وموزاريلا – 190غ» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "وجبة دجاج وبيض وموزاريلا – 190غ"
@@ -1685,7 +1684,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🍗",
-    "imageUrl": resolveProtectedUrl('recipe-70'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_38%20PM-7.png",
     "description": "وجبة «وجبة دجاج وبيض وموزاريلا – 200غ» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "وجبة دجاج وبيض وموزاريلا – 200غ"
@@ -1709,7 +1708,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🌯",
-    "imageUrl": resolveProtectedUrl('recipe-71'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_39%20PM-8.png",
     "description": "وجبة «وجبة كيتو شاورما دجاج وخضار» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "وجبة كيتو شاورما دجاج وخضار"
@@ -1733,7 +1732,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥞",
-    "imageUrl": resolveProtectedUrl('recipe-72'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_40%20PM-9.png",
     "description": "وجبة «بان كيك الشوفان بالقرفة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بان كيك الشوفان بالقرفة"
@@ -1757,7 +1756,7 @@ export const RECIPES_DATA = [
     "difficulty": "سهل",
     "servings": "1 حصة",
     "image": "🥞",
-    "imageUrl": resolveProtectedUrl('recipe-73'),
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_50_41%20PM-10.png",
     "description": "وجبة «بان كيك الشوفان والقمح الكامل» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
     "ingredients": [
       "بان كيك الشوفان والقمح الكامل"
