@@ -88,7 +88,7 @@ export function initCrossTabActionToastListener(getCurrentRoute) {
         details = (act.arguments?.names || [act.arguments?.name]).join(', ');
       }
 
-      if (targetRoute && targetRoute !== current && current !== 'neon-ai') {
+      if (targetRoute && targetRoute !== current) {
         showActionToast({
           module: moduleName,
           details,

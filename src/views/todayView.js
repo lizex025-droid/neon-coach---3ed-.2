@@ -603,11 +603,4 @@ export function bindTodayViewEvents() {
       }
     });
   });
-
-  // زر رسالة المدرب
-  const coachBanner = document.getElementById('coach-message-banner');
-  coachBanner?.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.location.hash = '#neon-ai';
-  });
 }

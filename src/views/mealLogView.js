@@ -88,9 +88,7 @@ export function renderMealLogView() {
         <h1 style="font-size: 1.3rem; font-weight: 900; color: #FFFFFF; margin: 0;">
           سجل الوجبات
         </h1>
-        <button id="meallog-chat-btn" class="btn-icon" aria-label="المحادثة" title="المساعد الذكي">
-
-        </button>
+        <div style="width: 36px;"></div>
       </div>
 
       <!-- بطاقة السعرات الكلية والمخصومة والمتبقية -->
@@ -349,7 +347,6 @@ function refreshMealLogView(focusIdx = null) {
 
 export function bindMealLogEvents() {
   const backBtn = document.getElementById('meallog-back-btn');
-  const chatBtn = document.getElementById('meallog-chat-btn');
   const micBtn = document.getElementById('meal-mic-btn');
   const photoInput = document.getElementById('meal-photo-upload');
   const textInput = document.getElementById('meal-quick-input');
@@ -363,11 +360,6 @@ export function bindMealLogEvents() {
   // زر الرجوع
   backBtn?.addEventListener('click', () => {
     window.location.hash = '#nutrition';
-  });
-
-  // زر المحادثة
-  chatBtn?.addEventListener('click', () => {
-    window.location.hash = '#neon-ai';
   });
 
   // زر حفظ كوجبة مفضلة

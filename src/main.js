@@ -12,7 +12,6 @@ import './styles/profileHub.css';
 import { Router } from './router/router.js';
 import { setupTrainingLoadingInterceptors } from './utils/splash.js';
 import { initNeonParticles } from './utils/particles.js';
-import { initGlobalVoiceTrigger } from './components/voice/voiceTriggerBtn.js';
 import { inject } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
 
@@ -37,8 +36,6 @@ function initApp() {
           if (typeof window.dismissNeonSplash === 'function') {
             window.dismissNeonSplash();
           }
-          // تفعيل زر الاستماع الصوتي العام لـ NEON ACTION AGENT
-          initGlobalVoiceTrigger();
         })
         .catch(err => {
           console.error('فشل تحميل الصفحة الأولى:', err);

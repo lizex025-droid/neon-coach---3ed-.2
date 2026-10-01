@@ -5,7 +5,6 @@
 
 import { renderHeader, bindHeaderEvents } from '../components/header.js';
 import { renderBottomNav } from '../components/navBar.js';
-import { renderAiDrawer, bindAiDrawerEvents } from '../components/aiDrawer.js';
 
 import { renderQuestionnaireView, bindQuestionnaireEvents } from '../views/questionnaireView.js';
 import { renderTodayView, bindTodayViewEvents } from '../views/todayView.js';
@@ -19,13 +18,11 @@ import { renderProgressReportView, bindProgressReportEvents } from '../views/pro
 import { renderCoachDashboardView, bindCoachDashboardEvents } from '../views/coachDashboardView.js';
 import { renderShoppingListView, bindShoppingListEvents } from '../views/shoppingListView.js';
 import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
-import { renderNeonAiView, bindNeonAiViewEvents } from '../views/neonAiView.js';
 
 import { store } from '../state/store.js';
 import { authService } from '../services/authService.js';
 import { syncService } from '../services/syncService.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
-import { updateVoiceTriggerVisibility } from '../components/voice/voiceTriggerBtn.js';
 
 export const ROUTES = {
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
@@ -33,7 +30,6 @@ export const ROUTES = {
   workout: { render: renderFortyDayWorkoutView, bind: bindFortyDayWorkoutEvents, showNav: true, showHeader: true },
   'workout-session': { render: renderWorkoutSessionView, bind: bindWorkoutSessionEvents, showNav: false, showHeader: false },
   nutrition: { render: renderNutritionView, bind: bindNutritionEvents, showNav: true, showHeader: true },
-  'neon-ai': { render: renderNeonAiView, bind: bindNeonAiViewEvents, showNav: true, showHeader: true },
   'meal-log': { render: renderMealLogView, bind: bindMealLogEvents, showNav: false, showHeader: true },
   'water-supps': { render: renderWaterSuppsView, bind: bindWaterSuppsEvents, showNav: true, showHeader: true },
   checkin: { render: renderWeeklyCheckinView, bind: bindWeeklyCheckinEvents, showNav: true, showHeader: true },
@@ -150,6 +146,11 @@ export class Router {
       return;
     }
 
+    if (routeKey === 'neon-ai') {
+      window.location.hash = hasCompletedOnboarding ? '#today' : '#questionnaire';
+      return;
+    }
+
     const defaultRoute = hasCompletedOnboarding ? 'today' : 'questionnaire';
     const effectiveKey = ROUTES[routeKey] ? routeKey : defaultRoute;
     const route = ROUTES[effectiveKey];
@@ -207,15 +208,12 @@ export class Router {
     if (route.showHeader) bindHeaderEvents();
     if (route.bind) this.cleanupView = route.bind();
 
-    // تحديث ظهور زر المايكروفون (يظهر فقط في تابة neon-ai)
-    updateVoiceTriggerVisibility(routeKey);
-
     this.scrollToTop();
   }
 
   refreshCurrentView() {
     // Keep the active command/card and drawer mounted while the store is refreshed.
-    if (this.currentRoute === 'neon-ai' || this.currentRoute === 'workout') return;
+    if (this.currentRoute === 'workout') return;
     // تنظيف أي نوافذ منبثقة ملحقة بـ body مباشرة قبل إعادة الرسم
     document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
 
@@ -226,7 +224,6 @@ export class Router {
       this.cleanupView = null;
       container.innerHTML = route.render();
       if (route.bind) this.cleanupView = route.bind();
-      updateVoiceTriggerVisibility(this.currentRoute);
     }
   }
 }
