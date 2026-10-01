@@ -30,6 +30,38 @@ const renderExerciseTitle = (title, englishFirst = false) => {
   return englishFirst ? `${englishPart}<span class="forty-title-slash">/</span>${arabicPart}` : `${arabicPart}<span class="forty-title-slash">/</span>${englishPart}`;
 };
 const hasCompletedSet = snapshot => (snapshot.session?.touchedExerciseIds || []).some(id => snapshot.trackers?.[id]?.sets?.some(set => set.done && (set.kg !== '' || set.reps !== '')));
+const exerciseImageCache = new Map();
+const MAX_WARM_EXERCISE_IMAGES = 12;
+
+function warmExerciseImage(url, priority = 'low') {
+  if (!url || typeof Image === 'undefined') return Promise.resolve(false);
+
+  const cached = exerciseImageCache.get(url);
+  if (cached) {
+    exerciseImageCache.delete(url);
+    exerciseImageCache.set(url, cached);
+    if (priority === 'high') cached.image.fetchPriority = 'high';
+    return cached.promise;
+  }
+
+  const image = new Image();
+  image.decoding = 'async';
+  image.fetchPriority = priority;
+  const promise = new Promise(resolve => {
+    image.onload = () => resolve(true);
+    image.onerror = () => {
+      exerciseImageCache.delete(url);
+      resolve(false);
+    };
+  });
+
+  exerciseImageCache.set(url, { image, promise });
+  while (exerciseImageCache.size > MAX_WARM_EXERCISE_IMAGES) {
+    exerciseImageCache.delete(exerciseImageCache.keys().next().value);
+  }
+  image.src = url;
+  return promise;
+}
 
 export function renderFortyDayWorkoutView() {
   const snapshot = fortyDayWorkoutService.getSnapshot();
@@ -119,7 +151,13 @@ export function renderFortyDayWorkoutView() {
           <div style="margin-bottom: 12px; padding: 0 40px 0 4px;">
             <h3 id="forty-image-title" style="margin: 0; font-size: 0.95rem; color: #fff; font-weight: 700;"></h3>
           </div>
-          <img id="forty-image-preview" alt="صورة التمرين" style="display: block; width: 100%; max-height: 75vh; object-fit: contain; border-radius: 14px; background: #000;">
+          <div class="exercise-image-stage is-loading" id="forty-image-stage" aria-live="polite">
+            <div class="exercise-image-load-state">
+              <span class="exercise-image-spinner" aria-hidden="true"></span>
+              <span id="forty-image-status">جاري تحميل صورة التمرين…</span>
+            </div>
+            <img id="forty-image-preview" alt="صورة التمرين" decoding="async">
+          </div>
         </div>
       </div>
       <div class="forty-modal" id="forty-detail-modal" aria-hidden="true"><div class="forty-modal-sheet" id="forty-detail-sheet"></div></div>
@@ -167,7 +205,7 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
           <button type="button" class="forty-quick-move-btn forty-move-down" data-action="quick-move-down" data-index="${exerciseIndex}" ${exerciseIndex === total - 1 ? 'disabled' : ''} aria-label="تأخير التمرين للأسفل">▼</button>
         </div>
         <div><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
-        <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" aria-label="عرض صورة التمرين">ⓘ</button>
+        <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" data-image-url="${escapeHtml(exercise.image || '')}" aria-label="عرض صورة التمرين">ⓘ</button>
       </div>
       <div class="forty-card-actions"><button type="button" data-action="history" data-index="${exerciseIndex}">history</button><button type="button" data-action="tune" data-index="${exerciseIndex}">tune</button></div>
       <div class="forty-sets" role="table" aria-label="جولات ${escapeHtml(exercise.title)}">
@@ -843,9 +881,12 @@ export function bindFortyDayWorkoutEvents() {
   let currentLibGroup = null;
   let currentLibSearch = '';
   let pendingSwitchContext = null;
+  let imageRequestId = 0;
+  let imagePreloadObserver = null;
 
   const openModal = modal => { modal?.classList.add('is-open'); modal?.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; };
   const closeModals = () => {
+    imageRequestId += 1;
     root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => {
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
@@ -864,6 +905,61 @@ export function bindFortyDayWorkoutEvents() {
         searchInput.selectionStart = searchInput.selectionEnd = searchInput.value.length;
       }
     }
+  };
+
+  const prepareVisibleExerciseImages = () => {
+    imagePreloadObserver?.disconnect();
+    imagePreloadObserver = null;
+    const buttons = Array.from(root.querySelectorAll('.forty-image-btn[data-image-url]'));
+    const warmButtonImage = button => warmExerciseImage(button.dataset.imageUrl, 'low');
+
+    if (typeof IntersectionObserver === 'undefined') {
+      buttons.slice(0, 2).forEach(warmButtonImage);
+      return;
+    }
+
+    imagePreloadObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        warmButtonImage(entry.target);
+        imagePreloadObserver?.unobserve(entry.target);
+      });
+    }, { rootMargin: '500px 0px' });
+    buttons.forEach(button => imagePreloadObserver.observe(button));
+  };
+
+  const showExerciseImage = async exercise => {
+    const preview = root.querySelector('#forty-image-preview');
+    const titleEl = root.querySelector('#forty-image-title');
+    const stage = root.querySelector('#forty-image-stage');
+    const status = root.querySelector('#forty-image-status');
+    if (!preview || !stage) return;
+
+    const requestId = ++imageRequestId;
+    const candidates = [...new Set([exercise?.image, exercise?.pageImage].filter(Boolean))];
+    preview.removeAttribute('src');
+    preview.alt = exercise?.title || 'صورة التمرين';
+    stage.classList.remove('is-ready', 'is-error');
+    stage.classList.add('is-loading');
+    if (titleEl) titleEl.textContent = exercise?.title || '';
+    if (status) status.textContent = 'جاري تحميل صورة التمرين…';
+    openModal(imageModal);
+
+    for (const url of candidates) {
+      const loaded = await warmExerciseImage(url, 'high');
+      if (requestId !== imageRequestId) return;
+      if (!loaded) continue;
+
+      preview.src = url;
+      stage.classList.remove('is-loading', 'is-error');
+      stage.classList.add('is-ready');
+      return;
+    }
+
+    if (requestId !== imageRequestId) return;
+    stage.classList.remove('is-loading', 'is-ready');
+    stage.classList.add('is-error');
+    if (status) status.textContent = 'تعذّر تحميل الصورة. حاول مرة أخرى.';
   };
 
   const updateSessionUI = () => {
@@ -942,6 +1038,7 @@ export function bindFortyDayWorkoutEvents() {
     if (dayContent) dayContent.innerHTML = renderDay(activeDay);
     root.querySelectorAll('[data-day]').forEach(button => button.classList.toggle('is-active', button.dataset.day === activeDay));
     updateSessionUI();
+    prepareVisibleExerciseImages();
   };
 
   if (dayContent) {
@@ -969,6 +1066,14 @@ export function bindFortyDayWorkoutEvents() {
     );
     updateSessionUI();
   });
+
+  const onImageIntent = event => {
+    const button = event.target.closest?.('.forty-image-btn[data-image-url]');
+    if (button) warmExerciseImage(button.dataset.imageUrl, 'high');
+  };
+  root.addEventListener('pointerover', onImageIntent, { passive: true });
+  root.addEventListener('pointerdown', onImageIntent, { passive: true });
+  root.addEventListener('focusin', onImageIntent);
 
   root.addEventListener('click', async event => {
     // 1. النقر على كارت عضلة في مكتبة التمارين
@@ -1170,14 +1275,7 @@ export function bindFortyDayWorkoutEvents() {
     }
     if (button.dataset.action === 'image') {
       const exercise = fortyDayWorkoutService.getDay(activeDay).exercises[index];
-      const preview = document.getElementById('forty-image-preview');
-      const titleEl = document.getElementById('forty-image-title');
-      if (titleEl) titleEl.textContent = exercise.title;
-      if (preview) {
-        preview.src = exercise.image;
-        preview.alt = exercise.title;
-      }
-      openModal(imageModal);
+      showExerciseImage(exercise);
       return;
     }
     if (button.dataset.action === 'history') {
@@ -1261,8 +1359,13 @@ export function bindFortyDayWorkoutEvents() {
   window.addEventListener('scroll', onScroll, { passive: true });
   return () => {
     clearInterval(timerInterval);
+    imageRequestId += 1;
+    imagePreloadObserver?.disconnect();
     document.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('scroll', onScroll);
+    root.removeEventListener('pointerover', onImageIntent);
+    root.removeEventListener('pointerdown', onImageIntent);
+    root.removeEventListener('focusin', onImageIntent);
     document.body.style.overflow = '';
   };
 }
