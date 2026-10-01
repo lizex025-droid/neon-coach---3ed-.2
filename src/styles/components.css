@@ -3149,3 +3149,30 @@ a:hover .neon-icon,
     font-weight: 700;
   }
 }
+
+/* ----------------------------------------------------
+   Recipes View (شاشة الوصفات الرياضية)
+---------------------------------------------------- */
+.recipes-category-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.recipes-category-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.recipe-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.recipe-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(85, 247, 165, 0.45) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4), 0 0 20px rgba(85, 247, 165, 0.15) !important;
+}
+
+.recipe-ingredient-item:hover {
+  background: rgba(85, 247, 165, 0.08) !important;
+  border-color: rgba(85, 247, 165, 0.35) !important;
+}
+

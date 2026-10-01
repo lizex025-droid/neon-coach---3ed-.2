@@ -203,12 +203,17 @@ export function renderProgressReportView() {
 
       <!-- عنوان التقرير وفلتر الفترة وزر تسجيل القياس -->
       <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
-        <div>
-          <h1 style="font-size: 1.8rem; font-weight: 900; color: #FFFFFF; margin: 0;">
-            تقرير التقدم
-          </h1>
-          <div style="font-size: 0.8rem; color: #8C9992; margin-top: 2px;">
-            تتبع تطور الوزن، محيط الخصر، مؤشرات القوة، وتاريخ التمارين
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="#profile" class="btn-icon no-print" title="الرجوع إلى حسابي" style="display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 12px; background: rgba(85,247,165,0.08); border: 1px solid rgba(85,247,165,0.25); color: #55F7A5; text-decoration: none; font-size: 1.15rem; cursor: pointer; transition: all 0.2s ease;">
+            ❯
+          </a>
+          <div>
+            <h1 style="font-size: 1.8rem; font-weight: 900; color: #FFFFFF; margin: 0;">
+              تقرير التقدم
+            </h1>
+            <div style="font-size: 0.8rem; color: #8C9992; margin-top: 2px;">
+              تتبع تطور الوزن، محيط الخصر، مؤشرات القوة، وتاريخ التمارين
+            </div>
           </div>
         </div>
 

@@ -15,6 +15,7 @@ import { renderMealLogView, bindMealLogEvents } from '../views/mealLogView.js';
 import { renderWaterSuppsView, bindWaterSuppsEvents } from '../views/waterSuppsView.js';
 import { renderWeeklyCheckinView, bindWeeklyCheckinEvents } from '../views/weeklyCheckinView.js';
 import { renderProgressReportView, bindProgressReportEvents } from '../views/progressReportView.js';
+import { renderRecipesView, bindRecipesEvents } from '../views/recipesView.js';
 import { renderCoachDashboardView, bindCoachDashboardEvents } from '../views/coachDashboardView.js';
 import { renderShoppingListView, bindShoppingListEvents } from '../views/shoppingListView.js';
 import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
@@ -33,6 +34,7 @@ export const ROUTES = {
   'meal-log': { render: renderMealLogView, bind: bindMealLogEvents, showNav: false, showHeader: true },
   'water-supps': { render: renderWaterSuppsView, bind: bindWaterSuppsEvents, showNav: true, showHeader: true },
   checkin: { render: renderWeeklyCheckinView, bind: bindWeeklyCheckinEvents, showNav: true, showHeader: true },
+  recipes: { render: renderRecipesView, bind: bindRecipesEvents, showNav: true, showHeader: true },
   progress: { render: renderProgressReportView, bind: bindProgressReportEvents, showNav: true, showHeader: true },
   coach: { render: renderCoachDashboardView, bind: bindCoachDashboardEvents, showNav: true, showHeader: true },
   'shopping-list': { render: renderShoppingListView, bind: bindShoppingListEvents, showNav: true, showHeader: true },

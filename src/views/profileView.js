@@ -125,6 +125,15 @@ function renderMainHub(profile, state) {
             </div>
             <div class="settings-item-arrow">←</div>
           </button>
+
+          <button type="button" class="settings-item" id="btn-profile-progress" onclick="window.location.hash='#progress'">
+            <div class="settings-item-icon">📈</div>
+            <div class="settings-item-content">
+              <div class="settings-item-title">التقدم والنتائج</div>
+              <div class="settings-item-subtitle">تتبع الوزن، محيط الخصر، فحص InBody، وتاريخ التمارين</div>
+            </div>
+            <div class="settings-item-arrow">←</div>
+          </button>
         </div>
       </div>
 
@@ -836,6 +845,12 @@ export function bindProfileEvents() {
         window.scrollTo?.({ top: 0, behavior: 'smooth' });
       }
     });
+  });
+
+  // زر التقدم والنتائج
+  document.getElementById('btn-profile-progress')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.hash = '#progress';
   });
 
   // زر تعديل مباشر من البطاقة
