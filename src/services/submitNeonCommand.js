@@ -38,7 +38,7 @@ export function submitNeonCommand(request) {
     if (!command.restore) sessionStorage.setItem(pendingKey, JSON.stringify(command));
     let response;
     try {
-      response = await fetch('/api/action-agent', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify(command), signal: AbortSignal.timeout(55000) });
+      response = await fetch('/api/action-agent', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify(command), signal: AbortSignal.timeout(command.restore ? 3500 : 55000) });
     } catch { throw new Error('تعذر الوصول إلى الخادم. لم يتم تأكيد الحفظ. استخدم إعادة المحاولة لنفس الطلب.'); }
     let result; try { result = await response.json(); } catch { throw new Error('استجابة الخادم غير صالحة. لم يتم تأكيد الحفظ.'); }
     if (!['success', 'clarification', 'partial', 'error', 'pending_sync'].includes(result.status)) throw new Error('لم يؤكد الخادم نتيجة العملية.');

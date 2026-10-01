@@ -18,8 +18,14 @@ import { injectSpeedInsights } from '@vercel/speed-insights';
 inject({ mode: import.meta.env.PROD ? 'production' : 'development' });
 injectSpeedInsights({ debug: import.meta.env.DEV });
 
-// تشغيل خلفية الجسيمات والنقاط الخضراء النيونية الطائرة
-initNeonParticles();
+// تشغيل خلفية الجسيمات والنقاط الخضراء النيونية بعد تجهيز الشاشة الأولى
+if (typeof window !== 'undefined') {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => initNeonParticles(), { timeout: 1000 });
+  } else {
+    setTimeout(initNeonParticles, 60);
+  }
+}
 
 // تفعيل رصد أزرار التدريب لعرض شاشة التحميل فوراً
 setupTrainingLoadingInterceptors();
@@ -30,19 +36,12 @@ function initApp() {
   if (appElement) {
     try {
       const router = new Router(appElement);
-      router.init()
-        .then(() => {
-          // إخفاء شاشة التحميل الأولية الذكية بسلاسة فور جاهزية الواجهة الأولى
-          if (typeof window.dismissNeonSplash === 'function') {
-            window.dismissNeonSplash();
-          }
-        })
-        .catch(err => {
-          console.error('فشل تحميل الصفحة الأولى:', err);
-          if (typeof window.dismissNeonSplash === 'function') {
-            window.dismissNeonSplash();
-          }
-        });
+      router.init();
+
+      // إخفاء شاشة التحميل الأولية الذكية فوراً وبسلاسة فور جاهزية الواجهة الأولى
+      if (typeof window.dismissNeonSplash === 'function') {
+        window.dismissNeonSplash();
+      }
     } catch (err) {
       console.error('خطأ أثناء تهيئة التطبيق:', err);
       if (typeof window.dismissNeonSplash === 'function') {

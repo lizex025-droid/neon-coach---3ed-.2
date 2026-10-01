@@ -86,21 +86,37 @@ export class Router {
       this.refreshCurrentView();
     });
 
+    // إذا كانت الشاشة الحالية هي شاشة الاستبيان وتم تأكيد اكتماله من المزامنة المحلية/السحابية، التحويل فوراً لليوم
+    store.subscribe((state) => {
+      const profile = state?.userProfile;
+      const done = profile?.onboardingCompleted || profile?.onboarding_completed;
+      if (done && this.currentRoute === 'questionnaire') {
+        window.location.hash = '#today';
+      }
+    });
+
     // الاستماع لإجراءات العميل الصوتي وتنبيه المستخدم عند تعديل تابة أخرى
     initCrossTabActionToastListener(() => this.currentRoute);
   }
 
-  async init() {
-    await authService.whenAuthReady();
-    const effectiveUserId = authService.getEffectiveUserId?.();
-    if (effectiveUserId) {
-      try {
-        await syncService.loadUserData(effectiveUserId);
-      } catch (err) {
-        console.warn('Initial cloud sync error:', err);
-      }
-    }
+  init() {
+    // 1. فتح فوري بدون أي تأخير اعتماداً على البيانات المخزنة محلياً في الذاكرة (Offline-First / Cache-First)
     this.checkInitialAccess();
+
+    // 2. مزامنة البيانات السحابية في الخلفية دون تعطيل واجهة المستخدم أو إبطاء شاشة البداية
+    this.syncInBackground();
+  }
+
+  async syncInBackground() {
+    try {
+      await authService.whenAuthReady();
+      const effectiveUserId = authService.getEffectiveUserId?.();
+      if (effectiveUserId) {
+        await syncService.loadUserData(effectiveUserId);
+      }
+    } catch (err) {
+      console.warn('Background sync error:', err);
+    }
   }
 
   checkInitialAccess() {

@@ -19,7 +19,6 @@
     <!-- Google Fonts: Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 
     <!-- ستايلات شاشة التحميل الفورية والذكية (Splash Preloader) بثيم الـ 40 يوم والقطة والعداد الدائري -->
@@ -381,9 +380,9 @@
               splash.classList.add('splash-hide');
               setTimeout(function() {
                 if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
-              }, 180);
+              }, 160);
             }
-          }, 80);
+          }, 20);
         }
 
         // دالة إعلام جاهزية التطبيق القادمة من main.js - تختفي شاشة التحميل فور جاهزية التطبيق
@@ -396,7 +395,7 @@
           if (document.getElementById('neon-app-splash')) {
             triggerCompletionSequence();
           }
-        }, 2500);
+        }, 900);
       })();
     </script>
 
