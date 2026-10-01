@@ -8,7 +8,7 @@ export const TRAINING_RULES_VERSION = '2.0.0';
 export const SPLIT_SCHEDULES = Object.freeze({
   ppl: { label: 'Push Pull Legs', supportedDays: [3, 6] },
   anas: { label: 'نظام أنس', supportedDays: [5] },
-  hasm: { label: 'نظام الحسم', supportedDays: [4, 5, 6] }
+  hasm: { label: 'نظام الحسم', supportedDays: [1, 2, 3, 4, 5, 6] }
 });
 
 const SPLIT_DAYS = { ppl: FORTY_DAY_DAYS, anas: ANAS_DAYS, hasm: HASM_GROUPS };
@@ -71,11 +71,11 @@ function inferComplexity(exercise) {
 
 function equipmentKind(exercise) {
   const text = titleText(exercise);
+  if (/dumbbell|دمبل|دامبل/.test(text)) return 'dumbbells';
   if (/cable|machine|smith|leg press|pulldown|كابل|جهاز/.test(text)) return 'machines';
   if (/barbell|ez.?bar|بار/.test(text)) return 'barbell';
-  if (/dumbbell|دمبل/.test(text)) return 'dumbbells';
-  if (/band|حبل مقاومة/.test(text)) return 'bands';
-  if (/bodyweight|push.?up|plank|crunch|lunge/.test(text)) return 'bodyweight';
+  if (/band|حبل/.test(text)) return 'bands';
+  if (/bodyweight|push.?up|plank|crunch|lunge|عقلة|pull.?up/.test(text)) return 'bodyweight';
   return 'general';
 }
 
@@ -151,13 +151,16 @@ function chooseAlternative(base, input, usedIds) {
   const group = detectExerciseMuscleGroup(base) || 'abs';
   const movement = inferMovement(base);
   const candidates = ALL_LIBRARY_EXERCISES
-    .filter(item => item.groupKey === group && !usedIds.has(item.id) && isCompatible(item, input))
-    .sort((a, b) => {
-      const scoreA = (inferMovement(a) === movement ? 4 : 0) + (inferComplexity(a) === 'basic' ? 1 : 0);
-      const scoreB = (inferMovement(b) === movement ? 4 : 0) + (inferComplexity(b) === 'basic' ? 1 : 0);
-      return scoreB - scoreA;
-    });
-  return candidates[0] || null;
+    .filter(item => item.groupKey === group && isCompatible(item, input));
+  if (!candidates.length) return null;
+  const unused = candidates.filter(item => !usedIds.has(item.id));
+  const pool = unused.length ? unused : candidates;
+  const sorted = [...pool].sort((a, b) => {
+    const scoreA = (inferMovement(a) === movement ? 4 : 0) + (inferComplexity(a) === 'basic' ? 1 : 0);
+    const scoreB = (inferMovement(b) === movement ? 4 : 0) + (inferComplexity(b) === 'basic' ? 1 : 0);
+    return scoreB - scoreA;
+  });
+  return sorted[0] || null;
 }
 
 function dosage(exercise, input) {
@@ -179,10 +182,10 @@ function buildExercise(base, baseId, input, usedIds, warnings) {
   const blockedBy = input.constraints.filter(c => constraintDecision(base, c).excluded);
   if (incompatibleEquipment || blockedBy.length) {
     selected = chooseAlternative(base, input, usedIds);
-    if (!selected) return { blocker: `لا يوجد بديل متوافق في المكتبة لتمرين ${base.title}. يلزم اختيار معدات أو مراجعة القيد الصحي.` };
+    if (!selected) return { blocker: `لا يوجد بديل متوافق في المكتبة لتمرين ${base.title}. يلزم مراجعة القيد الصحي أو استشارة مختص قبل اعتماد التمرين.` };
     reason = incompatibleEquipment
-      ? 'بديل من المكتبة متوافق مع المعدات المتاحة'
-      : `بديل محافظ بسبب قيد ${blockedBy.map(c => REGION_LABELS[c.region]).join('، ')}`;
+      ? 'بديل من المكتبة متوافق مع المعدات المتاحة في خطتك'
+      : `عدّلنا هذا التمرين لأنك ذكرت أنه يسبب أثراً أو ألماً في ${blockedBy.map(c => REGION_LABELS[c.region] || c.region).join(' و')}.`;
     warnings.push(`${base.title}: تم استبداله بخيار محافظ؛ البديل ليس ضماناً طبياً للأمان.`);
   }
   const dose = dosage(selected, input);
@@ -207,7 +210,11 @@ function buildExercise(base, baseId, input, usedIds, warnings) {
     restSeconds: dose.restSeconds,
     rir: dose.rir,
     reason: dose.focused ? `${reason}، مع أولوية للمنطقة المختارة` : reason,
-    coachingNote: input.selectedLevel === 'beginner' ? 'ابدأ بوزن يسمح بتقنية ثابتة واترك 3 تكرارات احتياطية.' : 'زد الحمل تدريجياً فقط عند إكمال كل التكرارات بتقنية ثابتة.'
+    coachingNote: input.selectedLevel === 'beginner'
+      ? 'ابدأ بوزن خفيف وركّز على إتقان الحركة والتحكم (RIR 3).'
+      : input.selectedLevel === 'advanced'
+        ? 'تدرج بالأحمال بحذر مع الحفاظ على الأداء الصارم (RIR 1-2).'
+        : 'زد الحمل تدريجياً فقط عند إكمال كل التكرارات بتقنية ثابتة (RIR 2).'
   };
 }
 
@@ -236,11 +243,15 @@ export function generatePersonalizedTrainingDraft(rawInput = {}, options = {}) {
 
   const sourceDays = SPLIT_DAYS[input.splitKey] || HASM_GROUPS;
   const selectedDays = sourceDays.filter(day => day.exercises?.length).slice(0, input.workoutDaysCount);
-  const usedIds = new Set();
-  const days = selectedDays.map(day => {
+  const days = selectedDays.map((day, dayIndex) => {
     const dayBlockers = [];
     const exercises = [];
-    day.exercises.forEach((base, index) => {
+    const usedIds = new Set();
+    let baseList = day.exercises || [];
+    if (input.sessionDurationMin <= 40 && baseList.length > 4) {
+      baseList = baseList.slice(0, 4);
+    }
+    baseList.forEach((base, index) => {
       const built = buildExercise(base, baseExerciseId(input.splitKey, day.key, index), input, usedIds, warnings);
       if (built.blocker) dayBlockers.push(built.blocker);
       else exercises.push({ ...built, number: exercises.length + 1 });
@@ -248,12 +259,15 @@ export function generatePersonalizedTrainingDraft(rawInput = {}, options = {}) {
     blockers.push(...dayBlockers);
     const estimatedMinutes = 8 + exercises.reduce((sum, ex) => sum + ex.sets * (0.75 + ex.restSeconds / 60), 0) + exercises.length;
     if (estimatedMinutes > input.sessionDurationMin + 10) warnings.push(`${day.label}: الزمن التقديري ${Math.round(estimatedMinutes)} دقيقة، أطول من الوقت المختار. يمكن تقليل تمرين عزل بعد المعاينة.`);
+    const isBeginnerHighDays = input.selectedLevel === 'beginner' && dayIndex >= 4;
     return {
       key: day.key,
       short: day.short,
       label: day.label,
-      tone: day.tone,
-      warmup: '5–8 دقائق حركة عامة ثم مجموعتان تمهيديتان لأول تمرين أساسي.',
+      tone: isBeginnerHighDays ? 'استشفاء حركي ونشاط خفيف' : day.tone,
+      warmup: isBeginnerHighDays
+        ? '8 دقائق إحماء حركي مريح وإطالات ديناميكية للمفاصل لتفادي الإجهاد.'
+        : '5–8 دقائق حركة عامة وتهيئة المفاصل ثم مجموعتان تمهيديتان لأول تمرين أساسي.',
       estimatedMinutes: Math.round(estimatedMinutes),
       exercises
     };

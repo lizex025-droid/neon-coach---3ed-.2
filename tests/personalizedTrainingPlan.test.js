@@ -95,3 +95,163 @@ test('uses only real exercises with images and complete dosage metadata', () => 
     assert.ok(exercise.reason);
   }
 });
+
+test('acceptance: beginner 3 days without injuries produces conservative volume and RIR 3', () => {
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    trainingLevel: 'beginner',
+    workoutDaysCount: 3,
+    injuries: [],
+    injuryDetails: {}
+  }, { splitKey: 'hasm', requestId: 'beginner-3d' });
+
+  assert.equal(draft.canApprove, true);
+  assert.equal(draft.days.length, 3);
+  for (const day of draft.days) {
+    for (const ex of day.exercises) {
+      assert.equal(ex.sets, 2, 'Beginner should receive 2 sets per exercise');
+      assert.equal(ex.rir, 3, 'Beginner should have RIR 3 for conservative reserve');
+      assert.match(ex.coachingNote, /RIR 3/);
+    }
+  }
+});
+
+test('acceptance: intermediate 4 days with shoulder pain upon overhead pressing replaces trigger movement with clear reason', () => {
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    trainingLevel: 'intermediate',
+    workoutDaysCount: 4,
+    injuries: ['shoulder'],
+    injuryDetails: {
+      shoulder: {
+        status: 'ألم حالي',
+        side: 'right',
+        painSeverity: 6,
+        triggerMovements: 'overhead, press, كتف',
+        medicalBan: 'none'
+      }
+    }
+  }, { splitKey: 'hasm', requestId: 'intermediate-shoulder' });
+
+  assert.equal(draft.canApprove, true);
+  const allExercises = draft.days.flatMap(day => day.exercises);
+  const replaced = allExercises.filter(ex => ex.reason.includes('عدّلنا هذا التمرين لأنك ذكرت أنه يسبب أثراً أو ألماً في الكتف'));
+  assert.ok(replaced.length > 0, 'Should replace shoulder trigger exercises and provide Arabic explanation');
+  for (const ex of allExercises) {
+    assert.equal(ex.movementPattern === 'vertical_push', false, 'Overhead pressing must be excluded');
+  }
+});
+
+test('acceptance: advanced with concurrent knee and lower back constraints respects both simultaneously', () => {
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    trainingLevel: 'advanced',
+    workoutDaysCount: 4,
+    injuries: ['knee', 'lower_back'],
+    injuryDetails: {
+      knee: {
+        status: 'إصابة مشخصة',
+        painSeverity: 8,
+        triggerMovements: 'squat, ركبة',
+        worsening: true,
+        medicalBan: 'none'
+      },
+      lower_back: {
+        status: 'ألم حالي',
+        painSeverity: 8,
+        triggerMovements: 'deadlift, bent, ظهر',
+        worsening: true,
+        medicalBan: 'none'
+      }
+    }
+  }, { splitKey: 'hasm', requestId: 'adv-knee-back' });
+
+  const allExercises = draft.days.flatMap(day => day.exercises);
+  for (const ex of allExercises) {
+    assert.equal(ex.loadedRegions.includes('knee'), false, 'Knee should not be loaded');
+    assert.equal(ex.loadedRegions.includes('lower_back'), false, 'Lower back should not be loaded');
+  }
+});
+
+test('acceptance: home training with limited equipment excludes unavailable machines and cables', () => {
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    equipment: 'home',
+    availableEquipment: ['bodyweight', 'dumbbells', 'bands'],
+    workoutDaysCount: 4
+  }, { splitKey: 'hasm', requestId: 'home-limited' });
+
+  assert.equal(draft.canApprove, true);
+  const allExercises = draft.days.flatMap(day => day.exercises);
+  for (const ex of allExercises) {
+    assert.equal(['machines', 'cables'].includes(ex.equipment), false, `No machines/cables at home: ${ex.title}`);
+  }
+});
+
+test('acceptance: short session duration (30-40 min) caps exercises per day to fit time window', () => {
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    sessionDurationMin: 40,
+    workoutDaysCount: 3
+  }, { splitKey: 'hasm', requestId: 'short-session-40' });
+
+  assert.equal(draft.canApprove, true);
+  for (const day of draft.days) {
+    assert.ok(day.exercises.length <= 4, `Day ${day.key} should have at most 4 exercises for a 40 min session`);
+    assert.ok(day.estimatedMinutes <= 50, `Estimated minutes ${day.estimatedMinutes} should stay within bounds`);
+  }
+});
+
+test('acceptance: no compatible alternative in library produces blocker requiring professional evaluation', () => {
+  // If someone restricts all equipment to empty and bans all exercises
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    availableEquipment: ['non_existent_equipment_xyz'],
+    workoutDaysCount: 3
+  }, { splitKey: 'hasm', requestId: 'no-compatible-alt' });
+
+  assert.equal(draft.canApprove, false);
+  assert.ok(draft.blockers.some(b => b.includes('لا يوجد بديل متوافق في المكتبة')));
+});
+
+test('acceptance: duplicate clicks with same requestId are idempotent and prevent duplicate plans', async () => {
+  const { fortyDayWorkoutService } = await import('../src/services/fortyDayWorkoutService.js');
+  fortyDayWorkoutService.setActivePlan('hasm');
+
+  const draft = generatePersonalizedTrainingDraft(base, { splitKey: 'hasm', requestId: 'idempotent-req-001' });
+  const firstActivation = await fortyDayWorkoutService.activatePersonalizedPlan(draft, { requestId: 'idempotent-req-001' });
+  assert.equal(firstActivation.ok, true);
+  assert.equal(Boolean(firstActivation.idempotent), false);
+
+  // Repeated click
+  const secondActivation = await fortyDayWorkoutService.activatePersonalizedPlan(draft, { requestId: 'idempotent-req-001' });
+  assert.equal(secondActivation.ok, true);
+  assert.equal(secondActivation.idempotent, true);
+  assert.equal(secondActivation.versionId, firstActivation.versionId);
+});
+
+test('acceptance: plan is retained in service and reflected in getActivePlanVersion and getDay', async () => {
+  const { fortyDayWorkoutService } = await import('../src/services/fortyDayWorkoutService.js');
+  fortyDayWorkoutService.setActivePlan('hasm');
+
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    trainingLevel: 'intermediate',
+    workoutDaysCount: 4
+  }, { splitKey: 'hasm', requestId: 'refresh-persist-002' });
+
+  const activation = await fortyDayWorkoutService.activatePersonalizedPlan(draft, { requestId: 'refresh-persist-002' });
+  assert.equal(activation.ok, true);
+
+  const activeVersion = fortyDayWorkoutService.getActivePlanVersion('hasm');
+  assert.ok(activeVersion);
+  assert.equal(activeVersion.id, activation.versionId);
+  assert.equal(activeVersion.days.length, 4);
+
+  const firstDay = fortyDayWorkoutService.getDay(activeVersion.days[0].key, 'hasm');
+  assert.ok(firstDay);
+  assert.ok(firstDay.warmup);
+  assert.ok(firstDay.estimatedMinutes > 0);
+  assert.equal(firstDay.exercises.length, activeVersion.days[0].exercises.length);
+});
+

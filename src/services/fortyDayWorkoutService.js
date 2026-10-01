@@ -284,9 +284,11 @@ class FortyDayWorkoutService {
     if (requestId) state.activationRequests[requestId] = result;
     this.save();
 
-    const verified = readJson(STATE_KEY, null);
-    if (!verified?.planVersions?.some(item => item.id === versionId) || verified?.activePlanVersionBySystem?.[draft.splitKey] !== versionId) {
-      return { ok: false, code: 'verification_failed', errors: ['تعذر التحقق من حفظ نسخة الخطة محلياً. أعد المحاولة.'] };
+    if (typeof localStorage !== 'undefined') {
+      const verified = readJson(STATE_KEY, null);
+      if (!verified?.planVersions?.some(item => item.id === versionId) || verified?.activePlanVersionBySystem?.[draft.splitKey] !== versionId) {
+        return { ok: false, code: 'verification_failed', errors: ['تعذر التحقق من حفظ نسخة الخطة محلياً. أعد المحاولة.'] };
+      }
     }
     const user = store.getState()?.auth?.user;
     if (user?.id) {
@@ -360,11 +362,22 @@ class FortyDayWorkoutService {
     }
     if (!baseDay) return null;
 
+    const activeVersion = this.getActivePlanVersion(planKey);
+    const versionDay = activeVersion?.days?.find(d => d.key === dayKey);
     const custom = this.load().customExercises?.[dayKey];
     if (Array.isArray(custom) && custom.length > 0) {
       return {
         ...baseDay,
+        ...(versionDay ? { warmup: versionDay.warmup, estimatedMinutes: versionDay.estimatedMinutes, tone: versionDay.tone } : {}),
         exercises: custom
+      };
+    }
+    if (versionDay) {
+      return {
+        ...baseDay,
+        warmup: versionDay.warmup,
+        estimatedMinutes: versionDay.estimatedMinutes,
+        tone: versionDay.tone
       };
     }
     return baseDay;

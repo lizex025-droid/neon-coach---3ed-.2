@@ -26,7 +26,7 @@ import {
   calculateFatLossPlan,
   evaluateWeightLossTarget
 } from '../domain/calculations.js';
-import { generatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
+import { generatePersonalizedTrainingDraft, SPLIT_SCHEDULES } from '../domain/personalizedTrainingPlan.js';
 import { syncService } from '../services/syncService.js';
 import { authService } from '../services/authService.js';
 import { notificationService } from '../services/notificationService.js';
@@ -564,7 +564,14 @@ function renderInjuryDetailFields() {
     return `<section data-injury-region="${region}" style="border:1px solid rgba(85,247,165,.2);border-radius:14px;padding:14px;background:rgba(255,255,255,.02);">
       <strong style="color:#55F7A5;">تفاصيل ${INJURY_REGION_LABELS[region]}</strong>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px;">
-        <label style="color:#B8C0BC;font-size:.8rem;">الحالة أو التشخيص إن وُجد<input data-injury-field="status" value="${escapeAttr(detail.status)}" placeholder="مثال: ألم قديم / تشخيص الطبيب" style="margin-top:4px;"></label>
+        <label style="color:#B8C0BC;font-size:.8rem;">حالة المشكلة
+          <select data-injury-field="status" style="margin-top:4px;">
+            <option value="">اختر حالة المشكلة...</option>
+            <option value="إصابة قديمة بلا أعراض" ${detail.status === 'إصابة قديمة بلا أعراض' ? 'selected' : ''}>إصابة قديمة بلا أعراض</option>
+            <option value="ألم حالي" ${detail.status === 'ألم حالي' ? 'selected' : ''}>ألم حالي</option>
+            <option value="إصابة مشخصة" ${detail.status === 'إصابة مشخصة' ? 'selected' : ''}>إصابة مشخصة</option>
+          </select>
+        </label>
         <label style="color:#B8C0BC;font-size:.8rem;">الجهة<select data-injury-field="side" style="margin-top:4px;"><option value="unspecified">غير محدد</option><option value="right" ${detail.side === 'right' ? 'selected' : ''}>يمين</option><option value="left" ${detail.side === 'left' ? 'selected' : ''}>يسار</option><option value="both" ${detail.side === 'both' ? 'selected' : ''}>الجهتان</option></select></label>
         <label style="color:#B8C0BC;font-size:.8rem;">شدة الألم 0–10<input data-injury-field="painSeverity" type="number" min="0" max="10" value="${detail.painSeverity ?? 0}" style="margin-top:4px;"></label>
         <label style="color:#B8C0BC;font-size:.8rem;">المنع الطبي<select data-injury-field="medicalBan" style="margin-top:4px;"><option value="none">لا يوجد منع مسجل</option><option value="region" ${detail.medicalBan === 'region' ? 'selected' : ''}>منع تحميل المنطقة</option><option value="all" ${detail.medicalBan === 'all' ? 'selected' : ''}>منع التدريب كلياً</option></select></label>
@@ -1846,6 +1853,20 @@ export function bindQuestionnaireEvents() {
         }
       }
 
+      // التحقق عند شاشة الصحة: استكمال بيانات الإصابات إن وُجدت قبل المتابعة
+      if (stepKeyNow === STEP_KEYS.HEALTH) {
+        saveCurrentStepInputs();
+        const incomplete = (formData.injuries || []).filter(region => {
+          const detail = formData.injuryDetails?.[region];
+          return !detail?.status && !detail?.triggerMovements && (!detail?.painSeverity || detail.painSeverity === 0) && detail?.medicalBan === 'none';
+        });
+        if (incomplete.length > 0) {
+          const names = incomplete.map(r => INJURY_REGION_LABELS[r] || r).join('، ');
+          notificationService.showToast(`يرجى استكمال تفاصيل (${names}) قبل المتابعة لتخصيص خطتك بأمان ودقة`, 'warning');
+          return;
+        }
+      }
+
       saveCurrentStepInputs();
       if (currentStep < totalNow) {
         currentStep++;
@@ -1889,9 +1910,20 @@ export function bindQuestionnaireEvents() {
   // زر إنشاء الخطة النهائي
   createPlanBtn?.addEventListener('click', async () => {
     if (!approvedTrainingDraft) {
+      let activeSplit = fortyDayWorkoutService.getActivePlan();
+      const currentSchedule = SPLIT_SCHEDULES[activeSplit];
+      if (currentSchedule && !currentSchedule.supportedDays.includes(formData.workoutDaysCount)) {
+        if (SPLIT_SCHEDULES.hasm.supportedDays.includes(formData.workoutDaysCount)) {
+          activeSplit = 'hasm';
+          fortyDayWorkoutService.setActivePlan('hasm');
+        } else if (SPLIT_SCHEDULES.ppl.supportedDays.includes(formData.workoutDaysCount)) {
+          activeSplit = 'ppl';
+          fortyDayWorkoutService.setActivePlan('ppl');
+        }
+      }
       const draft = generatePersonalizedTrainingDraft(
         { ...formData, trainingGoal: formData.goal },
-        { splitKey: fortyDayWorkoutService.getActivePlan() }
+        { splitKey: activeSplit }
       );
       fortyDayWorkoutService.savePlanDraft(draft);
       showTrainingPlanPreview(draft, createPlanBtn);

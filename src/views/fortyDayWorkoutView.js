@@ -193,17 +193,37 @@ function renderDay(dayKey) {
   return `
     <header class="forty-day-header">
       <div><span>${escapeHtml(day.short)}</span><h2>${escapeHtml(day.label)}</h2></div>
-      <strong>${day.exercises.length} تمارين</strong>
+      <div style="text-align: left;">
+        <strong>${day.exercises.length} تمارين</strong>
+        ${day.estimatedMinutes ? `<div style="font-size:0.82rem;color:#55F7A5;margin-top:2px;font-weight:700;">≈ ${day.estimatedMinutes} دقيقة تدريب وإحماء</div>` : ''}
+      </div>
     </header>
+    ${day.tone ? `<div style="background:rgba(85,247,165,.08);border:1px solid rgba(85,247,165,.25);border-radius:12px;padding:8px 14px;margin-bottom:10px;font-size:0.83rem;color:#55F7A5;font-weight:700;">🎯 نمط الجلسة: ${escapeHtml(day.tone)}</div>` : ''}
+    ${day.warmup ? `<div style="background:rgba(255,255,255,.03);border:1px solid rgba(85,247,165,.2);border-radius:14px;padding:12px 14px;margin-bottom:14px;color:#D8E3DE;font-size:0.85rem;"><strong style="color:#55F7A5;display:block;margin-bottom:4px;">🔥 الإحماء وتهيئة المفاصل المقترحة:</strong>${escapeHtml(day.warmup)}</div>` : ''}
     <div class="forty-exercise-grid">
       ${day.exercises.map((exercise, index) => renderExerciseCard(day, exercise, index, trackers[index], day.exercises.length)).join('')}
     </div>
   `;
 }
 
+const WORKOUT_MUSCLE_LABELS = {
+  chest: 'الصدر',
+  back: 'الظهر',
+  legs: 'الأرجل',
+  shoulders: 'الأكتاف',
+  biceps: 'بايسبس',
+  triceps: 'ترايسبس',
+  abs: 'عضلات البطن والوسط',
+  glutes: 'المؤخرة والأرجل الخلفية',
+  calves: 'السمانة',
+  forearms: 'الساعدين',
+  cardio: 'لياقة وهوائي'
+};
+
 function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 0) {
   const completed = tracker && tracker.sets.length > 0 && tracker.sets.every(set => set.done);
   const total = totalCount || (day?.exercises?.length ?? 1);
+  const muscleBadge = WORKOUT_MUSCLE_LABELS[exercise.groupKey] || exercise.groupKey || '';
   return `
     <article class="forty-exercise-card ${completed ? 'is-completed' : ''}" data-exercise-card="${exerciseIndex}" data-index="${exerciseIndex}">
       <div class="forty-exercise-head">
@@ -212,7 +232,16 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
           <span class="forty-exercise-number forty-drag-handle">${exercise.number}</span>
           <button type="button" class="forty-quick-move-btn forty-move-down" data-action="quick-move-down" data-index="${exerciseIndex}" ${exerciseIndex === total - 1 ? 'disabled' : ''} aria-label="تأخير التمرين للأسفل">▼</button>
         </div>
-        <div class="forty-exercise-title-block"><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}${exercise.reason ? `<p><span>سبب الاختيار:</span> ${escapeHtml(exercise.reason)}</p>` : ''}${exercise.restSeconds != null ? `<p><span>الجرعة:</span> ${exercise.sets} مجموعات · ${escapeHtml(exercise.reps)} · راحة ${exercise.restSeconds}ث · RIR ${exercise.rir}</p>` : ''}</div>
+        <div class="forty-exercise-title-block">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+            <h3>${renderExerciseTitle(exercise.title)}</h3>
+            ${muscleBadge ? `<span class="badge" style="font-size:0.72rem;padding:2px 8px;border-radius:8px;background:rgba(85,247,165,.12);color:#55F7A5;border:1px solid rgba(85,247,165,.25);">${escapeHtml(muscleBadge)}</span>` : ''}
+          </div>
+          ${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}
+          ${exercise.reason ? `<p><span>سبب الاختيار:</span> ${escapeHtml(exercise.reason)}</p>` : ''}
+          ${exercise.restSeconds != null ? `<p><span>الجرعة المقترحة:</span> ${exercise.sets} مجموعات · ${escapeHtml(exercise.reps)} · راحة ${exercise.restSeconds}ث · RIR ${exercise.rir}</p>` : ''}
+          ${exercise.coachingNote ? `<p style="color:#55F7A5;font-size:0.8rem;margin-top:4px;"><span>💡 التدرج والتكنيك:</span> ${escapeHtml(exercise.coachingNote)}</p>` : ''}
+        </div>
         <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" data-image-url="${escapeHtml(exercise.image || '')}" aria-label="عرض صورة التمرين">ⓘ</button>
       </div>
       <div class="forty-card-actions"><button type="button" data-action="history" data-index="${exerciseIndex}">history</button><button type="button" data-action="tune" data-index="${exerciseIndex}">tune</button></div>
