@@ -161,13 +161,10 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
   return `
     <article class="forty-exercise-card ${completed ? 'is-completed' : ''}" data-exercise-card="${exerciseIndex}" data-index="${exerciseIndex}">
       <div class="forty-exercise-head">
-        <div class="forty-exercise-reorder-wrap">
-          <div class="forty-reorder-arrows">
-            <button type="button" class="forty-quick-move-btn" data-action="quick-move-up" data-index="${exerciseIndex}" title="تقديم التمرين للأعلى" ${exerciseIndex === 0 ? 'disabled' : ''} aria-label="تقديم التمرين للأعلى">▲</button>
-            <button type="button" class="forty-quick-move-btn" data-action="quick-move-down" data-index="${exerciseIndex}" title="تأخير التمرين للأسفل" ${exerciseIndex === total - 1 ? 'disabled' : ''} aria-label="تأخير التمرين للأسفل">▼</button>
-          </div>
-          <span class="forty-drag-handle" title="اضغط مطولاً واسحب للترتيب">⋮⋮</span>
-          <span class="forty-exercise-number">${exercise.number}</span>
+        <div class="forty-exercise-reorder-wrap" title="اضغط مطولاً واسحب للترتيب">
+          <button type="button" class="forty-quick-move-btn forty-move-up" data-action="quick-move-up" data-index="${exerciseIndex}" ${exerciseIndex === 0 ? 'disabled' : ''} aria-label="تقديم التمرين للأعلى">▲</button>
+          <span class="forty-exercise-number forty-drag-handle">${exercise.number}</span>
+          <button type="button" class="forty-quick-move-btn forty-move-down" data-action="quick-move-down" data-index="${exerciseIndex}" ${exerciseIndex === total - 1 ? 'disabled' : ''} aria-label="تأخير التمرين للأسفل">▼</button>
         </div>
         <div><h3>${renderExerciseTitle(exercise.title)}</h3>${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}</div>
         <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" aria-label="عرض صورة التمرين">ⓘ</button>
