@@ -5,7 +5,8 @@ import {
   ALL_LIBRARY_EXERCISES,
   getExerciseGroups,
   getExercisesByGroup,
-  searchExercises
+  searchExercises,
+  detectExerciseMuscleGroup
 } from '../data/exerciseLibrary.js';
 import '../styles/fortyDayWorkout.css';
 
@@ -119,6 +120,7 @@ export function renderFortyDayWorkoutView() {
       </div>
       <div class="forty-modal" id="forty-detail-modal" aria-hidden="true"><div class="forty-modal-sheet" id="forty-detail-sheet"></div></div>
       <div class="forty-modal" id="forty-library-modal" aria-hidden="true"><div class="forty-modal-sheet library-sheet" id="forty-library-sheet"></div></div>
+      <div class="forty-modal" id="forty-manage-modal" aria-hidden="true"><div class="forty-modal-sheet manage-sheet" id="forty-manage-sheet"></div></div>
       <div class="workout-summary-modal" id="forty-summary-modal" aria-hidden="true">
         <section class="workout-summary-sheet" role="dialog" aria-modal="true" aria-label="Workout summary">
           <div class="summary-top-actions">
@@ -178,12 +180,115 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
           </div>
         `).join('')}
       </div>
-      <div class="forty-tracker-actions"><button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button><button type="button" data-action="reset" data-index="${exerciseIndex}">Reset This Exercise</button></div>
+      <div class="forty-tracker-actions">
+        <button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button>
+        <button type="button" class="forty-manage-btn" data-action="manage" data-index="${exerciseIndex}" aria-label="إدارة التمرين">⚙ Manage Exercise</button>
+      </div>
     </article>
   `;
 }
 
-function renderLibrarySheet(activeGroupKey = null, searchQuery = '') {
+function renderManageExerciseSheet(dayKey, exerciseIndex) {
+  const day = fortyDayWorkoutService.getDay(dayKey);
+  const exercise = day?.exercises?.[exerciseIndex];
+  if (!exercise) return '';
+
+  return `
+    <div class="manage-sheet-head">
+      <div>
+        <span class="manage-sheet-tag">تمرين #${exerciseIndex + 1}</span>
+        <h3 class="manage-sheet-title">${escapeHtml(exercise.title)}</h3>
+      </div>
+      <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
+    </div>
+
+    <div class="manage-sheet-options">
+      <!-- 1. Reset Exercise -->
+      <button type="button" class="manage-option-card" data-manage-action="reset" data-index="${exerciseIndex}">
+        <div class="manage-option-icon icon-reset">↺</div>
+        <div class="manage-option-content">
+          <div class="manage-option-title-row">
+            <strong>إعادة ضبط التمرين</strong>
+            <span class="manage-option-badge badge-reset">Reset Exercise</span>
+          </div>
+          <p>مسح الأوزان والتكرارات المسجلة وإرجاع الجولات فارغة للجلسة الحالية دون حذف التمرين من الخطة.</p>
+        </div>
+      </button>
+
+      <!-- 2. Switch Exercise -->
+      <button type="button" class="manage-option-card" data-manage-action="switch" data-index="${exerciseIndex}">
+        <div class="manage-option-icon icon-switch">⇄</div>
+        <div class="manage-option-content">
+          <div class="manage-option-title-row">
+            <strong>تبديل التمرين</strong>
+            <span class="manage-option-badge badge-switch">Switch Exercise</span>
+          </div>
+          <p>استبدال هذا التمرين بآخر من مكتبة التمارين مع فتحه تلقائياً على نفس العضلة والحفاظ على مكانه في الجدول.</p>
+        </div>
+      </button>
+
+      <!-- 3. Delete Exercise -->
+      <button type="button" class="manage-option-card is-danger" data-manage-action="delete" data-index="${exerciseIndex}">
+        <div class="manage-option-icon icon-delete">🗑</div>
+        <div class="manage-option-content">
+          <div class="manage-option-title-row">
+            <strong style="color: #f87171;">حذف التمرين</strong>
+            <span class="manage-option-badge badge-delete">Delete Exercise</span>
+          </div>
+          <p>حذف التمرين نهائياً من خطة وجلسة اليوم مع إمكانية إضافته مجدداً من المكتبة بأي وقت.</p>
+        </div>
+      </button>
+    </div>
+  `;
+}
+
+function renderDeleteConfirmSheet(dayKey, exerciseIndex) {
+  const day = fortyDayWorkoutService.getDay(dayKey);
+  const exercise = day?.exercises?.[exerciseIndex];
+  if (!exercise) return '';
+
+  return `
+    <div class="manage-sheet-head">
+      <div>
+        <span class="manage-sheet-tag" style="color: #f87171;">تأكيد الحذف</span>
+        <h3 class="manage-sheet-title" style="color: #f87171;">حذف التمرين من خطة اليوم؟</h3>
+      </div>
+      <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
+    </div>
+
+    <div class="manage-confirm-body">
+      <div class="manage-confirm-box">
+        <p>هل أنت متأكد من حذف تمرين:</p>
+        <h4>${escapeHtml(exercise.title)}</h4>
+        <small>سيتم حذف التمرين وجولاته من جدول اليوم الحالي، ولن تفقد سجلك وتاريخك السابق لنفس التمرين.</small>
+      </div>
+
+      <div class="manage-confirm-actions">
+        <button type="button" class="btn btn-danger confirm-delete-btn" data-confirm-delete-index="${exerciseIndex}">
+          نعم، احذف التمرين
+        </button>
+        <button type="button" class="btn btn-secondary confirm-cancel-btn" data-manage-action="back-to-manage" data-index="${exerciseIndex}">
+          تراجع
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchContext = null) {
+  const switchBanner = switchContext && switchContext.sourceExercise ? `
+    <div class="library-switch-banner">
+      <div class="library-switch-meta">
+        <span class="library-switch-icon">🔄</span>
+        <div>
+          <div class="library-switch-label">تبديل تمرين #${switchContext.targetIndex + 1}</div>
+          <strong class="library-switch-title">${escapeHtml(switchContext.sourceExercise.title)}</strong>
+        </div>
+      </div>
+      <button type="button" class="btn-cancel-switch" data-lib-action="cancel-switch">إلغاء التبديل</button>
+    </div>
+  ` : '';
+
   // 1. عرض نتائج البحث النصي الحي
   if (searchQuery && searchQuery.trim()) {
     const results = searchExercises(searchQuery);
@@ -195,18 +300,20 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '') {
           </button>
           <div class="library-head-title">
             <h2>نتائج البحث (${results.length})</h2>
-            <p>اختر أي تمرين لإضافته إلى جدولك الحالي</p>
+            <p>${switchContext ? 'اختر التمرين البديل ليأخذ مكانه فوراً' : 'اختر أي تمرين لإضافته إلى جدولك الحالي'}</p>
           </div>
         </div>
         <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
       </div>
+
+      ${switchBanner}
 
       <div class="library-search-box">
         <input type="text" id="lib-search-input" value="${escapeHtml(searchQuery)}" placeholder="ابحث عن أي تمرين بالاسم..." class="library-search-input">
       </div>
 
       <div class="library-exercises-list">
-        ${results.length ? results.map(ex => renderLibraryExerciseItem(ex)).join('') : `
+        ${results.length ? results.map(ex => renderLibraryExerciseItem(ex, Boolean(switchContext))).join('') : `
           <div style="text-align: center; padding: 40px 10px; color: rgba(255,255,255,0.5);">
             لا توجد تمارين مطابقة لبحثك. جرب اسم عضلة أو تمرين آخر.
           </div>
@@ -228,14 +335,16 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '') {
           </button>
           <div class="library-head-title">
             <h2>${escapeHtml(group?.nameAr || 'التمارين')} (${exercises.length} تمرين)</h2>
-            <p>${escapeHtml(group?.description || 'اختر تمريناً لإضافته')}</p>
+            <p>${switchContext ? 'اختر التمرين البديل ليأخذ مكانه في الخطة' : escapeHtml(group?.description || 'اختر تمريناً لإضافته')}</p>
           </div>
         </div>
         <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
       </div>
 
+      ${switchBanner}
+
       <div class="library-exercises-list">
-        ${exercises.map(ex => renderLibraryExerciseItem(ex)).join('')}
+        ${exercises.map(ex => renderLibraryExerciseItem(ex, Boolean(switchContext))).join('')}
       </div>
     `;
   }
@@ -245,10 +354,12 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '') {
     <div class="library-head">
       <div class="library-head-title">
         <h2>مكتبة التمارين الشاملة وشروحاتها</h2>
-        <p>اختر العضلة لعرض كافة تمارينها وإضافتها لخطة تمرينك</p>
+        <p>${switchContext ? 'اختر العضلة لاستعراض التمارين البديلة' : 'اختر العضلة لعرض كافة تمارينها وإضافتها لخطة تمرينك'}</p>
       </div>
       <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
     </div>
+
+    ${switchBanner}
 
     <div class="library-search-box">
       <input type="text" id="lib-search-input" placeholder="ابحث بالاسم عن أي تمرين (مثال: بنش، سكوات، ديدليفت)..." class="library-search-input">
@@ -273,7 +384,7 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '') {
   `;
 }
 
-function renderLibraryExerciseItem(ex) {
+function renderLibraryExerciseItem(ex, isSwitchMode = false) {
   return `
     <div class="lib-exercise-item" data-lib-item-id="${ex.id}">
       <div class="lib-exercise-thumb">
@@ -284,8 +395,8 @@ function renderLibraryExerciseItem(ex) {
         <small>${escapeHtml(ex.nameEn)}</small>
         <p>معدة: ${escapeHtml(ex.equipment)} · ${ex.sets} جولات × ${ex.reps}</p>
       </div>
-      <button type="button" class="btn btn-primary lib-add-btn" data-lib-add-id="${ex.id}">
-        ＋ إضافة
+      <button type="button" class="btn ${isSwitchMode ? 'btn-switch' : 'btn-primary'} lib-add-btn" data-lib-add-id="${ex.id}">
+        ${isSwitchMode ? '⇄ اختيار كبديل' : '＋ إضافة'}
       </button>
     </div>
   `;
@@ -664,6 +775,8 @@ export function bindFortyDayWorkoutEvents() {
   const summaryModal = document.getElementById('forty-summary-modal');
   const libraryModal = document.getElementById('forty-library-modal');
   const librarySheet = document.getElementById('forty-library-sheet');
+  const manageModal = document.getElementById('forty-manage-modal');
+  const manageSheet = document.getElementById('forty-manage-sheet');
 
   let activePlan = fortyDayWorkoutService.getActivePlan();
   let days = fortyDayWorkoutService.getDays(activePlan);
@@ -675,15 +788,22 @@ export function bindFortyDayWorkoutEvents() {
   let latestSummary = null;
   let currentLibGroup = null;
   let currentLibSearch = '';
+  let pendingSwitchContext = null;
 
   const openModal = modal => { modal?.classList.add('is-open'); modal?.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; };
-  const closeModals = () => { root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }); document.body.style.overflow = ''; };
+  const closeModals = () => {
+    root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    });
+    document.body.style.overflow = '';
+  };
 
   const updateLibraryView = (groupKey = currentLibGroup, search = currentLibSearch) => {
     currentLibGroup = groupKey;
     currentLibSearch = search;
     if (librarySheet) {
-      librarySheet.innerHTML = renderLibrarySheet(groupKey, search);
+      librarySheet.innerHTML = renderLibrarySheet(groupKey, search, pendingSwitchContext);
       const searchInput = librarySheet.querySelector('#lib-search-input');
       if (searchInput && search) {
         searchInput.focus();
@@ -696,6 +816,7 @@ export function bindFortyDayWorkoutEvents() {
   if (openLibraryBtn) {
     openLibraryBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      pendingSwitchContext = null;
       currentLibGroup = null;
       currentLibSearch = '';
       updateLibraryView(null, '');
@@ -732,19 +853,35 @@ export function bindFortyDayWorkoutEvents() {
       return;
     }
 
-    // 3. زر إضافة تمرين من المكتبة إلى خطة تمرين اليوم
+    // زر إلغاء التبديل
+    if (event.target.closest('[data-lib-action="cancel-switch"]')) {
+      pendingSwitchContext = null;
+      updateLibraryView();
+      return;
+    }
+
+    // 3. زر إضافة أو استبدال تمرين من المكتبة إلى خطة تمرين اليوم
     const addLibBtn = event.target.closest('[data-lib-add-id]');
     if (addLibBtn) {
       const exId = addLibBtn.dataset.libAddId;
       const exercise = ALL_LIBRARY_EXERCISES.find(e => e.id === exId);
       if (exercise) {
-        fortyDayWorkoutService.addExerciseToDay(activeDay, exercise);
-        addLibBtn.textContent = '✓ تمّت الإضافة';
-        addLibBtn.style.background = '#22c55e';
-        addLibBtn.style.borderColor = '#22c55e';
-        addLibBtn.disabled = true;
-        renderActiveDay();
-        notificationService.showToast(`تمت إضافة "${exercise.nameAr}" إلى تمارين اليوم بنجاح `, 'success');
+        if (pendingSwitchContext && pendingSwitchContext.targetIndex >= 0) {
+          fortyDayWorkoutService.replaceExerciseInDay(activeDay, pendingSwitchContext.targetIndex, exercise);
+          const replacedName = exercise.nameAr || exercise.title;
+          pendingSwitchContext = null;
+          closeModals();
+          renderActiveDay();
+          notificationService.showToast(`تم استبدال التمرين بـ "${replacedName}" بنجاح ✓`, 'success');
+        } else {
+          fortyDayWorkoutService.addExerciseToDay(activeDay, exercise);
+          addLibBtn.textContent = '✓ تمّت الإضافة';
+          addLibBtn.style.background = '#22c55e';
+          addLibBtn.style.borderColor = '#22c55e';
+          addLibBtn.disabled = true;
+          renderActiveDay();
+          notificationService.showToast(`تمت إضافة "${exercise.nameAr}" إلى تمارين اليوم بنجاح `, 'success');
+        }
       }
       return;
     }
@@ -760,6 +897,7 @@ export function bindFortyDayWorkoutEvents() {
     const button = event.target.closest('button');
     if (!button) return;
     if (button.hasAttribute('data-close-modal') || (button.closest('.forty-modal') && button === event.target.closest('.forty-modal'))) {
+      pendingSwitchContext = null;
       closeModals();
       return;
     }
@@ -772,6 +910,64 @@ export function bindFortyDayWorkoutEvents() {
       bindFortyDayWorkoutEvents();
       const planName = targetPlan === 'anas' ? 'نظام أنس' : (targetPlan === 'hasm' ? 'نظام الحسم' : 'Push Pull Legs');
       notificationService.showToast(`تم التبديل إلى ${planName} بنجاح`, 'info');
+      return;
+    }
+
+    // إجراءات نافذة إدارة التمرين (Manage Exercise Actions)
+    if (button.dataset.action === 'manage') {
+      const idx = Number(button.dataset.index);
+      if (manageSheet) {
+        manageSheet.innerHTML = renderManageExerciseSheet(activeDay, idx);
+      }
+      openModal(manageModal);
+      return;
+    }
+    if (button.dataset.manageAction === 'reset') {
+      const idx = Number(button.dataset.index);
+      fortyDayWorkoutService.resetExercise(activeDay, idx);
+      closeModals();
+      renderActiveDay();
+      notificationService.showToast('تمت إعادة ضبط التمرين بنجاح ✓', 'success');
+      return;
+    }
+    if (button.dataset.manageAction === 'switch') {
+      const idx = Number(button.dataset.index);
+      const day = fortyDayWorkoutService.getDay(activeDay);
+      const exercise = day?.exercises?.[idx];
+      if (exercise) {
+        pendingSwitchContext = {
+          targetIndex: idx,
+          sourceExercise: exercise
+        };
+        const targetGroup = detectExerciseMuscleGroup(exercise, activeDay);
+        closeModals();
+        currentLibGroup = targetGroup;
+        currentLibSearch = '';
+        updateLibraryView(targetGroup, '');
+        openModal(libraryModal);
+      }
+      return;
+    }
+    if (button.dataset.manageAction === 'delete') {
+      const idx = Number(button.dataset.index);
+      if (manageSheet) {
+        manageSheet.innerHTML = renderDeleteConfirmSheet(activeDay, idx);
+      }
+      return;
+    }
+    if (button.dataset.manageAction === 'back-to-manage') {
+      const idx = Number(button.dataset.index);
+      if (manageSheet) {
+        manageSheet.innerHTML = renderManageExerciseSheet(activeDay, idx);
+      }
+      return;
+    }
+    if (button.hasAttribute('data-confirm-delete-index')) {
+      const idx = Number(button.dataset.confirmDeleteIndex);
+      fortyDayWorkoutService.deleteExerciseFromDay(activeDay, idx);
+      closeModals();
+      renderActiveDay();
+      notificationService.showToast('تم حذف التمرين من خطة اليوم بنجاح', 'info');
       return;
     }
 

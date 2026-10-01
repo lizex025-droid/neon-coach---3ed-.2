@@ -235,3 +235,52 @@ export function searchExercises(query) {
     ex.groupNameAr.toLowerCase().includes(q)
   );
 }
+
+/**
+ * كشف المجموعة العضلية لتمرين معين لفتح المكتبة مباشرة عليها عند التبديل
+ */
+export function detectExerciseMuscleGroup(exercise, dayKey = '') {
+  if (!exercise) return null;
+
+  // 1. إذا كان محدد مسبقاً
+  if (exercise.groupKey && EXERCISE_GROUPS.some(g => g.key === exercise.groupKey)) {
+    return exercise.groupKey;
+  }
+
+  const title = String(exercise.title || exercise.nameAr || exercise.nameEn || exercise.name || '').toLowerCase();
+
+  // 2. مطابقة بالاسم مع تمارين المكتبة
+  const foundInLib = ALL_LIBRARY_EXERCISES.find(ex =>
+    (ex.id && exercise.id && ex.id === exercise.id) ||
+    ex.nameAr.toLowerCase() === title ||
+    ex.nameEn.toLowerCase() === title ||
+    ex.title.toLowerCase() === title
+  );
+  if (foundInLib) {
+    return foundInLib.groupKey;
+  }
+
+  // 3. تحليل الكلمات المفتاحية في العنوان
+  if (/بنش|صدر|chest|bench|fly|pectoral|incline|decline|dip/i.test(title)) return 'chest';
+  if (/ظهر|سحب|مجنص|back|row|lat|pull\s*down|deadlift|pulldown/i.test(title)) return 'back';
+  if (/رجل|ارجل|أرجل|سكوات|فخذ|سمانة|بطات|leg|squat|quad|hamstring|calf|lunge/i.test(title) && !/chest|shoulder/i.test(title)) return 'legs';
+  if (/كتف|shoulder|overhead|military|lateral|deltoid|front raise|rear delt/i.test(title)) return 'shoulders';
+  if (/ساعد|سواعد|forearm|wrist/i.test(title)) return 'forearms';
+  if (/باي|biceps|curl|hammer|preacher/i.test(title)) return 'biceps';
+  if (/تراي|triceps|pushdown|skull|extension|french press/i.test(title)) return 'triceps';
+  if (/بطن|abs|abdominal|crunch|plank|core/i.test(title)) return 'abs';
+
+  // 4. استنتاج من مفتاح اليوم (dayKey) كـ fallback ذكي
+  const dk = String(dayKey || '').toLowerCase();
+  if (dk.includes('chest')) return 'chest';
+  if (dk.includes('back')) return 'back';
+  if (dk.includes('leg')) return 'legs';
+  if (dk.includes('shoulder')) return 'shoulders';
+  if (dk.includes('bicep')) return 'biceps';
+  if (dk.includes('tricep')) return 'triceps';
+  if (dk.includes('push')) return 'chest';
+  if (dk.includes('pull')) return 'back';
+
+  return null;
+}
+

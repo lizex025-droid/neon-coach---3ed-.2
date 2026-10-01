@@ -6,7 +6,8 @@ import {
   ALL_LIBRARY_EXERCISES,
   getExerciseGroups,
   getExercisesByGroup,
-  searchExercises
+  searchExercises,
+  detectExerciseMuscleGroup
 } from '../src/data/exerciseLibrary.js';
 
 import { fortyDayWorkoutService } from '../src/services/fortyDayWorkoutService.js';
@@ -135,4 +136,87 @@ test('fortyDayWorkoutService: quick move reorders exercises sequentially up and 
   const afterUp = fortyDayWorkoutService.getDay('chestBiceps').exercises.map(e => e.title);
   assert.deepEqual(afterUp, originalOrder);
 });
+
+test('detectExerciseMuscleGroup accurately resolves muscle groups', () => {
+  assert.equal(detectExerciseMuscleGroup({ title: 'Barbell Bench Press | بنش مستوي' }), 'chest');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Lat Pulldown | سحب ظهر واسع' }), 'back');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Barbell Squat | سكوات خلفي' }), 'legs');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Overhead Shoulder Press | ضغط كتف' }), 'shoulders');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Bicep Barbell Curl | تبادل باي' }), 'biceps');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Triceps Cable Pushdown | تراي كابل' }), 'triceps');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Ab Crunch Machine' }), 'abs');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Wrist Curl | ساعد' }), 'forearms');
+  assert.equal(detectExerciseMuscleGroup({ title: 'Random Unknown Exercise' }, 'chestBiceps'), 'chest');
+});
+
+test('fortyDayWorkoutService: resetExercise clears logged sets and reps while preserving exercise in plan', () => {
+  const dayKey = 'chestBiceps';
+  // Fill in some data
+  fortyDayWorkoutService.updateSet(dayKey, 0, 0, 'kg', 100);
+  fortyDayWorkoutService.updateSet(dayKey, 0, 0, 'reps', 12);
+  fortyDayWorkoutService.toggleSet(dayKey, 0, 0);
+
+  const trackerBefore = fortyDayWorkoutService.getTracker(dayKey, 0);
+  assert.equal(trackerBefore.sets[0].kg, 100);
+  assert.equal(trackerBefore.sets[0].reps, 12);
+  assert.equal(trackerBefore.sets[0].done, true);
+
+  // Reset exercise
+  fortyDayWorkoutService.resetExercise(dayKey, 0);
+
+  const trackerAfter = fortyDayWorkoutService.getTracker(dayKey, 0);
+  assert.equal(trackerAfter.sets[0].kg, '');
+  assert.equal(trackerAfter.sets[0].reps, '');
+  assert.equal(trackerAfter.sets[0].done, false);
+
+  // Exercise itself is still in the day!
+  const day = fortyDayWorkoutService.getDay(dayKey);
+  assert.ok(day.exercises[0]);
+});
+
+test('fortyDayWorkoutService: replaceExerciseInDay replaces exercise in place with new tracker', () => {
+  const dayKey = 'chestBiceps';
+  const initialCount = fortyDayWorkoutService.getDay(dayKey).exercises.length;
+
+  const replacement = {
+    id: 'chest_press_machine_test',
+    title: 'Chest Press Machine | جهاز ضغط الصدر',
+    sets: 4,
+    reps: '10-12',
+    image: 'https://example.com/chest_machine.png'
+  };
+
+  const replaced = fortyDayWorkoutService.replaceExerciseInDay(dayKey, 1, replacement);
+  assert.ok(replaced);
+  assert.equal(replaced.title, replacement.title);
+  assert.equal(replaced.number, 2);
+
+  const dayAfter = fortyDayWorkoutService.getDay(dayKey);
+  assert.equal(dayAfter.exercises.length, initialCount); // Length unchanged!
+  assert.equal(dayAfter.exercises[1].title, replacement.title);
+
+  // Check that new tracker was created with 4 sets
+  const tracker = fortyDayWorkoutService.getTracker(dayKey, 1);
+  assert.ok(tracker);
+  assert.equal(tracker.sets.length, 4);
+});
+
+test('fortyDayWorkoutService: deleteExerciseFromDay removes exercise and re-indexes numbers', () => {
+  const dayKey = 'chestBiceps';
+  const initialCount = fortyDayWorkoutService.getDay(dayKey).exercises.length;
+  assert.ok(initialCount >= 2);
+
+  const ex0 = fortyDayWorkoutService.getDay(dayKey).exercises[0];
+  const ex1 = fortyDayWorkoutService.getDay(dayKey).exercises[1];
+
+  // Delete exercise at index 0
+  const success = fortyDayWorkoutService.deleteExerciseFromDay(dayKey, 0);
+  assert.equal(success, true);
+
+  const dayAfter = fortyDayWorkoutService.getDay(dayKey);
+  assert.equal(dayAfter.exercises.length, initialCount - 1);
+  assert.equal(dayAfter.exercises[0].title, ex1.title);
+  assert.equal(dayAfter.exercises[0].number, 1); // Re-indexed to 1!
+});
+
 

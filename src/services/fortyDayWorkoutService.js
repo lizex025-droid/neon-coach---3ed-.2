@@ -300,6 +300,72 @@ class FortyDayWorkoutService {
     this.save();
   }
 
+  replaceExerciseInDay(dayKey, exerciseIndex, newExercise) {
+    const state = this.load();
+    if (!state.customExercises) state.customExercises = {};
+    if (!state.customExercises[dayKey]) {
+      const baseDay = this.getDay(dayKey);
+      state.customExercises[dayKey] = (baseDay?.exercises || []).map((ex, idx) => ({
+        ...ex,
+        id: ex.id || this.getExerciseId(dayKey, idx)
+      }));
+    }
+    const list = state.customExercises[dayKey];
+    if (exerciseIndex < 0 || exerciseIndex >= list.length) return null;
+
+    const oldExercise = list[exerciseIndex];
+    const oldId = oldExercise.id || this.getExerciseId(dayKey, exerciseIndex);
+
+    if (state.session?.touchedExerciseIds) {
+      state.session.touchedExerciseIds = state.session.touchedExerciseIds.filter(id => id !== oldId);
+    }
+
+    const newId = newExercise.id ? `${newExercise.id}_${Date.now()}` : `custom_${dayKey}_${Date.now()}_${exerciseIndex}`;
+    const replaced = {
+      id: newId,
+      number: exerciseIndex + 1,
+      title: newExercise.title || newExercise.nameAr || newExercise.name,
+      sets: Number(newExercise.sets) || 3,
+      reps: String(newExercise.reps || '8-12'),
+      alternative: newExercise.alternative || '',
+      image: newExercise.image || newExercise.url || '',
+      groupKey: newExercise.groupKey || ''
+    };
+
+    list[exerciseIndex] = replaced;
+    state.trackers[newId] = normalizeTracker(null, replaced);
+    this.save();
+    return replaced;
+  }
+
+  deleteExerciseFromDay(dayKey, exerciseIndex) {
+    const state = this.load();
+    if (!state.customExercises) state.customExercises = {};
+    if (!state.customExercises[dayKey]) {
+      const baseDay = this.getDay(dayKey);
+      state.customExercises[dayKey] = (baseDay?.exercises || []).map((ex, idx) => ({
+        ...ex,
+        id: ex.id || this.getExerciseId(dayKey, idx)
+      }));
+    }
+    const list = state.customExercises[dayKey];
+    if (exerciseIndex < 0 || exerciseIndex >= list.length) return false;
+
+    const [deleted] = list.splice(exerciseIndex, 1);
+    const deletedId = deleted?.id || this.getExerciseId(dayKey, exerciseIndex);
+
+    if (state.session?.touchedExerciseIds) {
+      state.session.touchedExerciseIds = state.session.touchedExerciseIds.filter(id => id !== deletedId);
+    }
+
+    list.forEach((ex, idx) => {
+      ex.number = idx + 1;
+    });
+
+    this.save();
+    return true;
+  }
+
   setActiveDay(dayKey) {
     const allDays = [...ANAS_DAYS, ...HASM_GROUPS, ...FORTY_DAY_DAYS];
     if (!allDays.some(day => day.key === dayKey)) return;
@@ -416,7 +482,11 @@ class FortyDayWorkoutService {
     if (!exercise) return;
     const tracker = this.getTracker(dayKey, exerciseIndex);
     const id = this.getExerciseId(dayKey, exerciseIndex);
-    this.load().trackers[id] = normalizeTracker({ history: tracker.history }, exercise);
+    const state = this.load();
+    state.trackers[id] = normalizeTracker({ history: tracker?.history || [] }, exercise);
+    if (state.session?.touchedExerciseIds) {
+      state.session.touchedExerciseIds = state.session.touchedExerciseIds.filter(tid => tid !== id);
+    }
     this.save();
   }
 
