@@ -1680,7 +1680,10 @@ export function bindQuestionnaireEvents() {
     initWeeklyGainRateEvents();
   } else if (currentStepKey === STEP_KEYS.NUTRITION) {
     initNutritionStepEvents();
-  } else if (currentStepKey === STEP_KEYS.PLAN_PREFERENCES) {
+  } else if (
+    currentStepKey === STEP_KEYS.PLAN_PREFERENCES ||
+    currentStepKey === STEP_KEYS.PLAN_PREFERENCES_2
+  ) {
     initPlanPreferencesStepEvents();
   } else if (currentStepKey === STEP_KEYS.SUPPLEMENTS) {
     initSupplementsStepEvents();
@@ -3242,6 +3245,8 @@ export function bindQuestionnaireEvents() {
           b.classList.toggle('active', isAct);
           b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
           b.style.background = isAct ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)';
+          const label = b.querySelector('div:nth-child(2)');
+          if (label) label.style.color = isAct ? '#55F7A5' : '#fff';
         });
       };
     });
@@ -3257,6 +3262,8 @@ export function bindQuestionnaireEvents() {
           b.classList.toggle('active', isAct);
           b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
           b.style.background = isAct ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)';
+          const label = b.querySelector('div:nth-child(2)');
+          if (label) label.style.color = isAct ? '#55F7A5' : '#fff';
         });
       };
     });
