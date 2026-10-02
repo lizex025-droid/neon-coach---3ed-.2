@@ -10,7 +10,11 @@
     "test:provider": "node --env-file=.env.local scripts/test-neon-provider.mjs",
     "test:browser": "node scripts/verify-neon-browser.mjs",
     "test:bottom-nav": "node scripts/verify-bottom-nav.mjs",
-    "db:neon": "node --env-file=.env.local --env-file=.env.neon.local scripts/setup-neon-local.mjs"
+    "db:neon": "node --env-file=.env.local --env-file=.env.neon.local scripts/setup-neon-local.mjs",
+    "recipes:prepare": "node scripts/recipe-images/prepare.mjs",
+    "recipes:render": "node scripts/recipe-images/render-all.mjs",
+    "recipes:qa": "node scripts/recipe-images/qa-all.mjs",
+    "recipes:audit": "node scripts/recipe-images/audit.mjs"
   },
   "engines": {
     "node": ">=22.12"
@@ -29,6 +33,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "pg": "8.23.0",
+    "xlsx": "^0.18.5",
     "zod": "4.6.2"
   }
 }
