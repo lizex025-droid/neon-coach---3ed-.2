@@ -736,7 +736,7 @@ export const RECIPES_DATA = [
   },
   {
     "id": "recipe-29",
-    "titleAr": "بوظة البروتين الأصلية",
+    "titleAr": "بوظة البروتين الأصلية 35غ جبنة قريش",
     "titleEn": "",
     "category": "snacks_dessert",
     "categoryRaw": "سناك وحلويات",
@@ -745,17 +745,23 @@ export const RECIPES_DATA = [
     "protein": 30.8,
     "carbs": 2.8,
     "fats": 3.1,
-    "prepTime": "5 دقائق",
+    "prepTime": "10 دقائق",
     "difficulty": "سهل",
-    "servings": "1 حصة",
+    "servings": "حصة واحدة",
     "image": "🍨",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_19%20PM-5.png",
-    "description": "وجبة «بوظة البروتين الأصلية» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_23%20PM-1.png",
+    "description": "بوظة بروتين منعشة وسريعة غنية بالبروتين ومنخفضة الكارب محضرة بالوي وجبنة القريش وحليب اللوز.",
     "ingredients": [
-      "بوظة البروتين الأصلية"
+      "30غ Whey بروتين",
+      "35غ جبنة قريش",
+      "70غ حليب لوز غير محلى",
+      "ثلج كبير للخلط"
     ],
     "steps": [
-      "شاهد بوستر الوصفة لمتابعة المقادير وخطوات التحضير بالتفصيل."
+      "جهّز جميع المكونات بالكميات المذكورة.",
+      "اخلط الوي وجبنة قريش وحليب اللوز مع كمية كبيرة من الثلج في الخلاط.",
+      "امزج الخليط حتى يصبح بقوام بوظة ناعم وكثيف.",
+      "قدّم البوظة مباشرة في كوب أو وعاء بارد."
     ]
   },
   {
@@ -769,22 +775,29 @@ export const RECIPES_DATA = [
     "protein": 37.4,
     "carbs": 3.4,
     "fats": 3.9,
-    "prepTime": "5 دقائق + تجميد اختياري",
+    "prepTime": "10 دقائق",
     "difficulty": "سهل",
-    "servings": "1 حصة",
+    "servings": "حصة واحدة",
     "image": "🍦",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_21%20PM-6.png",
-    "description": "وجبة «بوظة البروتين المفضلة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_25%20PM-2.png",
+    "description": "النسخة المفضلة من بوظة البروتين بقوام كريمي فائق ونسبة بروتين 37.4غ مع بذور الشيا.",
     "ingredients": [
-      "بوظة البروتين المفضلة"
+      "40غ Whey بروتين",
+      "35غ جبنة قريش",
+      "70غ حليب لوز غير محلى",
+      "3غ بذور شيا",
+      "ثلج كبير"
     ],
     "steps": [
-      "شاهد بوستر الوصفة لمتابعة المقادير وخطوات التحضير بالتفصيل."
+      "جهّز جميع المكونات بالكميات المذكورة.",
+      "اخلط البروتين وجبنة القريش وحليب اللوز وبذور الشيا والثلج في الخلاط.",
+      "اخلط على سرعة عالية حتى يصبح القوام كريمياً متجانساً.",
+      "قدّمها فوراً واستمتع بوجبة سناك منعشة."
     ]
   },
   {
     "id": "recipe-31",
-    "titleAr": "بوظة البروتين 50غ تفورك",
+    "titleAr": "بوظة البروتين 50غ جبنة قريش",
     "titleEn": "",
     "category": "snacks_dessert",
     "categoryRaw": "سناك وحلويات",
@@ -793,22 +806,28 @@ export const RECIPES_DATA = [
     "protein": 33.4,
     "carbs": 3.2,
     "fats": 3.9,
-    "prepTime": "5 دقائق",
+    "prepTime": "10 دقائق",
     "difficulty": "سهل",
-    "servings": "1 حصة",
+    "servings": "حصة واحدة",
     "image": "🍨",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_22%20PM-7.png",
-    "description": "وجبة «بوظة البروتين 50غ تفورك» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_27%20PM-3.png",
+    "description": "بوظة بروتين كريمية مدعمة بـ 50غ جبنة قريش لزيادة الكازين والشبع.",
     "ingredients": [
-      "بوظة البروتين 50غ تفورك"
+      "30غ Whey بروتين",
+      "50غ جبنة قريش",
+      "70غ حليب لوز غير محلى",
+      "ثلج كبير"
     ],
     "steps": [
-      "شاهد بوستر الوصفة لمتابعة المقادير وخطوات التحضير بالتفصيل."
+      "جهّز جميع المكونات بالكميات المذكورة.",
+      "ضع البروتين والجبنة القريش وحليب اللوز والثلج في الخلاط.",
+      "اخلط حتى يتكون قوام بوظة ناعم وثقيل.",
+      "اسكبها في وعاء التقديم وتناولها مباشرة."
     ]
   },
   {
     "id": "recipe-32",
-    "titleAr": "بوظة البروتين مع Xanthan",
+    "titleAr": "بوظة البروتين 50غ جبنة قريش + Xanthan",
     "titleEn": "",
     "category": "snacks_dessert",
     "categoryRaw": "سناك وحلويات",
@@ -817,17 +836,24 @@ export const RECIPES_DATA = [
     "protein": 33.4,
     "carbs": 3.7,
     "fats": 3.9,
-    "prepTime": "5 دقائق",
+    "prepTime": "10 دقائق",
     "difficulty": "سهل",
-    "servings": "1 حصة",
+    "servings": "حصة واحدة",
     "image": "🍦",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2006_06_23%20PM-8.png",
-    "description": "وجبة «بوظة البروتين مع Xanthan» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_30%20PM-4.png",
+    "description": "بوظة بروتين مثالية القوام باستخدام صمغ الزانثان والجبنة القريش لملمس مثل الآيس كريم التجاري.",
     "ingredients": [
-      "بوظة البروتين مع Xanthan"
+      "30غ Whey بروتين",
+      "50غ جبنة قريش",
+      "70غ حليب لوز غير محلى",
+      "1غ صمغ الزانثان (Xanthan Gum)",
+      "ثلج كبير"
     ],
     "steps": [
-      "شاهد بوستر الوصفة لمتابعة المقادير وخطوات التحضير بالتفصيل."
+      "جهّز جميع المكونات بالكميات المذكورة.",
+      "اخلط البروتين والجبنة وحليب اللوز والزانثان والثلج.",
+      "اخلط بقوة حتى يتضاعف حجم الخليط ويصبح كثيفاً ومطاطياً كالآيس كريم.",
+      "قدّمها فوراً في كأس بارد."
     ]
   },
   {
@@ -1192,7 +1218,7 @@ export const RECIPES_DATA = [
   },
   {
     "id": "recipe-48",
-    "titleAr": "كفتة وتفورك كوجبة خفيفة",
+    "titleAr": "كفتة وجبنة قريش كوجبة خفيفة",
     "titleEn": "",
     "category": "snacks_dessert",
     "categoryRaw": "سناك / وجبة خفيفة",
@@ -1203,15 +1229,19 @@ export const RECIPES_DATA = [
     "fats": 25.8,
     "prepTime": "15 دقيقة",
     "difficulty": "سهل",
-    "servings": "1 حصة",
+    "servings": "حصة واحدة",
     "image": "🍢",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_22_41%20PM-5.png",
-    "description": "وجبة «كفتة وتفورك كوجبة خفيفة» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_32%20PM-5.png",
+    "description": "وجبة سريعة تجمع كفتة اللحم المشوية مع جبنة القريش لوجبة عالية البروتين وسريعة التحضير.",
     "ingredients": [
-      "كفتة وتفورك كوجبة خفيفة"
+      "150غ كفتة لحم مشوية",
+      "50غ جبنة قريش",
+      "بهارات خفيفة حسب الرغبة"
     ],
     "steps": [
-      "شاهد بوستر الوصفة لمتابعة المقادير وخطوات التحضير بالتفصيل."
+      "سخّن أو اشوِ كفتة اللحم جيداً.",
+      "قدّم الكفتة بجانب جبنة القريش الطازجة.",
+      "تناولها كوجبة مشبعة قبل أو بعد التمرين."
     ]
   },
   {
@@ -1480,7 +1510,7 @@ export const RECIPES_DATA = [
   },
   {
     "id": "recipe-60",
-    "titleAr": "كيكة البروتين بالتفورك",
+    "titleAr": "كيكة البروتين بجبنة القريش",
     "titleEn": "",
     "category": "snacks_dessert",
     "categoryRaw": "سناك وحلويات",
@@ -1489,17 +1519,22 @@ export const RECIPES_DATA = [
     "protein": 26.9,
     "carbs": 2.5,
     "fats": 6.4,
-    "prepTime": "5 دقائق",
+    "prepTime": "15 دقيقة",
     "difficulty": "سهل",
-    "servings": "1 حصة",
+    "servings": "حصة واحدة",
     "image": "🍰",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%201%2C%202026%2C%2007_40_11%20PM-7.png",
-    "description": "وجبة «كيكة البروتين بالتفورك» متوازنة ومحسوبة السعرات والماكروز لدعم أهدافك الرياضية.",
+    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_36%20PM-6.png",
+    "description": "كيكة بروتين إسفنجية خفيفة وسريعة محضرة بالمايكرويف باستخدام البروتين وجبنة القريش.",
     "ingredients": [
-      "كيكة البروتين بالتفورك"
+      "30غ Whey بروتين شوكولاتة",
+      "50غ جبنة قريش",
+      "1 بياض بيض أو ملعقة حليب",
+      "1/2 ملعقة صغيرة بيكنج باودر"
     ],
     "steps": [
-      "شاهد بوستر الوصفة لمتابعة المقادير وخطوات التحضير بالتفصيل."
+      "اخلط المكونات جيداً في مج أو وعاء صغير آمن للمايكرويف.",
+      "ضعها في المايكرويف لمدة 60-90 ثانية حتى ترتفع وتنضج.",
+      "دعها تبرد قليلاً ثم استمتع بها."
     ]
   },
   {
@@ -1816,187 +1851,6 @@ export const RECIPES_DATA = [
   },
   {
     "id": "recipe-74",
-    "titleAr": "بوظة البروتين الأصلية 35غ جبنة قريش",
-    "titleEn": "",
-    "category": "snacks_dessert",
-    "categoryRaw": "سناك وحلويات",
-    "isHighProtein": true,
-    "calories": 172,
-    "protein": 30.8,
-    "carbs": 2.8,
-    "fats": 3.1,
-    "prepTime": "10 دقائق",
-    "difficulty": "سهل",
-    "servings": "حصة واحدة",
-    "image": "🍨",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_23%20PM-1.png",
-    "description": "بوظة بروتين منعشة وسريعة غنية بالبروتين ومنخفضة الكارب محضرة بالوي وجبنة القريش وحليب اللوز.",
-    "ingredients": [
-      "30غ Whey بروتين",
-      "35غ جبنة قريش (تفورك)",
-      "70غ حليب لوز غير محلى",
-      "ثلج كبير للخلط"
-    ],
-    "steps": [
-      "جهّز جميع المكونات بالكميات المذكورة.",
-      "اخلط الوي وجبنة قريش وحليب اللوز مع كمية كبيرة من الثلج في الخلاط.",
-      "امزج الخليط حتى يصبح بقوام بوظة ناعم وكثيف.",
-      "قدّم البوظة مباشرة في كوب أو وعاء بارد."
-    ]
-  },
-  {
-    "id": "recipe-75",
-    "titleAr": "بوظة البروتين المفضلة",
-    "titleEn": "",
-    "category": "snacks_dessert",
-    "categoryRaw": "سناك وحلويات",
-    "isHighProtein": true,
-    "calories": 211,
-    "protein": 37.4,
-    "carbs": 3.4,
-    "fats": 3.9,
-    "prepTime": "10 دقائق",
-    "difficulty": "سهل",
-    "servings": "حصة واحدة",
-    "image": "🍨",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_25%20PM-2.png",
-    "description": "بوظة بروتين لذيذة ومنعشة بـ 37.4غ بروتين مع إمكانية التبريد بالفريزر لقوام متماسك.",
-    "ingredients": [
-      "35غ Whey بروتين",
-      "50غ جبنة قريش",
-      "60غ حليب لوز غير محلى",
-      "كمية كبيرة من الثلج"
-    ],
-    "steps": [
-      "جهّز جميع المكونات بالكميات المذكورة.",
-      "اخلط الوي والجبنة القريش وحليب اللوز مع كمية كبيرة من الثلج.",
-      "يمكن وضعها في الفريزر 30 - 45 دقيقة اختيارياً لزيادة التماسك.",
-      "قدّمها مباشرة كبوظة بروتين باردة."
-    ]
-  },
-  {
-    "id": "recipe-76",
-    "titleAr": "بوظة البروتين 50غ جبنة قريش",
-    "titleEn": "",
-    "category": "snacks_dessert",
-    "categoryRaw": "سناك وحلويات",
-    "isHighProtein": true,
-    "calories": 194,
-    "protein": 33.4,
-    "carbs": 3.2,
-    "fats": 3.9,
-    "prepTime": "10 دقائق",
-    "difficulty": "سهل",
-    "servings": "حصة واحدة",
-    "image": "🍨",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_27%20PM-3.png",
-    "description": "بوظة بروتين صحية مناسبة للكيتو ومنخفضة الكارب بقوام كريمي كثيف ونكهة رائعة.",
-    "ingredients": [
-      "30غ Whey بروتين",
-      "50غ جبنة قريش",
-      "70غ حليب لوز غير محلى",
-      "ثلج كبير للخلط"
-    ],
-    "steps": [
-      "جهّز جميع المكونات بالكميات المذكورة.",
-      "أضف الوي والجبنة القريش وحليب اللوز والثلج في الخلاط.",
-      "اخلطها حتى يصبح القوام كريميًا كثيفًا.",
-      "قدّمها فورًا كبوظة بروتين باردة."
-    ]
-  },
-  {
-    "id": "recipe-77",
-    "titleAr": "بوظة البروتين 50غ جبنة قريش + Xanthan",
-    "titleEn": "",
-    "category": "snacks_dessert",
-    "categoryRaw": "سناك وحلويات",
-    "isHighProtein": true,
-    "calories": 194,
-    "protein": 33.4,
-    "carbs": 3.7,
-    "fats": 3.9,
-    "prepTime": "10 دقائق",
-    "difficulty": "سهل",
-    "servings": "حصة واحدة",
-    "image": "🍨",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_30%20PM-4.png",
-    "description": "بوظة بروتين متماسكة وكريمية غنية بالبروتين باستخدام صمغ الزانثان لقوام مثالي.",
-    "ingredients": [
-      "30غ Whey بروتين",
-      "50غ جبنة قريش",
-      "70غ حليب لوز غير محلى",
-      "0.5غ صمغ الزانثان (Xanthan Gum)",
-      "ثلج كبير للخلط"
-    ],
-    "steps": [
-      "جهّز جميع المكونات بالكميات المذكورة.",
-      "أضف جميع المكونات مع الثلج إلى الخلاط.",
-      "اخلطها جيدًا حتى يصبح القوام أكثر تماسكًا بفضل الزانثان.",
-      "قدّمها مباشرة كبوظة بروتين باردة وكريمية."
-    ]
-  },
-  {
-    "id": "recipe-78",
-    "titleAr": "كفتة وجبنة قريش كوجبة خفيفة",
-    "titleEn": "",
-    "category": "main_dishes",
-    "categoryRaw": "وجبات رئيسية",
-    "isHighProtein": true,
-    "calories": 415,
-    "protein": 40.2,
-    "carbs": 4.2,
-    "fats": 25.8,
-    "prepTime": "15 دقيقة",
-    "difficulty": "سهل",
-    "servings": "حصة واحدة",
-    "image": "🥩",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_32%20PM-5.png",
-    "description": "وجبة مشبعة ومتوازنة من كفتة كتف العجل المحمرة بالزبدة مع الجبنة القريش وخس الآيسبرغ المقرمش.",
-    "ingredients": [
-      "120غ كفتة كتف عجل مطبوخة",
-      "50غ جبنة قريش",
-      "50غ خس آيسبرغ",
-      "5غ زبدة"
-    ],
-    "steps": [
-      "جهّز جميع المكونات بالكميات المذكورة.",
-      "سخّن الكفتة بالزبدة في المقلاة.",
-      "جهّز الجبنة القريش والخس بجانب الكفتة.",
-      "قدّم الوجبة كطبق خفيف متوازن غني بالبروتين."
-    ]
-  },
-  {
-    "id": "recipe-79",
-    "titleAr": "كيكة البروتين بجبنة القريش",
-    "titleEn": "",
-    "category": "snacks_dessert",
-    "categoryRaw": "سناك وحلويات",
-    "isHighProtein": true,
-    "calories": 183,
-    "protein": 26.9,
-    "carbs": 2.5,
-    "fats": 6.4,
-    "prepTime": "5 دقائق",
-    "difficulty": "سهل",
-    "servings": "حصة واحدة",
-    "image": "🧁",
-    "imageUrl": "https://pub-17c54e21fe364e5e9b1b1923cf6896ec.r2.dev/ChatGPT%20Image%20Oct%202%2C%202026%2C%2001_16_36%20PM-6.png",
-    "description": "كيكة بروتين سريعة بالميكروويف في دقيقة واحدة، منخفضة الكارب وغنية بـ 26.9غ بروتين.",
-    "ingredients": [
-      "20غ Whey بروتين",
-      "50غ بيض كامل",
-      "25غ جبنة قريش",
-      "1.5غ بيكنج باودر"
-    ],
-    "steps": [
-      "جهّز جميع المكونات بالكميات المذكورة.",
-      "اخلط الوي والبيض والجبنة القريش والبيكنج باودر جيداً.",
-      "اطبخها في الميكروويف لمدة 60-70 ثانية.",
-      "أضف 10 ثوانٍ عند الحاجة ثم قدمها بعد أن تتماسك."
-    ]
-  },
-  {
-    "id": "recipe-80",
     "titleAr": "بان كيك اللوز والقريش والواي",
     "titleEn": "",
     "category": "breakfast",
@@ -2028,7 +1882,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-81",
+    "id": "recipe-75",
     "titleAr": "كيك الشوفان والموز المخبوز",
     "titleEn": "",
     "category": "breakfast",
@@ -2062,7 +1916,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-82",
+    "id": "recipe-76",
     "titleAr": "دجاج الترياكي والبروكلي مع صوص الفول السوداني",
     "titleEn": "",
     "category": "main_dishes",
@@ -2095,7 +1949,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-83",
+    "id": "recipe-77",
     "titleAr": "سلطة الخس والجوز والشوفان والمانجو",
     "titleEn": "",
     "category": "salads",
@@ -2135,7 +1989,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-84",
+    "id": "recipe-78",
     "titleAr": "سلطة يونانية بالباذنجان والسبانخ",
     "titleEn": "Greek Salad",
     "category": "salads",
@@ -2175,7 +2029,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-85",
+    "id": "recipe-79",
     "titleAr": "جرانولا الشوفان واللوز والتمر",
     "titleEn": "Homemade Healthy Granola",
     "category": "breakfast",
@@ -2211,7 +2065,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-86",
+    "id": "recipe-80",
     "titleAr": "كرات طاقة بالشوفان وزبدة الفول السوداني",
     "titleEn": "No Bake Energy Bites",
     "category": "breakfast",
@@ -2243,7 +2097,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-87",
+    "id": "recipe-81",
     "titleAr": "لقيمات الخضار والشوفان بالفرن",
     "titleEn": "Baked Vegetable Oat Bites",
     "category": "breakfast",
@@ -2285,7 +2139,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-88",
+    "id": "recipe-82",
     "titleAr": "شوربة البروكلي والعدس والشيدر",
     "titleEn": "Broccoli and Cheddar Soup",
     "category": "soups",
@@ -2322,7 +2176,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-89",
+    "id": "recipe-83",
     "titleAr": "شوربة الدجاج والفاصوليا البيضاء بالفلفل الأخضر",
     "titleEn": "Green Chile Chicken Soup with White Beans",
     "category": "soups",
@@ -2365,7 +2219,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-90",
+    "id": "recipe-84",
     "titleAr": "شوربة الشوفان التقليدية باللحم",
     "titleEn": "Traditional Oat Soup with Lamb",
     "category": "soups",
@@ -2406,7 +2260,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-91",
+    "id": "recipe-85",
     "titleAr": "شوربة العدس والشوفان مع البصل بالبالسميك",
     "titleEn": "Creamy Lentil and Oat Soup",
     "category": "soups",
@@ -2450,7 +2304,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-92",
+    "id": "recipe-86",
     "titleAr": "شوربة العدس والفاصوليا السوداء",
     "titleEn": "Black Bean and Lentil Soup",
     "category": "soups",
@@ -2489,7 +2343,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-93",
+    "id": "recipe-87",
     "titleAr": "شوربة اللحم والفاصوليا والخضار",
     "titleEn": "Hearty Beef and Bean Soup",
     "category": "soups",
@@ -2531,7 +2385,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-94",
+    "id": "recipe-88",
     "titleAr": "شوربة المأكولات البحرية والبطاطا الحلوة بالكاجن",
     "titleEn": "Cajun Sweet Potato Seafood Bisque",
     "category": "soups",
@@ -2569,7 +2423,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-95",
+    "id": "recipe-89",
     "titleAr": "حمص بالشمندر والليمون",
     "titleEn": "Beetroot Hummus",
     "category": "appetizers_dips",
@@ -2603,7 +2457,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-96",
+    "id": "recipe-90",
     "titleAr": "حمص بالطحينة والليمون",
     "titleEn": "Hummus",
     "category": "appetizers_dips",
@@ -2638,7 +2492,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-97",
+    "id": "recipe-91",
     "titleAr": "صوص الأفوكادو والزبادي والكزبرة",
     "titleEn": "Quick Avocado Crema",
     "category": "appetizers_dips",
@@ -2671,7 +2525,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-98",
+    "id": "recipe-92",
     "titleAr": "شوفان البروتين بالتوت والبهارات",
     "titleEn": "Spiced Berry Porridge",
     "category": "breakfast",
@@ -2705,7 +2559,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-99",
+    "id": "recipe-93",
     "titleAr": "شوفان ليلي بالزبادي والشيا",
     "titleEn": "Overnight Oats with Greek Yogurt and Chia",
     "category": "breakfast",
@@ -2737,7 +2591,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-100",
+    "id": "recipe-94",
     "titleAr": "فرنش توست مافن مع التفاح واللوز",
     "titleEn": "French Toast Muffins with Caramel Apples",
     "category": "breakfast",
@@ -2775,7 +2629,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-101",
+    "id": "recipe-95",
     "titleAr": "كاري اللحم البطيء مع الأرز البني",
     "titleEn": "Slow Cooked Beef Curry",
     "category": "main_dishes",
@@ -2819,7 +2673,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-102",
+    "id": "recipe-96",
     "titleAr": "سالمون مشوي بالعسل والصويا",
     "titleEn": "Grilled Salmon",
     "category": "main_dishes",
@@ -2857,7 +2711,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-103",
+    "id": "recipe-97",
     "titleAr": "سموثي بروتين بالتفاح واللوز والشوفان",
     "titleEn": "Christmas Mince Pie Smoothie",
     "category": "drinks_smoothies",
@@ -2890,7 +2744,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-104",
+    "id": "recipe-98",
     "titleAr": "خلطة البيض والجبنة قريش والدجاج",
     "titleEn": "",
     "category": "breakfast",
@@ -2920,7 +2774,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-105",
+    "id": "recipe-99",
     "titleAr": "خلطة بعد الجيم بالكفتة والدجاج",
     "titleEn": "",
     "category": "main_dishes",
@@ -2951,7 +2805,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-106",
+    "id": "recipe-100",
     "titleAr": "بان كيك الجوكر",
     "titleEn": "",
     "category": "breakfast",
@@ -2987,7 +2841,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-107",
+    "id": "recipe-101",
     "titleAr": "بان كيك صحي",
     "titleEn": "",
     "category": "breakfast",
@@ -3017,7 +2871,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-108",
+    "id": "recipe-102",
     "titleAr": "بودينغ الأرز والليمون بالواي",
     "titleEn": "",
     "category": "snacks_dessert",
@@ -3047,7 +2901,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-109",
+    "id": "recipe-103",
     "titleAr": "بودينغ الموز وزبدة الفول السوداني",
     "titleEn": "",
     "category": "breakfast",
@@ -3077,7 +2931,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-110",
+    "id": "recipe-104",
     "titleAr": "فشار البروتين",
     "titleEn": "",
     "category": "snacks_dessert",
@@ -3109,7 +2963,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-111",
+    "id": "recipe-105",
     "titleAr": "خبز ردة مع اللانشون",
     "titleEn": "",
     "category": "sandwiches",
@@ -3139,7 +2993,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-112",
+    "id": "recipe-106",
     "titleAr": "ساندويتش شيدر مع أفوكادو",
     "titleEn": "",
     "category": "sandwiches",
@@ -3170,7 +3024,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-113",
+    "id": "recipe-107",
     "titleAr": "قوارب البيتزا بالبيض",
     "titleEn": "",
     "category": "breakfast",
@@ -3200,7 +3054,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-114",
+    "id": "recipe-108",
     "titleAr": "منقوشة البيض",
     "titleEn": "",
     "category": "breakfast",
@@ -3230,7 +3084,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-115",
+    "id": "recipe-109",
     "titleAr": "أقراص التونة المشوية",
     "titleEn": "",
     "category": "breakfast",
@@ -3261,7 +3115,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-116",
+    "id": "recipe-110",
     "titleAr": "الشكشوكة",
     "titleEn": "",
     "category": "breakfast",
@@ -3290,7 +3144,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-117",
+    "id": "recipe-111",
     "titleAr": "الفول المدمس",
     "titleEn": "",
     "category": "breakfast",
@@ -3319,7 +3173,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-118",
+    "id": "recipe-112",
     "titleAr": "بطاطس بالمشروم والبروكلي",
     "titleEn": "",
     "category": "breakfast",
@@ -3350,7 +3204,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-119",
+    "id": "recipe-113",
     "titleAr": "بيض بالجبن القريش",
     "titleEn": "",
     "category": "breakfast",
@@ -3379,7 +3233,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-120",
+    "id": "recipe-114",
     "titleAr": "بيض بالمشروم والجبن",
     "titleEn": "",
     "category": "breakfast",
@@ -3412,7 +3266,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-121",
+    "id": "recipe-115",
     "titleAr": "بيض مقلي مع جبنة قليلة الدسم",
     "titleEn": "",
     "category": "breakfast",
@@ -3440,7 +3294,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-122",
+    "id": "recipe-116",
     "titleAr": "تونة بالجبنة",
     "titleEn": "",
     "category": "breakfast",
@@ -3470,7 +3324,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-123",
+    "id": "recipe-117",
     "titleAr": "سلطة العدس والمشروم",
     "titleEn": "",
     "category": "salads",
@@ -3500,7 +3354,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-124",
+    "id": "recipe-118",
     "titleAr": "سوفليه البيض والدجاج",
     "titleEn": "",
     "category": "breakfast",
@@ -3532,7 +3386,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-125",
+    "id": "recipe-119",
     "titleAr": "شوربة الدجاج بالشوفان والذرة",
     "titleEn": "",
     "category": "soups",
@@ -3563,7 +3417,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-126",
+    "id": "recipe-120",
     "titleAr": "طاجن الفول بالبيض",
     "titleEn": "",
     "category": "breakfast",
@@ -3593,7 +3447,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-127",
+    "id": "recipe-121",
     "titleAr": "فطور الجوكر",
     "titleEn": "",
     "category": "breakfast",
@@ -3624,7 +3478,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-128",
+    "id": "recipe-122",
     "titleAr": "كيك البروتين بطريقة الجوكر",
     "titleEn": "",
     "category": "snacks_dessert",
@@ -3659,7 +3513,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-129",
+    "id": "recipe-123",
     "titleAr": "مخبوز التفاح والقرفة",
     "titleEn": "",
     "category": "snacks_dessert",
@@ -3693,7 +3547,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-130",
+    "id": "recipe-124",
     "titleAr": "الدجاج المكسيكي",
     "titleEn": "",
     "category": "main_dishes",
@@ -3723,7 +3577,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-131",
+    "id": "recipe-125",
     "titleAr": "دجاج مشوي مع كوسا وباذنجان",
     "titleEn": "",
     "category": "main_dishes",
@@ -3753,7 +3607,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-132",
+    "id": "recipe-126",
     "titleAr": "رول دجاج محشو سبانخ ومشروم",
     "titleEn": "",
     "category": "main_dishes",
@@ -3783,7 +3637,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-133",
+    "id": "recipe-127",
     "titleAr": "صدر دجاج بالنكهة الإيطالية",
     "titleEn": "",
     "category": "main_dishes",
@@ -3813,7 +3667,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-134",
+    "id": "recipe-128",
     "titleAr": "فاصولياء خضراء بالثوم والبارميزان",
     "titleEn": "",
     "category": "main_dishes",
@@ -3844,7 +3698,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-135",
+    "id": "recipe-129",
     "titleAr": "قطع لحم بقري بالبروكلي",
     "titleEn": "",
     "category": "main_dishes",
@@ -3874,7 +3728,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-136",
+    "id": "recipe-130",
     "titleAr": "أرز بالخضار مع دجاج بصلصة الشوي والصويا",
     "titleEn": "",
     "category": "main_dishes",
@@ -3902,7 +3756,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-137",
+    "id": "recipe-131",
     "titleAr": "أفخاذ دجاج مع المعكرونة بالصلصة",
     "titleEn": "",
     "category": "main_dishes",
@@ -3933,7 +3787,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-138",
+    "id": "recipe-132",
     "titleAr": "السماقية الفلسطينية",
     "titleEn": "",
     "category": "main_dishes",
@@ -3966,7 +3820,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-139",
+    "id": "recipe-133",
     "titleAr": "الكبدة الإسكندراني",
     "titleEn": "",
     "category": "main_dishes",
@@ -3995,7 +3849,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-140",
+    "id": "recipe-134",
     "titleAr": "ترياكي الدجاج",
     "titleEn": "",
     "category": "main_dishes",
@@ -4029,7 +3883,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-141",
+    "id": "recipe-135",
     "titleAr": "تونة أو سردين بالسلطة",
     "titleEn": "",
     "category": "salads",
@@ -4057,7 +3911,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-142",
+    "id": "recipe-136",
     "titleAr": "دجاج بالخضراوات",
     "titleEn": "",
     "category": "main_dishes",
@@ -4085,7 +3939,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-143",
+    "id": "recipe-137",
     "titleAr": "ساندويتش التونة",
     "titleEn": "",
     "category": "sandwiches",
@@ -4116,7 +3970,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-144",
+    "id": "recipe-138",
     "titleAr": "سباغيتي باللحم",
     "titleEn": "",
     "category": "main_dishes",
@@ -4144,7 +3998,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-145",
+    "id": "recipe-139",
     "titleAr": "سلطة الجرجير والدجاج المشوي",
     "titleEn": "",
     "category": "salads",
@@ -4176,7 +4030,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-146",
+    "id": "recipe-140",
     "titleAr": "شاورما الجوكر",
     "titleEn": "",
     "category": "sandwiches",
@@ -4205,7 +4059,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-147",
+    "id": "recipe-141",
     "titleAr": "صدر بالزعتر والأوريجانو",
     "titleEn": "",
     "category": "main_dishes",
@@ -4235,7 +4089,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-148",
+    "id": "recipe-142",
     "titleAr": "صدور دجاج مشوية بالمستردة",
     "titleEn": "",
     "category": "main_dishes",
@@ -4265,7 +4119,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-149",
+    "id": "recipe-143",
     "titleAr": "صدور دجاج مشوية مع شوربة الشوفان",
     "titleEn": "",
     "category": "soups",
@@ -4293,7 +4147,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-150",
+    "id": "recipe-144",
     "titleAr": "صدور دجاج مع أرز بني",
     "titleEn": "",
     "category": "main_dishes",
@@ -4323,7 +4177,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-151",
+    "id": "recipe-145",
     "titleAr": "صدور مشوية مع العدس والخضار",
     "titleEn": "",
     "category": "main_dishes",
@@ -4352,7 +4206,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-152",
+    "id": "recipe-146",
     "titleAr": "صدور مشوية مع صوص وشوربة خضار",
     "titleEn": "",
     "category": "soups",
@@ -4382,7 +4236,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-153",
+    "id": "recipe-147",
     "titleAr": "صينية بطاطس بالكفتة",
     "titleEn": "",
     "category": "main_dishes",
@@ -4415,7 +4269,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-154",
+    "id": "recipe-148",
     "titleAr": "طاجن خضار بصدر الدجاج",
     "titleEn": "",
     "category": "main_dishes",
@@ -4448,7 +4302,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-155",
+    "id": "recipe-149",
     "titleAr": "فاصوليا بيضاء بالصلصة مع فخذ دجاج",
     "titleEn": "",
     "category": "breakfast",
@@ -4479,7 +4333,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-156",
+    "id": "recipe-150",
     "titleAr": "فاصوليا بيضاء مع اللحم المفروم",
     "titleEn": "",
     "category": "breakfast",
@@ -4511,7 +4365,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-157",
+    "id": "recipe-151",
     "titleAr": "فخذ مشوي مع خضار مشكلة",
     "titleEn": "",
     "category": "main_dishes",
@@ -4543,7 +4397,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-158",
+    "id": "recipe-152",
     "titleAr": "فلافل مشوية",
     "titleEn": "",
     "category": "breakfast",
@@ -4578,7 +4432,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-159",
+    "id": "recipe-153",
     "titleAr": "فوتشيني صحي",
     "titleEn": "",
     "category": "main_dishes",
@@ -4609,7 +4463,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-160",
+    "id": "recipe-154",
     "titleAr": "فيليه سمك مع أرز وخضار",
     "titleEn": "",
     "category": "main_dishes",
@@ -4639,7 +4493,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-161",
+    "id": "recipe-155",
     "titleAr": "كبدة مشوية مع لبن",
     "titleEn": "",
     "category": "main_dishes",
@@ -4670,7 +4524,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-162",
+    "id": "recipe-156",
     "titleAr": "كبسة الدجاج",
     "titleEn": "",
     "category": "main_dishes",
@@ -4702,7 +4556,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-163",
+    "id": "recipe-157",
     "titleAr": "كبسة دجاج وبطاطا",
     "titleEn": "",
     "category": "main_dishes",
@@ -4734,7 +4588,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-164",
+    "id": "recipe-158",
     "titleAr": "مجدرة الأرز والعدس",
     "titleEn": "",
     "category": "main_dishes",
@@ -4765,7 +4619,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-165",
+    "id": "recipe-159",
     "titleAr": "معكرونة بالتونة والخضروات",
     "titleEn": "",
     "category": "main_dishes",
@@ -4796,7 +4650,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-166",
+    "id": "recipe-160",
     "titleAr": "معكرونة بالجبن وصدور الدجاج",
     "titleEn": "",
     "category": "main_dishes",
@@ -4827,7 +4681,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-167",
+    "id": "recipe-161",
     "titleAr": "معكرونة بالخضروات وقطع الدجاج",
     "titleEn": "",
     "category": "main_dishes",
@@ -4860,7 +4714,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-168",
+    "id": "recipe-162",
     "titleAr": "معكرونة بشاميل باللحم المفروم",
     "titleEn": "",
     "category": "main_dishes",
@@ -4890,7 +4744,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-169",
+    "id": "recipe-163",
     "titleAr": "مقلوبة الدجاج",
     "titleEn": "",
     "category": "main_dishes",
@@ -4921,7 +4775,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-170",
+    "id": "recipe-164",
     "titleAr": "بان كيك كيتو قليل جدًا بالكارب",
     "titleEn": "",
     "category": "breakfast",
@@ -4953,7 +4807,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-171",
+    "id": "recipe-165",
     "titleAr": "بيض بالفرن بصفار أقل وبياض أكثر",
     "titleEn": "",
     "category": "breakfast",
@@ -4984,7 +4838,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-172",
+    "id": "recipe-166",
     "titleAr": "تتبيلة الجمبري",
     "titleEn": "",
     "category": "main_dishes",
@@ -5016,7 +4870,7 @@ export const RECIPES_DATA = [
     ]
   },
   {
-    "id": "recipe-173",
+    "id": "recipe-167",
     "titleAr": "تتبيلة سالمون بالمقلاة",
     "titleEn": "",
     "category": "main_dishes",
