@@ -1321,6 +1321,7 @@ export function bindFortyDayWorkoutEvents() {
       return;
     }
     if (button.dataset.action === 'history') {
+      detailSheet.className = 'forty-modal-sheet history-sheet';
       detailSheet.innerHTML = renderHistoryModal(activeDay, index);
       bindHistoryHover(detailSheet, activeDay, index, 'ALL');
       openModal(detailModal);
@@ -1328,11 +1329,13 @@ export function bindFortyDayWorkoutEvents() {
     }
     if (button.dataset.action === 'history-range') {
       const range = button.dataset.range || 'ALL';
+      detailSheet.className = 'forty-modal-sheet history-sheet';
       detailSheet.innerHTML = renderHistoryModal(activeDay, index, range);
       bindHistoryHover(detailSheet, activeDay, index, range);
       return;
     }
     if (button.dataset.action === 'tune') {
+      detailSheet.className = 'forty-modal-sheet tune-sheet';
       detailSheet.innerHTML = renderTuneModal(activeDay, index);
       openModal(detailModal);
       return;
