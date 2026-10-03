@@ -10,6 +10,11 @@ export const RECIPE_CATEGORIES = [
     "icon": "✨"
   },
   {
+    "id": "favorites",
+    "label": "المفضلة",
+    "icon": "🤍"
+  },
+  {
     "id": "high_protein",
     "label": "عالي البروتين",
     "icon": "💪"
@@ -43,11 +48,6 @@ export const RECIPE_CATEGORIES = [
     "id": "snacks_dessert",
     "label": "سناك وحلويات",
     "icon": "🍪"
-  },
-  {
-    "id": "favorites",
-    "label": "المفضلة",
-    "icon": "🤍"
   },
   {
     "id": "drinks_smoothies",
