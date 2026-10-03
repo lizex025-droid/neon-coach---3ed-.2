@@ -45,6 +45,11 @@ export const RECIPE_CATEGORIES = [
     "icon": "🍪"
   },
   {
+    "id": "favorites",
+    "label": "المفضلة",
+    "icon": "🤍"
+  },
+  {
     "id": "drinks_smoothies",
     "label": "مشروبات وسموثي",
     "icon": "🥤"

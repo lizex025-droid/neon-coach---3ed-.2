@@ -104,6 +104,9 @@ class Store {
                 } catch {}
               }
             }
+            if (!Array.isArray(parsed.favoriteRecipeIds)) {
+              parsed.favoriteRecipeIds = [];
+            }
             return parsed;
           }
           // مسح الجلسة التجريبية القديمة
@@ -853,6 +856,36 @@ class Store {
     if (!this.state.savedMeals) return;
     this.state.savedMeals = this.state.savedMeals.filter(m => m.id !== savedId);
     this.saveState();
+  }
+
+  // --- إدارة الوصفات المفضلة (Favorite Recipes) ---
+  getFavoriteRecipeIds() {
+    if (!Array.isArray(this.state.favoriteRecipeIds)) {
+      this.state.favoriteRecipeIds = [];
+    }
+    return this.state.favoriteRecipeIds;
+  }
+
+  isRecipeFavorite(recipeId) {
+    if (!Array.isArray(this.state.favoriteRecipeIds)) return false;
+    return this.state.favoriteRecipeIds.includes(recipeId);
+  }
+
+  toggleFavoriteRecipe(recipeId) {
+    if (!Array.isArray(this.state.favoriteRecipeIds)) {
+      this.state.favoriteRecipeIds = [];
+    }
+    const idx = this.state.favoriteRecipeIds.indexOf(recipeId);
+    let isFav = false;
+    if (idx > -1) {
+      this.state.favoriteRecipeIds.splice(idx, 1);
+      isFav = false;
+    } else {
+      this.state.favoriteRecipeIds.push(recipeId);
+      isFav = true;
+    }
+    this.saveState();
+    return isFav;
   }
 
   recalculateDailyNutrition() {

@@ -211,6 +211,9 @@ export const EMPTY_INITIAL_STATE = {
   // الوجبات المحفوظة — يمكن للمستخدم حفظ وجباته المتكررة لاستخدامها بسرعة
   savedMeals: [],
 
+  // الوصفات الرياضية المفضلة
+  favoriteRecipeIds: [],
+
   // ذاكرة محادثات الذكاء الاصطناعي
   aiChatHistory: []
 };
