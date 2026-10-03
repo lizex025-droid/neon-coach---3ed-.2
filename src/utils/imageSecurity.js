@@ -2,6 +2,8 @@
  * NEON COACH - حماية الصور من النقر بالزر الأيمن (Right-Click) والسحب
  */
 
+let isDocumentGuardInitialized = false;
+
 export function initImageProtectionGuard(rootElement = document) {
   if (!rootElement) return;
 
@@ -30,7 +32,9 @@ export function initImageProtectionGuard(rootElement = document) {
 
   rootElement.addEventListener('contextmenu', handleContextMenu, true);
   rootElement.addEventListener('dragstart', handleDragStart, true);
-  if (rootElement !== document) {
+
+  if (!isDocumentGuardInitialized) {
+    isDocumentGuardInitialized = true;
     document.addEventListener('contextmenu', handleContextMenu, true);
     document.addEventListener('dragstart', handleDragStart, true);
   }

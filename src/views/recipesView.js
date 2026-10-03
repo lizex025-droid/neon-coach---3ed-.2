@@ -1,6 +1,7 @@
 /**
  * NEON COACH - شاشة الوصفات الرياضية الصحية (Healthy Fitness Recipes Hub)
  * استكشاف وصفات محسوبة السعرات والماكروز مع خيارات التصفية والبحث والإضافة الفورية لوجبات اليوم والمفضلة
+ * تم تحسين الأداء والتوافق العالي مع WebKit / iOS Safari عبر التحميل التدريجي (Batching) لمنع استهلاك الذاكرة.
  */
 
 import { RECIPE_CATEGORIES, RECIPES_DATA } from '../data/recipesData.js';
@@ -8,6 +9,8 @@ import { store } from '../state/store.js';
 import { notificationService } from '../services/notificationService.js';
 import { initImageProtectionGuard } from '../utils/imageSecurity.js';
 
+const PAGE_SIZE = 12;
+let visibleCount = PAGE_SIZE;
 let activeCategory = 'all';
 let searchQuery = '';
 let currentSort = 'default';
@@ -82,8 +85,8 @@ function getFilteredRecipes() {
   return list;
 }
 
-function renderCardsHtml(recipes) {
-  if (recipes.length === 0) {
+function renderCardsHtml(recipes, totalFilteredCount) {
+  if (totalFilteredCount === 0) {
     if (activeCategory === 'favorites') {
       return `
         <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; background: rgba(7, 16, 13, 0.6); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 20px; margin-top: 10px;">
@@ -114,6 +117,7 @@ function renderCardsHtml(recipes) {
 export function renderRecipesView() {
   const filteredRecipes = getFilteredRecipes();
   const favoriteIds = store.getFavoriteRecipeIds ? store.getFavoriteRecipeIds() : [];
+  const displayedRecipes = filteredRecipes.slice(0, visibleCount);
 
   return `
     <div class="recipes-view-container view-fade-slide" style="max-width: 900px; margin: 0 auto; padding: 14px 12px 105px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
@@ -189,7 +193,21 @@ export function renderRecipesView() {
 
       <!-- شبكة بطاقات الوصفات -->
       <div id="recipes-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-        ${renderCardsHtml(filteredRecipes)}
+        ${renderCardsHtml(displayedRecipes, filteredRecipes.length)}
+      </div>
+
+      <!-- عنصر التحميل التلقائي وزر عرض المزيد لتجنب إجهاد الذاكرة في الهواتف -->
+      <div id="recipes-load-more-container" style="text-align: center; margin-top: 10px; display: ${visibleCount < filteredRecipes.length ? 'block' : 'none'};">
+        <button
+          type="button"
+          id="btn-recipes-load-more"
+          class="btn btn-secondary"
+          style="padding: 12px 28px; border-radius: 14px; font-size: 0.92rem; font-weight: 800; border: 1px solid rgba(85,247,165,0.3); background: rgba(85,247,165,0.08); color: #55F7A5; cursor: pointer; transition: all 0.2s;"
+        >
+          <span>عرض المزيد من الوجبات</span>
+          <span id="recipes-load-more-count" style="font-size: 0.8rem; color: #B8C0BC; margin-right: 6px;">(${Math.min(visibleCount, filteredRecipes.length)} من ${filteredRecipes.length})</span>
+        </button>
+        <div id="recipes-scroll-sentinel" style="height: 40px; width: 100%; margin-top: 10px;"></div>
       </div>
 
       <!-- مودال عرض تفاصيل الوصفة والمقادير والتحضير -->
@@ -233,7 +251,7 @@ function renderRecipeCard(recipe) {
             }
           </button>
 
-          <!-- صورة عرض الطبق النهائي -->
+          <!-- صورة عرض الطبق النهائي بدون طبقات تسريع GPU تستهلك ذاكرة WebKit -->
           ${recipe.imageUrl ? `
             <div class="recipe-dish-preview btn-open-recipe" data-recipe-id="${recipe.id}" style="width: 100%; height: 100%; cursor: pointer;" title="انقر لعرض تفاصيل ومقادير الوصفة">
               <img
@@ -242,7 +260,7 @@ function renderRecipeCard(recipe) {
                 loading="lazy"
                 decoding="async"
                 draggable="false"
-                style="position: absolute; width: 200%; left: -3%; right: auto; top: 0; transform: translateY(-69.5%) translateZ(0); display: block; max-width: none; border-radius: 0;"
+                style="position: absolute; width: 200%; left: -3%; right: auto; top: 0; transform: translateY(-69.5%); display: block; max-width: none; border-radius: 0;"
               />
             </div>
           ` : `
@@ -419,19 +437,27 @@ export function bindRecipesEvents() {
   const container = document.querySelector('.recipes-view-container');
   if (!container) return;
 
-  // تفعيل حماية الصور من النقر بزر الفأرة الأيمن والسحب
+  // حماية خفيفة للصور
   initImageProtectionGuard(container);
 
   const countBadge = container.querySelector('#recipes-count-badge');
   const cardsGrid = container.querySelector('#recipes-cards-grid');
+  const loadMoreContainer = container.querySelector('#recipes-load-more-container');
+  const loadMoreCount = container.querySelector('#recipes-load-more-count');
 
-  const updateGridOnly = () => {
-    const filtered = getFilteredRecipes();
-    if (countBadge) countBadge.textContent = filtered.length;
-    if (cardsGrid) {
-      cardsGrid.innerHTML = renderCardsHtml(filtered);
+  const updateLoadMoreUI = (totalFiltered) => {
+    if (!loadMoreContainer) return;
+    if (visibleCount < totalFiltered) {
+      loadMoreContainer.style.display = 'block';
+      if (loadMoreCount) {
+        loadMoreCount.textContent = `(${Math.min(visibleCount, totalFiltered)} من ${totalFiltered})`;
+      }
+    } else {
+      loadMoreContainer.style.display = 'none';
     }
-    // تحديث عداد المفضلة في الشريحة إن وجد
+  };
+
+  const updateFavChipBadge = () => {
     const favChip = container.querySelector('.recipe-cat-chip[data-cat="favorites"]');
     if (favChip) {
       const favIds = store.getFavoriteRecipeIds ? store.getFavoriteRecipeIds() : [];
@@ -451,6 +477,33 @@ export function bindRecipesEvents() {
     }
   };
 
+  const resetAndRender = () => {
+    visibleCount = PAGE_SIZE;
+    const allFiltered = getFilteredRecipes();
+    if (countBadge) countBadge.textContent = allFiltered.length;
+    if (cardsGrid) {
+      cardsGrid.innerHTML = renderCardsHtml(allFiltered.slice(0, visibleCount), allFiltered.length);
+    }
+    updateLoadMoreUI(allFiltered.length);
+    updateFavChipBadge();
+  };
+
+  const loadMore = () => {
+    const allFiltered = getFilteredRecipes();
+    if (visibleCount >= allFiltered.length) return;
+    const nextBatch = allFiltered.slice(visibleCount, visibleCount + PAGE_SIZE);
+    visibleCount += nextBatch.length;
+
+    if (cardsGrid && nextBatch.length > 0) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = nextBatch.map(r => renderRecipeCard(r)).join('');
+      while (tempDiv.firstChild) {
+        cardsGrid.appendChild(tempDiv.firstChild);
+      }
+    }
+    updateLoadMoreUI(allFiltered.length);
+  };
+
   // 1. فلتر التصنيفات (تشمل الكل والمفضلة وكافة الأقسام)
   container.querySelectorAll('.recipe-cat-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -463,7 +516,7 @@ export function bindRecipesEvents() {
           iconSpan.textContent = isCurrent ? '❤️' : '🤍';
         }
       });
-      updateGridOnly();
+      resetAndRender();
     });
   });
 
@@ -472,7 +525,7 @@ export function bindRecipesEvents() {
   if (sortSelect) {
     sortSelect.addEventListener('change', (e) => {
       currentSort = e.target.value;
-      updateGridOnly();
+      resetAndRender();
     });
   }
 
@@ -486,7 +539,7 @@ export function bindRecipesEvents() {
       if (clearBtn) clearBtn.style.display = searchQuery ? 'flex' : 'none';
       clearTimeout(window._recipeSearchDebounce);
       window._recipeSearchDebounce = setTimeout(() => {
-        updateGridOnly();
+        resetAndRender();
       }, 100);
     });
   }
@@ -498,10 +551,26 @@ export function bindRecipesEvents() {
       searchInput.focus();
     }
     clearBtn.style.display = 'none';
-    updateGridOnly();
+    resetAndRender();
   });
 
-  // 4. إعادة ضبط الفلاتر عند الضغط على زر "عرض كافة الوصفات" في الحالة الفارغة
+  // 4. زر عرض المزيد والتمرير اللانهائي
+  const loadMoreBtn = container.querySelector('#btn-recipes-load-more');
+  loadMoreBtn?.addEventListener('click', () => {
+    loadMore();
+  });
+
+  const sentinel = container.querySelector('#recipes-scroll-sentinel');
+  if (sentinel && typeof IntersectionObserver !== 'undefined') {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0] && entries[0].isIntersecting) {
+        loadMore();
+      }
+    }, { rootMargin: '300px 0px' });
+    observer.observe(sentinel);
+  }
+
+  // 5. إعادة ضبط الفلاتر عند الضغط على زر "عرض كافة الوصفات" في الحالة الفارغة
   container.addEventListener('click', (e) => {
     if (e.target.closest('#recipes-reset-filter-btn')) {
       activeCategory = 'all';
@@ -511,11 +580,11 @@ export function bindRecipesEvents() {
       container.querySelectorAll('.recipe-cat-chip').forEach(c => {
         c.classList.toggle('active', c.dataset.cat === 'all');
       });
-      updateGridOnly();
+      resetAndRender();
     }
   });
 
-  // 5. فتح تفاصيل الوصفة في المودال (Event Delegation)
+  // 6. فتح تفاصيل الوصفة في المودال (Event Delegation)
   const modal = document.getElementById('recipe-detail-modal');
   const modalContent = document.getElementById('recipe-modal-content');
 
@@ -560,12 +629,23 @@ export function bindRecipesEvents() {
         } else {
           notificationService.showToast(`تمت إزالة «${recipe.titleAr}» من المفضلة`, 'info');
         }
-        updateGridOnly();
+        // تحديث زر القلب المقابل في البطاقة إذا كانت معروضة
+        const cardHeart = container.querySelector(`.recipe-fav-heart-btn[data-recipe-id="${recipe.id}"]`);
+        if (cardHeart) {
+          cardHeart.classList.toggle('is-fav', isNowFav);
+          cardHeart.innerHTML = isNowFav
+            ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="1.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`
+            : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+        }
+        updateFavChipBadge();
+        if (activeCategory === 'favorites') {
+          resetAndRender();
+        }
       }
     });
   };
 
-  // 6. تفويض أحداث النقر للبطاقات (زر القلب وزر أضف لليوم وزر عرض الوصفة)
+  // 7. تفويض أحداث النقر للبطاقات (زر القلب وزر أضف لليوم وزر عرض الوصفة)
   container.addEventListener('click', (e) => {
     // أ. النقر على زر القلب (المفضلة)
     const heartBtn = e.target.closest('.recipe-fav-heart-btn');
@@ -591,28 +671,11 @@ export function bindRecipesEvents() {
         notificationService.showToast(`تمت إزالة «${recipe.titleAr}» من المفضلة`, 'info');
       }
 
+      updateFavChipBadge();
+
       // إذا كان التصنيف النشط هو المفضلة يتم تحديث الشبكة فوراً
       if (activeCategory === 'favorites') {
-        updateGridOnly();
-      } else {
-        // تحديث عداد المفضلة في الشريحة العلوية
-        const favChip = container.querySelector('.recipe-cat-chip[data-cat="favorites"]');
-        if (favChip) {
-          const favIds = store.getFavoriteRecipeIds ? store.getFavoriteRecipeIds() : [];
-          let badge = favChip.querySelector('span:last-child');
-          if (favIds.length > 0) {
-            if (!badge || badge.classList.contains('chip-label')) {
-              const newSpan = document.createElement('span');
-              newSpan.style.cssText = 'font-size: 0.72rem; padding: 2px 7px; border-radius: 99px; background: rgba(239,68,68,0.25); color: #EF4444; font-weight: 900; margin-right: 2px;';
-              newSpan.textContent = favIds.length;
-              favChip.appendChild(newSpan);
-            } else {
-              badge.textContent = favIds.length;
-            }
-          } else if (badge && !badge.classList.contains('chip-label')) {
-            badge.remove();
-          }
-        }
+        resetAndRender();
       }
       return;
     }
