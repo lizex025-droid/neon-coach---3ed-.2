@@ -10,3 +10,12 @@ scratch/
 
 .vercel
 .env*
+
+# Recipe generation scripts and intermediate artifacts
+recipe-images/
+scripts/recipe-images/
+scripts/generated_90_recipes.json
+scripts/new_urls.json
+scripts/apply_all_recipes.mjs
+scripts/check_urls.mjs
+scripts/generate_recipes_data.mjs
