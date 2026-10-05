@@ -11,7 +11,7 @@ import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, isCountBasedFood
 import { mealNameFromItems } from '../domain/nutritionCalculations.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
-import { parseArabicFloat } from '../utils/arabicNumerals.js';
+import { parseArabicFloat, parseArabicInt, normalizeArabicNumerals } from '../utils/arabicNumerals.js';
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -51,14 +51,20 @@ function recalcDraft(draft) {
       item.carbs = Math.round(m.c);
       item.fats = Math.round(m.f);
     } else {
-      const baseCal = item.baseKcal || (item.grams ? (item.calories * 100 / item.grams) : item.calories);
-      const baseP = item.baseP || (item.grams ? (item.protein * 100 / item.grams) : item.protein);
-      const baseC = item.baseC || (item.grams ? (item.carbs * 100 / item.grams) : item.carbs);
-      const baseF = item.baseF || (item.grams ? (item.fats * 100 / item.grams) : item.fats);
+      if (!item.baseKcal && item.calories && item.grams) {
+        item.baseKcal = (item.calories * 100) / item.grams;
+        item.baseP = (item.protein * 100) / item.grams;
+        item.baseC = (item.carbs * 100) / item.grams;
+        item.baseF = (item.fats * 100) / item.grams;
+      }
+      const baseCal = item.baseKcal || 0;
+      const baseP = item.baseP || 0;
+      const baseC = item.baseC || 0;
+      const baseF = item.baseF || 0;
       item.calories = Math.round(baseCal * (grams / 100));
-      item.protein = Math.round(baseP * (grams / 100));
-      item.carbs = Math.round(baseC * (grams / 100));
-      item.fats = Math.round(baseF * (grams / 100));
+      item.protein = Math.round(baseP * (grams / 100) * 10) / 10;
+      item.carbs = Math.round(baseC * (grams / 100) * 10) / 10;
+      item.fats = Math.round(baseF * (grams / 100) * 10) / 10;
     }
     draft.calories += item.calories;
     draft.protein += item.protein;
@@ -217,13 +223,13 @@ export function renderMealLogView() {
                 </div>
                 ${isCount ? `
                   <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="number" class="draft-item-count-input" data-idx="${idx}" min="1" step="1" value="${countVal}" style="width: 65px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.4); color: #55F7A5; font-size: 1.05rem; font-weight: 800; font-family: monospace; padding: 6px 4px;">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" class="draft-item-count-input" data-idx="${idx}" value="${countVal}" style="width: 65px; text-align: center; border-radius: 10px; background: #020704; border: 1px solid rgba(85,247,165,0.4); color: #55F7A5; font-size: 1.05rem; font-weight: 800; font-family: monospace; padding: 6px 4px;">
                     <span style="color: #55F7A5; font-weight: 700; font-size: 0.84rem; white-space: nowrap;">${uLabel}</span>
                     <span class="item-grams-hint" style="color: #8C9992; font-size: 0.75rem; font-family: monospace;">(~${item.grams}غ)</span>
                   </div>
                 ` : `
                   <div style="display: flex; align-items: center; gap: 6px;">
-                    <input type="number" class="draft-item-grams-input" data-idx="${idx}" min="0" step="5" value="${item.grams}">
+                    <input type="text" inputmode="decimal" class="draft-item-grams-input" data-idx="${idx}" value="${item.grams}" style="width: 72px; text-align: center; padding: 6px 8px; border-radius: 8px; background: #030806; border: 1px solid rgba(85, 247, 165, 0.3); color: #FFFFFF; font-family: monospace; font-weight: 700;">
                     <span style="color: #B8C0BC; font-size: 0.85rem;">${uLabel || 'غ'}</span>
                   </div>
                 `}
@@ -447,6 +453,10 @@ export function bindMealLogEvents() {
         unitLabel: unitLabel || (isCount ? 'بيضة كاملة' : 'غ'),
         count: isCount ? defaultCount : null,
         grams: initialGrams,
+        baseKcal: food.per100?.kcal || food.calories || (initialGrams > 0 ? (food.calories * 100 / initialGrams) : 0),
+        baseP: food.per100?.p || food.protein || (initialGrams > 0 ? (food.protein * 100 / initialGrams) : 0),
+        baseC: food.per100?.c || food.carbs || (initialGrams > 0 ? (food.carbs * 100 / initialGrams) : 0),
+        baseF: food.per100?.f || food.fats || (initialGrams > 0 ? (food.fats * 100 / initialGrams) : 0),
         calories: Math.round((food.per100?.kcal || 0) * factor),
         protein: Math.round((food.per100?.p || 0) * factor * 10) / 10,
         carbs: Math.round((food.per100?.c || 0) * factor * 10) / 10,
@@ -608,7 +618,12 @@ export function bindMealLogEvents() {
   document.querySelectorAll('.draft-item-count-input').forEach(input => {
     input.addEventListener('input', () => {
       const idx = Number(input.getAttribute('data-idx'));
-      const count = Math.max(1, parseArabicFloat(input.value, 1));
+      const rawVal = input.value;
+      const normalized = normalizeArabicNumerals(rawVal, true);
+      if (normalized !== rawVal) {
+        input.value = normalized;
+      }
+      const count = Math.max(1, parseArabicInt(normalized, 10, 1));
       const item = activeDraft.items[idx];
       if (item) {
         item.count = count;
@@ -640,7 +655,12 @@ export function bindMealLogEvents() {
   document.querySelectorAll('.draft-item-grams-input').forEach(input => {
     input.addEventListener('input', () => {
       const idx = Number(input.getAttribute('data-idx'));
-      const val = Math.max(0, parseArabicFloat(input.value, 0));
+      const rawVal = input.value;
+      const normalized = normalizeArabicNumerals(rawVal, true);
+      if (normalized !== rawVal) {
+        input.value = normalized;
+      }
+      const val = Math.max(0, parseArabicFloat(normalized, 0));
       if (activeDraft.items[idx]) {
         activeDraft.items[idx].grams = val;
         recalcDraft(activeDraft);

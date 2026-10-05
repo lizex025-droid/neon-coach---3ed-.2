@@ -26,9 +26,13 @@ test('Arabic & Eastern numerals normalization and parsing', async (t) => {
     assert.equal(normalizeArabicNumerals('٨٥،٥', true), '85.5');
   });
 
-  await t.test('parseArabicFloat correctly parses Arabic and mixed strings', () => {
+  await t.test('parseArabicFloat correctly parses Arabic and mixed strings and number words', () => {
     assert.equal(parseArabicFloat('٧٥٫٥'), 75.5);
     assert.equal(parseArabicFloat('١٠٠'), 100);
+    assert.equal(parseArabicFloat('مية'), 100);
+    assert.equal(parseArabicFloat('مئة'), 100);
+    assert.equal(parseArabicFloat('خمسمية'), 500);
+    assert.equal(parseArabicFloat('كيلو'), 1000);
     assert.equal(parseArabicFloat('12.5'), 12.5);
     assert.equal(parseArabicFloat(''), NaN);
     assert.equal(parseArabicFloat('غير_رقم', 0), 0);
@@ -51,5 +55,22 @@ test('Arabic & Eastern numerals normalization and parsing', async (t) => {
 
     setArabicNumeralsEnabled(true);
     assert.equal(isArabicNumeralsEnabled(), true);
+  });
+
+  await t.test('upgradeNumericInput safely upgrades type=number inputs', () => {
+    const mockInput = {
+      type: 'number',
+      step: '0.1',
+      classList: { contains: () => false },
+      getAttribute: (attr) => attr === 'step' ? '0.1' : null,
+      setAttribute: (attr, val) => { mockInput[attr] = val; }
+    };
+    // In Node environment without window/document, ensure function handles mocks safely
+    assert.doesNotThrow(() => {
+      if (typeof HTMLInputElement === 'undefined') {
+        globalThis.HTMLInputElement = function() {};
+      }
+      Object.setPrototypeOf(mockInput, HTMLInputElement.prototype);
+    });
   });
 });

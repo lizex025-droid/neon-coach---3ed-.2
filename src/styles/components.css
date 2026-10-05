@@ -855,7 +855,10 @@
   border-radius: 12px;
 }
 
-.draft-item-row input[type="number"] {
+.draft-item-row input[type="number"],
+.draft-item-row input[type="text"],
+.draft-item-row .draft-item-grams-input,
+.draft-item-row .draft-item-count-input {
   width: 72px;
   text-align: center;
   padding: 6px 8px;
