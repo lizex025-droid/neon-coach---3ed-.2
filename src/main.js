@@ -13,6 +13,7 @@ import { Router } from './router/router.js';
 import { setupTrainingLoadingInterceptors } from './utils/splash.js';
 import { initNeonParticles } from './utils/particles.js';
 import { initImageProtectionGuard } from './utils/imageSecurity.js';
+import { initArabicNumeralsAutoConvert } from './utils/arabicNumerals.js';
 import { inject } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
 
@@ -31,6 +32,7 @@ if (typeof window !== 'undefined') {
 // تفعيل رصد أزرار التدريب لعرض شاشة التحميل فوراً وحماية الوسائط
 setupTrainingLoadingInterceptors();
 initImageProtectionGuard();
+initArabicNumeralsAutoConvert();
 
 // تهيئة وتشغيل موجه الصفحات
 function initApp() {

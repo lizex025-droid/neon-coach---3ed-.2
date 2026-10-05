@@ -11,6 +11,7 @@ import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 import { authService } from '../services/authService.js';
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient.js';
 import { syncService } from '../services/syncService.js';
+import { isArabicNumeralsEnabled, setArabicNumeralsEnabled, normalizeArabicNumerals, parseArabicFloat } from '../utils/arabicNumerals.js';
 
 // الصفحة الفرعية النشطة: 'main' | 'plan' | 'badges' | 'preferences' | 'security'
 let activeSubPage = 'main';
@@ -647,6 +648,7 @@ function renderBadgesSubPage(profile, state) {
 function renderPreferencesSubPage(profile, state) {
   const currentLang = typeof localStorage !== 'undefined' ? (localStorage.getItem('neon_app_lang') || 'ar') : 'ar';
   const currentTheme = typeof localStorage !== 'undefined' ? (localStorage.getItem('neon_app_theme') || 'dark') : 'dark';
+  const arabicNumeralsActive = isArabicNumeralsEnabled();
   const weightUnit = profile.weightUnit || 'kg';
   const heightUnit = profile.heightUnit || 'cm';
   const liquidUnit = profile.liquidUnit || 'liter';
@@ -669,6 +671,16 @@ function renderPreferencesSubPage(profile, state) {
         <div class="pref-selector">
           <button type="button" class="pref-btn ${currentLang === 'ar' ? 'active' : ''}" data-pref="lang" data-value="ar">العربية (RTL)</button>
           <button type="button" class="pref-btn ${currentLang === 'en' ? 'active' : ''}" data-pref="lang" data-value="en">English (LTR)</button>
+        </div>
+      </div>
+
+      <!-- تفضيل التعرف على الأرقام العربية -->
+      <div class="neon-card" style="padding: 18px 20px;">
+        <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 4px;">التعرف على الأرقام العربية (٠-٩)</div>
+        <p style="font-size: 0.78rem; color: #8E9B94; margin: 0 0 10px;">يتعرف التطبيق تلقائياً على الأرقام المدخلة بالأرقام العربية ويحولها مباشرة دون الحاجة لتبديل لوحة المفاتيح</p>
+        <div class="pref-selector">
+          <button type="button" class="pref-btn ${arabicNumeralsActive ? 'active' : ''}" data-pref="arabicNumerals" data-value="true">مفعل تلقائياً (موصى به) ✅</button>
+          <button type="button" class="pref-btn ${!arabicNumeralsActive ? 'active' : ''}" data-pref="arabicNumerals" data-value="false">إيقاف التعرف ✕</button>
         </div>
       </div>
 
@@ -907,8 +919,8 @@ export function bindProfileEvents() {
   if (activeSubPage === 'plan') {
     // حساب حي للـ BMI والعمر
     const updatePlanMetrics = () => {
-      const w = Number(document.getElementById('plan-current-weight')?.value) || 0;
-      const h = Number(document.getElementById('plan-height')?.value) || 0;
+      const w = parseArabicFloat(document.getElementById('plan-current-weight')?.value, 0);
+      const h = parseArabicFloat(document.getElementById('plan-height')?.value, 0);
       const bDate = document.getElementById('plan-birthdate')?.value;
       const ageLabel = document.getElementById('label-plan-age');
       if (bDate) {
@@ -931,8 +943,8 @@ export function bindProfileEvents() {
     // إعادة الحساب التلقائي للسعرات والماء
     document.getElementById('btn-recalculate-targets')?.addEventListener('click', () => {
       const existing = store.getState().userProfile || {};
-      const weight = Number(document.getElementById('plan-current-weight')?.value) || existing.currentWeight || 0;
-      const height = Number(document.getElementById('plan-height')?.value) || existing.height || 0;
+      const weight = parseArabicFloat(document.getElementById('plan-current-weight')?.value, existing.currentWeight || 0);
+      const height = parseArabicFloat(document.getElementById('plan-height')?.value, existing.height || 0);
       const birthDate = document.getElementById('plan-birthdate')?.value || existing.birthDate || '';
       const gender = document.getElementById('plan-gender')?.value || existing.gender || 'male';
       const goal = document.getElementById('plan-goal')?.value || existing.goal || 'fat_loss';
@@ -971,17 +983,17 @@ export function bindProfileEvents() {
       const gender = document.getElementById('plan-gender')?.value || existing.gender || 'male';
 
       const heightInput = document.getElementById('plan-height')?.value;
-      const height = heightInput !== '' && heightInput !== undefined ? Number(heightInput) : (existing.height ?? 0);
+      const height = heightInput !== '' && heightInput !== undefined ? parseArabicFloat(heightInput, existing.height ?? 0) : (existing.height ?? 0);
 
       const currentWeightInput = document.getElementById('plan-current-weight')?.value;
-      const currentWeight = currentWeightInput !== '' && currentWeightInput !== undefined ? Number(currentWeightInput) : (existing.currentWeight ?? 0);
+      const currentWeight = currentWeightInput !== '' && currentWeightInput !== undefined ? parseArabicFloat(currentWeightInput, existing.currentWeight ?? 0) : (existing.currentWeight ?? 0);
 
       const targetWeightInput = document.getElementById('plan-target-weight')?.value;
-      const targetWeight = targetWeightInput !== '' && targetWeightInput !== undefined ? Number(targetWeightInput) : (existing.targetWeight ?? 0);
+      const targetWeight = targetWeightInput !== '' && targetWeightInput !== undefined ? parseArabicFloat(targetWeightInput, existing.targetWeight ?? 0) : (existing.targetWeight ?? 0);
 
       const goal = document.getElementById('plan-goal')?.value || existing.goal || 'fat_loss';
       const trainingLevel = document.getElementById('plan-level')?.value || existing.trainingLevel || 'intermediate';
-      const workoutDaysCount = Number(document.getElementById('plan-workout-days')?.value) || existing.workoutDaysCount || 0;
+      const workoutDaysCount = parseArabicFloat(document.getElementById('plan-workout-days')?.value, existing.workoutDaysCount || 0);
       const sessionDuration = document.getElementById('plan-session-duration')?.value || existing.sessionDuration || '60';
       const equipment = document.getElementById('plan-equipment')?.value || existing.equipment || 'gym';
       const workoutPlan = document.getElementById('plan-workout-plan')?.value || existing.workoutPlan || 'hasm';
@@ -991,10 +1003,10 @@ export function bindProfileEvents() {
       const weightLossRate = document.getElementById('plan-weight-loss-rate')?.value || existing.weightLossRate || 'balanced';
 
       const targetCaloriesInput = document.getElementById('plan-target-calories')?.value;
-      let targetCalories = targetCaloriesInput !== '' && targetCaloriesInput !== undefined ? Number(targetCaloriesInput) : (existing.targetCalories ?? 0);
+      let targetCalories = targetCaloriesInput !== '' && targetCaloriesInput !== undefined ? parseArabicFloat(targetCaloriesInput, existing.targetCalories ?? 0) : (existing.targetCalories ?? 0);
 
       const targetWaterInput = document.getElementById('plan-target-water')?.value;
-      let targetWaterLiters = targetWaterInput !== '' && targetWaterInput !== undefined ? Number(targetWaterInput) : (existing.targetWaterLiters ?? 0);
+      let targetWaterLiters = targetWaterInput !== '' && targetWaterInput !== undefined ? parseArabicFloat(targetWaterInput, existing.targetWaterLiters ?? 0) : (existing.targetWaterLiters ?? 0);
 
       if (recalc && currentWeight > 0 && height > 0) {
         const calculated = calculateNutritionTargets({
@@ -1062,7 +1074,7 @@ export function bindProfileEvents() {
     const confirmModal = document.getElementById('modal-plan-change-confirm');
     document.getElementById('btn-save-plan-all')?.addEventListener('click', () => {
       const existing = store.getState().userProfile || {};
-      const newWeight = Number(document.getElementById('plan-current-weight')?.value) || existing.currentWeight;
+      const newWeight = parseArabicFloat(document.getElementById('plan-current-weight')?.value, existing.currentWeight);
       const newGoal = document.getElementById('plan-goal')?.value || existing.goal;
       const newAct = document.getElementById('plan-activity-level')?.value || existing.activityLevel;
 
@@ -1112,6 +1124,10 @@ export function bindProfileEvents() {
             document.documentElement.setAttribute('data-theme', val);
           }
           notificationService.showToast(`تم تطبيق المظهر: ${val === 'dark' ? 'داكن' : (val === 'light' ? 'فاتح' : 'تلقائي')}`, 'info');
+        } else if (prefType === 'arabicNumerals') {
+          const isEnabled = val === 'true';
+          setArabicNumeralsEnabled(isEnabled);
+          notificationService.showToast(isEnabled ? 'تم تفعيل التعرف التلقائي على الأرقام العربية (٠-٩) ✓' : 'تم إيقاف التعرف التلقائي على الأرقام العربية', 'info');
         } else {
           // وحدات القياس (weightUnit, heightUnit, liquidUnit)
           const prof = store.getState().userProfile || {};

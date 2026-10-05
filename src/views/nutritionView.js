@@ -11,6 +11,7 @@ import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
 import { nutritionPlanService } from '../services/nutritionPlanService.js';
+import { parseArabicFloat, normalizeArabicNumerals } from '../utils/arabicNumerals.js';
 
 let activePlanDayIndex = (new Date().getDay() + 1) % 7;
 
@@ -953,7 +954,7 @@ export function bindNutritionEvents() {
       editFieldsContainer.querySelectorAll('.edit-logged-grams').forEach(inp => {
         inp.addEventListener('input', () => {
           const idx = Number(inp.getAttribute('data-idx'));
-          const newG = Math.max(0, Number(inp.value) || 0);
+          const newG = Math.max(0, parseArabicFloat(inp.value, 0));
           const it = currentEditingItems[idx];
           if (it) {
             it.grams = newG;
@@ -981,7 +982,7 @@ export function bindNutritionEvents() {
       editFieldsContainer.querySelectorAll('.edit-logged-count').forEach(inp => {
         inp.addEventListener('input', () => {
           const idx = Number(inp.getAttribute('data-idx'));
-          const count = Math.max(1, Number(inp.value) || 1);
+          const count = Math.max(1, parseArabicFloat(inp.value, 1));
           const pWeight = Number(inp.getAttribute('data-weight')) || 50;
           const uLabel = inp.getAttribute('data-unit') || 'بيضة';
           const newG = count * pWeight;
@@ -1051,10 +1052,10 @@ export function bindNutritionEvents() {
       `;
       editFieldsContainer.querySelectorAll('input').forEach(inp => {
         inp.addEventListener('input', () => {
-          directFallbackData.calories = Number(document.getElementById('edit-direct-cals')?.value) || 0;
-          directFallbackData.protein = Number(document.getElementById('edit-direct-protein')?.value) || 0;
-          directFallbackData.carbs = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
-          directFallbackData.fats = Number(document.getElementById('edit-direct-fats')?.value) || 0;
+          directFallbackData.calories = parseArabicFloat(document.getElementById('edit-direct-cals')?.value, 0);
+          directFallbackData.protein = parseArabicFloat(document.getElementById('edit-direct-protein')?.value, 0);
+          directFallbackData.carbs = parseArabicFloat(document.getElementById('edit-direct-carbs')?.value, 0);
+          directFallbackData.fats = parseArabicFloat(document.getElementById('edit-direct-fats')?.value, 0);
           updateEditSummary();
         });
       });
@@ -1221,10 +1222,10 @@ export function bindNutritionEvents() {
         totalF += (it.fats || 0);
       });
     } else if (directFallbackData) {
-      totalC = Number(document.getElementById('edit-direct-cals')?.value) || 0;
-      totalP = Number(document.getElementById('edit-direct-protein')?.value) || 0;
-      totalCarb = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
-      totalF = Number(document.getElementById('edit-direct-fats')?.value) || 0;
+      totalC = parseArabicFloat(document.getElementById('edit-direct-cals')?.value, 0);
+      totalP = parseArabicFloat(document.getElementById('edit-direct-protein')?.value, 0);
+      totalCarb = parseArabicFloat(document.getElementById('edit-direct-carbs')?.value, 0);
+      totalF = parseArabicFloat(document.getElementById('edit-direct-fats')?.value, 0);
     }
 
     const res = store.saveToFavorites({
@@ -1263,10 +1264,10 @@ export function bindNutritionEvents() {
       copy.fats = currentEditingItems.reduce((s, i) => s + (i.fats || 0), 0);
     } else if (directFallbackData) {
       copy.items = [];
-      copy.calories = Number(document.getElementById('edit-direct-cals')?.value) || 0;
-      copy.protein = Number(document.getElementById('edit-direct-protein')?.value) || 0;
-      copy.carbs = Number(document.getElementById('edit-direct-carbs')?.value) || 0;
-      copy.fats = Number(document.getElementById('edit-direct-fats')?.value) || 0;
+      copy.calories = parseArabicFloat(document.getElementById('edit-direct-cals')?.value, 0);
+      copy.protein = parseArabicFloat(document.getElementById('edit-direct-protein')?.value, 0);
+      copy.carbs = parseArabicFloat(document.getElementById('edit-direct-carbs')?.value, 0);
+      copy.fats = parseArabicFloat(document.getElementById('edit-direct-fats')?.value, 0);
     } else {
       copy.items = [];
       copy.calories = 0;
@@ -1436,14 +1437,14 @@ export function bindNutritionEvents() {
 
   // التحقق الحي من تطابق سعرات الماكروز مع هدف السعرات اليومية
   const updateMacroValidation = () => {
-    const targetVal = Number(calInput?.value) || 0;
+    const targetVal = parseArabicFloat(calInput?.value, 0);
     const manP = document.getElementById('manual-protein-input');
     const manC = document.getElementById('manual-carbs-input');
     const manF = document.getElementById('manual-fats-input');
 
-    const p = Number(manP?.value) || 0;
-    const c = Number(manC?.value) || 0;
-    const f = Number(manF?.value) || 0;
+    const p = parseArabicFloat(manP?.value, 0);
+    const c = parseArabicFloat(manC?.value, 0);
+    const f = parseArabicFloat(manF?.value, 0);
 
     const totalFromMacros = (p * 4) + (c * 4) + (f * 9);
     const sumElem = document.getElementById('manual-macros-cals-sum');
@@ -1477,15 +1478,15 @@ export function bindNutritionEvents() {
   // زر الاقتراح والتعديل التلقائي للماكروز لتطابق الهدف العلمي
   const autoFixBtn = document.getElementById('auto-fix-macros-btn');
   autoFixBtn?.addEventListener('click', () => {
-    const targetVal = Number(calInput?.value) || 2000;
+    const targetVal = parseArabicFloat(calInput?.value, 2000);
     const userWeight = Number(store.getState().userProfile?.currentWeight) || 0;
     const pInput = document.getElementById('manual-protein-input');
     const cInput = document.getElementById('manual-carbs-input');
     const fInput = document.getElementById('manual-fats-input');
 
-    const curP = Number(pInput?.value) || 0;
-    const curC = Number(cInput?.value) || 0;
-    const curF = Number(fInput?.value) || 0;
+    const curP = parseArabicFloat(pInput?.value, 0);
+    const curC = parseArabicFloat(cInput?.value, 0);
+    const curF = parseArabicFloat(fInput?.value, 0);
     const curTotal = (curP * 4) + (curC * 4) + (curF * 9);
 
     let newP, newF, newC;
@@ -1517,7 +1518,7 @@ export function bindNutritionEvents() {
 
   // تحديث المعاينة الحية عند كتابة السعرات
   const updatePreview = () => {
-    const val = Number(calInput?.value) || 2000;
+    const val = parseArabicFloat(calInput?.value, 2000);
     const userWeight = Number(store.getState().userProfile?.currentWeight) || 0;
     const p = Math.round(userWeight > 0 ? Math.min(userWeight * 2.2, (val * 0.3) / 4) : (val * 0.3) / 4);
     const f = Math.round((val * 0.25) / 9);
@@ -1556,7 +1557,7 @@ export function bindNutritionEvents() {
   });
 
   saveCalBtn?.addEventListener('click', () => {
-    const newTarget = Number(calInput?.value);
+    const newTarget = parseArabicFloat(calInput?.value, 0);
     if (!newTarget || newTarget < 500) {
       notificationService.showToast('يرجى إدخال رقم سعرات صحيح (500 على الأقل)', 'error');
       return;
@@ -1564,9 +1565,9 @@ export function bindNutritionEvents() {
 
     let customMacros = null;
     if (!autoCheckbox?.checked) {
-      const p = Number(document.getElementById('manual-protein-input')?.value) || 0;
-      const c = Number(document.getElementById('manual-carbs-input')?.value) || 0;
-      const f = Number(document.getElementById('manual-fats-input')?.value) || 0;
+      const p = parseArabicFloat(document.getElementById('manual-protein-input')?.value, 0);
+      const c = parseArabicFloat(document.getElementById('manual-carbs-input')?.value, 0);
+      const f = parseArabicFloat(document.getElementById('manual-fats-input')?.value, 0);
       const macroTotal = (p * 4) + (c * 4) + (f * 9);
       const diff = Math.abs(macroTotal - newTarget);
 

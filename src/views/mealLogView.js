@@ -11,6 +11,7 @@ import { searchFoods, foodById, macrosFor, IMPORTED_FOOD_COUNT, isCountBasedFood
 import { mealNameFromItems } from '../domain/nutritionCalculations.js';
 import { neonIcon } from '../utils/neonIcons.js';
 import { renderCustomFoodModal, bindCustomFoodModal } from '../components/customFoodModal.js';
+import { parseArabicFloat } from '../utils/arabicNumerals.js';
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -607,7 +608,7 @@ export function bindMealLogEvents() {
   document.querySelectorAll('.draft-item-count-input').forEach(input => {
     input.addEventListener('input', () => {
       const idx = Number(input.getAttribute('data-idx'));
-      const count = Math.max(1, Number(input.value) || 1);
+      const count = Math.max(1, parseArabicFloat(input.value, 1));
       const item = activeDraft.items[idx];
       if (item) {
         item.count = count;
@@ -639,7 +640,7 @@ export function bindMealLogEvents() {
   document.querySelectorAll('.draft-item-grams-input').forEach(input => {
     input.addEventListener('input', () => {
       const idx = Number(input.getAttribute('data-idx'));
-      const val = Math.max(0, Number(input.value) || 0);
+      const val = Math.max(0, parseArabicFloat(input.value, 0));
       if (activeDraft.items[idx]) {
         activeDraft.items[idx].grams = val;
         recalcDraft(activeDraft);

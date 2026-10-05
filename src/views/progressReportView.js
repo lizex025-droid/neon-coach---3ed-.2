@@ -19,6 +19,7 @@ import { filterStrongestExercisePerMuscle } from '../domain/calculations.js';
 import { escapeActionHtml } from '../components/actionPanel.js';
 import { dailyHistoryWithin } from '../domain/dailyCycle.js';
 import { localPhotoStorage } from '../services/localPhotoStorage.js';
+import { parseArabicFloat, normalizeArabicNumerals } from '../utils/arabicNumerals.js';
 import {
   wtLoad,
   wtSave,
@@ -1254,7 +1255,7 @@ function initWeightTrackerAndPhotos(state, report, user) {
   const editBtn = document.getElementById('wtEditBtn');
 
   const doSaveWeight = () => {
-    const v = parseFloat(inputEl?.value);
+    const v = parseArabicFloat(inputEl?.value);
     if (isNaN(v) || v <= 0) return;
     wtEntries = wtSaveEntry(wtEntries, v);
     store.logProgressMeasurement({ weight: v });
@@ -1358,13 +1359,20 @@ export function bindProgressReportEvents() {
   });
 
   document.getElementById('save-measure-btn')?.addEventListener('click', () => {
-    const w = document.getElementById('input-measure-weight')?.value;
-    const waist = document.getElementById('input-measure-waist')?.value;
-    const bench = document.getElementById('input-measure-bench')?.value;
-    if (w && !isNaN(Number(w))) {
-      wtSaveEntry(wtLoad(), Number(w));
+    const rawW = document.getElementById('input-measure-weight')?.value;
+    const rawWaist = document.getElementById('input-measure-waist')?.value;
+    const rawBench = document.getElementById('input-measure-bench')?.value;
+    const wNum = parseArabicFloat(rawW);
+    const waistNum = parseArabicFloat(rawWaist);
+    const benchNum = parseArabicFloat(rawBench);
+    if (!isNaN(wNum) && wNum > 0) {
+      wtSaveEntry(wtLoad(), wNum);
     }
-    store.logProgressMeasurement({ weight: w, waistCm: waist, benchPressKg: bench });
+    store.logProgressMeasurement({
+      weight: !isNaN(wNum) ? wNum : (rawW ? normalizeArabicNumerals(rawW, true) : ''),
+      waistCm: !isNaN(waistNum) ? waistNum : (rawWaist ? normalizeArabicNumerals(rawWaist, true) : ''),
+      benchPressKg: !isNaN(benchNum) ? benchNum : (rawBench ? normalizeArabicNumerals(rawBench, true) : '')
+    });
     measureModal?.classList.remove('open');
     notificationService.showToast('تم حفظ القياسات وتحديث التقرير بنجاح ✓', 'success');
     refreshView();
@@ -1380,9 +1388,9 @@ export function bindProgressReportEvents() {
   });
 
   document.getElementById('save-inbody-btn')?.addEventListener('click', () => {
-    const fat = document.getElementById('input-inbody-fat')?.value;
-    const muscle = document.getElementById('input-inbody-muscle')?.value;
-    const visceral = document.getElementById('input-inbody-visceral')?.value;
+    const fat = normalizeArabicNumerals(document.getElementById('input-inbody-fat')?.value || '', true);
+    const muscle = normalizeArabicNumerals(document.getElementById('input-inbody-muscle')?.value || '', true);
+    const visceral = normalizeArabicNumerals(document.getElementById('input-inbody-visceral')?.value || '', true);
     const provider = document.getElementById('input-inbody-provider')?.value;
     store.updateInBodyResult({ bodyFatPercentage: fat, skeletalMuscleMassKg: muscle, visceralFatLevel: visceral, provider });
     inbodyModal?.classList.remove('open');

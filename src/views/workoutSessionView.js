@@ -7,6 +7,7 @@
 import { store } from '../state/store.js';
 import { timerService } from '../services/timerService.js';
 import { notificationService } from '../services/notificationService.js';
+import { parseArabicFloat, parseArabicInt } from '../utils/arabicNumerals.js';
 
 export function renderWorkoutSessionView() {
   const state = store.getState();
@@ -273,14 +274,22 @@ export function bindWorkoutSessionEvents() {
   document.querySelectorAll('.set-weight-input').forEach(input => {
     input.addEventListener('change', () => {
       const idx = Number(input.getAttribute('data-index'));
-      store.updateWorkoutSet(idx, 'weight', Number(input.value));
+      store.updateWorkoutSet(idx, 'weight', parseArabicFloat(input.value, 0));
     });
   });
 
   document.querySelectorAll('.set-reps-input').forEach(input => {
     input.addEventListener('change', () => {
       const idx = Number(input.getAttribute('data-index'));
-      store.updateWorkoutSet(idx, 'reps', Number(input.value));
+      store.updateWorkoutSet(idx, 'reps', parseArabicInt(input.value, 10, 0));
+    });
+  });
+
+  document.querySelectorAll('.set-rpe-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const idx = Number(input.getAttribute('data-index'));
+      const val = parseArabicFloat(input.value);
+      store.updateWorkoutSet(idx, 'rpe', isNaN(val) ? '' : val);
     });
   });
 

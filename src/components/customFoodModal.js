@@ -6,6 +6,7 @@
 import { addCustomFood, updateCustomFood, deleteCustomFood, getCustomFoods, foodById, isLiquidFood } from '../data/foods.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
+import { parseArabicFloat } from '../utils/arabicNumerals.js';
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -233,9 +234,9 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
   let currentTab = 'form'; // 'form' or 'list'
 
   const updateCalculatedCalories = () => {
-    const p = Math.max(0, parseFloat(pInput?.value) || 0);
-    const c = Math.max(0, parseFloat(cInput?.value) || 0);
-    const f = Math.max(0, parseFloat(fInput?.value) || 0);
+    const p = Math.max(0, parseArabicFloat(pInput?.value, 0));
+    const c = Math.max(0, parseArabicFloat(cInput?.value, 0));
+    const f = Math.max(0, parseArabicFloat(fInput?.value, 0));
     const sum = Math.round((p * 4) + (c * 4) + (f * 9));
     if (calcPreview) calcPreview.textContent = `${sum.toLocaleString('en-US')} سعرة`;
     return sum;
@@ -471,10 +472,10 @@ export function bindCustomFoodModal({ modalId = 'custom-food-modal', onSaved = n
       return;
     }
 
-    let calories = parseFloat(calInput?.value);
-    const p = parseFloat(pInput?.value);
-    const c = parseFloat(cInput?.value);
-    const f = parseFloat(fInput?.value);
+    let calories = parseArabicFloat(calInput?.value);
+    const p = parseArabicFloat(pInput?.value);
+    const c = parseArabicFloat(cInput?.value);
+    const f = parseArabicFloat(fInput?.value);
 
     // إذا ترك السعرات فارغة، نحسبها تلقائياً من الماكروز إن وجدت
     if (isNaN(calories) || calories < 0) {

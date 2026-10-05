@@ -6,6 +6,7 @@ import { syncService } from './syncService.js';
 import { localDate } from '../domain/actionAgent.js';
 import { notificationService } from './notificationService.js';
 import { validatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
+import { normalizeArabicNumerals } from '../utils/arabicNumerals.js';
 
 const STATE_KEY = 'neon_forty_day_workout_v2';
 const LEGACY_SESSION_KEY = 'fortyDay_active_workout_v1';
@@ -23,7 +24,8 @@ const blankSet = (weight = '', reps = '') => ({ kg: weight, reps, done: false })
 const targetReps = value => String(value || '').match(/\d+/)?.[0] || '';
 const clampNumber = (value, min, max, integer = false) => {
   if (value === '' || value == null) return '';
-  const number = Number(value);
+  const normalized = normalizeArabicNumerals(String(value), true);
+  const number = Number(normalized);
   if (!Number.isFinite(number)) return '';
   const safe = Math.max(min, Math.min(max, number));
   return integer ? Math.floor(safe) : safe;
