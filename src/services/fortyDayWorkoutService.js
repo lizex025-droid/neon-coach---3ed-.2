@@ -272,6 +272,14 @@ class FortyDayWorkoutService {
     state.planVersions.forEach(item => {
       if (item.splitKey === draft.splitKey && item.status === 'active') item.status = 'archived';
     });
+    if (draft.splitKey === 'personalized' && state.customExercises) {
+      const activeKeys = new Set(draft.days.map(d => d.key));
+      for (const k of Object.keys(state.customExercises)) {
+        if (k.startsWith('pers_') && !activeKeys.has(k)) {
+          delete state.customExercises[k];
+        }
+      }
+    }
     for (const day of draft.days) {
       state.customExercises[day.key] = day.exercises.map((exercise, index) => ({
         ...structuredClone(exercise),
