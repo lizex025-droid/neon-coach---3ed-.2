@@ -83,12 +83,11 @@ export function renderFortyDayWorkoutView() {
         <img src="${program.cover}" alt="غلاف ${program.title}" class="forty-hero-cover">
         <div class="forty-hero-overlay"></div>
         <div class="forty-hero-content">
-          <div class="forty-plan-switcher" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.45); padding: 4px; border-radius: 999px; border: 1px solid var(--forty-line); margin-bottom: 12px; gap: 4px; z-index: 2; flex-wrap: wrap;">
-            <button type="button" data-action="switch-plan" data-plan="hasm" class="btn btn-sm ${activePlan === 'hasm' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">نظام الحسم</button>
-            <button type="button" data-action="switch-plan" data-plan="anas" class="btn btn-sm ${activePlan === 'anas' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">نظام أنس</button>
-            <button type="button" data-action="switch-plan" data-plan="ppl" class="btn btn-sm ${activePlan === 'ppl' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">Push Pull Legs</button>
-            <button type="button" data-action="switch-plan" data-plan="personalized" class="btn btn-sm ${activePlan === 'personalized' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">الخطة المقترحة</button>
-            <button type="button" data-action="create-personalized-plan" class="btn btn-sm" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer; background: linear-gradient(135deg, rgba(85,247,165,0.22), rgba(0,210,132,0.3)); color: #55F7A5; border: 1px solid rgba(85,247,165,0.5); font-weight: 700; box-shadow: 0 0 10px rgba(85,247,165,0.2);">✨ إنشاء خطة</button>
+          <div class="forty-active-plan-pill" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(85,247,165,0.35); margin-bottom: 12px; z-index: 2; backdrop-filter: blur(8px);">
+            <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #55F7A5; box-shadow: 0 0 8px #55F7A5;"></span>
+            <span style="color: #FFFFFF; font-size: 0.8rem; font-weight: 700;">${escapeHtml(program.title)}</span>
+            ${activePlan === 'personalized' ? `<button type="button" data-action="create-personalized-plan" class="btn btn-xs" style="border-radius: 999px; font-size: 0.72rem; padding: 2px 10px; background: rgba(85,247,165,0.18); color: #55F7A5; border: 1px solid rgba(85,247,165,0.4); cursor: pointer; margin-right: 4px;">✨ تخصيص الخطة</button>` : ''}
+            <a href="#profile/workout-plans" style="color: #55F7A5; font-size: 0.72rem; text-decoration: none; margin-right: 4px; opacity: 0.85; transition: opacity 0.2s;" title="تغيير الخطة من حسابي">تغيير ⚙️</a>
           </div>
           <span class="forty-kicker">${program.kicker || 'NEON TRAINING PROGRAM'}</span>
           <h1>${program.title}</h1>
@@ -1717,6 +1716,9 @@ export function openPersonalizedPlanCreatorModal() {
             if (root) {
               root.outerHTML = renderFortyDayWorkoutView();
               bindFortyDayWorkoutEvents();
+            }
+            if (typeof window !== 'undefined' && window.location.hash.includes('profile')) {
+              window.dispatchEvent(new Event('hashchange'));
             }
             notificationService.showToast('تم اعتماد خطتك المقترحة بنجاح! جاهز للتمرين 💪', 'success');
           } else {

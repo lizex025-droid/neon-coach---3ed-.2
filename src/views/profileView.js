@@ -12,8 +12,9 @@ import { authService } from '../services/authService.js';
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient.js';
 import { syncService } from '../services/syncService.js';
 import { isArabicNumeralsEnabled, setArabicNumeralsEnabled, normalizeArabicNumerals, parseArabicFloat } from '../utils/arabicNumerals.js';
+import { openPersonalizedPlanCreatorModal } from './fortyDayWorkoutView.js';
 
-// الصفحة الفرعية النشطة: 'main' | 'plan' | 'badges' | 'preferences' | 'security'
+// الصفحة الفرعية النشطة: 'main' | 'plan' | 'workout-plans' | 'badges' | 'preferences' | 'security'
 let activeSubPage = 'main';
 
 export function getActiveSubPage() {
@@ -25,12 +26,12 @@ export function setActiveSubPage(subPage) {
 }
 
 export function renderProfileView() {
-  // فحص إذا كان الـ hash يحدد صفحة فرعية (مثل #profile/plan) أو العودة للمركز الرئيسي (#profile)
+  // فحص إذا كان الـ hash يحدد صفحة فرعية (مثل #profile/workout-plans أو #profile/plan) أو العودة للمركز الرئيسي (#profile)
   if (typeof window !== 'undefined') {
     const raw = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0];
     const parts = raw.split('/');
     if (parts[0] === 'profile') {
-      if (parts[1] && ['plan', 'badges', 'preferences', 'security'].includes(parts[1])) {
+      if (parts[1] && ['plan', 'workout-plans', 'badges', 'preferences', 'security'].includes(parts[1])) {
         activeSubPage = parts[1];
       } else {
         activeSubPage = 'main';
@@ -42,6 +43,8 @@ export function renderProfileView() {
   const profile = state.userProfile || {};
 
   switch (activeSubPage) {
+    case 'workout-plans':
+      return renderWorkoutPlansSubPage(profile, state);
     case 'plan':
       return renderPlanSubPage(profile, state);
     case 'badges':
@@ -109,6 +112,15 @@ function renderMainHub(profile, state) {
       <div class="settings-group">
         <div class="settings-group-title">الحساب والخطة</div>
         <div class="settings-list">
+          <button type="button" class="settings-item" data-navigate="workout-plans">
+            <div class="settings-item-icon">🏋️‍♂️</div>
+            <div class="settings-item-content">
+              <div class="settings-item-title">أنظمة وخطط التدريب</div>
+              <div class="settings-item-subtitle">${escapeHtml(getPlanSubtitle(profile.workoutPlan || fortyDayWorkoutService.getActivePlan()))} · اختر أو بدّل خطتك التدريبية</div>
+            </div>
+            <div class="settings-item-arrow">←</div>
+          </button>
+
           <button type="button" class="settings-item" data-navigate="plan">
             <div class="settings-item-icon">👤</div>
             <div class="settings-item-content">
@@ -251,8 +263,142 @@ function renderMainHub(profile, state) {
   `;
 }
 
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+const WORKOUT_PLANS_CATALOG = [
+  {
+    key: 'hasm',
+    title: 'نظام الحسم',
+    subtitle: 'وقت قليل وفعالية عالية — 4 مجموعات عضلية مركزة',
+    tag: 'الأكثر شعبية 🔥',
+    splitType: 'صدر وبطن · ظهر وبطن · كتف وترابيس · أرجل وسمانة · باي وتراي · علوي شامل',
+    description: 'نظام تدريبي مصمم لتحقيق أقصى تضخيم وقوة عضلية بأقل وقت ممكن وتجنب الهدم أو الإجهاد العصبي الزائد.',
+    icon: '⚔️'
+  },
+  {
+    key: 'anas',
+    title: 'نظام أنس التدريبي',
+    subtitle: '5 أيام تدريبية مكثفة بتوزيع دقيق',
+    tag: 'مكثف وشامل ⚡',
+    splitType: 'Push · Pull · Legs · Upper · كتف',
+    description: 'برنامج تدريبي متكامل يوزع الحمل التدريبي على مدار 5 أيام بتناغم واستهداف عميق لجميع الزوايا العضلية.',
+    icon: '⚡'
+  },
+  {
+    key: 'ppl',
+    title: 'Push Pull Legs (تمرين الـ 40 يوم)',
+    subtitle: 'النظام الكلاسيكي المتوازن للتحول البدني',
+    tag: 'تحدي الـ 40 يوم 🛡️',
+    splitType: 'Push A/B · Pull A/B · Legs A/B · يوم راحة أسبوعي',
+    description: 'النظام الذهبي الأوسع انتشاراً عالمياً للرياضيين، يجمع بين القوة والتضخيم والاستشفاء المتوازن.',
+    icon: '🛡️'
+  },
+  {
+    key: 'personalized',
+    title: 'الخطة المقترحة من التطبيق',
+    subtitle: 'خطة ذكية مخصصة تتكيف مع أيامك وإصاباتك',
+    tag: 'ذكية وقابلة للتخصيص ✨',
+    splitType: 'ديناميكية (1 إلى 6 أيام حسب جدولك)',
+    description: 'هندسة تدريبية خاصة بك: تتكيف مع عدد الأيام المتاحة، مكان تمرينك (جيم أو منزلي)، وتستبعد تلقائياً التمارين المسببة لآلام المفاصل والإصابات مع بدائل آمنة.',
+    icon: '✨',
+    isPersonalized: true
+  }
+];
+
+function getPlanSubtitle(planKey) {
+  const plan = WORKOUT_PLANS_CATALOG.find(p => p.key === planKey);
+  return plan ? plan.title : 'نظام الحسم';
+}
+
 // ----------------------------------------------------
-// 2. صفحة فرعية: «بياناتي وخطتي» (My Data & Plan)
+// 2. صفحة فرعية: «أنظمة وخطط التدريب» (Workout Plans)
+// ----------------------------------------------------
+function renderWorkoutPlansSubPage(profile, state) {
+  const currentPlan = profile.workoutPlan || fortyDayWorkoutService.getActivePlan() || 'hasm';
+
+  return `
+    <div class="profile-hub-container" id="profile-plans-root">
+      
+      <!-- شريط العودة العلوي -->
+      <div class="subpage-nav-header">
+        <button type="button" class="subpage-back-btn" data-navigate="main">
+          <span>← العودة إلى حسابي</span>
+        </button>
+        <h1 class="subpage-title">أنظمة وخطط التدريب</h1>
+      </div>
+
+      <!-- بطاقة توضيحية -->
+      <div class="neon-card" style="padding: 14px 18px; background: rgba(85,247,165,0.05); border: 1px solid rgba(85,247,165,0.22); border-radius: 16px;">
+        <p style="margin: 0; font-size: 0.85rem; color: #D8E3DE; line-height: 1.55;">
+          💡 <strong>الخطة المعتمدة في شاشة التدريب:</strong> الخطة التي تختارها هنا هي الوحيدة التي ستظهر في شاشة التمرين الرئيسية لتجربة تركيز تامة. يمكنك التبديل بحرية دون فقدان أوزانك وسجلاتك.
+        </p>
+      </div>
+
+      <!-- قائمة الخطط -->
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        ${WORKOUT_PLANS_CATALOG.map(plan => {
+          const isActive = currentPlan === plan.key;
+          return `
+            <div class="neon-card" style="padding: 18px 20px; border: ${isActive ? '2px solid #55F7A5' : '1px solid rgba(85,247,165,0.18)'}; background: ${isActive ? 'linear-gradient(145deg, rgba(85,247,165,0.08), rgba(3,18,12,0.95))' : 'rgba(5,13,10,0.75)'}; border-radius: 18px; box-shadow: ${isActive ? '0 0 24px rgba(85,247,165,0.18)' : 'none'};">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.6rem;">${plan.icon}</span>
+                  <div>
+                    <h3 style="color: #FFFFFF; margin: 0; font-size: 1.05rem; font-weight: 800;">${escapeHtml(plan.title)}</h3>
+                    <span style="color: ${isActive ? '#55F7A5' : '#8E9B94'}; font-size: 0.74rem; font-weight: 700;">${escapeHtml(plan.tag)}</span>
+                  </div>
+                </div>
+                ${isActive ? `
+                  <span style="background: rgba(85,247,165,0.2); color: #55F7A5; border: 1px solid #55F7A5; border-radius: 999px; padding: 4px 12px; font-size: 0.75rem; font-weight: 800; white-space: nowrap;">
+                    ✓ الخطة النشطة
+                  </span>
+                ` : ''}
+              </div>
+
+              <p style="color: ${isActive ? '#D8E3DE' : '#9BA9A2'}; font-size: 0.84rem; line-height: 1.45; margin: 6px 0 10px;">
+                ${escapeHtml(plan.description)}
+              </p>
+
+              <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 8px 12px; font-size: 0.78rem; color: #B8C0BC; margin-bottom: 14px;">
+                <strong style="color: #55F7A5; display: block; margin-bottom: 2px;">توزيع الأيام:</strong>
+                ${escapeHtml(plan.splitType)}
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                ${isActive ? `
+                  <a href="#workout" class="btn btn-sm btn-primary" style="border-radius: 10px; font-weight: 700; padding: 7px 16px; text-decoration: none;">
+                    الانتقال للتمرين الآن 🏋️‍♂️
+                  </a>
+                ` : `
+                  <button type="button" class="btn btn-sm btn-outline-primary" data-select-plan="${plan.key}" style="border-radius: 10px; font-weight: 700; padding: 7px 16px; border: 1px solid rgba(85,247,165,0.4); color: #55F7A5; background: rgba(85,247,165,0.08); cursor: pointer;">
+                    اعتماد هذه الخطة
+                  </button>
+                `}
+
+                ${plan.isPersonalized ? `
+                  <button type="button" class="btn btn-sm" id="btn-creator-from-plans" style="border-radius: 10px; font-weight: 700; background: linear-gradient(135deg, rgba(85,247,165,0.22), rgba(0,210,132,0.3)); color: #55F7A5; border: 1px solid rgba(85,247,165,0.5); padding: 7px 14px; cursor: pointer;">
+                    ✨ ${isActive ? 'تعديل الخطة المقترحة' : 'إنشاء وتخصيص الخطة'}
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="margin-top: 10px; text-align: center;">
+        <button type="button" class="btn btn-ghost" data-navigate="main" style="color: #8E9B94; font-size: 0.82rem;">
+          ← العودة إلى حسابي
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// 3. صفحة فرعية: «بياناتي وخطتي» (My Data & Plan)
 // ----------------------------------------------------
 function renderPlanSubPage(profile, state) {
   const currentWeight = Number(profile.currentWeight) || 0;
@@ -879,6 +1025,41 @@ export function bindProfileEvents() {
       bindProfileEvents();
       window.scrollTo?.({ top: 0, behavior: 'smooth' });
     }
+  });
+
+  // أحداث صفحة «أنظمة وخطط التدريب»
+  container.querySelectorAll('[data-select-plan]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const planKey = btn.dataset.selectPlan;
+      if (!planKey) return;
+      const targetProgram = fortyDayWorkoutService.getProgram(planKey);
+      fortyDayWorkoutService.setActivePlan(planKey);
+      const curProfile = store.getState()?.userProfile || {};
+      store.setUserProfile({
+        ...curProfile,
+        workoutPlan: planKey
+      });
+      // مزامنة سحابية
+      const effectiveUserId = store.getUserId?.() || authService.getEffectiveUserId?.();
+      if (effectiveUserId) {
+        syncService.syncProfile(effectiveUserId, store.getState().userProfile);
+      }
+      notificationService.showToast(`تم اعتماد ${targetProgram?.title || planKey} كخطتك التدريبية بنجاح ✓`, 'success');
+      const parent = container.parentElement || document.getElementById('view-container');
+      if (parent) {
+        parent.innerHTML = renderProfileView();
+        bindProfileEvents();
+      }
+    });
+  });
+
+  // فتح نافذة إنشاء/تخصيص الخطة المقترحة من صفحة الخطط
+  container.querySelectorAll('#btn-creator-from-plans').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openPersonalizedPlanCreatorModal();
+    });
   });
 
   // 2. إدارة المودالز (الأجهزة والتطبيقات المرتبطة / الدعم)
