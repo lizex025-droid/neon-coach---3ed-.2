@@ -8,10 +8,11 @@ export const TRAINING_RULES_VERSION = '2.0.0';
 export const SPLIT_SCHEDULES = Object.freeze({
   ppl: { label: 'Push Pull Legs', supportedDays: [3, 6] },
   anas: { label: 'نظام أنس', supportedDays: [5] },
-  hasm: { label: 'نظام الحسم', supportedDays: [1, 2, 3, 4, 5, 6] }
+  hasm: { label: 'نظام الحسم', supportedDays: [1, 2, 3, 4, 5, 6] },
+  personalized: { label: 'الخطة المقترحة', supportedDays: [1, 2, 3, 4, 5, 6] }
 });
 
-const SPLIT_DAYS = { ppl: FORTY_DAY_DAYS, anas: ANAS_DAYS, hasm: HASM_GROUPS };
+const SPLIT_DAYS = { ppl: FORTY_DAY_DAYS, anas: ANAS_DAYS, hasm: HASM_GROUPS, personalized: HASM_GROUPS };
 const REGION_LABELS = { shoulder: 'الكتف', knee: 'الركبة', lower_back: 'أسفل الظهر' };
 const REGION_ALIASES = {
   shoulder: ['shoulder', 'overhead', 'press', 'upright', 'lateral', 'front raise', 'كتف'],
@@ -19,7 +20,7 @@ const REGION_ALIASES = {
   lower_back: ['deadlift', 'rack pull', 'bent', 'yates', 'good morning', 'ديدلفت', 'أسفل الظهر']
 };
 
-const cleanSplit = value => value === 'ppl' || value === 'fortyDay' ? 'ppl' : value === 'anas' ? 'anas' : 'hasm';
+const cleanSplit = value => value === 'ppl' || value === 'fortyDay' ? 'ppl' : value === 'anas' ? 'anas' : value === 'personalized' ? 'personalized' : 'hasm';
 const safeNumber = (value, fallback, min, max) => Math.min(max, Math.max(min, Number(value) || fallback));
 const titleText = exercise => `${exercise?.title || ''} ${exercise?.nameEn || ''} ${exercise?.nameAr || ''}`.toLowerCase();
 
@@ -32,6 +33,7 @@ function stableId(prefix, text) {
 function baseExerciseId(splitKey, dayKey, index) {
   if (splitKey === 'ppl') return fortyDayExerciseId(dayKey, index);
   if (splitKey === 'anas') return anasExerciseId(dayKey, index);
+  if (splitKey === 'personalized') return `pers_${dayKey}_${index}`;
   return hasmExerciseId(dayKey, index);
 }
 
@@ -244,6 +246,7 @@ export function generatePersonalizedTrainingDraft(rawInput = {}, options = {}) {
   const sourceDays = SPLIT_DAYS[input.splitKey] || HASM_GROUPS;
   const selectedDays = sourceDays.filter(day => day.exercises?.length).slice(0, input.workoutDaysCount);
   const days = selectedDays.map((day, dayIndex) => {
+    const dayKey = input.splitKey === 'personalized' ? `pers_${day.key}` : day.key;
     const dayBlockers = [];
     const exercises = [];
     const usedIds = new Set();
@@ -252,7 +255,7 @@ export function generatePersonalizedTrainingDraft(rawInput = {}, options = {}) {
       baseList = baseList.slice(0, 4);
     }
     baseList.forEach((base, index) => {
-      const built = buildExercise(base, baseExerciseId(input.splitKey, day.key, index), input, usedIds, warnings);
+      const built = buildExercise(base, baseExerciseId(input.splitKey, dayKey, index), input, usedIds, warnings);
       if (built.blocker) dayBlockers.push(built.blocker);
       else exercises.push({ ...built, number: exercises.length + 1 });
     });
@@ -261,7 +264,7 @@ export function generatePersonalizedTrainingDraft(rawInput = {}, options = {}) {
     if (estimatedMinutes > input.sessionDurationMin + 10) warnings.push(`${day.label}: الزمن التقديري ${Math.round(estimatedMinutes)} دقيقة، أطول من الوقت المختار. يمكن تقليل تمرين عزل بعد المعاينة.`);
     const isBeginnerHighDays = input.selectedLevel === 'beginner' && dayIndex >= 4;
     return {
-      key: day.key,
+      key: dayKey,
       short: day.short,
       label: day.label,
       tone: isBeginnerHighDays ? 'استشفاء حركي ونشاط خفيف' : day.tone,

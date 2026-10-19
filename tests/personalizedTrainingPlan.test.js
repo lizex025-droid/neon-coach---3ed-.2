@@ -255,3 +255,52 @@ test('acceptance: plan is retained in service and reflected in getActivePlanVers
   assert.equal(firstDay.exercises.length, activeVersion.days[0].exercises.length);
 });
 
+test('acceptance: personalized plan generation and activation keeps existing plans (hasm, anas, ppl) untouched', async () => {
+  const { fortyDayWorkoutService } = await import('../src/services/fortyDayWorkoutService.js');
+  
+  // Baseline check for hasm, anas, ppl
+  const hasmDaysOriginal = fortyDayWorkoutService.getDays('hasm').map(d => ({ key: d.key, exercises: d.exercises.map(e => e.title) }));
+  const anasDaysOriginal = fortyDayWorkoutService.getDays('anas').map(d => ({ key: d.key, exercises: d.exercises.map(e => e.title) }));
+  const pplDaysOriginal = fortyDayWorkoutService.getDays('ppl').map(d => ({ key: d.key, exercises: d.exercises.map(e => e.title) }));
+
+  // Generate personalized plan with 3 days and shoulder injury
+  const draft = generatePersonalizedTrainingDraft({
+    ...base,
+    trainingLevel: 'intermediate',
+    workoutDaysCount: 3,
+    injuries: ['shoulder'],
+    injuryDetails: {
+      shoulder: {
+        status: 'ألم حالي',
+        painSeverity: 7,
+        triggerMovements: 'overhead, press, كتف',
+        medicalBan: 'none'
+      }
+    }
+  }, { splitKey: 'personalized', requestId: 'req-pers-untouched-01' });
+
+  assert.equal(draft.splitKey, 'personalized');
+  assert.equal(draft.days.length, 3);
+  assert.equal(draft.canApprove, true);
+
+  // Activate personalized plan
+  const activation = await fortyDayWorkoutService.activatePersonalizedPlan(draft, { requestId: 'req-pers-untouched-01' });
+  assert.equal(activation.ok, true);
+  assert.equal(fortyDayWorkoutService.getActivePlan(), 'personalized');
+
+  // Verify personalized plan program and days
+  const program = fortyDayWorkoutService.getProgram('personalized');
+  assert.equal(program.title, 'الخطة المقترحة من التطبيق');
+  const persDays = fortyDayWorkoutService.getDays('personalized');
+  assert.equal(persDays.length, 3);
+
+  // Verify hasm, anas, ppl are 100% untouched
+  const hasmDaysAfter = fortyDayWorkoutService.getDays('hasm').map(d => ({ key: d.key, exercises: d.exercises.map(e => e.title) }));
+  const anasDaysAfter = fortyDayWorkoutService.getDays('anas').map(d => ({ key: d.key, exercises: d.exercises.map(e => e.title) }));
+  const pplDaysAfter = fortyDayWorkoutService.getDays('ppl').map(d => ({ key: d.key, exercises: d.exercises.map(e => e.title) }));
+
+  assert.deepEqual(hasmDaysAfter, hasmDaysOriginal, 'Hasm plan must remain untouched');
+  assert.deepEqual(anasDaysAfter, anasDaysOriginal, 'Anas plan must remain untouched');
+  assert.deepEqual(pplDaysAfter, pplDaysOriginal, 'PPL plan must remain untouched');
+});
+

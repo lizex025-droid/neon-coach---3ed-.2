@@ -1,5 +1,8 @@
 import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 import { notificationService } from '../services/notificationService.js';
+import { store } from '../state/store.js';
+import { generatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
+import { showTrainingPlanPreview } from './questionnaireView.js';
 import {
   EXERCISE_GROUPS,
   ALL_LIBRARY_EXERCISES,
@@ -84,12 +87,14 @@ export function renderFortyDayWorkoutView() {
             <button type="button" data-action="switch-plan" data-plan="hasm" class="btn btn-sm ${activePlan === 'hasm' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">نظام الحسم</button>
             <button type="button" data-action="switch-plan" data-plan="anas" class="btn btn-sm ${activePlan === 'anas' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">نظام أنس</button>
             <button type="button" data-action="switch-plan" data-plan="ppl" class="btn btn-sm ${activePlan === 'ppl' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">Push Pull Legs</button>
+            <button type="button" data-action="switch-plan" data-plan="personalized" class="btn btn-sm ${activePlan === 'personalized' ? 'btn-primary' : 'btn-ghost'}" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer;">الخطة المقترحة</button>
+            <button type="button" data-action="create-personalized-plan" class="btn btn-sm" style="border-radius: 999px; font-size: 0.76rem; padding: 5px 14px; min-height: unset; cursor: pointer; background: linear-gradient(135deg, rgba(85,247,165,0.22), rgba(0,210,132,0.3)); color: #55F7A5; border: 1px solid rgba(85,247,165,0.5); font-weight: 700; box-shadow: 0 0 10px rgba(85,247,165,0.2);">✨ إنشاء خطة</button>
           </div>
           <span class="forty-kicker">${program.kicker || 'NEON TRAINING PROGRAM'}</span>
           <h1>${program.title}</h1>
           <p>${program.description}</p>
           <div class="forty-progress-meta">
-            <strong>${activePlan === 'hasm' || activePlan === 'anas' ? `اليوم النشط: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
+            <strong>${activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم النشط: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
             <span>${progress}% مكتمل</span>
           </div>
           <div class="forty-progress-track"><span style="width:${progress}%"></span></div>
@@ -121,16 +126,16 @@ export function renderFortyDayWorkoutView() {
       <section class="forty-days-section">
         <div class="forty-section-heading">
           <div>
-            <span>${activePlan === 'anas' ? 'خطة نظام أنس' : (activePlan === 'hasm' ? 'خطة نظام الحسم' : 'خطة الأسبوع')}</span>
-            <h2>${activePlan === 'anas' ? 'اختر نوع التمرين' : (activePlan === 'hasm' ? 'اختر مجموعة العضلات لعرض تمارينها فقط' : 'اختر يوم التمرين')}</h2>
+            <span>${activePlan === 'anas' ? 'خطة نظام أنس' : (activePlan === 'hasm' ? 'خطة نظام الحسم' : (activePlan === 'personalized' ? 'الخطة المقترحة من التطبيق' : 'خطة الأسبوع'))}</span>
+            <h2>${activePlan === 'anas' ? 'اختر نوع التمرين' : (activePlan === 'hasm' ? 'اختر مجموعة العضلات لعرض تمارينها فقط' : (activePlan === 'personalized' ? 'اختر يوم التمرين المقترح' : 'اختر يوم التمرين'))}</h2>
           </div>
-          <p>${activePlan === 'anas' ? '5 أيام تدريبية: Push / Pull / Legs / Upper / كتف' : (activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : '6 أيام Push / Pull / Legs ثم يوم راحة')}</p>
+          <p>${activePlan === 'anas' ? '5 أيام تدريبية: Push / Pull / Legs / Upper / كتف' : (activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : (activePlan === 'personalized' ? `${days.length} أيام تدريبية مخصصة ومعدلة حسب أهدافك وإصاباتك` : '6 أيام Push / Pull / Legs ثم يوم راحة'))}</p>
         </div>
-        <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : (activePlan === 'anas' ? 'anas-tabs' : '')}" id="forty-day-tabs" role="tablist" aria-label="أيام التمرين">
+        <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : (activePlan === 'anas' ? 'anas-tabs' : (activePlan === 'personalized' ? 'personalized-tabs' : ''))}" id="forty-day-tabs" role="tablist" aria-label="أيام التمرين">
           ${days.map((day, idx) => `
             <button type="button" role="tab" aria-selected="${day.key === activeDay ? 'true' : 'false'}" class="forty-day-tab tone-${day.tone} ${day.key === activeDay ? 'is-active' : ''}" data-day="${day.key}">
-              <span class="forty-tab-day">${activePlan === 'hasm' || activePlan === 'anas' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
-              <span class="forty-tab-title">${escapeHtml(day.short)}</span>
+              <span class="forty-tab-day">${activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
+              <span class="forty-tab-title">${escapeHtml(day.short || day.label)}</span>
             </button>
           `).join('')}
         </div>
@@ -1176,7 +1181,7 @@ export function bindFortyDayWorkoutEvents() {
       return;
     }
 
-    // تبديل الخطة بين نظام الحسم و PPL مباشرة من شاشة التمرين
+    // تبديل الخطة بين نظام الحسم، نظام أنس، PPL، والخطة المقترحة مباشرة من شاشة التمرين
     if (button.dataset.action === 'switch-plan') {
       const targetPlan = button.dataset.plan;
       if (targetPlan === activePlan) return;
@@ -1187,8 +1192,14 @@ export function bindFortyDayWorkoutEvents() {
       fortyDayWorkoutService.setActivePlan(targetPlan);
       root.outerHTML = renderFortyDayWorkoutView();
       bindFortyDayWorkoutEvents();
-      const planName = targetPlan === 'anas' ? 'نظام أنس' : (targetPlan === 'hasm' ? 'نظام الحسم' : 'Push Pull Legs');
+      const planName = targetPlan === 'anas' ? 'نظام أنس' : (targetPlan === 'hasm' ? 'نظام الحسم' : (targetPlan === 'personalized' ? 'الخطة المقترحة' : 'Push Pull Legs'));
       notificationService.showToast(`تم التبديل إلى ${planName} بنجاح`, 'info');
+      return;
+    }
+
+    // زر إنشاء وتخصيص الخطة المقترحة
+    if (button.dataset.action === 'create-personalized-plan') {
+      openPersonalizedPlanCreatorModal();
       return;
     }
 
@@ -1414,4 +1425,310 @@ export function bindFortyDayWorkoutEvents() {
     document.body.style.overflow = '';
     document.body.style.userSelect = '';
   };
+}
+
+export function openPersonalizedPlanCreatorModal() {
+  document.getElementById('personalized-plan-creator-modal')?.remove();
+  const profile = store.getState()?.userProfile || {};
+
+  let selectedDays = Number(profile.workoutDaysCount) || 4;
+  let selectedLevel = profile.trainingLevel || profile.fitnessLevel || 'intermediate';
+  let selectedEquipment = profile.equipment || 'gym';
+  let selectedGoal = profile.goal || 'muscle_gain';
+  let selectedDuration = Number(profile.sessionDurationMin) || 60;
+  
+  let selectedInjuries = Array.isArray(profile.injuries) ? [...profile.injuries] : [];
+  let injuryDetails = (profile.injuryDetails && typeof profile.injuryDetails === 'object') ? structuredClone(profile.injuryDetails) : {};
+
+  const modal = document.createElement('div');
+  modal.id = 'personalized-plan-creator-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10045;background:rgba(0,8,5,.88);display:flex;align-items:flex-end;justify-content:center;padding:12px;backdrop-filter:blur(10px);';
+
+  const renderContent = () => `
+    <section role="dialog" aria-modal="true" aria-labelledby="creator-modal-title" style="width:min(720px,100%);max-height:90vh;overflow-y:auto;background:#03120c;border:1px solid rgba(85,247,165,.35);border-radius:24px;padding:22px;box-shadow:0 0 50px rgba(85,247,165,.18);direction:rtl;color:#fff;">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid rgba(85,247,165,.15);padding-bottom:14px;margin-bottom:18px;">
+        <div>
+          <span style="color:#55F7A5;font-size:.82rem;font-weight:800;letter-spacing:0.5px;">تخصيص ذكي من نيون · NEON AI PLANNER</span>
+          <h2 id="creator-modal-title" style="color:#fff;margin:6px 0 4px;font-size:1.35rem;font-weight:800;">إنشاء وتخصيص الخطة المقترحة ✨</h2>
+          <p style="color:#9BA9A2;margin:0;font-size:0.86rem;">عدّل خياراتك وسيقوم التطبيق بهندسة جدول تمارين مخصص يتكيف بدقة مع إصاباتك وأيامك.</p>
+        </div>
+        <button type="button" id="close-creator-modal-btn" aria-label="إغلاق" style="background:transparent;border:0;color:#fff;font-size:1.8rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+      </div>
+
+      <!-- 1. عدد أيام التدريب -->
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-weight:700;font-size:0.9rem;color:#55F7A5;margin-bottom:8px;">📅 عدد أيام التمرين أسبوعياً:</label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(90px, 1fr));gap:6px;" id="creator-days-group">
+          ${[1, 2, 3, 4, 5, 6].map(d => `
+            <button type="button" data-days="${d}" class="btn btn-sm ${selectedDays === d ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;font-weight:700;padding:8px 4px;font-size:0.85rem;border:1px solid ${selectedDays === d ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+              ${d === 1 ? '1 يوم شامل' : `${d} أيام`}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 2. المستوى التدريبي -->
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-weight:700;font-size:0.9rem;color:#55F7A5;margin-bottom:8px;">⚡ المستوى التدريبي:</label>
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;" id="creator-level-group">
+          <button type="button" data-level="beginner" class="btn btn-sm ${selectedLevel === 'beginner' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedLevel === 'beginner' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            مبتدئ (RIR 3)
+          </button>
+          <button type="button" data-level="intermediate" class="btn btn-sm ${selectedLevel === 'intermediate' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedLevel === 'intermediate' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            متوسط (RIR 2)
+          </button>
+          <button type="button" data-level="advanced" class="btn btn-sm ${selectedLevel === 'advanced' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedLevel === 'advanced' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            متقدم (RIR 1-2)
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. مكان ومعدات التمرين -->
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-weight:700;font-size:0.9rem;color:#55F7A5;margin-bottom:8px;">🏋️‍♂️ مكان ومعدات التمرين:</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="creator-equipment-group">
+          <button type="button" data-equipment="gym" class="btn btn-sm ${selectedEquipment === 'gym' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:10px;font-size:0.86rem;font-weight:700;border:1px solid ${selectedEquipment === 'gym' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            نادي رياضي كامل (Gym)
+          </button>
+          <button type="button" data-equipment="home" class="btn btn-sm ${selectedEquipment === 'home' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:10px;font-size:0.86rem;font-weight:700;border:1px solid ${selectedEquipment === 'home' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            منزل وأوزان حرة (Home)
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. الهدف التدريبي -->
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-weight:700;font-size:0.9rem;color:#55F7A5;margin-bottom:8px;">🎯 الهدف الرئيسي:</label>
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;" id="creator-goal-group">
+          <button type="button" data-goal="fat_loss" class="btn btn-sm ${selectedGoal === 'fat_loss' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedGoal === 'fat_loss' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            تنشيف وحرق
+          </button>
+          <button type="button" data-goal="muscle_gain" class="btn btn-sm ${selectedGoal === 'muscle_gain' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedGoal === 'muscle_gain' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            بناء وتضخيم
+          </button>
+          <button type="button" data-goal="general_fitness" class="btn btn-sm ${selectedGoal === 'general_fitness' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedGoal === 'general_fitness' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            لياقة شاملة
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. مدة الحصة -->
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-weight:700;font-size:0.9rem;color:#55F7A5;margin-bottom:8px;">⏱️ مدة الجلسة التدريبية:</label>
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;" id="creator-duration-group">
+          <button type="button" data-duration="40" class="btn btn-sm ${selectedDuration <= 40 ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedDuration <= 40 ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            30–40 دقيقة (سريعة)
+          </button>
+          <button type="button" data-duration="60" class="btn btn-sm ${selectedDuration > 40 && selectedDuration <= 60 ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedDuration > 40 && selectedDuration <= 60 ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            45–60 دقيقة (قياسية)
+          </button>
+          <button type="button" data-duration="75" class="btn btn-sm ${selectedDuration > 60 ? 'btn-primary' : 'btn-ghost'}" style="border-radius:12px;padding:8px 4px;font-size:0.82rem;font-weight:700;border:1px solid ${selectedDuration > 60 ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+            60–75 دقيقة (مكثفة)
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. الإصابات والقيود الصحية -->
+      <div style="margin-bottom:22px;padding:14px;border-radius:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(85,247,165,0.18);">
+        <label style="display:block;font-weight:700;font-size:0.9rem;color:#55F7A5;margin-bottom:6px;">🩺 هل لديك إصابة أو ألم يستدعي استبعاد تمارين معينة؟</label>
+        <small style="display:block;color:#9BA9A2;margin-bottom:10px;">التطبيق يستبعد الحركات الخطرة أو المسببة للألم تلقائياً ويقترح البديل الآمن.</small>
+        
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="creator-injuries-chips">
+          <button type="button" data-injury="none" class="btn btn-sm ${selectedInjuries.length === 0 ? 'btn-primary' : 'btn-ghost'}" style="border-radius:999px;padding:5px 14px;font-size:0.82rem;border:1px solid rgba(85,247,165,0.3);">
+            لا توجد إصابات ✓
+          </button>
+          <button type="button" data-injury="shoulder" class="btn btn-sm ${selectedInjuries.includes('shoulder') ? 'btn-primary' : 'btn-ghost'}" style="border-radius:999px;padding:5px 14px;font-size:0.82rem;border:1px solid rgba(251,191,36,0.4);">
+            الكتف (Shoulder) 🤕
+          </button>
+          <button type="button" data-injury="knee" class="btn btn-sm ${selectedInjuries.includes('knee') ? 'btn-primary' : 'btn-ghost'}" style="border-radius:999px;padding:5px 14px;font-size:0.82rem;border:1px solid rgba(251,191,36,0.4);">
+            الركبة (Knee) 🦵
+          </button>
+          <button type="button" data-injury="lower_back" class="btn btn-sm ${selectedInjuries.includes('lower_back') ? 'btn-primary' : 'btn-ghost'}" style="border-radius:999px;padding:5px 14px;font-size:0.82rem;border:1px solid rgba(251,191,36,0.4);">
+            أسفل الظهر (Lower Back) 🦴
+          </button>
+        </div>
+
+        ${selectedInjuries.length ? `
+          <div style="display:grid;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.1);">
+            ${selectedInjuries.map(inj => {
+              const label = inj === 'shoulder' ? 'الكتف' : (inj === 'knee' ? 'الركبة' : 'أسفل الظهر');
+              const currentSev = injuryDetails[inj]?.painSeverity || 6;
+              return `
+                <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:10px;">
+                  <span style="font-size:0.85rem;color:#fbbf24;">درجة ألم ${label}:</span>
+                  <div style="display:flex;gap:4px;" data-injury-severity-group="${inj}">
+                    <button type="button" data-inj-sev="${inj}:3" class="btn btn-xs ${currentSev <= 3 ? 'btn-primary' : 'btn-ghost'}" style="border-radius:8px;font-size:0.75rem;padding:3px 8px;">خفيف (3)</button>
+                    <button type="button" data-inj-sev="${inj}:6" class="btn btn-xs ${currentSev > 3 && currentSev <= 6 ? 'btn-primary' : 'btn-ghost'}" style="border-radius:8px;font-size:0.75rem;padding:3px 8px;">متوسط (6)</button>
+                    <button type="button" data-inj-sev="${inj}:8" class="btn btn-xs ${currentSev > 6 ? 'btn-primary' : 'btn-ghost'}" style="border-radius:8px;font-size:0.75rem;padding:3px 8px;">شديد (8)</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+        <button type="button" id="creator-generate-preview-btn" class="btn btn-primary btn-lg" style="border-radius:14px;font-weight:800;font-size:1.02rem;padding:12px;box-shadow:0 0 25px rgba(85,247,165,0.3);">
+          توليد ومعاينة الخطة المقترحة ✨
+        </button>
+        <button type="button" id="creator-goto-questionnaire-btn" class="btn btn-ghost" style="color:#9BA9A2;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px;font-size:0.82rem;">
+          أو املأ الاستبيان الشامل الكامل لجميع أهداف التغذية والتمارين 📋
+        </button>
+      </div>
+    </section>
+  `;
+
+  modal.innerHTML = renderContent();
+  document.body.appendChild(modal);
+
+  const rebind = () => {
+    modal.innerHTML = renderContent();
+    attachListeners();
+  };
+
+  const attachListeners = () => {
+    modal.querySelector('#close-creator-modal-btn')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+
+    modal.querySelector('#creator-goto-questionnaire-btn')?.addEventListener('click', () => {
+      modal.remove();
+      window.location.hash = '#questionnaire';
+    });
+
+    // Days group
+    modal.querySelectorAll('#creator-days-group button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedDays = Number(btn.dataset.days);
+        rebind();
+      });
+    });
+
+    // Level group
+    modal.querySelectorAll('#creator-level-group button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedLevel = btn.dataset.level;
+        rebind();
+      });
+    });
+
+    // Equipment group
+    modal.querySelectorAll('#creator-equipment-group button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedEquipment = btn.dataset.equipment;
+        rebind();
+      });
+    });
+
+    // Goal group
+    modal.querySelectorAll('#creator-goal-group button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedGoal = btn.dataset.goal;
+        rebind();
+      });
+    });
+
+    // Duration group
+    modal.querySelectorAll('#creator-duration-group button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedDuration = Number(btn.dataset.duration);
+        rebind();
+      });
+    });
+
+    // Injuries chips
+    modal.querySelectorAll('#creator-injuries-chips button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const inj = btn.dataset.injury;
+        if (inj === 'none') {
+          selectedInjuries = [];
+          injuryDetails = {};
+        } else {
+          if (selectedInjuries.includes(inj)) {
+            selectedInjuries = selectedInjuries.filter(i => i !== inj);
+            delete injuryDetails[inj];
+          } else {
+            selectedInjuries.push(inj);
+            injuryDetails[inj] = {
+              status: 'ألم حالي',
+              painSeverity: 6,
+              triggerMovements: inj === 'shoulder' ? 'overhead, press, كتف' : (inj === 'knee' ? 'squat, ركبة' : 'deadlift, bent, ظهر'),
+              medicalBan: 'none'
+            };
+          }
+        }
+        rebind();
+      });
+    });
+
+    // Severity buttons
+    modal.querySelectorAll('[data-inj-sev]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const [inj, sev] = btn.dataset.injSev.split(':');
+        if (!injuryDetails[inj]) injuryDetails[inj] = { status: 'ألم حالي', medicalBan: 'none' };
+        injuryDetails[inj].painSeverity = Number(sev);
+        injuryDetails[inj].triggerMovements = inj === 'shoulder' ? 'overhead, press, كتف' : (inj === 'knee' ? 'squat, ركبة' : 'deadlift, bent, ظهر');
+        rebind();
+      });
+    });
+
+    // Generate & Preview Button
+    modal.querySelector('#creator-generate-preview-btn')?.addEventListener('click', () => {
+      const draftInput = {
+        trainingLevel: selectedLevel,
+        workoutDaysCount: selectedDays,
+        sessionDurationMin: selectedDuration,
+        equipment: selectedEquipment,
+        goal: selectedGoal,
+        injuries: selectedInjuries,
+        injuryDetails: injuryDetails,
+        availableEquipment: selectedEquipment === 'home'
+          ? ['bodyweight', 'dumbbells', 'bands']
+          : ['machines', 'barbell', 'dumbbells', 'cables', 'bodyweight']
+      };
+
+      const draft = generatePersonalizedTrainingDraft(draftInput, {
+        splitKey: 'personalized',
+        requestId: `pers_gen_${Date.now()}`
+      });
+
+      fortyDayWorkoutService.savePlanDraft(draft);
+      modal.remove();
+
+      showTrainingPlanPreview(draft, {
+        onApprove: async (approvedDraft) => {
+          const res = await fortyDayWorkoutService.activatePersonalizedPlan(approvedDraft);
+          if (res.ok) {
+            fortyDayWorkoutService.setActivePlan('personalized');
+            const curProfile = store.getState()?.userProfile || {};
+            store.setUserProfile({
+              ...curProfile,
+              workoutPlan: 'personalized',
+              workoutDaysCount: selectedDays,
+              trainingLevel: selectedLevel,
+              equipment: selectedEquipment,
+              injuries: selectedInjuries,
+              injuryDetails: injuryDetails
+            });
+            const root = document.getElementById('forty-workout-root');
+            if (root) {
+              root.outerHTML = renderFortyDayWorkoutView();
+              bindFortyDayWorkoutEvents();
+            }
+            notificationService.showToast('تم اعتماد خطتك المقترحة بنجاح! جاهز للتمرين 💪', 'success');
+          } else {
+            notificationService.showToast((res.errors || ['تعذر تفعيل الخطة']).join(' '), 'error');
+          }
+        },
+        onCancel: () => {
+          openPersonalizedPlanCreatorModal();
+        }
+      });
+    });
+  };
+
+  attachListeners();
 }

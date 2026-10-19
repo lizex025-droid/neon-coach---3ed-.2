@@ -419,6 +419,7 @@ function renderPlanSubPage(profile, state) {
               <option value="hasm" ${workoutPlan === 'hasm' ? 'selected' : ''}>نظام الحسم — 6 مجموعات (صدر، ظهر، كتف، أرجل، أذرع، علوي)</option>
               <option value="anas" ${workoutPlan === 'anas' ? 'selected' : ''}>نظام أنس — 5 أيام تدريبية (Push, Pull, Legs, Upper, كتف)</option>
               <option value="ppl" ${workoutPlan === 'ppl' ? 'selected' : ''}>Push Pull Legs — تمرين الـ40 يوم (Push A/B, Pull A/B, Legs A/B)</option>
+              <option value="personalized" ${workoutPlan === 'personalized' ? 'selected' : ''}>الخطة المقترحة من التطبيق — مخصصة حسب اختياراتك وإصاباتك</option>
             </select>
           </div>
         </div>

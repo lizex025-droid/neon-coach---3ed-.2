@@ -5,7 +5,7 @@ import { store } from '../state/store.js';
 import { syncService } from './syncService.js';
 import { localDate } from '../domain/actionAgent.js';
 import { notificationService } from './notificationService.js';
-import { validatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
+import { validatePersonalizedTrainingDraft, generatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
 import { normalizeArabicNumerals } from '../utils/arabicNumerals.js';
 
 const STATE_KEY = 'neon_forty_day_workout_v2';
@@ -239,7 +239,11 @@ class FortyDayWorkoutService {
       return { ok: false, code: 'active_session', errors: ['أنهِ جلسة التدريب الحالية أو ألغها قبل اعتماد خطة جديدة.'] };
     }
     if (draft.splitKey !== this.getActivePlan()) {
-      return { ok: false, code: 'split_changed', errors: ['تغير نظام التدريب منذ إنشاء المعاينة. أنشئ معاينة جديدة للنظام النشط.'] };
+      if (draft.splitKey === 'personalized') {
+        this.setActivePlan('personalized');
+      } else {
+        return { ok: false, code: 'split_changed', errors: ['تغير نظام التدريب منذ إنشاء المعاينة. أنشئ معاينة جديدة للنظام النشط.'] };
+      }
     }
     if (requestId && state.activationRequests[requestId]?.ok) {
       const existingVersion = state.planVersions.find(version => version.id === state.activationRequests[requestId].versionId);
@@ -311,20 +315,23 @@ class FortyDayWorkoutService {
 
   getActivePlan() {
     const profilePlan = store.getState()?.userProfile?.workoutPlan;
-    if (profilePlan === 'hasm' || profilePlan === 'ppl' || profilePlan === 'fortyDay' || profilePlan === 'anas') {
+    if (profilePlan === 'hasm' || profilePlan === 'ppl' || profilePlan === 'fortyDay' || profilePlan === 'anas' || profilePlan === 'personalized') {
       return (profilePlan === 'ppl' || profilePlan === 'fortyDay') ? 'ppl' : profilePlan;
     }
     return this.load().activePlan || 'hasm';
   }
 
   setActivePlan(planKey) {
-    const normalized = (planKey === 'ppl' || planKey === 'fortyDay') ? 'ppl' : (planKey === 'anas' ? 'anas' : 'hasm');
+    const normalized = (planKey === 'ppl' || planKey === 'fortyDay') ? 'ppl' : (planKey === 'anas' ? 'anas' : (planKey === 'personalized' ? 'personalized' : 'hasm'));
     const state = this.load();
     state.activePlan = normalized;
     if (normalized === 'anas') {
       state.activeDay = 'saturdayPush';
     } else if (normalized === 'ppl') {
       state.activeDay = 'pushA';
+    } else if (normalized === 'personalized') {
+      const persDays = this.getDays('personalized');
+      state.activeDay = persDays[0]?.key || 'pers_day_1';
     } else {
       state.activeDay = 'chestBiceps';
     }
@@ -338,16 +345,101 @@ class FortyDayWorkoutService {
   getProgram(planKey = this.getActivePlan()) {
     if (planKey === 'anas') return ANAS_PROGRAM;
     if (planKey === 'ppl' || planKey === 'fortyDay') return FORTY_DAY_PROGRAM;
+    if (planKey === 'personalized') {
+      const version = this.getActivePlanVersion('personalized');
+      return {
+        key: 'personalized',
+        title: 'الخطة المقترحة من التطبيق',
+        kicker: 'NEON AI SMART TRAINING',
+        description: version
+          ? `خطة تدريبية مقترحة لمستوى ${version.selectedLevel} (${version.days?.length || 4} أيام تدريبية) معدلة حسب خياراتك وإصاباتك.`
+          : 'خطة تدريبية ذكية مقترحة ومفصلة خصيصاً وفقاً لأهدافك، إصاباتك، وأيام تمرينك المختارة.',
+        cover: './hasm.jpg',
+        durationDays: 40
+      };
+    }
     return HASM_PROGRAM;
+  }
+
+  _getDefaultPersonalizedDays() {
+    const profile = store.getState()?.userProfile || {};
+    try {
+      const draft = generatePersonalizedTrainingDraft(
+        {
+          trainingLevel: profile.trainingLevel || profile.fitnessLevel || 'intermediate',
+          trainingExperienceMonths: profile.trainingExperienceMonths || 12,
+          workoutDaysCount: Number(profile.workoutDaysCount) || 4,
+          sessionDurationMin: Number(profile.sessionDurationMin) || 60,
+          equipment: profile.equipment || 'gym',
+          goal: profile.goal || 'muscle_gain',
+          injuries: profile.injuries || [],
+          injuryDetails: profile.injuryDetails || {},
+          focusAreas: profile.focusAreas || []
+        },
+        { splitKey: 'personalized', requestId: 'default-pers-seed' }
+      );
+      if (draft?.days?.length) {
+        return draft.days.map((day, idx) => ({
+          key: day.key,
+          short: day.short || day.label || `اليوم ${idx + 1}`,
+          label: day.label || day.short || `اليوم ${idx + 1}`,
+          tone: day.tone || 'strength',
+          warmup: day.warmup,
+          estimatedMinutes: day.estimatedMinutes,
+          exercises: day.exercises || []
+        }));
+      }
+    } catch (_) {}
+    return HASM_GROUPS.slice(0, 4).map((d, i) => ({
+      ...d,
+      key: `pers_${d.key}`,
+      short: d.short,
+      label: d.label
+    }));
   }
 
   getDays(planKey = this.getActivePlan()) {
     if (planKey === 'anas') return ANAS_DAYS;
     if (planKey === 'ppl' || planKey === 'fortyDay') return FORTY_DAY_DAYS;
+    if (planKey === 'personalized') {
+      const version = this.getActivePlanVersion('personalized');
+      if (version?.days?.length) {
+        return version.days.map((day, idx) => ({
+          key: day.key,
+          short: day.short || day.label || `اليوم ${idx + 1}`,
+          label: day.label || day.short || `اليوم ${idx + 1}`,
+          tone: day.tone || 'strength',
+          warmup: day.warmup,
+          estimatedMinutes: day.estimatedMinutes,
+          exercises: day.exercises || []
+        }));
+      }
+      return this._getDefaultPersonalizedDays();
+    }
     return HASM_GROUPS;
   }
 
   getDay(dayKey, planKey = this.getActivePlan()) {
+    if (planKey === 'personalized' || String(dayKey).startsWith('pers_')) {
+      const activeVersion = this.getActivePlanVersion('personalized');
+      const versionDay = activeVersion?.days?.find(d => d.key === dayKey);
+      const custom = this.load().customExercises?.[dayKey];
+      if (versionDay) {
+        return {
+          ...versionDay,
+          exercises: Array.isArray(custom) && custom.length > 0 ? custom : versionDay.exercises
+        };
+      }
+      const defaultDays = this._getDefaultPersonalizedDays();
+      const defDay = defaultDays.find(d => d.key === dayKey);
+      if (defDay) {
+        return {
+          ...defDay,
+          exercises: Array.isArray(custom) && custom.length > 0 ? custom : defDay.exercises
+        };
+      }
+    }
+
     let baseDay = null;
     if (ANAS_DAYS.some(day => day.key === dayKey)) {
       baseDay = getAnasDay(dayKey);
@@ -365,7 +457,7 @@ class FortyDayWorkoutService {
     if (!baseDay) return null;
 
     const activeVersion = this.getActivePlanVersion(planKey);
-    const versionDay = activeVersion?.days?.find(d => d.key === dayKey);
+    const versionDay = (activeVersion?.splitKey === planKey) ? activeVersion?.days?.find(d => d.key === dayKey) : null;
     const custom = this.load().customExercises?.[dayKey];
     if (Array.isArray(custom) && custom.length > 0) {
       return {
@@ -390,6 +482,9 @@ class FortyDayWorkoutService {
     const exercise = day?.exercises?.[exerciseIndex];
     if (exercise?.id) {
       return exercise.id;
+    }
+    if (String(dayKey).startsWith('pers_') || planKey === 'personalized') {
+      return `pers_${dayKey}_${exerciseIndex}`;
     }
     if (ANAS_DAYS.some(day => day.key === dayKey) || planKey === 'anas') {
       return anasExerciseId(dayKey, exerciseIndex);
@@ -541,7 +636,7 @@ class FortyDayWorkoutService {
   }
 
   setActiveDay(dayKey) {
-    const allDays = [...ANAS_DAYS, ...HASM_GROUPS, ...FORTY_DAY_DAYS];
+    const allDays = [...ANAS_DAYS, ...HASM_GROUPS, ...FORTY_DAY_DAYS, ...this.getDays('personalized')];
     if (!allDays.some(day => day.key === dayKey)) return;
     this.load().activeDay = dayKey;
     this.save();

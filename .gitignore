@@ -11,6 +11,14 @@ scratch/
 .vercel
 .env*
 
+# Temporary website reference analysis
+.reference-rea/
+.reference-prenuvo/
+.rea-tool/
+.reference-porofolio/
+.reference-shuhada-2/
+al-nokhba/
+
 # Recipe generation scripts and intermediate artifacts
 recipe-images/
 scripts/recipe-images/

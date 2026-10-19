@@ -1698,12 +1698,17 @@ function renderStepContent(step) {
   }
 }
 
-function showTrainingPlanPreview(draft, createPlanBtn) {
+export function showTrainingPlanPreview(draft, createPlanBtnOrOptions = {}) {
   document.getElementById('training-plan-preview-modal')?.remove();
   const modal = document.createElement('div');
   modal.id = 'training-plan-preview-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:10050;background:rgba(0,8,5,.92);display:flex;align-items:flex-end;justify-content:center;padding:12px;backdrop-filter:blur(10px);';
   const issues = [...(draft.blockers || []), ...(draft.warnings || [])];
+  const isElement = typeof HTMLElement !== 'undefined' && createPlanBtnOrOptions instanceof HTMLElement;
+  const onApprove = typeof createPlanBtnOrOptions?.onApprove === 'function' ? createPlanBtnOrOptions.onApprove : null;
+  const onCancel = typeof createPlanBtnOrOptions?.onCancel === 'function' ? createPlanBtnOrOptions.onCancel : null;
+  const createPlanBtn = isElement ? createPlanBtnOrOptions : null;
+
   modal.innerHTML = `<section role="dialog" aria-modal="true" aria-labelledby="training-preview-title" style="width:min(920px,100%);max-height:92vh;overflow:auto;background:#03120c;border:1px solid rgba(85,247,165,.35);border-radius:24px;padding:20px;box-shadow:0 0 45px rgba(85,247,165,.14);direction:rtl;">
     <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
       <div><span style="color:#55F7A5;font-size:.8rem;font-weight:800;">معاينة قبل الاعتماد · ${escapeAttr(draft.splitName)}</span><h2 id="training-preview-title" style="color:#fff;margin:6px 0;">خطتك التدريبية الشخصية</h2><p style="color:#9BA9A2;margin:0;">لن تتغير خطتك الحالية قبل الضغط على «اعتماد الخطة».</p></div>
@@ -1726,18 +1731,26 @@ function showTrainingPlanPreview(draft, createPlanBtn) {
   modal.querySelectorAll('[data-preview-action="cancel"]').forEach(button => button.addEventListener('click', () => {
     fortyDayWorkoutService.discardPendingPlanDraft(draft.id);
     modal.remove();
-    createPlanBtn.disabled = false;
+    if (createPlanBtn) createPlanBtn.disabled = false;
+    if (onCancel) onCancel();
   }));
   modal.querySelectorAll('[data-preview-days]').forEach(button => button.addEventListener('click', () => {
-    formData.workoutDaysCount = Number(button.dataset.previewDays);
-    const nextDraft = generatePersonalizedTrainingDraft({ ...formData, trainingGoal: formData.goal }, { splitKey: fortyDayWorkoutService.getActivePlan() });
+    const nextDays = Number(button.dataset.previewDays);
+    if (typeof formData !== 'undefined' && formData) formData.workoutDaysCount = nextDays;
+    const splitKey = draft.splitKey || fortyDayWorkoutService.getActivePlan();
+    const baseInput = (typeof formData !== 'undefined' && formData) ? { ...formData, trainingGoal: formData.goal } : (draft.inputSnapshot || {});
+    const nextDraft = generatePersonalizedTrainingDraft({ ...baseInput, workoutDaysCount: nextDays }, { splitKey });
     fortyDayWorkoutService.savePlanDraft(nextDraft);
-    showTrainingPlanPreview(nextDraft, createPlanBtn);
+    showTrainingPlanPreview(nextDraft, createPlanBtnOrOptions);
   }));
   modal.querySelector('[data-preview-action="approve"]')?.addEventListener('click', () => {
-    approvedTrainingDraft = draft;
     modal.remove();
-    createPlanBtn.click();
+    if (onApprove) {
+      onApprove(draft);
+    } else if (createPlanBtn) {
+      approvedTrainingDraft = draft;
+      createPlanBtn.click();
+    }
   });
 }
 
