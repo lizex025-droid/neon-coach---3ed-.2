@@ -1466,7 +1466,7 @@ export function openPersonalizedPlanCreatorModal() {
 
   const modal = document.createElement('div');
   modal.id = 'personalized-plan-creator-modal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:10045;background:rgba(0,8,5,.88);display:flex;align-items:flex-end;justify-content:center;padding:12px;backdrop-filter:blur(10px);';
+  modal.className = 'personalized-plan-creator-overlay';
 
   const renderContent = () => {
     const totalExercisesCount = customDays.reduce((acc, d) => acc + d.exercises.length, 0);
@@ -1474,7 +1474,6 @@ export function openPersonalizedPlanCreatorModal() {
     // 1. وضع استعراض مكتبة التمارين لاختيار التمارين وإضافتها لليوم المحدد
     if (mode === 'library') {
       const targetDay = customDays[targetDayIndex] || customDays[0];
-      const targetDayName = targetDay?.name || `اليوم ${targetDayIndex + 1}`;
 
       let filteredExercises = ALL_LIBRARY_EXERCISES;
       if (libSelectedGroup !== 'all') {
@@ -1490,77 +1489,75 @@ export function openPersonalizedPlanCreatorModal() {
       }
 
       return `
-        <section role="dialog" aria-modal="true" aria-labelledby="creator-lib-title" style="width:min(800px,100%);max-height:92vh;overflow-y:auto;background:#03120c;border:1px solid rgba(85,247,165,.35);border-radius:24px;padding:20px;box-shadow:0 0 50px rgba(85,247,165,.18);direction:rtl;color:#fff;">
+        <section role="dialog" aria-modal="true" aria-labelledby="creator-lib-title" class="creator-modal-dialog">
           
-          <!-- Library Header with Day Destination Selector -->
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid rgba(85,247,165,0.15);padding-bottom:14px;margin-bottom:14px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <button type="button" id="btn-back-to-builder" class="btn btn-sm btn-ghost" style="border-radius:10px;border:1px solid rgba(85,247,165,0.3);color:#55F7A5;padding:6px 12px;font-weight:700;cursor:pointer;">
-                ← العودة لجدول الأيام
-              </button>
-              <div>
-                <h3 id="creator-lib-title" style="color:#fff;margin:0;font-size:1.1rem;font-weight:800;">مكتبة التمارين الشاملة 📚</h3>
-                <span style="color:#9BA9A2;font-size:0.76rem;">اختر التمارين لإضافتها لجدولك</span>
-              </div>
+          <!-- Library Header -->
+          <div class="creator-modal-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <button type="button" id="btn-back-to-builder" class="btn btn-sm btn-ghost" style="border-radius:10px;border:1px solid rgba(85,247,165,0.3);color:#55F7A5;padding:6px 12px;font-weight:700;font-size:0.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+              ← العودة للجدول
+            </button>
+            <div style="text-align:left;min-width:0;">
+              <h3 id="creator-lib-title" style="color:#fff;margin:0;font-size:1.05rem;font-weight:800;white-space:nowrap;">مكتبة التمارين 📚</h3>
+              <span style="color:#9BA9A2;font-size:0.72rem;">اختر تمارينك</span>
             </div>
+          </div>
 
-            <!-- وجهة الإضافة (حسب وين بده يضيفها) -->
-            <div style="display:flex;align-items:center;gap:8px;background:rgba(85,247,165,0.08);border:1px solid rgba(85,247,165,0.25);border-radius:12px;padding:4px 10px;">
-              <label for="lib-picker-day-select" style="font-size:0.78rem;color:#55F7A5;font-weight:800;white-space:nowrap;">إضافة التمارين إلى:</label>
-              <select id="lib-picker-day-select" style="padding:6px 10px;border-radius:8px;background:#030806;border:1px solid #55F7A5;color:#55F7A5;font-weight:700;font-size:0.82rem;cursor:pointer;">
-                ${customDays.map((d, i) => `
-                  <option value="${i}" ${i === targetDayIndex ? 'selected' : ''}>
-                    اليوم ${i + 1}: ${escapeHtml(d.name || `يوم ${i + 1}`)} (${d.exercises.length} تمارين)
-                  </option>
-                `).join('')}
-              </select>
-            </div>
+          <!-- وجهة الإضافة (شريط كامل وواضح) -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(85,247,165,0.08);border:1px solid rgba(85,247,165,0.25);border-radius:12px;padding:8px 12px;margin-bottom:10px;flex-shrink:0;box-sizing:border-box;">
+            <label for="lib-picker-day-select" style="font-size:0.78rem;color:#55F7A5;font-weight:800;white-space:nowrap;flex-shrink:0;">🎯 إضافة التمارين إلى:</label>
+            <select id="lib-picker-day-select" style="flex:1;min-width:0;padding:6px 10px;border-radius:8px;background:#030806;border:1px solid #55F7A5;color:#55F7A5;font-weight:700;font-size:0.82rem;cursor:pointer;text-overflow:ellipsis;">
+              ${customDays.map((d, i) => `
+                <option value="${i}" ${i === targetDayIndex ? 'selected' : ''}>
+                  اليوم ${i + 1}: ${escapeHtml(d.name || `يوم ${i + 1}`)} (${d.exercises.length} تمارين)
+                </option>
+              `).join('')}
+            </select>
           </div>
 
           <!-- شريط البحث -->
-          <div style="margin-bottom:12px;">
-            <input type="text" id="lib-picker-search-input" value="${escapeHtml(libSearchQuery)}" placeholder="ابحث بالاسم عن أي تمرين (مثال: بنش، سكوات، ديدليفت)..." style="width:100%;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(85,247,165,0.3);color:#fff;font-size:0.88rem;box-sizing:border-box;">
+          <div style="margin-bottom:10px;flex-shrink:0;">
+            <input type="text" id="lib-picker-search-input" value="${escapeHtml(libSearchQuery)}" placeholder="ابحث بالاسم (بنش، سكوات، ديدليفت)..." style="width:100%;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(85,247,165,0.3);color:#fff;font-size:0.86rem;box-sizing:border-box;">
           </div>
 
           <!-- فلتر المجموعات العضلية -->
-          <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:14px;scrollbar-width:none;">
-            <button type="button" class="btn btn-xs ${libSelectedGroup === 'all' ? 'btn-primary' : 'btn-ghost'}" data-lib-cat="all" style="border-radius:999px;padding:6px 14px;font-weight:700;white-space:nowrap;border:1px solid ${libSelectedGroup === 'all' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+          <div class="creator-lib-chips">
+            <button type="button" class="btn btn-xs creator-lib-chip-btn ${libSelectedGroup === 'all' ? 'btn-primary' : 'btn-ghost'}" data-lib-cat="all" style="border-radius:999px;padding:6px 14px;font-weight:700;border:1px solid ${libSelectedGroup === 'all' ? 'var(--neon-accent)' : 'rgba(255,255,255,0.15)'};">
               الكل (${ALL_LIBRARY_EXERCISES.length})
             </button>
             ${EXERCISE_GROUPS.map(g => `
-              <button type="button" class="btn btn-xs ${libSelectedGroup === g.key ? 'btn-primary' : 'btn-ghost'}" data-lib-cat="${g.key}" style="border-radius:999px;padding:6px 14px;font-weight:700;white-space:nowrap;border:1px solid ${libSelectedGroup === g.key ? 'var(--neon-accent)' : 'rgba(255,255,255,0.1)'};">
+              <button type="button" class="btn btn-xs creator-lib-chip-btn ${libSelectedGroup === g.key ? 'btn-primary' : 'btn-ghost'}" data-lib-cat="${g.key}" style="border-radius:999px;padding:6px 14px;font-weight:700;border:1px solid ${libSelectedGroup === g.key ? 'var(--neon-accent)' : 'rgba(255,255,255,0.15)'};">
                 ${escapeHtml(g.nameAr)} (${g.count})
               </button>
             `).join('')}
           </div>
 
-          <!-- قائمة التمارين المتاحة -->
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+          <!-- قائمة التمارين المتاحة (تمرير سلس) -->
+          <div id="creator-lib-exercises-list" class="creator-scroll-body" style="display:flex;flex-direction:column;gap:8px;">
             ${filteredExercises.length === 0 ? `
-              <div style="text-align:center;padding:30px 10px;color:#8E9B94;">
+              <div style="text-align:center;padding:30px 10px;color:#8E9B94;font-size:0.88rem;">
                 لا توجد نتائج مطابقة لبحثك. جرب اسم عضلة أو تمرين آخر.
               </div>
             ` : filteredExercises.map(ex => {
               const isAdded = targetDay.exercises.some(e => e.nameAr === ex.nameAr || e.title === ex.title || (ex.id && e.id === ex.id));
               return `
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,0.35);border:1px solid ${isAdded ? 'rgba(34,197,94,0.35)' : 'rgba(85,247,165,0.14)'};border-radius:14px;padding:10px 14px;">
-                  <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">
-                    <img src="${escapeHtml(ex.image)}" alt="" style="width:46px;height:46px;border-radius:10px;object-fit:cover;background:#000;flex-shrink:0;border:1px solid rgba(85,247,165,0.2);" loading="lazy">
-                    <div style="min-width:0;">
-                      <div style="font-size:0.92rem;font-weight:800;color:#fff;">${escapeHtml(ex.nameAr)}</div>
-                      <div style="font-size:0.74rem;color:#8E9B94;margin-top:2px;">${escapeHtml(ex.nameEn || '')} · ${escapeHtml(ex.equipment || 'جيم')} · ${ex.sets} جولات × ${ex.reps}</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,0.35);border:1px solid ${isAdded ? 'rgba(34,197,94,0.35)' : 'rgba(85,247,165,0.14)'};border-radius:14px;padding:8px 12px;box-sizing:border-box;">
+                  <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
+                    <img src="${escapeHtml(ex.image)}" alt="" style="width:48px;height:48px;border-radius:10px;object-fit:cover;background:#000;flex-shrink:0;border:1px solid rgba(85,247,165,0.2);" loading="lazy">
+                    <div style="min-width:0;flex:1;">
+                      <div style="font-size:0.88rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ex.nameAr)}</div>
+                      <div style="font-size:0.72rem;color:#8E9B94;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ex.nameEn || '')} · ${escapeHtml(ex.equipment || 'جيم')} · ${ex.sets}×${ex.reps}</div>
                     </div>
                   </div>
-                  <button type="button" class="btn btn-sm btn-lib-toggle-add ${isAdded ? 'is-added' : 'btn-primary'}" data-ex-id="${ex.id}" style="border-radius:10px;font-weight:800;padding:7px 16px;white-space:nowrap;cursor:pointer;${isAdded ? 'background:rgba(34,197,94,0.18);color:#22c55e;border:1px solid #22c55e;' : ''}">
-                    ${isAdded ? `✓ مضاف لـ (${escapeHtml(targetDayName)})` : `＋ إضافة لـ (${escapeHtml(targetDayName)})`}
+                  <button type="button" class="btn btn-sm btn-lib-toggle-add ${isAdded ? 'is-added' : 'btn-primary'}" data-ex-id="${ex.id}" style="border-radius:10px;font-weight:800;font-size:0.78rem;padding:7px 12px;white-space:nowrap;cursor:pointer;flex-shrink:0;${isAdded ? 'background:rgba(34,197,94,0.18) !important;color:#22c55e !important;border:1px solid #22c55e !important;' : ''}">
+                    ${isAdded ? '✓ مضاف' : '＋ إضافة'}
                   </button>
                 </div>
               `;
             }).join('')}
           </div>
 
-          <!-- زر العودة للجدول -->
-          <div style="position:sticky;bottom:0;background:#03120c;padding:12px 0 0;border-top:1px solid rgba(85,247,165,0.2);z-index:5;">
+          <!-- زر العودة للجدول (مثبت دائماً بالأسفل) -->
+          <div class="creator-modal-footer">
             <button type="button" id="btn-finish-lib-selection" class="btn btn-primary btn-block" style="border-radius:14px;font-weight:800;padding:12px;font-size:0.95rem;cursor:pointer;">
               تم · العودة لمراجعة الخطة (${totalExercisesCount} تمارين إجمالاً)
             </button>
@@ -1571,97 +1568,99 @@ export function openPersonalizedPlanCreatorModal() {
 
     // 2. وضع محرر الأيام والتمارين الرئيسي (Builder Mode)
     return `
-      <section role="dialog" aria-modal="true" aria-labelledby="creator-modal-title" style="width:min(800px,100%);max-height:92vh;overflow-y:auto;background:#03120c;border:1px solid rgba(85,247,165,.35);border-radius:24px;padding:20px;box-shadow:0 0 50px rgba(85,247,165,.18);direction:rtl;color:#fff;">
+      <section role="dialog" aria-modal="true" aria-labelledby="creator-modal-title" class="creator-modal-dialog">
         
         <!-- Header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid rgba(85,247,165,0.15);padding-bottom:14px;margin-bottom:16px;">
-          <div>
-            <span style="color:#55F7A5;font-size:0.8rem;font-weight:800;letter-spacing:0.5px;">تخصيص الخطة التدريبية · NEON PLAN BUILDER</span>
-            <h2 id="creator-modal-title" style="color:#fff;margin:4px 0;font-size:1.3rem;font-weight:800;">إنشاء وتخصيص الخطة التدريبية ✨</h2>
-            <p style="color:#9BA9A2;margin:0;font-size:0.84rem;">أضف أيام تمرينك، سمّ كل يوم بحرية، وأضف التمارين المناسبة من مكتبة التمارين الشاملة.</p>
+        <div class="creator-modal-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="min-width:0;flex:1;">
+            <span style="color:#55F7A5;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">تخصيص الخطة · NEON PLAN BUILDER</span>
+            <h2 id="creator-modal-title" style="color:#fff;margin:2px 0 4px;font-size:1.15rem;font-weight:800;">إنشاء وتخصيص الخطة التدريبية ✨</h2>
+            <p style="color:#9BA9A2;margin:0;font-size:0.78rem;line-height:1.4;">أضف أيام تمرينك، سمّ كل يوم بحرية، وأضف التمارين من المكتبة.</p>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button type="button" id="btn-quick-smart-template" class="btn btn-sm btn-ghost" style="border:1px solid rgba(85,247,165,0.3);color:#55F7A5;border-radius:10px;font-size:0.76rem;padding:5px 12px;cursor:pointer;white-space:nowrap;" title="توليد مسودة ذكية مقترحة لتعديلها مباشرة">
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <button type="button" id="btn-quick-smart-template" class="btn btn-sm btn-ghost" style="border:1px solid rgba(85,247,165,0.3);color:#55F7A5;border-radius:10px;font-size:0.74rem;padding:5px 10px;cursor:pointer;white-space:nowrap;" title="توليد مسودة ذكية مقترحة لتعديلها مباشرة">
               ⚡ اقتراح ذكي
             </button>
             <button type="button" id="close-creator-modal-btn" aria-label="إغلاق" style="background:transparent;border:0;color:#fff;font-size:1.8rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
           </div>
         </div>
 
-        <!-- قائمة الأيام -->
-        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:16px;">
-          ${customDays.map((day, dIdx) => `
-            <div class="creator-day-card" data-day-card-index="${dIdx}" style="background:rgba(5,13,10,0.85);border:1px solid rgba(85,247,165,0.22);border-radius:16px;padding:16px;">
-              
-              <!-- ترويسة اليوم: التسمية والحذف والعدد -->
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:220px;">
-                  <span style="background:#55F7A5;color:#030806;font-weight:800;font-size:0.78rem;padding:4px 10px;border-radius:8px;white-space:nowrap;">
+        <!-- قائمة الأيام (تمرير سلس) -->
+        <div class="creator-scroll-body">
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
+            ${customDays.map((day, dIdx) => `
+              <div class="creator-day-card" data-day-card-index="${dIdx}">
+                
+                <!-- ترويسة اليوم: التسمية والرقم -->
+                <div class="creator-day-title-row">
+                  <span style="flex-shrink:0;background:#55F7A5;color:#030806;font-weight:800;font-size:0.78rem;padding:6px 10px;border-radius:8px;white-space:nowrap;">
                     اليوم ${dIdx + 1}
                   </span>
-                  <input type="text" class="creator-day-name-input" data-day-index="${dIdx}" value="${escapeHtml(day.name)}" placeholder="اسم اليوم (مثال: صدر وباي، أرجل، Push)..." style="flex:1;padding:8px 12px;background:rgba(0,0,0,0.45);border:1px solid rgba(85,247,165,0.3);border-radius:10px;color:#FFFFFF;font-size:0.88rem;font-weight:700;box-sizing:border-box;">
+                  <input type="text" class="creator-day-name-input" data-day-index="${dIdx}" value="${escapeHtml(day.name)}" placeholder="اسم اليوم (مثال: صدر وتراي)..." style="flex:1;min-width:0;width:100%;padding:8px 12px;background:rgba(0,0,0,0.55);border:1px solid rgba(85,247,165,0.3);border-radius:10px;color:#FFFFFF;font-size:0.86rem;font-weight:700;box-sizing:border-box;">
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span style="font-size:0.78rem;color:#55F7A5;background:rgba(85,247,165,0.1);border:1px solid rgba(85,247,165,0.25);border-radius:999px;padding:3px 10px;font-weight:700;">
+
+                <!-- سطر معلومات اليوم: عدد التمارين وزر الحذف -->
+                <div class="creator-day-meta-row">
+                  <span style="font-size:0.76rem;color:#55F7A5;background:rgba(85,247,165,0.1);border:1px solid rgba(85,247,165,0.25);border-radius:999px;padding:3px 10px;font-weight:700;">
                     ${day.exercises.length} تمارين
                   </span>
                   ${customDays.length > 1 ? `
-                    <button type="button" class="btn-delete-day" data-day-index="${dIdx}" title="حذف هذا اليوم" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.78rem;">
-                      🗑️ حذف
+                    <button type="button" class="btn-delete-day" data-day-index="${dIdx}" title="حذف هذا اليوم" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:0.76rem;font-weight:700;">
+                      🗑️ حذف اليوم
                     </button>
                   ` : ''}
                 </div>
-              </div>
 
-              <!-- تمارين هذا اليوم -->
-              <div class="day-exercises-container" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-                ${day.exercises.length === 0 ? `
-                  <div style="text-align:center;padding:18px 10px;background:rgba(0,0,0,0.25);border:1px dashed rgba(85,247,165,0.2);border-radius:12px;color:#8E9B94;font-size:0.82rem;">
-                    لم تتم إضافة تمارين بعد لهذا اليوم. اضغط بالأسفل لاختيار تمارين من المكتبة.
-                  </div>
-                ` : day.exercises.map((ex, eIdx) => `
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(85,247,165,0.12);border-radius:12px;padding:8px 12px;">
-                    <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
-                      ${ex.image ? `<img src="${escapeHtml(ex.image)}" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;background:#000;flex-shrink:0;" loading="lazy">` : ''}
-                      <div style="min-width:0;">
-                        <div style="font-size:0.86rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                          ${escapeHtml(ex.nameAr || ex.title)}
-                        </div>
-                        <div style="font-size:0.72rem;color:#8E9B94;display:flex;align-items:center;gap:6px;">
-                          <span>${ex.sets || 3} جولات × ${ex.reps || '8-12'} عدات</span>
-                          ${ex.equipment ? `<span>· ${escapeHtml(ex.equipment)}</span>` : ''}
+                <!-- تمارين هذا اليوم -->
+                <div class="day-exercises-container" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+                  ${day.exercises.length === 0 ? `
+                    <div style="text-align:center;padding:14px 10px;background:rgba(0,0,0,0.25);border:1px dashed rgba(85,247,165,0.2);border-radius:12px;color:#8E9B94;font-size:0.8rem;">
+                      لا توجد تمارين بعد لهذا اليوم. اضغط أدناه لإضافة تمارين من المكتبة.
+                    </div>
+                  ` : day.exercises.map((ex, eIdx) => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(0,0,0,0.45);border:1px solid rgba(85,247,165,0.14);border-radius:12px;padding:8px 10px;box-sizing:border-box;">
+                      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
+                        ${ex.image ? `<img src="${escapeHtml(ex.image)}" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;background:#000;flex-shrink:0;border:1px solid rgba(85,247,165,0.2);" loading="lazy">` : ''}
+                        <div style="min-width:0;flex:1;">
+                          <div style="font-size:0.86rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            ${escapeHtml(ex.nameAr || ex.title)}
+                          </div>
+                          <div style="font-size:0.72rem;color:#8E9B94;display:flex;align-items:center;gap:6px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            <span>${ex.sets || 3} جولات × ${ex.reps || '8-12'}</span>
+                            ${ex.equipment ? `<span>· ${escapeHtml(ex.equipment)}</span>` : ''}
+                          </div>
                         </div>
                       </div>
+                      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                        <button type="button" class="btn-move-ex-up" data-day-index="${dIdx}" data-ex-index="${eIdx}" ${eIdx === 0 ? 'disabled' : ''} style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:6px;padding:4px 8px;font-size:0.72rem;cursor:pointer;opacity:${eIdx === 0 ? '0.25' : '1'};">▲</button>
+                        <button type="button" class="btn-move-ex-down" data-day-index="${dIdx}" data-ex-index="${eIdx}" ${eIdx === day.exercises.length - 1 ? 'disabled' : ''} style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:6px;padding:4px 8px;font-size:0.72rem;cursor:pointer;opacity:${eIdx === day.exercises.length - 1 ? '0.25' : '1'};">▼</button>
+                        <button type="button" class="btn-remove-ex" data-day-index="${dIdx}" data-ex-index="${eIdx}" title="إزالة التمرين" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:4px 8px;font-size:0.78rem;cursor:pointer;font-weight:700;">✕</button>
+                      </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                      <button type="button" class="btn-move-ex-up" data-day-index="${dIdx}" data-ex-index="${eIdx}" ${eIdx === 0 ? 'disabled' : ''} style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:6px;padding:2px 6px;font-size:0.72rem;cursor:pointer;opacity:${eIdx === 0 ? '0.3' : '1'};">▲</button>
-                      <button type="button" class="btn-move-ex-down" data-day-index="${dIdx}" data-ex-index="${eIdx}" ${eIdx === day.exercises.length - 1 ? 'disabled' : ''} style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:6px;padding:2px 6px;font-size:0.72rem;cursor:pointer;opacity:${eIdx === day.exercises.length - 1 ? '0.3' : '1'};">▼</button>
-                      <button type="button" class="btn-remove-ex" data-day-index="${dIdx}" data-ex-index="${eIdx}" title="إزالة التمرين" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:2px 8px;font-size:0.78rem;cursor:pointer;">✕</button>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
+                  `).join('')}
+                </div>
 
-              <!-- زر إضافة تمارين لهذا اليوم من المكتبة -->
-              <button type="button" class="btn btn-sm btn-open-lib-for-day" data-day-index="${dIdx}" style="width:100%;border-radius:10px;padding:8px;font-weight:700;border:1px dashed #55F7A5;color:#55F7A5;background:rgba(85,247,165,0.06);cursor:pointer;">
-                ＋ إضافة تمارين لـ (${escapeHtml(day.name || `اليوم ${dIdx + 1}`)}) من مكتبة التمارين
-              </button>
-            </div>
-          `).join('')}
+                <!-- زر إضافة تمارين لهذا اليوم من المكتبة (نص مختصر وأنيق لا يفيض) -->
+                <button type="button" class="btn btn-sm btn-open-lib-for-day" data-day-index="${dIdx}" style="width:100%;border-radius:10px;padding:9px;font-weight:700;font-size:0.84rem;border:1px dashed #55F7A5;color:#55F7A5;background:rgba(85,247,165,0.06);cursor:pointer;box-sizing:border-box;">
+                  ＋ إضافة تمارين من المكتبة
+                </button>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- زر إضافة يوم جديد -->
+          <button type="button" id="btn-creator-add-day" class="btn btn-secondary btn-block" style="border-radius:14px;padding:11px;font-weight:700;font-size:0.88rem;border:1px solid rgba(85,247,165,0.3);margin-bottom:8px;background:rgba(85,247,165,0.08);color:#55F7A5;cursor:pointer;box-sizing:border-box;">
+            ＋ إضافة يوم تدريب جديد
+          </button>
         </div>
 
-        <!-- زر إضافة يوم جديد -->
-        <button type="button" id="btn-creator-add-day" class="btn btn-secondary btn-block" style="border-radius:14px;padding:12px;font-weight:700;border:1px solid rgba(85,247,165,0.3);margin-bottom:16px;background:rgba(85,247,165,0.08);color:#55F7A5;cursor:pointer;">
-          ＋ إضافة يوم تدريب جديد
-        </button>
-
-        <!-- شريط الحفظ والاعتماد -->
-        <div style="position:sticky;bottom:0;background:#03120c;padding:12px 0 0;border-top:1px solid rgba(85,247,165,0.2);z-index:5;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.84rem;color:#D8E3DE;">
+        <!-- شريط الحفظ والاعتماد (مثبت بالأسفل دون تداخل) -->
+        <div class="creator-modal-footer">
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:8px;font-size:0.84rem;color:#D8E3DE;box-sizing:border-box;">
             <span>عدد الأيام: <strong style="color:#55F7A5;">${customDays.length}</strong></span>
             <span>إجمالي التمارين: <strong style="color:#55F7A5;">${totalExercisesCount}</strong></span>
           </div>
-          <button type="button" id="btn-save-creator-plan" class="btn btn-primary btn-lg btn-block" style="border-radius:14px;font-weight:800;font-size:1.02rem;padding:12px;box-shadow:0 0 25px rgba(85,247,165,0.3);cursor:pointer;">
+          <button type="button" id="btn-save-creator-plan" class="btn btn-primary btn-block" style="border-radius:14px;font-weight:800;font-size:0.98rem;padding:12px;box-shadow:0 0 25px rgba(85,247,165,0.3);cursor:pointer;box-sizing:border-box;">
             حفظ واعتماد الخطة في شاشة التمرين ✓
           </button>
         </div>
@@ -1705,7 +1704,7 @@ export function openPersonalizedPlanCreatorModal() {
       const searchInput = modal.querySelector('#lib-picker-search-input');
       searchInput?.addEventListener('input', (e) => {
         libSearchQuery = e.target.value;
-        const listContainer = modal.querySelector('div[style*="display:flex;flex-direction:column;gap:8px"]');
+        const listContainer = modal.querySelector('#creator-lib-exercises-list');
         if (listContainer) {
           rebind();
           // إعادة التركيز على حقل البحث

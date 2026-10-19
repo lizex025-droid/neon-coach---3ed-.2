@@ -954,3 +954,135 @@
   color: #000;
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
 }
+
+/* =========================================================
+   Personalized Plan Creator Modal & Mobile Responsive
+   ========================================================= */
+#personalized-plan-creator-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10045;
+  background: rgba(0, 8, 5, 0.92);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  #personalized-plan-creator-modal {
+    align-items: center;
+    padding: 16px;
+  }
+}
+
+.creator-modal-dialog {
+  width: 100%;
+  max-width: 800px;
+  max-height: 94vh;
+  height: 94vh;
+  display: flex;
+  flex-direction: column;
+  background: #03120c;
+  border: 1px solid rgba(85, 247, 165, 0.35);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding: 14px 14px 10px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8), 0 0 50px rgba(85, 247, 165, 0.15);
+  direction: rtl;
+  color: #ffffff;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .creator-modal-dialog {
+    height: auto;
+    max-height: 90vh;
+    border-bottom: 1px solid rgba(85, 247, 165, 0.35);
+    border-radius: 24px;
+    padding: 20px;
+  }
+}
+
+.creator-modal-header {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(85, 247, 165, 0.15);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.creator-scroll-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  margin-bottom: 8px;
+  padding: 2px 2px 8px;
+}
+
+.creator-modal-footer {
+  flex-shrink: 0;
+  background: #03120c;
+  border-top: 1px solid rgba(85, 247, 165, 0.2);
+  padding-top: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.creator-lib-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.creator-lib-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.creator-lib-chip-btn {
+  flex-shrink: 0 !important;
+  min-width: max-content !important;
+  white-space: nowrap !important;
+}
+
+.creator-day-card {
+  background: rgba(5, 13, 10, 0.85);
+  border: 1px solid rgba(85, 247, 165, 0.22);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .creator-day-card {
+    padding: 16px;
+  }
+}
+
+.creator-day-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.creator-day-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
