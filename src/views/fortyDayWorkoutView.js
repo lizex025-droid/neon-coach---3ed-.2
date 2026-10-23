@@ -72,7 +72,7 @@ export function renderFortyDayWorkoutView() {
   const program = fortyDayWorkoutService.getProgram(activePlan);
   const days = fortyDayWorkoutService.getDays(activePlan);
   const workoutNumber = Math.min(program.durationDays, snapshot.history.length + 1);
-  const progress = Math.round((Math.min(snapshot.history.length, program.durationDays) / program.durationDays) * 100);
+  const progress = program.durationDays ? Math.round((Math.min(snapshot.history.length, program.durationDays) / program.durationDays) * 100) : 0;
   const activeDay = days.some(d => d.key === snapshot.activeDay) ? snapshot.activeDay : days[0].key;
   const activeDayObj = fortyDayWorkoutService.getDay(activeDay, activePlan);
   const activeVersion = fortyDayWorkoutService.getActivePlanVersion(activePlan);
@@ -93,10 +93,10 @@ export function renderFortyDayWorkoutView() {
           <h1>${program.title}</h1>
           <p>${program.description}</p>
           <div class="forty-progress-meta">
-            <strong>${activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم النشط: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
-            <span>${progress}% مكتمل</span>
+            <strong>${activePlan === 'fbw' || activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم النشط: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
+            <span>${activePlan === 'fbw' ? '3 أيام / أسبوع' : `${progress}% مكتمل`}</span>
           </div>
-          <div class="forty-progress-track"><span style="width:${progress}%"></span></div>
+          ${activePlan === 'fbw' ? `<p>${escapeHtml(program.schedule)}</p><p>${escapeHtml(program.dropSetNote)}</p>` : `<div class="forty-progress-track"><span style="width:${progress}%"></span></div>`}
         </div>
       </section>
 
@@ -125,15 +125,15 @@ export function renderFortyDayWorkoutView() {
       <section class="forty-days-section">
         <div class="forty-section-heading">
           <div>
-            <span>${activePlan === 'anas' ? 'خطة نظام أنس' : (activePlan === 'hasm' ? 'خطة نظام الحسم' : (activePlan === 'personalized' ? 'الخطة المقترحة من التطبيق' : 'خطة الأسبوع'))}</span>
+            <span>${activePlan === 'fbw' ? 'خطة FBW — Full Body' : activePlan === 'anas' ? 'خطة نظام أنس' : (activePlan === 'hasm' ? 'خطة نظام الحسم' : (activePlan === 'personalized' ? 'الخطة المقترحة من التطبيق' : 'خطة الأسبوع'))}</span>
             <h2>${activePlan === 'anas' ? 'اختر نوع التمرين' : (activePlan === 'hasm' ? 'اختر مجموعة العضلات لعرض تمارينها فقط' : (activePlan === 'personalized' ? 'اختر يوم التمرين المقترح' : 'اختر يوم التمرين'))}</h2>
           </div>
-          <p>${activePlan === 'anas' ? '5 أيام تدريبية: Push / Pull / Legs / Upper / كتف' : (activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : (activePlan === 'personalized' ? `${days.length} أيام تدريبية مخصصة ومعدلة حسب أهدافك وإصاباتك` : '6 أيام Push / Pull / Legs ثم يوم راحة'))}</p>
+          <p>${activePlan === 'fbw' ? '3 أيام · السبت A / الأحد B / الثلاثاء C' : activePlan === 'anas' ? '5 أيام تدريبية: Push / Pull / Legs / Upper / كتف' : (activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : (activePlan === 'personalized' ? `${days.length} أيام تدريبية مخصصة ومعدلة حسب أهدافك وإصاباتك` : '6 أيام Push / Pull / Legs ثم يوم راحة'))}</p>
         </div>
         <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : (activePlan === 'anas' ? 'anas-tabs' : (activePlan === 'personalized' ? 'personalized-tabs' : ''))}" id="forty-day-tabs" role="tablist" aria-label="أيام التمرين">
           ${days.map((day, idx) => `
             <button type="button" role="tab" aria-selected="${day.key === activeDay ? 'true' : 'false'}" class="forty-day-tab tone-${day.tone} ${day.key === activeDay ? 'is-active' : ''}" data-day="${day.key}">
-              <span class="forty-tab-day">${activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
+              <span class="forty-tab-day">${activePlan === 'fbw' || activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
               <span class="forty-tab-title">${escapeHtml(day.short || day.label)}</span>
             </button>
           `).join('')}
@@ -243,7 +243,9 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
           </div>
           ${exercise.alternative ? `<p><span>بديل / Alternative:</span> ${escapeHtml(exercise.alternative)}</p>` : ''}
           ${exercise.reason ? `<p><span>سبب الاختيار:</span> ${escapeHtml(exercise.reason)}</p>` : ''}
-          ${exercise.restSeconds != null ? `<p><span>الجرعة المقترحة:</span> ${exercise.sets} مجموعات · ${escapeHtml(exercise.reps)} · راحة ${exercise.restSeconds}ث · RIR ${exercise.rir}</p>` : ''}
+          ${exercise.restSeconds != null ? `<p><span>الجرعة المقترحة:</span> ${exercise.sets} مجموعات · ${escapeHtml(exercise.reps)} · راحة ${escapeHtml(exercise.restLabel || `${exercise.restSeconds}ث`)} · RIR ${exercise.rir}</p>` : ''}
+          ${exercise.dropSet ? `<p class="badge">+ Drop Set بعد آخر مجموعة</p>` : ''}
+          ${exercise.imageNote ? `<p>${escapeHtml(exercise.imageNote)}</p>` : ''}
           ${exercise.coachingNote ? `<p style="color:#55F7A5;font-size:0.8rem;margin-top:4px;"><span>💡 التدرج والتكنيك:</span> ${escapeHtml(exercise.coachingNote)}</p>` : ''}
         </div>
         <button type="button" class="forty-image-btn" data-action="image" data-index="${exerciseIndex}" data-image-url="${escapeHtml(exercise.image || '')}" aria-label="عرض صورة التمرين">ⓘ</button>
@@ -356,7 +358,7 @@ function renderDeleteConfirmSheet(dayKey, exerciseIndex) {
 }
 
 function renderResetPlanConfirmSheet(dayKey, activePlan) {
-  const planName = activePlan === 'anas' ? 'نظام أنس' : (activePlan === 'hasm' ? 'نظام الحسم' : 'Push Pull Legs');
+  const planName = fortyDayWorkoutService.getProgram(activePlan).title;
   const day = fortyDayWorkoutService.getDay(dayKey);
   const dayName = day?.label || day?.short || 'اليوم الحالي';
 
@@ -1191,7 +1193,7 @@ export function bindFortyDayWorkoutEvents() {
       fortyDayWorkoutService.setActivePlan(targetPlan);
       root.outerHTML = renderFortyDayWorkoutView();
       bindFortyDayWorkoutEvents();
-      const planName = targetPlan === 'anas' ? 'نظام أنس' : (targetPlan === 'hasm' ? 'نظام الحسم' : (targetPlan === 'personalized' ? 'الخطة المقترحة' : 'Push Pull Legs'));
+      const planName = fortyDayWorkoutService.getProgram(targetPlan).title;
       notificationService.showToast(`تم التبديل إلى ${planName} بنجاح`, 'info');
       return;
     }
