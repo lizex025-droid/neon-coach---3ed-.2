@@ -560,7 +560,7 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
   const totalVolume = history.reduce((sum, row) => sum + Number(row.volume || (Number(row.weight || 0) * Number(row.reps || 0) * Number(row.sets || 0))), 0);
   const bestWeight = Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0)));
   const roundCount = history.reduce((sum, row) => sum + (Array.isArray(row.rounds) ? row.rounds.length : Number(row.sets || 0)), 0);
-  const loggedSets = (tracker?.sets || []).filter(set => set.kg !== '' && set.reps !== '').length;
+  const loggedSets = (tracker?.sets || []).filter(set => set.done && Number(set.reps) > 0).length;
   const tableRows = history.slice().reverse().flatMap(row => Array.isArray(row.rounds) && row.rounds.length
     ? row.rounds.map(round => ({ date: row.date, round: round.round, reps: round.reps, weight: round.kg }))
     : [{ date: row.date, round: row.sets || '-', reps: row.bestReps || row.reps || '-', weight: row.bestKg || row.weight || '-' }]);
