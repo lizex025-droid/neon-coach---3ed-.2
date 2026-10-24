@@ -269,6 +269,14 @@ function escapeHtml(str) {
 
 const WORKOUT_PLANS_CATALOG = [
   {
+    key: 'ulf', title: 'Upper / Lower / Full Body',
+    subtitle: '3 أيام أسبوعيًا · السبت Upper · الأحد Lower · الثلاثاء Full Body',
+    tag: '49 Working Sets + 3 Drop Sets',
+    splitType: 'السبت Upper Body · الأحد Lower Body · الثلاثاء Full Body',
+    description: 'تقسيمة ثلاثية للحفاظ على العضلات خلال التنشيف، بجميع المجموعات والتكرارات وRIR وصور التمارين؛ دون استبدال أي خطة حالية.',
+    icon: '🏋️'
+  },
+  {
     key: 'fbw', title: 'FBW — Full Body',
     subtitle: '3 أيام أسبوعيًا · المحافظة على العضلات خلال التنشيف',
     tag: '48 Working Sets + 3 Drop Sets',
@@ -570,6 +578,7 @@ function renderPlanSubPage(profile, state) {
           <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.82rem;">نظام التمرين المقترح والمعتمد</label>
             <select id="plan-workout-plan" style="padding: 10px 12px; border-radius: 10px; background: #030806; border: 1px solid rgba(85,247,165,0.35); color: #FFFFFF; font-size: 0.85rem; font-weight: 600;">
+              <option value="ulf" ${workoutPlan === 'ulf' ? 'selected' : ''}>Upper / Lower / Full Body — السبت والأحد والثلاثاء</option>
               <option value="fbw" ${workoutPlan === 'fbw' ? 'selected' : ''}>FBW — Full Body — السبت والأحد والثلاثاء</option>
               <option value="hasm" ${workoutPlan === 'hasm' ? 'selected' : ''}>نظام الحسم — 6 مجموعات (صدر، ظهر، كتف، أرجل، أذرع، علوي)</option>
               <option value="anas" ${workoutPlan === 'anas' ? 'selected' : ''}>نظام أنس — 5 أيام تدريبية (Push, Pull, Legs, Upper, كتف)</option>
