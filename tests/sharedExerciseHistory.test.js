@@ -205,3 +205,36 @@ test('A checked round is accessible immediately from other matching plans', () =
   service.setActivePlan('ulf');
   assert.deepEqual(service.getSharedHistory('ulfUpper', 2)[0].rounds[0], { round: 1, kg: 28, reps: 9 });
 }));
+
+test('Live history does not suppress a new personal record at finish', () => withIsolatedWorkout(() => {
+  service.setActivePlan('hasm');
+  service.updateSet('chestBiceps', 0, 0, 'kg', 30);
+  service.updateSet('chestBiceps', 0, 0, 'reps', 10);
+  service.toggleSet('chestBiceps', 0, 0);
+  service.finishWorkout();
+
+  service.updateSet('chestBiceps', 0, 0, 'kg', 35);
+  service.updateSet('chestBiceps', 0, 0, 'reps', 8);
+  service.toggleSet('chestBiceps', 0, 0);
+  const summary = service.finishWorkout();
+  assert.equal(summary.personalRecords, 1);
+  assert.equal(service.getSharedHistory('chestBiceps', 0).length, 2);
+}));
+
+test('Switching from Hasm to ULF mid-session preserves both checked exercises at finish', () => withIsolatedWorkout(() => {
+  service.setActivePlan('hasm');
+  service.updateSet('chestBiceps', 0, 0, 'kg', 30);
+  service.updateSet('chestBiceps', 0, 0, 'reps', 8);
+  service.toggleSet('chestBiceps', 0, 0);
+
+  service.setActivePlan('ulf');
+  service.updateSet('ulfLower', 0, 0, 'kg', 100);
+  service.updateSet('ulfLower', 0, 0, 'reps', 10);
+  service.toggleSet('ulfLower', 0, 0);
+  assert.equal(service.getSharedHistory('ulfLower', 0).length, 1);
+  const summary = service.finishWorkout();
+  assert.equal(summary.totalSets, 2);
+  assert.equal(summary.totalVolume, 1240);
+  assert.equal(service.getSharedHistory('chestBiceps', 0).length, 1);
+  assert.equal(service.getSharedHistory('ulfLower', 0).length, 1);
+}));
