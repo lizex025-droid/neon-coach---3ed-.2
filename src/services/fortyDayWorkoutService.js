@@ -865,16 +865,20 @@ class FortyDayWorkoutService {
     this.save();
   }
 
-  // A newly added Drop Set belongs to the first unfinished working set.
-  // Explicit selection (per-set +Drop action) overrides this safe default.
+  // By default, pair a new Drop Set with the LAST completed working set.
+  // Example: after checking Set 1, +Drop appears under Set 1, not Set 2.
+  // Before any set is completed, use Set 1. Explicit per-set choice and drag
+  // always override this default without changing recorded kg/reps.
   _dropParentIndex(tracker, parentSetIndex) {
     const max = Math.max(0, (tracker?.sets?.length || 1) - 1);
     if (parentSetIndex !== undefined && parentSetIndex !== null && parentSetIndex !== '') {
       const value = Number(parentSetIndex);
       return Number.isInteger(value) && value >= 0 && value <= max ? value : null;
     }
-    const firstPending = tracker.sets.findIndex(set => !set.done);
-    return firstPending >= 0 ? firstPending : max;
+    for (let index = max; index >= 0; index -= 1) {
+      if (tracker.sets[index]?.done) return index;
+    }
+    return 0;
   }
 
   enableDropSet(dayKey, exerciseIndex, parentSetIndex = null) {
