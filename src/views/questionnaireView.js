@@ -1946,29 +1946,32 @@ export function bindQuestionnaireEvents() {
     };
   }
 
-  // زر إنشاء الخطة النهائي
+  // عند التسجيل: إنشاء الخطة مباشرة دون نافذة "معاينة قبل الاعتماد".
+  // تبقى نافذة المعاينة متاحة عند تعديل خطة موجودة داخل تبويب التدريب.
   createPlanBtn?.addEventListener('click', async () => {
-    if (!approvedTrainingDraft) {
-      let activeSplit = fortyDayWorkoutService.getActivePlan();
-      const currentSchedule = SPLIT_SCHEDULES[activeSplit];
-      if (currentSchedule && !currentSchedule.supportedDays.includes(formData.workoutDaysCount)) {
-        if (SPLIT_SCHEDULES.hasm.supportedDays.includes(formData.workoutDaysCount)) {
-          activeSplit = 'hasm';
-          fortyDayWorkoutService.setActivePlan('hasm');
-        } else if (SPLIT_SCHEDULES.ppl.supportedDays.includes(formData.workoutDaysCount)) {
-          activeSplit = 'ppl';
-          fortyDayWorkoutService.setActivePlan('ppl');
-        }
+    if (createPlanBtn.disabled) return;
+    let activeSplit = fortyDayWorkoutService.getActivePlan();
+    const currentSchedule = SPLIT_SCHEDULES[activeSplit];
+    if (currentSchedule && !currentSchedule.supportedDays.includes(formData.workoutDaysCount)) {
+      if (SPLIT_SCHEDULES.hasm.supportedDays.includes(formData.workoutDaysCount)) {
+        activeSplit = 'hasm';
+      } else if (SPLIT_SCHEDULES.ppl.supportedDays.includes(formData.workoutDaysCount)) {
+        activeSplit = 'ppl';
       }
-      const draft = generatePersonalizedTrainingDraft(
-        { ...formData, trainingGoal: formData.goal },
-        { splitKey: activeSplit }
+    }
+    const trainingDraftToActivate = generatePersonalizedTrainingDraft(
+      { ...formData, trainingGoal: formData.goal },
+      { splitKey: activeSplit }
+    );
+    // Never silently activate an incomplete or medically blocked plan.
+    if (!trainingDraftToActivate.canApprove) {
+      notificationService.showToast(
+        (trainingDraftToActivate.blockers || []).join(' ') || 'تعذّر إنشاء الخطة. راجع بيانات التدريب والإصابات.',
+        'warning'
       );
-      fortyDayWorkoutService.savePlanDraft(draft);
-      showTrainingPlanPreview(draft, createPlanBtn);
       return;
     }
-    const trainingDraftToActivate = approvedTrainingDraft;
+    fortyDayWorkoutService.savePlanDraft(trainingDraftToActivate);
     const overlay = document.getElementById('plan-gen-overlay');
     const coreIcon = document.getElementById('plan-gen-core-icon');
     const actionLabel = document.getElementById('plan-gen-action-label');
