@@ -1971,6 +1971,12 @@ export function bindQuestionnaireEvents() {
       );
       return;
     }
+    // A fresh account may currently have an old/default split selected.
+    // Align the active split only after validating the generated draft, since
+    // activation requires draft.splitKey === getActivePlan().
+    if (trainingDraftToActivate.splitKey !== fortyDayWorkoutService.getActivePlan()) {
+      fortyDayWorkoutService.setActivePlan(trainingDraftToActivate.splitKey);
+    }
     fortyDayWorkoutService.savePlanDraft(trainingDraftToActivate);
     const overlay = document.getElementById('plan-gen-overlay');
     const coreIcon = document.getElementById('plan-gen-core-icon');
