@@ -90,11 +90,14 @@ function normalizeTracker(raw, exercise) {
       title: String(raw.superset.title || ''),
       image: String(raw.superset.image || ''),
       groupKey: String(raw.superset.groupKey || ''),
-      sets: Array.from({ length: count }, (_, i) => {
-        const set = raw.superset.sets?.[i] || {};
-        return { kg: clampNumber(set.kg ?? '', 0, 1000),
-          reps: clampNumber(set.reps ?? '', 0, 1000, true), done: Boolean(set.done) };
-      })
+      // Older superset trackers had exactly one companion per working set.
+      // Default its absent parentSetIndex to the original array position.
+      sets: (Array.isArray(raw.superset.sets) ? raw.superset.sets : []).slice(0, 12).map((set, i) => ({
+        parentSetIndex: Math.min(count - 1, Math.max(0, Number(set.parentSetIndex ?? i) || 0)),
+        kg: clampNumber(set.kg ?? '', 0, 1000),
+        reps: clampNumber(set.reps ?? '', 0, 1000, true),
+        done: Boolean(set.done)
+      }))
     } : null,
     dropSets: Array.isArray(raw?.dropSets) ? raw.dropSets.slice(0, 12).map(item => ({
       parentSetIndex: Math.min(count - 1, Math.max(0, Number(item.parentSetIndex) || 0)),
@@ -848,8 +851,31 @@ class FortyDayWorkoutService {
       image: libraryExercise.image || '',
       groupKey: libraryExercise.groupKey || '',
       sets: current?.exerciseId === libraryExercise.id
-        ? current.sets : tracker.sets.map(() => blankSet('', ''))
+        ? current.sets : [{ parentSetIndex: this._dropParentIndex(tracker, null), ...blankSet('', '') }]
     };
+    this.save();
+    return true;
+  }
+
+  addSupersetRound(dayKey, exerciseIndex, parentSetIndex = null) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    if (!tracker?.superset || tracker.superset.sets.length >= 12) return false;
+    const parent = this._dropParentIndex(tracker, parentSetIndex);
+    if (parent == null) return false;
+    tracker.superset.sets.push({ parentSetIndex: parent, ...blankSet('', '') });
+    this.save();
+    return true;
+  }
+
+  // Move just this paired round; do not change its weight, reps or saved state.
+  moveSupersetRound(dayKey, exerciseIndex, superIndex, parentSetIndex) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    const round = tracker?.superset?.sets?.[superIndex];
+    if (!round) return false;
+    const parent = this._dropParentIndex(tracker, parentSetIndex);
+    if (parent == null || parent === round.parentSetIndex) return false;
+    round.parentSetIndex = parent;
+    if (this.load().session) this._writeSessionExerciseHistory(tracker, this.load().session);
     this.save();
     return true;
   }
@@ -969,7 +995,8 @@ class FortyDayWorkoutService {
     );
     const superRounds = (tracker.superset?.sets || []).flatMap((set, index) =>
       set.done && Number(set.reps) > 0
-        ? [{ round: index + 1, kg: Number(set.kg || 0), reps: Number(set.reps || 0),
+        ? [{ round: set.parentSetIndex + 1, pairRound: index + 1,
+          kg: Number(set.kg || 0), reps: Number(set.reps || 0),
           exerciseId: tracker.superset.exerciseId, exerciseTitle: tracker.superset.title }]
         : []
     );
@@ -1062,7 +1089,6 @@ class FortyDayWorkoutService {
     const tracker = this.getTracker(dayKey, exerciseIndex);
     if (!tracker || tracker.sets.length >= 12) return;
     tracker.sets.push(blankSet('', ''));
-    tracker.superset?.sets.push(blankSet('', ''));
     tracker.targetSets = tracker.sets.length;
     this.save();
   }
@@ -1081,7 +1107,9 @@ class FortyDayWorkoutService {
       this._writeSessionExerciseHistory(tracker, state.session);
     }
     const linked = {
-      superset: tracker.superset ? { ...tracker.superset, sets: tracker.sets.map(() => blankSet('', '')) } : null,
+      superset: tracker.superset ? { ...tracker.superset, sets: tracker.superset.sets.map(set => ({
+        parentSetIndex: set.parentSetIndex, ...blankSet('', '')
+      })) } : null,
       dropSets: tracker.dropSets.map(set => ({ parentSetIndex: set.parentSetIndex, ...blankSet('', '') }))
     };
     state.trackers[id] = normalizeTracker({ history: tracker?.history || [], ...linked }, exercise);
@@ -1112,8 +1140,9 @@ class FortyDayWorkoutService {
         done: existing?.done || false
       };
     });
-    if (tracker.superset) tracker.superset.sets = Array.from({ length: count },
-      (_, i) => tracker.superset.sets[i] || blankSet('', ''));
+    if (tracker.superset) tracker.superset.sets.forEach(item => {
+      item.parentSetIndex = Math.min(item.parentSetIndex, count - 1);
+    });
     tracker.dropSets.forEach(item => { item.parentSetIndex = Math.min(item.parentSetIndex, count - 1); });
     this.save();
   }
@@ -1168,7 +1197,9 @@ class FortyDayWorkoutService {
       // or create it here for older sessions that predate immediate logging.
       const record = this._writeSessionExerciseHistory(tracker, session, { finalize: true });
       tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet('', ''));
-      if (tracker.superset) tracker.superset.sets = Array.from({ length: tracker.targetSets }, () => blankSet('', ''));
+      if (tracker.superset) tracker.superset.sets = tracker.superset.sets.map(set => ({
+        parentSetIndex: set.parentSetIndex, ...blankSet('', '')
+      }));
       tracker.dropSets = tracker.dropSets.map(set => ({ parentSetIndex: set.parentSetIndex, ...blankSet('', '') }));
       exercises.push({
         id,
