@@ -297,16 +297,14 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
                 <small class="forty-linked-set-name">SUPER SET · ${escapeHtml(tracker.superset.title)}</small>
               </div>
             ` : ''}
-            ${tracker?.dropSets?.length ? `
-              <div class="forty-set-drop-insert">
-                <button type="button" data-action="add-drop-to-set" data-index="${exerciseIndex}" data-set="${setIndex}">+ Drop للجولة ${setIndex + 1}</button>
-              </div>
-            ` : ''}
+            <div class="forty-set-drop-insert">
+              <button type="button" data-action="add-drop-to-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="أضف Drop Set تحت الجولة ${setIndex + 1}">+ Drop للجولة ${setIndex + 1}</button>
+            </div>
         `).join('')}
       </div>
       <div class="forty-tracker-actions">
         <button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button>
-        ${tracker?.dropSets?.length ? `<button type="button" class="forty-add-drop-btn" data-action="add-drop-round" data-index="${exerciseIndex}">+ Drop للجولة التالية</button>` : ''}
+        ${tracker?.dropSets?.length ? `<button type="button" class="forty-add-drop-btn" data-action="add-drop-round" data-index="${exerciseIndex}">+ Drop لآخر جولة منجزة</button>` : ''}
         <button type="button" class="forty-manage-btn" data-action="manage" data-index="${exerciseIndex}" aria-label="إدارة التمرين">⚙ Manage Exercise</button>
       </div>
     </article>
@@ -365,7 +363,7 @@ function renderManageExerciseSheet(dayKey, exerciseIndex) {
         <div class="manage-option-icon icon-drop">↓</div>
         <div class="manage-option-content">
           <div class="manage-option-title-row"><strong>دروب سيت</strong><span class="manage-option-badge badge-drop">Drop Set</span></div>
-          <p>${tracker?.dropSets?.length ? `مفعّل · ${tracker.dropSets.length} جولة إضافية. اضغط لإضافة جولة أخرى.` : 'أضف جولة بوزن أقل بعد آخر Set، مع خانة الوزن والعدّات وعلامة حفظ مستقلة.'}</p>
+          <p>${tracker?.dropSets?.length ? `مفعّل · ${tracker.dropSets.length} جولة إضافية. اضغط لإضافة جولة أخرى.` : 'أضف Drop Set مع الجولة التي لعبتها أو اختر أي جولة، وتقدر تسحبه لتغيير موضعه.'}</p>
         </div>
       </button>
       ${tracker?.dropSets?.length ? `<button type="button" class="forty-linked-remove" data-manage-action="remove-drop" data-index="${exerciseIndex}">إزالة جولات الدروب سيت</button>` : ''}
@@ -1439,11 +1437,16 @@ export function bindFortyDayWorkoutEvents() {
     if (button.dataset.manageAction === 'drop-set') {
       const idx = Number(button.dataset.index);
       const tracker = fortyDayWorkoutService.getTracker(activeDay, idx);
-      if (tracker?.dropSets?.length) fortyDayWorkoutService.addDropRound(activeDay, idx);
-      else fortyDayWorkoutService.enableDropSet(activeDay, idx);
+      const added = tracker?.dropSets?.length
+        ? fortyDayWorkoutService.addDropRound(activeDay, idx)
+        : fortyDayWorkoutService.enableDropSet(activeDay, idx);
+      if (!added) {
+        notificationService.showToast('الحد الأقصى 12 جولة Drop Set لكل تمرين.', 'warning');
+        return;
+      }
       closeModals();
       renderActiveDay();
-      notificationService.showToast('تمت إضافة جولة Drop Set للتمرين.', 'success');
+      notificationService.showToast('تمت إضافة Drop Set تحت آخر جولة لعبتها، ويمكنك سحبه لأي جولة.', 'success');
       return;
     }
     if (button.dataset.manageAction === 'remove-drop') {
@@ -1564,8 +1567,9 @@ export function bindFortyDayWorkoutEvents() {
       return;
     }
     if (button.dataset.action === 'add-drop-round') {
-      fortyDayWorkoutService.addDropRound(activeDay, index);
-      renderActiveDay();
+      const added = fortyDayWorkoutService.addDropRound(activeDay, index);
+      if (!added) notificationService.showToast('الحد الأقصى 12 جولة Drop Set لكل تمرين.', 'warning');
+      else renderActiveDay();
       return;
     }
     if (button.dataset.action === 'toggle-set') {
