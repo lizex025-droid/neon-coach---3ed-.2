@@ -5,6 +5,7 @@
 import { store } from '../state/store.js';
 import { notificationService } from '../services/notificationService.js';
 import { neonIcon } from '../utils/neonIcons.js';
+import { scrollWorkoutToTop } from '../utils/workoutScroll.js';
 
 export function renderHeader() {
   const state = store.getState();
@@ -38,11 +39,9 @@ export function bindHeaderEvents() {
   const workoutTop = document.getElementById('workout-top-pill');
   if (workoutTop) {
     document.body.appendChild(workoutTop);
-    workoutTop.addEventListener('click', () => {
-      const scrollOptions = { top: 0, behavior: 'smooth' };
-      window.scrollTo(scrollOptions);
-      document.getElementById('view-container')?.scrollTo?.(scrollOptions);
-      document.scrollingElement?.scrollTo?.(scrollOptions);
+    workoutTop.addEventListener('click', (event) => {
+      event.preventDefault();
+      scrollWorkoutToTop();
     });
   }
   const roleBtn = document.getElementById('role-toggle-btn');
