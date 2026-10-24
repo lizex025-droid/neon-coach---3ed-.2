@@ -643,7 +643,7 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
     }));
     const paired = (row.superRounds || []).map(round => ({
       date: row.date,
-      round: `SS ${round.round} · ${(round.exerciseTitle || 'Super Set').split('|').at(-1).trim()}`,
+      round: `SS ${round.pairRound || round.round} (Set ${round.round}) · ${(round.exerciseTitle || 'Super Set').split('|').at(-1).trim()}`,
       reps: round.reps, weight: round.kg
     }));
     const drops = (row.dropRounds || []).map(round => ({
