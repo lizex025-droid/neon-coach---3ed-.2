@@ -586,7 +586,7 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
     </div>
     <div class="forty-history-summary">
       <div><small>ROUNDS</small><b>${roundCount}</b></div>
-      <div><small>CURRENT LOGGED</small><b>${loggedSets}/${tracker?.targetSets || 3}</b></div>
+      <div><small>SAVED NOW</small><b>${loggedSets}/${tracker?.targetSets || 3}</b></div>
       <div><small>BEST</small><b>${bestWeight ? `${bestWeight} kg` : '-'}</b></div>
       <div><small>TOTAL VOLUME</small><b>${totalVolume ? `${Math.round(totalVolume)} kg` : '-'}</b></div>
     </div>
