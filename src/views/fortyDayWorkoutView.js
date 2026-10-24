@@ -2,6 +2,7 @@ import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 import { notificationService } from '../services/notificationService.js';
 import { store } from '../state/store.js';
 import { scrollWorkoutToTop } from '../utils/workoutScroll.js';
+import { getExerciseReorderCard } from '../utils/workoutDragSafety.js';
 import { generatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
 import { showTrainingPlanPreview } from './questionnaireView.js';
 import {
@@ -941,8 +942,7 @@ function initDragAndReorder(container, onReorder) {
   container.addEventListener('touchstart', (e) => {
     // Only the dedicated grip may trigger drag. Long-pressing ordinary
     // cards must never disable iOS scrolling while reading exercises.
-    const grip = e.target.closest('.forty-drag-handle');
-    const card = grip?.closest('.forty-exercise-card');
+    const card = getExerciseReorderCard(e.target);
     if (!card || e.touches.length !== 1) return;
 
     const touch = e.touches[0];
@@ -978,7 +978,7 @@ function initDragAndReorder(container, onReorder) {
   // Mouse / Pointer Events (Desktop)
   container.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    const card = e.target.closest('.forty-drag-handle')?.closest('.forty-exercise-card');
+    const card = getExerciseReorderCard(e.target);
     if (!card) return;
 
     startX = e.clientX;
