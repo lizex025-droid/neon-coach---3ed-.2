@@ -1312,9 +1312,14 @@ export function bindFortyDayWorkoutEvents() {
       return;
     }
     if (button.dataset.action === 'toggle-set') {
-      fortyDayWorkoutService.toggleSet(activeDay, index, Number(button.dataset.set));
+      const completed = fortyDayWorkoutService.toggleSet(activeDay, index, Number(button.dataset.set));
+      if (completed === null) {
+        notificationService.showToast('أدخل عدد التكرارات أولاً لحفظ الجولة في History.', 'warning');
+        return;
+      }
       renderActiveDay();
       updateTimers();
+      notificationService.showToast(completed ? 'تم حفظ الجولة في History مباشرة ✓' : 'تم إلغاء تسجيل الجولة من History', 'success');
       return;
     }
     if (button.dataset.action === 'add-set') {
