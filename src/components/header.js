@@ -31,10 +31,13 @@ export function renderHeader() {
 }
 
 export function bindHeaderEvents() {
-  // The header is sticky on every workout screen. Unlike a floating button
-  // inside the training view, this is always mounted and visible on mobile.
+  // Keep this small shortcut at the viewport's bottom-right on iOS too.
+  // A sticky, backdrop-filtered header can become the containing block of
+  // fixed descendants; portal the button to <body> to prevent that.
+  document.querySelectorAll('body > #workout-top-pill').forEach(button => button.remove());
   const workoutTop = document.getElementById('workout-top-pill');
   if (workoutTop) {
+    document.body.appendChild(workoutTop);
     workoutTop.addEventListener('click', () => {
       const scrollOptions = { top: 0, behavior: 'smooth' };
       window.scrollTo(scrollOptions);
