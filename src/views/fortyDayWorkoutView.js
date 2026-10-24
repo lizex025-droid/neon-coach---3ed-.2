@@ -304,15 +304,13 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
                 <small class="forty-linked-set-name">SUPER SET · ${escapeHtml(tracker.superset.title)} · مرتبط بالجولة ${setIndex + 1}</small>
               </div>
             ` : '').join('')}
-            <div class="forty-set-drop-insert">
-              <button type="button" data-action="add-drop-to-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="أضف Drop Set تحت الجولة ${setIndex + 1}">+ Drop للجولة ${setIndex + 1}</button>
-              ${tracker?.superset ? `<button type="button" class="forty-set-add-super" data-action="add-superset-to-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="أضف Super Set تحت الجولة ${setIndex + 1}">+ SS للجولة ${setIndex + 1}</button>` : ''}
-            </div>
+            ${tracker?.superset ? `<div class="forty-set-drop-insert">
+              <button type="button" class="forty-set-add-super" data-action="add-superset-to-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="أضف Super Set تحت الجولة ${setIndex + 1}">+ SS للجولة ${setIndex + 1}</button>
+            </div>` : ''}
         `).join('')}
       </div>
       <div class="forty-tracker-actions">
         <button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button>
-        ${tracker?.dropSets?.length ? `<button type="button" class="forty-add-drop-btn" data-action="add-drop-round" data-index="${exerciseIndex}">+ Drop لآخر جولة منجزة</button>` : ''}
         ${tracker?.superset ? `<button type="button" class="forty-add-super-btn" data-action="add-superset-round" data-index="${exerciseIndex}">+ Super Set لآخر جولة منجزة</button>` : ''}
         <button type="button" class="forty-manage-btn" data-action="manage" data-index="${exerciseIndex}" aria-label="إدارة التمرين">⚙ Manage Exercise</button>
       </div>
@@ -1578,15 +1576,6 @@ export function bindFortyDayWorkoutEvents() {
         activeDay, index, superIndex, current + Number(button.dataset.delta))) renderActiveDay();
       return;
     }
-    if (button.dataset.action === 'add-drop-to-set') {
-      const added = fortyDayWorkoutService.addDropRound(activeDay, index, Number(button.dataset.set));
-      if (!added) {
-        notificationService.showToast('الحد الأقصى 12 جولة Drop Set لكل تمرين.', 'warning');
-        return;
-      }
-      renderActiveDay();
-      return;
-    }
     if (button.dataset.action === 'move-drop') {
       const tracker = fortyDayWorkoutService.getTracker(activeDay, index);
       const dropIndex = Number(button.dataset.set);
@@ -1594,12 +1583,6 @@ export function bindFortyDayWorkoutEvents() {
       if (fortyDayWorkoutService.moveDropRound(activeDay, index, dropIndex, target)) {
         renderActiveDay();
       }
-      return;
-    }
-    if (button.dataset.action === 'add-drop-round') {
-      const added = fortyDayWorkoutService.addDropRound(activeDay, index);
-      if (!added) notificationService.showToast('الحد الأقصى 12 جولة Drop Set لكل تمرين.', 'warning');
-      else renderActiveDay();
       return;
     }
     if (button.dataset.action === 'toggle-set') {
