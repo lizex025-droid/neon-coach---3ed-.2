@@ -1120,3 +1120,31 @@
   .manage-option-title-row { flex-wrap:wrap; }
   .manage-option-card { gap:9px; padding:12px 10px; }
 }
+
+/* Move Drop Sets between working sets by grip (touch, pen, mouse) or arrow */
+.forty-drop-drag-header { display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap; }
+.forty-drop-reorder { display:flex; align-items:center; gap:5px; }
+.forty-drop-drag-handle,.forty-drop-move-btn {
+  background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.34);
+  color:#ffcf8a; border-radius:9px; min-height:33px; padding:5px 9px;
+  cursor:pointer; display:inline-flex; justify-content:center; align-items:center;
+  font:800 .75rem 'Cairo',sans-serif; gap:4px;
+}
+.forty-drop-move-btn { min-width:33px; padding:4px; font-size:1rem; }
+.forty-drop-move-btn:disabled { opacity:.2; cursor:not-allowed; }
+.forty-drop-drag-handle { cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; }
+.forty-drop-drag-handle:active { cursor:grabbing; background:rgba(251,191,36,.24); }
+.forty-linked-set-row.is-drop.is-dragging-drop { border-color:#facc70; box-shadow:0 0 0 2px rgba(251,191,36,.28),0 10px 28px rgba(0,0,0,.4); z-index:2; }
+.forty-set-row.is-drop-target { outline:2px solid #facc70; outline-offset:3px; background:rgba(251,191,36,.13); }
+.forty-set-drop-insert { margin:-9px 6px 3px 25px; display:flex; justify-content:flex-start; }
+.forty-set-drop-insert button {
+  background:transparent; border:1px dashed rgba(251,191,36,.35);
+  color:#edbf7c; border-radius:8px; padding:4px 11px;
+  font:700 .7rem 'Cairo',sans-serif; cursor:pointer;
+}
+.forty-set-drop-insert button:hover { background:rgba(251,191,36,.1); border-style:solid; }
+@media(max-width:480px) {
+  .forty-drop-drag-handle,.forty-drop-move-btn { min-height:30px; padding:4px 6px; }
+  .forty-drop-move-btn { min-width:30px; }
+  .forty-set-drop-insert { margin-left:12px; }
+}
