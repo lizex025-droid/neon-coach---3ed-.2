@@ -982,7 +982,7 @@ class FortyDayWorkoutService {
       // Ignore this exercise's in-progress row when comparing against prior PRs.
       const currentSessionId = `workout:${session.startedAt}`;
       const previousBest = Math.max(0, ...this.getSharedExerciseHistory(exercise)
-        .filter(row => !(row.sessionId === currentSessionId && row.sourceExerciseId === id))
+        .filter(row => row.sessionId !== currentSessionId)
         .map(row => Number(row.bestKg || row.weight || 0)));
       const isPersonalRecord = Boolean(Number(best.kg || 0) && previousBest > 0 && Number(best.kg || 0) > previousBest);
       if (isPersonalRecord) personalRecords += 1;
