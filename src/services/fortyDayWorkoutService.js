@@ -953,25 +953,10 @@ class FortyDayWorkoutService {
       let exercise = activeSessionDay?.exercises?.find((ex, idx) => this.getExerciseId(session.dayKey, idx) === id);
 
       if (!exercise) {
-        let dayKey = null;
-        let exerciseIndex = null;
-        const anasMatch = id.match(/^anas_(.+)_(\d+)$/);
-        const hasmMatch = id.match(/^hasm_(.+)_(\d+)$/);
-        const fortyMatch = id.match(/^fortyDay_(.+)_(\d+)$/);
-        if (anasMatch) {
-          dayKey = anasMatch[1];
-          exerciseIndex = Number(anasMatch[2]);
-        } else if (hasmMatch) {
-          dayKey = hasmMatch[1];
-          exerciseIndex = Number(hasmMatch[2]);
-        } else if (fortyMatch) {
-          dayKey = fortyMatch[1];
-          exerciseIndex = Number(fortyMatch[2]);
-        }
-        if (dayKey) {
-          day = this.getDay(dayKey);
-          exercise = day?.exercises?.[exerciseIndex];
-        }
+        // A session may span a plan/day switch. Resolve every supported
+        // exercise ID (including FBW, ULF and custom exercises) before finish.
+        exercise = getHistoricalExerciseIndex(state.customExercises)
+          .find(entry => entry.id === id)?.exercise;
       }
       const tracker = state.trackers[id];
       if (!exercise || !tracker) continue;
