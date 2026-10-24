@@ -999,6 +999,71 @@ function initDragAndReorder(container, onReorder) {
   });
 }
 
+// Drag a Drop Set by its grip onto any working set within the same exercise.
+// This is independent from the existing drag-to-reorder exercise cards.
+function bindDropRoundDrag(container, onMove) {
+  let active = null;
+  const cleanup = () => {
+    if (!active) return;
+    active.row.classList.remove('is-dragging-drop');
+    active.targets.forEach(target => target.classList.remove('is-drop-target'));
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerCancel);
+    active = null;
+  };
+  const onPointerMove = event => {
+    if (!active || event.pointerId !== active.pointerId) return;
+    const { targets } = active;
+    const distance = Math.abs(event.clientY - active.startY) + Math.abs(event.clientX - active.startX);
+    if (distance < 6 && !active.dragged) return;
+    active.dragged = true;
+    if (event.cancelable) event.preventDefault();
+    let nearest = targets[0];
+    let min = Infinity;
+    for (const row of targets) {
+      const rect = row.getBoundingClientRect();
+      const d = Math.abs(event.clientY - (rect.top + rect.bottom) / 2);
+      if (d < min) { nearest = row; min = d; }
+    }
+    active.nextParent = Number(nearest.dataset.workingSet);
+    targets.forEach(row => row.classList.toggle('is-drop-target', row === nearest));
+    active.row.classList.add('is-dragging-drop');
+  };
+  const onPointerUp = event => {
+    if (!active || event.pointerId !== active.pointerId) return;
+    const { dragged, nextParent, originalParent, exerciseIndex, dropIndex } = active;
+    cleanup();
+    if (dragged && nextParent !== originalParent) onMove(exerciseIndex, dropIndex, nextParent);
+  };
+  const onPointerCancel = event => {
+    if (active && event.pointerId === active.pointerId) cleanup();
+  };
+  const onPointerDown = event => {
+    const handle = event.target.closest?.('.forty-drop-drag-handle');
+    if (!handle || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    const row = handle.closest('.forty-linked-set-row.is-drop');
+    const card = handle.closest('.forty-exercise-card');
+    if (!row || !card) return;
+    const targets = Array.from(card.querySelectorAll('.forty-set-row[data-working-set]'));
+    if (!targets.length) return;
+    event.preventDefault();
+    active = {
+      pointerId: event.pointerId, row, targets,
+      startX: event.clientX, startY: event.clientY, dragged: false,
+      exerciseIndex: Number(row.dataset.exerciseIndex),
+      dropIndex: Number(row.dataset.dropIndex),
+      originalParent: Number(row.dataset.parentSet),
+      nextParent: Number(row.dataset.parentSet)
+    };
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerCancel);
+  };
+  container.addEventListener('pointerdown', onPointerDown);
+  return () => { cleanup(); container.removeEventListener('pointerdown', onPointerDown); };
+}
+
 export function bindFortyDayWorkoutEvents() {
   const root = document.getElementById('forty-workout-root');
   if (!root) return;
@@ -1183,6 +1248,12 @@ export function bindFortyDayWorkoutEvents() {
     prepareVisibleExerciseImages();
   };
 
+  const stopDropDrag = dayContent ? bindDropRoundDrag(dayContent, (exerciseIndex, dropIndex, parentSetIndex) => {
+    if (fortyDayWorkoutService.moveDropRound(activeDay, exerciseIndex, dropIndex, parentSetIndex)) {
+      renderActiveDay();
+      notificationService.showToast(`تم نقل Drop Set تحت الجولة ${parentSetIndex + 1} ✓`, 'success');
+    }
+  }) : () => {};
   if (dayContent) {
     initDragAndReorder(dayContent, (fromIndex, toIndex) => {
       fortyDayWorkoutService.reorderDayExercises(activeDay, fromIndex, toIndex);
@@ -1607,6 +1678,7 @@ export function bindFortyDayWorkoutEvents() {
   window.addEventListener('scroll', onScroll, { passive: true });
   return () => {
     clearInterval(timerInterval);
+    stopDropDrag();
     imageRequestId += 1;
     imagePreloadObserver?.disconnect();
     document.removeEventListener('keydown', onKeyDown);
