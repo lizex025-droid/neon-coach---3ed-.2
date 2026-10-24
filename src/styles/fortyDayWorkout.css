@@ -110,12 +110,13 @@
 .forty-finish-wrap small { color: rgba(255,255,255,.4); }
 /* Compact back-to-top pill on the right, matching the requested mobile reference. */
 .forty-scroll-top {
+  --forty-mint: #6ee7b7; /* Button lives directly under body, outside scoped .forty-workout */
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 78px);
+  top: max(108px, calc(env(safe-area-inset-top, 0px) + 72px));
   right: max(12px, env(safe-area-inset-right, 0px));
   left: auto;
   bottom: auto;
-  z-index: 48;
+  z-index: 1150;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -133,16 +134,17 @@
   font: 700 .92rem/1 'Cairo', sans-serif;
   white-space: nowrap;
   box-shadow: 0 5px 24px rgba(0,0,0,.25);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-9px);
-  transition: opacity .2s ease, transform .2s ease, border-color .2s ease, background .2s ease;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: border-color .2s ease, background .2s ease;
   cursor: pointer;
 }
 .forty-scroll-top.is-visible {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
-  transform: translateY(0);
 }
 .forty-scroll-top:hover, .forty-scroll-top:focus-visible {
   border-color: var(--forty-mint);
@@ -152,7 +154,7 @@
 .forty-scroll-top .forty-scroll-top-arrow { font-family: inherit; font-size: 1.17rem; font-weight: 800; line-height: 1; }
 @media (max-width: 480px) {
   .forty-scroll-top {
-    top: calc(env(safe-area-inset-top, 0px) + 74px);
+    top: max(108px, calc(env(safe-area-inset-top, 0px) + 72px));
     right: max(9px, env(safe-area-inset-right, 0px));
     min-height: 39px;
     min-width: 78px;
