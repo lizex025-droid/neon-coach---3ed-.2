@@ -185,15 +185,31 @@ test('Add Drop to any chosen set and keep its position when a new Drop Round is 
   assert.deepEqual(service.getTracker('ulfUpper', 0).dropSets.map(x => x.parentSetIndex), [2, 0, 1]);
 }));
 
-test('Default Drop Set attaches to first unfinished set rather than jumping to last set', () => isolate(() => {
+test('Default Drop Set follows the round just played (Set 1), not the next pending round', () => isolate(() => {
   service.setActivePlan('ulf');
+  assert.equal(service.enableDropSet('ulfUpper', 0), true);
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[0].parentSetIndex, 0,
+    'before starting, drop should be positioned under Set 1');
+  service.removeDropSet('ulfUpper', 0);
   service.updateSet('ulfUpper', 0, 0, 'kg', 30);
   service.updateSet('ulfUpper', 0, 0, 'reps', 10);
   service.toggleSet('ulfUpper', 0, 0);
   assert.equal(service.enableDropSet('ulfUpper', 0), true);
-  assert.equal(service.getTracker('ulfUpper', 0).dropSets[0].parentSetIndex, 1,
-    'the next pending round is set 2');
-  assert.equal(service.addDropRound('ulfUpper', 0, 0), true);
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[0].parentSetIndex, 0,
+    'after checking Set 1, the drop stays below Set 1 rather than jumping to Set 2');
+  service.addDropRound('ulfUpper', 0);
   assert.equal(service.getTracker('ulfUpper', 0).dropSets[1].parentSetIndex, 0,
-    'per-set action can still attach to already completed set 1');
+    'another implicit drop round attaches to Set 1');
+  service.updateSet('ulfUpper', 0, 1, 'kg', 28);
+  service.updateSet('ulfUpper', 0, 1, 'reps', 9);
+  service.toggleSet('ulfUpper', 0, 1);
+  assert.equal(service.addDropRound('ulfUpper', 0), true);
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[2].parentSetIndex, 1,
+    'after completing Set 2, the next implicit drop attaches to Set 2');
+  assert.equal(service.moveDropRound('ulfUpper', 0, 0, 2), true,
+    'manual dragging stays supported');
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[0].parentSetIndex, 2);
+  assert.equal(service.addDropRound('ulfUpper', 0, 0), true,
+    'explicit per-round selection also remains supported');
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[3].parentSetIndex, 0);
 }));
