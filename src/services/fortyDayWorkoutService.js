@@ -1,5 +1,6 @@
 import { FBW_DAYS, FBW_PROGRAM, getFbwDay } from '../data/fbwWorkout.js';
 import { ULF_DAYS, ULF_PROGRAM, getUlfDay } from '../data/ulfWorkout.js';
+import { exerciseHistoryKey, getHistoricalExerciseIndex } from '../data/exerciseHistoryIdentity.js';
 import { FORTY_DAY_DAYS, FORTY_DAY_PROGRAM, getFortyDay, fortyDayExerciseId } from '../data/fortyDayWorkout.js';
 import { HASM_GROUPS, HASM_PROGRAM, getHasmGroup, hasmExerciseId } from '../data/hasmWorkout.js';
 import { ANAS_DAYS, ANAS_PROGRAM, getAnasDay, anasExerciseId } from '../data/anasWorkout.js';
@@ -668,36 +669,95 @@ class FortyDayWorkoutService {
     this.save();
   }
 
+  // Build a read-only timeline from all plan-specific trackers. This leaves
+  // original data in place and avoids duplicating histories with each switch.
+  getSharedExerciseHistory(exercise) {
+    const key = exerciseHistoryKey(exercise);
+    if (!key) return [];
+    const state = this.load();
+    const seen = new Set();
+    const rows = [];
+    for (const entry of getHistoricalExerciseIndex(state.customExercises)) {
+      if (entry.key !== key) continue;
+      // Older installations also kept separate per-exercise local records.
+      const tracker = state.trackers[entry.id] || readJson(`exercise_tracker_${entry.id}`, null);
+      if (!Array.isArray(tracker?.history)) continue;
+      for (const record of tracker.history) {
+        if (!record || typeof record !== 'object') continue;
+        const identity = `${entry.id}|${record.isoDate || record.date || ''}|${JSON.stringify(record.rounds || [])}|${record.volume ?? ''}`;
+        if (seen.has(identity)) continue;
+        seen.add(identity);
+        rows.push({ ...record, sourceExerciseId: entry.id });
+      }
+    }
+    rows.sort((a, b) => (Date.parse(a.isoDate || '') || 0) - (Date.parse(b.isoDate || '') || 0));
+    return rows.slice(-100);
+  }
+
+  getSharedHistory(dayKey, exerciseIndex) {
+    const exercise = this.getDay(dayKey)?.exercises?.[exerciseIndex];
+    return exercise ? this.getSharedExerciseHistory(exercise) : [];
+  }
+
+  _prefillRecentPerformance(id, tracker, exercise, state) {
+    const history = this.getSharedExerciseHistory(exercise);
+    const latest = history.at(-1);
+    if (!latest) return false;
+    const reference = `${latest.sourceExerciseId}|${latest.isoDate || latest.date}|${JSON.stringify(latest.rounds || [])}`;
+    if (tracker.sharedSeedRef === reference) return false;
+    // Never discard an active workout, hand-entered values, or a tuned weight.
+    if (state.session?.touchedExerciseIds?.includes(id) ||
+        tracker.sets.some(set => set.done || set.kg !== '' || set.reps !== '') ||
+        (tracker.weight !== '' && tracker.weight != null)) return false;
+    const rounds = Array.isArray(latest.rounds) && latest.rounds.length
+      ? latest.rounds
+      : [{ kg: latest.bestKg ?? latest.weight, reps: latest.bestReps ?? latest.reps }];
+    const valid = rounds.filter(round => Number(round.kg) > 0 || Number(round.reps) > 0);
+    if (!valid.length) return false;
+    tracker.sets = tracker.sets.map((set, index) => {
+      const round = valid[Math.min(index, valid.length - 1)];
+      return blankSet(
+        round.kg == null || round.kg === '' ? '' : clampNumber(round.kg, 0, 1000),
+        round.reps == null || round.reps === '' ? '' : clampNumber(round.reps, 0, 1000, true)
+      );
+    });
+    tracker.sharedSeedRef = reference;
+    return true;
+  }
+
+  _ensureTracker(dayKey, exerciseIndex, exercise, state) {
+    const id = this.getExerciseId(dayKey, exerciseIndex);
+    const old = state.trackers[id] || readJson(`exercise_tracker_${id}`, null);
+    const created = !state.trackers[id];
+    const tracker = normalizeTracker(old, exercise);
+    // normalizeTracker deliberately returns a new object; keep seed metadata.
+    if (old?.sharedSeedRef) tracker.sharedSeedRef = old.sharedSeedRef;
+    state.trackers[id] = tracker;
+    const seeded = this._prefillRecentPerformance(id, tracker, exercise, state);
+    return { tracker, changed: created || seeded };
+  }
+
   getTrackersForDay(dayKey) {
     const day = this.getDay(dayKey);
+    if (!day) return [];
     const state = this.load();
-    let shouldSave = false;
-    const trackers = day.exercises.map((exercise, exerciseIndex) => {
-      const id = this.getExerciseId(dayKey, exerciseIndex);
-      if (!state.trackers[id]) {
-        state.trackers[id] = normalizeTracker(readJson(`exercise_tracker_${id}`, null), exercise);
-        shouldSave = true;
-      } else {
-        state.trackers[id] = normalizeTracker(state.trackers[id], exercise);
-      }
-      return state.trackers[id];
+    let changed = false;
+    const trackers = day.exercises.map((exercise, index) => {
+      const result = this._ensureTracker(dayKey, index, exercise, state);
+      changed = changed || result.changed;
+      return result.tracker;
     });
-    if (shouldSave) this.save();
+    if (changed) this.save();
     return trackers;
   }
 
   getTracker(dayKey, exerciseIndex) {
-    const exercise = this.getDay(dayKey)?.exercises[exerciseIndex];
+    const exercise = this.getDay(dayKey)?.exercises?.[exerciseIndex];
     if (!exercise) return null;
-    const id = this.getExerciseId(dayKey, exerciseIndex);
-    if (!this.load().trackers[id]) {
-      const legacy = readJson(`exercise_tracker_${id}`, null);
-      this.load().trackers[id] = normalizeTracker(legacy, exercise);
-      this.save();
-    } else {
-      this.load().trackers[id] = normalizeTracker(this.load().trackers[id], exercise);
-    }
-    return this.load().trackers[id];
+    const state = this.load();
+    const { tracker, changed } = this._ensureTracker(dayKey, exerciseIndex, exercise, state);
+    if (changed) this.save();
+    return tracker;
   }
 
   startWorkout(dayKey = this.load().activeDay) {
@@ -779,6 +839,9 @@ class FortyDayWorkoutService {
     const id = this.getExerciseId(dayKey, exerciseIndex);
     const state = this.load();
     state.trackers[id] = normalizeTracker({ history: tracker?.history || [] }, exercise);
+    // An explicit reset must not be undone by shared-history auto-prefill.
+    const latest = this.getSharedExerciseHistory(exercise).at(-1);
+    if (latest) state.trackers[id].sharedSeedRef = `${latest.sourceExerciseId}|${latest.isoDate || latest.date}|${JSON.stringify(latest.rounds || [])}`;
     if (state.session?.touchedExerciseIds) {
       state.session.touchedExerciseIds = state.session.touchedExerciseIds.filter(tid => tid !== id);
     }
@@ -854,7 +917,7 @@ class FortyDayWorkoutService {
       if (!played.length) continue;
       const best = played.reduce((winner, set) => Number(set.kg || 0) > Number(winner.kg || 0) ? set : winner, played[0]);
       const volume = played.reduce((sum, set) => sum + Number(set.kg || 0) * Number(set.reps || 0), 0);
-      const previousBest = Math.max(0, ...(tracker.history || []).map(row => Number(row.bestKg || row.weight || 0)));
+      const previousBest = Math.max(0, ...this.getSharedExerciseHistory(exercise).map(row => Number(row.bestKg || row.weight || 0)));
       const isPersonalRecord = Boolean(Number(best.kg || 0) && previousBest > 0 && Number(best.kg || 0) > previousBest);
       if (isPersonalRecord) personalRecords += 1;
       totalSets += played.length;
