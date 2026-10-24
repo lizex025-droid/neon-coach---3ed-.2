@@ -18,42 +18,40 @@
   height: var(--header-height);
 }
 
-/* Training Top pill: always visible just below the sticky header on mobile. */
-.app-header .header-workout-top {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: max(12px, env(safe-area-inset-right, 0px));
+/* Compact training shortcut, positioned above the bottom navigation.
+   Keep it under <body>: backdrop-filter on the header breaks fixed positioning. */
+.header-workout-top {
+  position: fixed;
+  right: max(10px, var(--sar, 0px));
+  bottom: calc(var(--nav-height, 68px) + var(--sab, 0px) + 10px);
   left: auto;
-  z-index: 130;
-  display: inline-flex !important;
+  top: auto;
+  z-index: 1120;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 87px;
-  min-height: 42px;
-  padding: 7px 15px;
-  border: 1px solid rgba(110,231,183,.62);
+  width: 54px;
+  min-width: 0;
+  height: 30px;
+  min-height: 0;
+  padding: 3px 6px;
+  border: 1px solid rgba(110,231,183,.52);
   border-radius: 999px;
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
   color: #85f4c4;
-  background: rgba(3,26,16,.96);
-  box-shadow: 0 5px 24px rgba(0,0,0,.35);
-  font: 800 16px/1.15 'Cairo', system-ui, sans-serif;
+  background: rgba(3,26,16,.94);
+  box-shadow: 0 3px 14px rgba(0,0,0,.26);
+  font: 700 11px/1 'Cairo', system-ui, sans-serif;
   white-space: nowrap;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
   cursor: pointer;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
-.app-header .header-workout-top:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 2px; }
-@media (max-width: 480px) {
-  .app-header .header-workout-top {
-    min-width: 78px;
-    min-height: 40px;
-    padding: 6px 12px;
-    right: max(9px, env(safe-area-inset-right, 0px));
-    font-size: 15px;
-  }
+.header-workout-top:focus-visible {
+  outline: 2px solid #6ee7b7;
+  outline-offset: 2px;
 }
 
 .header-brand {
