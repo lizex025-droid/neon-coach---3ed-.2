@@ -455,16 +455,18 @@ function renderResetPlanConfirmSheet(dayKey, activePlan) {
 }
 
 function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchContext = null) {
+  const isSupersetPick = switchContext?.mode === 'superset';
+  const libraryMode = switchContext ? (isSupersetPick ? 'superset' : 'switch') : 'add';
   const switchBanner = switchContext && switchContext.sourceExercise ? `
     <div class="library-switch-banner">
       <div class="library-switch-meta">
-        <span class="library-switch-icon">🔄</span>
+        <span class="library-switch-icon">${isSupersetPick ? '⇆' : '🔄'}</span>
         <div>
-          <div class="library-switch-label">تبديل تمرين #${switchContext.targetIndex + 1}</div>
+          <div class="library-switch-label">${isSupersetPick ? 'ربط Super Set مع التمرين #' : 'تبديل تمرين #'}${switchContext.targetIndex + 1}</div>
           <strong class="library-switch-title">${escapeHtml(switchContext.sourceExercise.title)}</strong>
         </div>
       </div>
-      <button type="button" class="btn-cancel-switch" data-lib-action="cancel-switch">إلغاء التبديل</button>
+      <button type="button" class="btn-cancel-switch" data-lib-action="cancel-switch">${isSupersetPick ? 'إلغاء الاختيار' : 'إلغاء التبديل'}</button>
     </div>
   ` : '';
 
@@ -479,7 +481,7 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchConte
           </button>
           <div class="library-head-title">
             <h2>نتائج البحث (${results.length})</h2>
-            <p>${switchContext ? 'اختر التمرين البديل ليأخذ مكانه فوراً' : 'اختر أي تمرين لإضافته إلى جدولك الحالي'}</p>
+            <p>${isSupersetPick ? 'اختر التمرين الثاني للسوبر سيت، وسيظهر تحت الجولات الأساسية' : switchContext ? 'اختر التمرين البديل ليأخذ مكانه فوراً' : 'اختر أي تمرين لإضافته إلى جدولك الحالي'}</p>
           </div>
         </div>
         <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
@@ -492,7 +494,7 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchConte
       </div>
 
       <div class="library-exercises-list">
-        ${results.length ? results.map(ex => renderLibraryExerciseItem(ex, Boolean(switchContext))).join('') : `
+        ${results.length ? results.map(ex => renderLibraryExerciseItem(ex, libraryMode)).join('') : `
           <div style="text-align: center; padding: 40px 10px; color: rgba(255,255,255,0.5);">
             لا توجد تمارين مطابقة لبحثك. جرب اسم عضلة أو تمرين آخر.
           </div>
@@ -514,7 +516,7 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchConte
           </button>
           <div class="library-head-title">
             <h2>${escapeHtml(group?.nameAr || 'التمارين')} (${exercises.length} تمرين)</h2>
-            <p>${switchContext ? 'اختر التمرين البديل ليأخذ مكانه في الخطة' : escapeHtml(group?.description || 'اختر تمريناً لإضافته')}</p>
+            <p>${isSupersetPick ? 'اختر تمرين السوبر سيت' : switchContext ? 'اختر التمرين البديل ليأخذ مكانه في الخطة' : escapeHtml(group?.description || 'اختر تمريناً لإضافته')}</p>
           </div>
         </div>
         <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
@@ -523,7 +525,7 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchConte
       ${switchBanner}
 
       <div class="library-exercises-list">
-        ${exercises.map(ex => renderLibraryExerciseItem(ex, Boolean(switchContext))).join('')}
+        ${exercises.map(ex => renderLibraryExerciseItem(ex, libraryMode)).join('')}
       </div>
     `;
   }
@@ -533,7 +535,7 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchConte
     <div class="library-head">
       <div class="library-head-title">
         <h2>مكتبة التمارين الشاملة وشروحاتها</h2>
-        <p>${switchContext ? 'اختر العضلة لاستعراض التمارين البديلة' : 'اختر العضلة لعرض كافة تمارينها وإضافتها لخطة تمرينك'}</p>
+        <p>${isSupersetPick ? 'اختر عضلة ثم تمرين السوبر سيت' : switchContext ? 'اختر العضلة لاستعراض التمارين البديلة' : 'اختر العضلة لعرض كافة تمارينها وإضافتها لخطة تمرينك'}</p>
       </div>
       <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
     </div>
@@ -563,7 +565,8 @@ function renderLibrarySheet(activeGroupKey = null, searchQuery = '', switchConte
   `;
 }
 
-function renderLibraryExerciseItem(ex, isSwitchMode = false) {
+function renderLibraryExerciseItem(ex, mode = 'add') {
+  const isSwitchMode = mode !== 'add';
   return `
     <div class="lib-exercise-item" data-lib-item-id="${ex.id}">
       <div class="lib-exercise-thumb">
@@ -575,7 +578,7 @@ function renderLibraryExerciseItem(ex, isSwitchMode = false) {
         <p>معدة: ${escapeHtml(ex.equipment)} · ${ex.sets} جولات × ${ex.reps}</p>
       </div>
       <button type="button" class="btn ${isSwitchMode ? 'btn-switch' : 'btn-primary'} lib-add-btn" data-lib-add-id="${ex.id}">
-        ${isSwitchMode ? '⇄ اختيار كبديل' : '＋ إضافة'}
+        ${mode === 'superset' ? '⇆ Super Set' : isSwitchMode ? '⇄ اختيار كبديل' : '＋ إضافة'}
       </button>
     </div>
   `;
@@ -1153,6 +1156,14 @@ export function bindFortyDayWorkoutEvents() {
     );
     updateSessionUI();
   });
+  root.addEventListener('input', event => {
+    const input = event.target.closest('input[data-linked-field]');
+    if (!input) return;
+    fortyDayWorkoutService.updateLinkedSet(
+      activeDay, Number(input.dataset.index), input.dataset.linkedKind,
+      Number(input.dataset.set), input.dataset.linkedField, input.value
+    );
+  });
 
   const onImageIntent = event => {
     const button = event.target.closest?.('.forty-image-btn[data-image-url]');
@@ -1190,7 +1201,17 @@ export function bindFortyDayWorkoutEvents() {
       const exId = addLibBtn.dataset.libAddId;
       const exercise = ALL_LIBRARY_EXERCISES.find(e => e.id === exId);
       if (exercise) {
-        if (pendingSwitchContext && pendingSwitchContext.targetIndex >= 0) {
+        if (pendingSwitchContext?.mode === 'superset') {
+          const ok = fortyDayWorkoutService.configureSuperset(activeDay, pendingSwitchContext.targetIndex, exercise);
+          if (!ok) {
+            notificationService.showToast('اختر تمرينًا مختلفًا عن التمرين الأساسي.', 'warning');
+            return;
+          }
+          pendingSwitchContext = null;
+          closeModals();
+          renderActiveDay();
+          notificationService.showToast(`تم ربط Super Set مع "${exercise.nameAr}" ✓`, 'success');
+        } else if (pendingSwitchContext && pendingSwitchContext.targetIndex >= 0) {
           fortyDayWorkoutService.replaceExerciseInDay(activeDay, pendingSwitchContext.targetIndex, exercise);
           const replacedName = exercise.nameAr || exercise.title;
           pendingSwitchContext = null;
@@ -1275,6 +1296,40 @@ export function bindFortyDayWorkoutEvents() {
       openModal(manageModal);
       return;
     }
+    if (button.dataset.manageAction === 'superset') {
+      const idx = Number(button.dataset.index);
+      const exercise = fortyDayWorkoutService.getDay(activeDay)?.exercises?.[idx];
+      if (!exercise) return;
+      pendingSwitchContext = { mode: 'superset', targetIndex: idx, sourceExercise: exercise };
+      closeModals();
+      updateLibraryView(null, '');
+      openModal(libraryModal);
+      return;
+    }
+    if (button.dataset.manageAction === 'remove-superset') {
+      fortyDayWorkoutService.removeSuperset(activeDay, Number(button.dataset.index));
+      closeModals();
+      renderActiveDay();
+      notificationService.showToast('تم فك ربط Super Set دون حذف السجل السابق.', 'info');
+      return;
+    }
+    if (button.dataset.manageAction === 'drop-set') {
+      const idx = Number(button.dataset.index);
+      const tracker = fortyDayWorkoutService.getTracker(activeDay, idx);
+      if (tracker?.dropSets?.length) fortyDayWorkoutService.addDropRound(activeDay, idx);
+      else fortyDayWorkoutService.enableDropSet(activeDay, idx);
+      closeModals();
+      renderActiveDay();
+      notificationService.showToast('تمت إضافة جولة Drop Set للتمرين.', 'success');
+      return;
+    }
+    if (button.dataset.manageAction === 'remove-drop') {
+      fortyDayWorkoutService.removeDropSet(activeDay, Number(button.dataset.index));
+      closeModals();
+      renderActiveDay();
+      notificationService.showToast('تمت إزالة جولات Drop Set الحالية.', 'info');
+      return;
+    }
     if (button.dataset.manageAction === 'reset') {
       const idx = Number(button.dataset.index);
       fortyDayWorkoutService.resetExercise(activeDay, idx);
@@ -1353,6 +1408,23 @@ export function bindFortyDayWorkoutEvents() {
         renderActiveDay();
         notificationService.showToast('تم تأخير التمرين للأسفل ⬇', 'info');
       }
+      return;
+    }
+    if (button.dataset.action === 'toggle-linked') {
+      const kind = button.dataset.kind;
+      const result = fortyDayWorkoutService.toggleLinkedSet(activeDay, index, kind, Number(button.dataset.set));
+      if (result === null) {
+        notificationService.showToast('أدخل عدد العدّات أولًا لحفظ الجولة.', 'warning');
+        return;
+      }
+      renderActiveDay();
+      updateTimers();
+      notificationService.showToast(result ? `تم حفظ جولة ${kind === 'drop' ? 'Drop Set' : 'Super Set'} في History ✓` : 'تم إلغاء تسجيل الجولة.', 'success');
+      return;
+    }
+    if (button.dataset.action === 'add-drop-round') {
+      fortyDayWorkoutService.addDropRound(activeDay, index);
+      renderActiveDay();
       return;
     }
     if (button.dataset.action === 'toggle-set') {
