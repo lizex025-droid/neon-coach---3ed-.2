@@ -30,7 +30,7 @@ export const ULF_DAYS = [
   { key: 'ulfUpper', label: 'السبت — Upper Body', short: 'السبت · Upper', tone: 'push', exercises: [
     ex('بنش دامبل مستوي | Flat DB Bench Press', 'DUMBBELL BENCH PRESS', 3, '6–10', '1–2', 180),
     ex('تجديف مع إسناد الصدر | Chest-Supported Row', 'TRIPOD DUMBBELL ROW ALTERNATIVE', 3, '8–12', '1–2', 120, { imageFallback: true }),
-    ex('ضغط صدر علوي بالدامبل | Incline DB Press', 'INCLINE BENCH PRESS', 2, '8–12', '1–2', 120, { imageFallback: true }),
+    ex('ضغط صدر علوي بزاوية 45° بالدامبل | Incline DB Press', 'INCLINE BENCH PRESS', 2, '8–12', '1–2', 120, { imageFallback: true }),
     ex('سحب أمامي | Lat Pulldown', 'WIDE GRIP LAT PULLDOWN', 2, '8–12', '1–2', 120),
     ex('رفرفة جانبية بالكابل | Cable Lateral Raise', 'CABLE LATERAL RAISE', 2, '12–20', '0–1', 90, { dropSet: true }),
     ex('فراشة عكسية للكتف الخلفي | Reverse Pec Deck', 'REVERSE MACHINE FLYES', 1, '12–20', '0–1', 90),
@@ -46,7 +46,7 @@ export const ULF_DAYS = [
     ex('كرنش بالكابل | Cable Crunch', 'MACHINE CRUNCH', 2, '10–15', '0–1', 90, { imageFallback: true })
   ] },
   { key: 'ulfFull', label: 'الثلاثاء — Full Body', short: 'الثلاثاء · Full', tone: 'pull', exercises: [
-    ex('ضغط صدر علوي بالجهاز | Incline Machine Chest Press', 'INCLINE BENCH PRESS', 2, '8–12', '1–2', 120, { imageFallback: true }),
+    ex('ضغط صدر علوي بزاوية 45° على الجهاز | Incline Machine Chest Press', 'INCLINE BENCH PRESS', 2, '8–12', '1–2', 120, { imageFallback: true }),
     ex('سحب أرضي بالكابل | Seated Cable Row', 'SEATED CABLE ROW', 2, '8–12', '1–2', 120),
     ex('سحب أمامي | Lat Pulldown', 'WIDE GRIP LAT PULLDOWN', 1, '10–12', '1', 120),
     ex('دفع الأرجل | Leg Press', 'LEG PRESS', 2, '10–15', '1–2', 150),
