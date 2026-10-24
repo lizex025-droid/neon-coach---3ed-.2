@@ -159,8 +159,6 @@ export function renderFortyDayWorkoutView() {
         <small>أكمل جولة واحدة على الأقل لتفعيل إنهاء الجلسة</small>
       </div>
 
-      <button type="button" class="forty-scroll-top" id="forty-scroll-top" aria-label="العودة إلى أعلى الصفحة" title="العودة إلى أعلى الصفحة"><span>Top</span><span class="forty-scroll-top-arrow" aria-hidden="true">↑</span></button>
-
       <div class="forty-modal" id="forty-image-modal" aria-hidden="true">
         <div class="forty-modal-sheet image-sheet">
           <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
@@ -1084,21 +1082,6 @@ export function bindFortyDayWorkoutEvents() {
   const manageModal = document.getElementById('forty-manage-modal');
   const manageSheet = document.getElementById('forty-manage-sheet');
 
-  // Render the fixed Top pill directly under <body>. Keeping it inside
-  // the training view can clip it or place it behind transformed scroll
-  // containers on iOS/PWA. Show it immediately (no scroll threshold).
-  const topButton = root.querySelector('#forty-scroll-top');
-  document.querySelectorAll('body > #forty-scroll-top').forEach(stale => stale.remove());
-  const scrollToTrainingTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.scrollingElement?.scrollTo?.({ top: 0, behavior: 'smooth' });
-  };
-  if (topButton) {
-    document.body.appendChild(topButton);
-    topButton.classList.add('is-visible');
-    topButton.addEventListener('click', scrollToTrainingTop);
-  }
-
   let activePlan = fortyDayWorkoutService.getActivePlan();
   let days = fortyDayWorkoutService.getDays(activePlan);
   let activeDay = fortyDayWorkoutService.getSnapshot().activeDay;
@@ -1711,8 +1694,6 @@ export function bindFortyDayWorkoutEvents() {
     imageRequestId += 1;
     imagePreloadObserver?.disconnect();
     document.removeEventListener('keydown', onKeyDown);
-    topButton?.removeEventListener('click', scrollToTrainingTop);
-    topButton?.remove();
     root.removeEventListener('pointerover', onImageIntent);
     root.removeEventListener('pointerdown', onImageIntent);
     root.removeEventListener('focusin', onImageIntent);
