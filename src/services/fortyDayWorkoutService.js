@@ -708,13 +708,37 @@ class FortyDayWorkoutService {
     const seen = new Set();
     const rows = [];
     for (const entry of getHistoricalExerciseIndex(state.customExercises)) {
-      if (entry.key !== key) continue;
       // Older installations also kept separate per-exercise local records.
       const tracker = state.trackers[entry.id] || readJson(`exercise_tracker_${entry.id}`, null);
       if (!Array.isArray(tracker?.history)) continue;
+      const primary = entry.key === key;
+      const companion = tracker.superset?.title && exerciseHistoryKey({ title: tracker.superset.title }) === key;
+      if (!primary && !companion) continue;
       for (const record of tracker.history) {
         if (!record || typeof record !== 'object' || record.cancelled) continue;
-        const identity = `${entry.id}|${record.isoDate || record.date || ''}|${JSON.stringify(record.rounds || [])}|${record.volume ?? ''}`;
+        // The companion gets its own searchable History without copying or
+        // rewriting the parent tracker/plan ID.
+        if (companion && Array.isArray(record.superRounds)) {
+          const companionRounds = record.superRounds.filter(round =>
+            round.exerciseId === tracker.superset.exerciseId);
+          if (companionRounds.length) {
+            const identity = `${entry.id}:superset|${record.sessionId || record.isoDate}|${JSON.stringify(companionRounds)}`;
+            if (!seen.has(identity)) {
+              seen.add(identity);
+              const best = companionRounds.reduce((winner, round) => round.kg > (winner?.kg || 0) ? round : winner, companionRounds[0]);
+              rows.push({
+                isoDate: record.isoDate, date: record.date, sessionId: record.sessionId,
+                live: record.live, sourceExerciseId: `${entry.id}:superset`,
+                sets: companionRounds.length, reps: best?.reps || 0,
+                weight: best?.kg || 0, bestKg: best?.kg || 0, bestReps: best?.reps || 0,
+                volume: companionRounds.reduce((sum, round) => sum + round.kg * round.reps, 0),
+                rounds: companionRounds.map(({ round, kg, reps }) => ({ round, kg, reps }))
+              });
+            }
+          }
+        }
+        if (!primary) continue;
+        const identity = `${entry.id}|${record.sessionId || record.isoDate || record.date || ''}|${JSON.stringify(record.rounds || [])}|${JSON.stringify(record.superRounds || [])}|${JSON.stringify(record.dropRounds || [])}`;
         if (seen.has(identity)) continue;
         seen.add(identity);
         rows.push({ ...record, sourceExerciseId: entry.id });
@@ -1089,9 +1113,12 @@ class FortyDayWorkoutService {
       const tracker = state.trackers[id];
       if (!exercise || !tracker) continue;
       const played = tracker.sets.filter(set => set.done && (set.kg !== '' || set.reps !== ''));
-      if (!played.length) continue;
-      const best = played.reduce((winner, set) => Number(set.kg || 0) > Number(winner.kg || 0) ? set : winner, played[0]);
-      const volume = played.reduce((sum, set) => sum + Number(set.kg || 0) * Number(set.reps || 0), 0);
+      const superPlayed = (tracker.superset?.sets || []).filter(set => set.done && Number(set.reps) > 0);
+      const dropPlayed = tracker.dropSets.filter(set => set.done && Number(set.reps) > 0);
+      if (!played.length && !superPlayed.length && !dropPlayed.length) continue;
+      const best = played.reduce((winner, set) => Number(set.kg || 0) > Number(winner?.kg || 0) ? set : winner, played[0]);
+      const allPlayed = [...played, ...superPlayed, ...dropPlayed];
+      const volume = allPlayed.reduce((sum, set) => sum + Number(set.kg || 0) * Number(set.reps || 0), 0);
       // Ignore this exercise's in-progress row when comparing against prior PRs.
       const currentSessionId = `workout:${session.startedAt}`;
       const previousBest = Math.max(0, ...this.getSharedExerciseHistory(exercise)
@@ -1099,26 +1126,31 @@ class FortyDayWorkoutService {
         .map(row => Number(row.bestKg || row.weight || 0)));
       const isPersonalRecord = Boolean(Number(best.kg || 0) && previousBest > 0 && Number(best.kg || 0) > previousBest);
       if (isPersonalRecord) personalRecords += 1;
-      totalSets += played.length;
-      totalReps += played.reduce((sum, set) => sum + Number(set.reps || 0), 0);
+      totalSets += allPlayed.length;
+      totalReps += allPlayed.reduce((sum, set) => sum + Number(set.reps || 0), 0);
       totalVolume += volume;
       // Sets were already saved when checked. Finalize the same record,
       // or create it here for older sessions that predate immediate logging.
       const record = this._writeSessionExerciseHistory(tracker, session, { finalize: true });
       tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet('', ''));
+      if (tracker.superset) tracker.superset.sets = Array.from({ length: tracker.targetSets }, () => blankSet('', ''));
+      tracker.dropSets = tracker.dropSets.map(set => ({ parentSetIndex: set.parentSetIndex, ...blankSet('', '') }));
       exercises.push({
         id,
         exerciseId: id,
         title: exercise.title,
         nameAr: exercise.title,
-        sets: played.length,
-        setsCount: played.length,
+        sets: allPlayed.length,
+        setsCount: allPlayed.length,
         bestKg: record.bestKg,
         bestReps: record.bestReps,
         bestSet: record.bestKg ? `${record.bestKg} كغ × ${record.bestReps || '-'} تكرار` : `${record.bestReps || '-'} تكرار`,
         volume,
         isPersonalRecord,
-        rounds: record.rounds
+        rounds: record.rounds,
+        superRounds: record.superRounds,
+        dropRounds: record.dropRounds,
+        supersetTitle: tracker.superset?.title || null
       });
     }
     const day = this.getDay(session.dayKey);
@@ -1174,7 +1206,10 @@ class FortyDayWorkoutService {
           bestSet: e.bestSet,
           volume: e.volume,
           isPersonalRecord: e.isPersonalRecord,
-          rounds: e.rounds || []
+          rounds: e.rounds || [],
+          superRounds: e.superRounds || [],
+          dropRounds: e.dropRounds || [],
+          supersetTitle: e.supersetTitle || null
         })),
         notes: `تمارين منجزة: ${exercises.length}، إجمالي الجولات: ${summary.totalSets}`
       });
