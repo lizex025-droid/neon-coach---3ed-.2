@@ -1148,3 +1148,46 @@
   .forty-drop-move-btn { min-width:30px; }
   .forty-set-drop-insert { margin-left:12px; }
 }
+
+
+/* Super Set now supports the same per-round dragging as Drop Set */
+.forty-super-drag-handle,.forty-super-move-btn {
+  background: rgba(56,189,248,.10);
+  border: 1px solid rgba(56,189,248,.36);
+  color: #7dd3fc;
+  border-radius: 9px;
+  min-height: 33px;
+  padding: 5px 9px;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font: 800 .75rem 'Cairo',sans-serif;
+  gap: 4px;
+}
+.forty-super-move-btn { min-width: 33px; padding: 4px; font-size: 1rem; }
+.forty-super-move-btn:disabled { opacity: .25; cursor: not-allowed; }
+.forty-super-drag-handle { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.forty-super-drag-handle:active { cursor: grabbing; background: rgba(56,189,248,.22); }
+.forty-linked-set-row.is-superset.is-dragging-super {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 2px rgba(56,189,248,.3), 0 10px 28px rgba(0,0,0,.4);
+  z-index: 2;
+}
+.forty-set-row.is-super-target { outline: 2px solid #7dd3fc; outline-offset: 3px; background: rgba(56,189,248,.14); }
+.forty-set-drop-insert { flex-wrap: wrap; gap: 7px; }
+.forty-set-drop-insert .forty-set-add-super {
+  color: #7dd3fc;
+  border-color: rgba(56,189,248,.4);
+}
+.forty-set-drop-insert .forty-set-add-super:hover { background: rgba(56,189,248,.12); }
+.forty-tracker-actions .forty-add-super-btn {
+  background: rgba(56,189,248,.09) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(56,189,248,.35) !important;
+}
+@media(max-width:480px) {
+  .forty-super-drag-handle,.forty-super-move-btn { min-height: 30px; padding: 4px 6px; }
+  .forty-super-move-btn { min-width: 30px; }
+  .forty-set-drop-insert { gap: 5px; }
+}
