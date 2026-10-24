@@ -154,14 +154,26 @@ class FortyDayWorkoutService {
           local.trackers[id] = remoteTracker;
         } else {
           if (Array.isArray(remoteTracker.history) && remoteTracker.history.length > 0) {
-            const localHistIds = new Set((local.trackers[id].history || []).map(h => h.isoDate || h.date));
             const newHistory = [...(local.trackers[id].history || [])];
-            for (const h of remoteTracker.history) {
-              if (!localHistIds.has(h.isoDate || h.date)) {
-                newHistory.push(h);
+            for (const remoteRecord of remoteTracker.history) {
+              // Live entries have one stable session ID. Merge revisions rather
+              // than re-adding a round that the user unchecked on another device.
+              const index = newHistory.findIndex(localRecord => remoteRecord.sessionId
+                ? localRecord.sessionId === remoteRecord.sessionId
+                : !localRecord.sessionId && (localRecord.isoDate || localRecord.date) === (remoteRecord.isoDate || remoteRecord.date));
+              if (index < 0) {
+                newHistory.push(remoteRecord);
+              } else if (remoteRecord.sessionId) {
+                const current = newHistory[index];
+                const remoteVersion = Number(remoteRecord.version || 0);
+                const localVersion = Number(current.version || 0);
+                if (remoteVersion > localVersion ||
+                    (remoteVersion === localVersion && String(remoteRecord.updatedAt || '') > String(current.updatedAt || ''))) {
+                  newHistory[index] = remoteRecord;
+                }
               }
             }
-            local.trackers[id].history = newHistory;
+            local.trackers[id].history = newHistory.slice(-100);
           }
           const hasLocalWeights = local.trackers[id].sets?.some(s => s.kg !== '' || s.reps !== '');
           const hasRemoteWeights = remoteTracker.sets?.some(s => s.kg !== '' || s.reps !== '');
@@ -683,7 +695,7 @@ class FortyDayWorkoutService {
       const tracker = state.trackers[entry.id] || readJson(`exercise_tracker_${entry.id}`, null);
       if (!Array.isArray(tracker?.history)) continue;
       for (const record of tracker.history) {
-        if (!record || typeof record !== 'object') continue;
+        if (!record || typeof record !== 'object' || record.cancelled) continue;
         const identity = `${entry.id}|${record.isoDate || record.date || ''}|${JSON.stringify(record.rounds || [])}|${record.volume ?? ''}`;
         if (seen.has(identity)) continue;
         seen.add(identity);
@@ -774,24 +786,69 @@ class FortyDayWorkoutService {
     if (!tracker?.sets[setIndex] || !['kg', 'reps'].includes(field)) return;
     tracker.sets[setIndex][field] = clampNumber(value, 0, 1000, field === 'reps');
     this.markTouched(dayKey, exerciseIndex);
+    if (tracker.sets[setIndex].done) this._writeSessionExerciseHistory(tracker, this.load().session);
     this.save();
+  }
+
+  // Persist each checked set immediately, even if Finish Workout is never
+  // pressed. One record per exercise+session is updated as more sets are checked.
+  // Undo writes a cancellation tombstone so cloud sync cannot resurrect a set.
+  _writeSessionExerciseHistory(tracker, session, { finalize = false } = {}) {
+    if (!session?.startedAt || !tracker) return null;
+    const sessionId = `workout:${session.startedAt}`;
+    const history = tracker.history || (tracker.history = []);
+    const index = history.findIndex(row => row.sessionId === sessionId);
+    const previous = index >= 0 ? history[index] : null;
+    const rounds = tracker.sets.flatMap((set, roundIndex) =>
+      set.done && (set.kg !== '' || set.reps !== '')
+        ? [{ round: roundIndex + 1, kg: Number(set.kg || 0), reps: Number(set.reps || 0) }]
+        : []
+    );
+    if (!rounds.length && !previous) return null;
+    const best = rounds.reduce((winner, round) => round.kg > (winner?.kg || 0) ? round : winner, rounds[0]);
+    const at = new Date();
+    const record = {
+      ...previous,
+      sessionId,
+      isoDate: previous?.isoDate || at.toISOString(),
+      date: previous?.date || at.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+      updatedAt: at.toISOString(),
+      version: Number(previous?.version || 0) + 1,
+      live: !finalize,
+      cancelled: rounds.length === 0,
+      sets: rounds.length,
+      reps: best?.reps || 0,
+      weight: best?.kg || 0,
+      bestKg: best?.kg || 0,
+      bestReps: best?.reps || 0,
+      volume: rounds.reduce((sum, round) => sum + round.kg * round.reps, 0),
+      rounds
+    };
+    if (index >= 0) history[index] = record;
+    else history.push(record);
+    tracker.history = history.slice(-100);
+    return record;
   }
 
   toggleSet(dayKey, exerciseIndex, setIndex) {
     const tracker = this.getTracker(dayKey, exerciseIndex);
-    if (!tracker?.sets[setIndex]) return null;
+    const set = tracker?.sets[setIndex];
+    if (!set) return null;
+    // A blank set cannot be entered into History. Bodyweight sets may use 0 kg.
+    if (!set.done && !(Number(set.reps) > 0)) return null;
     this.startWorkout(dayKey);
-    tracker.sets[setIndex].done = !tracker.sets[setIndex].done;
+    set.done = !set.done;
     this.markTouched(dayKey, exerciseIndex);
-    if (tracker.sets[setIndex].done && tracker.rest > 0) {
+    this._writeSessionExerciseHistory(tracker, this.load().session);
+    if (set.done && tracker.rest > 0) {
       this.load().restDuration = tracker.rest;
       this.load().restUntil = Date.now() + tracker.rest * 1000;
     }
-    this.save();
-    if (tracker.sets[setIndex].done && Number(tracker.sets[setIndex].kg) > 0) {
+    this.save(); // LocalStorage immediately; cloud user_state sync is debounced.
+    if (set.done && Number(set.kg) > 0) {
       this._syncExercisePr(dayKey, exerciseIndex);
     }
-    return tracker.sets[setIndex].done;
+    return set.done;
   }
 
   async _syncExercisePr(dayKey, exerciseIndex) {
@@ -838,6 +895,11 @@ class FortyDayWorkoutService {
     const tracker = this.getTracker(dayKey, exerciseIndex);
     const id = this.getExerciseId(dayKey, exerciseIndex);
     const state = this.load();
+    // A reset during an unfinished workout also retracts its live rounds.
+    if (state.session) {
+      tracker.sets.forEach(set => { set.done = false; });
+      this._writeSessionExerciseHistory(tracker, state.session);
+    }
     state.trackers[id] = normalizeTracker({ history: tracker?.history || [] }, exercise);
     // An explicit reset must not be undone by shared-history auto-prefill.
     const latest = this.getSharedExerciseHistory(exercise).at(-1);
@@ -917,24 +979,19 @@ class FortyDayWorkoutService {
       if (!played.length) continue;
       const best = played.reduce((winner, set) => Number(set.kg || 0) > Number(winner.kg || 0) ? set : winner, played[0]);
       const volume = played.reduce((sum, set) => sum + Number(set.kg || 0) * Number(set.reps || 0), 0);
-      const previousBest = Math.max(0, ...this.getSharedExerciseHistory(exercise).map(row => Number(row.bestKg || row.weight || 0)));
+      // Ignore this exercise's in-progress row when comparing against prior PRs.
+      const currentSessionId = `workout:${session.startedAt}`;
+      const previousBest = Math.max(0, ...this.getSharedExerciseHistory(exercise)
+        .filter(row => !(row.sessionId === currentSessionId && row.sourceExerciseId === id))
+        .map(row => Number(row.bestKg || row.weight || 0)));
       const isPersonalRecord = Boolean(Number(best.kg || 0) && previousBest > 0 && Number(best.kg || 0) > previousBest);
       if (isPersonalRecord) personalRecords += 1;
       totalSets += played.length;
       totalReps += played.reduce((sum, set) => sum + Number(set.reps || 0), 0);
       totalVolume += volume;
-      const record = {
-        isoDate: new Date(finishedAt).toISOString(),
-        date: new Date(finishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-        sets: played.length,
-        reps: Number(best.reps || 0),
-        weight: Number(best.kg || 0),
-        bestKg: Number(best.kg || 0),
-        bestReps: Number(best.reps || 0),
-        volume,
-        rounds: played.map((set, index) => ({ round: index + 1, kg: Number(set.kg || 0), reps: Number(set.reps || 0) }))
-      };
-      tracker.history = [...(tracker.history || []), record].slice(-100);
+      // Sets were already saved when checked. Finalize the same record,
+      // or create it here for older sessions that predate immediate logging.
+      const record = this._writeSessionExerciseHistory(tracker, session, { finalize: true });
       tracker.sets = Array.from({ length: tracker.targetSets }, () => blankSet('', ''));
       exercises.push({
         id,
