@@ -33,7 +33,7 @@ test('Top button scrolls workout, nested view, document and window', () => {
   for (const name of ['workout', 'main', 'app', 'body', 'html', 'window']) {
     assert.ok(calls.some(call => call.name === name), `missing ${name}`);
   }
-  assert.equal(calls.find(call => call.name === 'window').options.top, 0);
+  assert.equal(calls.find(call => call.name === 'window').options, 0);
   assert.equal(calls.find(call => call.name === 'workout').options.block, 'start');
   assert.equal(container.scrollTop, 0);
 });
@@ -54,4 +54,39 @@ test('Top button supports older iOS scrollers with numeric scrollTop only', () =
   assert.equal(scrollWorkoutToTop(win, doc), true);
   assert.equal(container.scrollTop, 0);
   assert.equal(win.scrollTop, 0);
+});
+
+test('Top click cancels iOS scrolling momentum by correcting position on next frame', () => {
+  const calls = [];
+  const root = { parentElement: null, scrollIntoView: () => calls.push('intoView') };
+  const view = { parentElement: null, scrollTop: 400, scrollTo: () => calls.push('view') };
+  let nextFrame;
+  const win = {
+    scrollTo: () => calls.push('window'),
+    requestAnimationFrame(callback) { nextFrame = callback; }
+  };
+  const doc = {
+    getElementById: key => ({ 'forty-workout-root': root, 'view-container': view })[key] || null,
+    scrollingElement: null, documentElement: null, body: null
+  };
+  assert.equal(scrollWorkoutToTop(win, doc), true);
+  assert.equal(view.scrollTop, 0);
+  assert.equal(typeof nextFrame, 'function');
+  // Simulate the preceding inertial scroll restoration seen in standalone PWAs.
+  view.scrollTop = 180;
+  nextFrame();
+  assert.equal(view.scrollTop, 0);
+  assert.equal(calls.filter(call => call === 'window').length, 2);
+});
+
+test('Top click can scroll when only the view exists during a route redraw', () => {
+  const calls = [];
+  const view = { scrollTop: 900, scrollTo: () => calls.push('view'), parentElement: null };
+  const doc = {
+    getElementById: id => id === 'view-container' ? view : null,
+    scrollingElement: view, documentElement: null, body: null
+  };
+  assert.equal(scrollWorkoutToTop({ scrollTo: () => calls.push('window') }, doc), true);
+  assert.equal(view.scrollTop, 0);
+  assert.deepEqual(calls, ['view', 'window']);
 });
