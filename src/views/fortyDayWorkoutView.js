@@ -1084,6 +1084,21 @@ export function bindFortyDayWorkoutEvents() {
   const manageModal = document.getElementById('forty-manage-modal');
   const manageSheet = document.getElementById('forty-manage-sheet');
 
+  // Render the fixed Top pill directly under <body>. Keeping it inside
+  // the training view can clip it or place it behind transformed scroll
+  // containers on iOS/PWA. Show it immediately (no scroll threshold).
+  const topButton = root.querySelector('#forty-scroll-top');
+  document.querySelectorAll('body > #forty-scroll-top').forEach(stale => stale.remove());
+  const scrollToTrainingTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.scrollingElement?.scrollTo?.({ top: 0, behavior: 'smooth' });
+  };
+  if (topButton) {
+    document.body.appendChild(topButton);
+    topButton.classList.add('is-visible');
+    topButton.addEventListener('click', scrollToTrainingTop);
+  }
+
   let activePlan = fortyDayWorkoutService.getActivePlan();
   let days = fortyDayWorkoutService.getDays(activePlan);
   let activeDay = fortyDayWorkoutService.getSnapshot().activeDay;
@@ -1685,22 +1700,19 @@ export function bindFortyDayWorkoutEvents() {
         if (error?.name !== 'AbortError') notificationService.showToast('تعذرت المشاركة على هذا الجهاز.', 'warning');
       }
     }
-    if (button.id === 'forty-scroll-top') window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => modal.addEventListener('click', event => { if (event.target === modal) closeModals(); }));
   const onKeyDown = event => { if (event.key === 'Escape') closeModals(); };
-  const onScroll = () => root.querySelector('#forty-scroll-top')?.classList.toggle('is-visible', window.scrollY > 350);
   document.addEventListener('keydown', onKeyDown);
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll(); // Also show immediately if the route opens while already scrolled.
   return () => {
     clearInterval(timerInterval);
     stopLinkedDrag();
     imageRequestId += 1;
     imagePreloadObserver?.disconnect();
     document.removeEventListener('keydown', onKeyDown);
-    window.removeEventListener('scroll', onScroll);
+    topButton?.removeEventListener('click', scrollToTrainingTop);
+    topButton?.remove();
     root.removeEventListener('pointerover', onImageIntent);
     root.removeEventListener('pointerdown', onImageIntent);
     root.removeEventListener('focusin', onImageIntent);
