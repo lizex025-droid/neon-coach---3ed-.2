@@ -285,26 +285,35 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
                 <small class="forty-linked-set-name">DROP SET · مرتبط بالجولة ${setIndex + 1} · اسحب لتغيير الجولة</small>
               </div>
             ` : '').join('')}
-            ${tracker?.superset ? `
-              <div class="forty-linked-set-row is-superset ${tracker.superset.sets[setIndex].done ? 'is-done' : ''}">
-                <span class="forty-linked-set-tag">SS ${setIndex + 1}</span>
-                <div class="forty-linked-set-fields">
-                  <label><input type="number" min="0" max="1000" step="0.5" placeholder="kg" value="${tracker.superset.sets[setIndex].kg}" aria-label="Superset weight" data-linked-field="kg" data-linked-kind="superset" data-index="${exerciseIndex}" data-set="${setIndex}" ${tracker.superset.sets[setIndex].done ? 'disabled' : ''}><small>kg</small></label>
-                  <span>×</span>
-                  <label><input type="number" min="0" max="1000" step="1" placeholder="reps" value="${tracker.superset.sets[setIndex].reps}" aria-label="Superset repetitions" data-linked-field="reps" data-linked-kind="superset" data-index="${exerciseIndex}" data-set="${setIndex}" ${tracker.superset.sets[setIndex].done ? 'disabled' : ''}><small>reps</small></label>
-                  <button type="button" class="forty-done-btn ${tracker.superset.sets[setIndex].done ? 'is-done' : ''}" data-action="toggle-linked" data-kind="superset" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="حفظ الجولة">✓</button>
+            ${(tracker?.superset?.sets || []).map((pair, superIndex) => pair.parentSetIndex === setIndex ? `
+              <div class="forty-linked-set-row is-superset ${pair.done ? 'is-done' : ''}" data-super-index="${superIndex}" data-parent-set="${setIndex}" data-exercise-index="${exerciseIndex}">
+                <div class="forty-drop-drag-header">
+                  <span class="forty-linked-set-tag">SS ${superIndex + 1} · Set ${setIndex + 1}</span>
+                  <div class="forty-drop-reorder">
+                    <button type="button" class="forty-super-move-btn" data-action="move-superset" data-delta="-1" data-index="${exerciseIndex}" data-set="${superIndex}" aria-label="نقل السوبر سيت للجولة السابقة" ${setIndex === 0 ? 'disabled' : ''}>↑</button>
+                    <button type="button" class="forty-super-drag-handle" aria-label="اسحب السوبر سيت إلى أي جولة" title="اسحب إلى الجولة المطلوبة">⠿ <span>سحب</span></button>
+                    <button type="button" class="forty-super-move-btn" data-action="move-superset" data-delta="1" data-index="${exerciseIndex}" data-set="${superIndex}" aria-label="نقل السوبر سيت للجولة التالية" ${setIndex === tracker.sets.length - 1 ? 'disabled' : ''}>↓</button>
+                  </div>
                 </div>
-                <small class="forty-linked-set-name">SUPER SET · ${escapeHtml(tracker.superset.title)}</small>
+                <div class="forty-linked-set-fields">
+                  <label><input type="number" min="0" max="1000" step="0.5" placeholder="kg" value="${pair.kg}" aria-label="Superset weight" data-linked-field="kg" data-linked-kind="superset" data-index="${exerciseIndex}" data-set="${superIndex}" ${pair.done ? 'disabled' : ''}><small>kg</small></label>
+                  <span>×</span>
+                  <label><input type="number" min="0" max="1000" step="1" placeholder="reps" value="${pair.reps}" aria-label="Superset repetitions" data-linked-field="reps" data-linked-kind="superset" data-index="${exerciseIndex}" data-set="${superIndex}" ${pair.done ? 'disabled' : ''}><small>reps</small></label>
+                  <button type="button" class="forty-done-btn ${pair.done ? 'is-done' : ''}" data-action="toggle-linked" data-kind="superset" data-index="${exerciseIndex}" data-set="${superIndex}" aria-label="حفظ الجولة">✓</button>
+                </div>
+                <small class="forty-linked-set-name">SUPER SET · ${escapeHtml(tracker.superset.title)} · مرتبط بالجولة ${setIndex + 1}</small>
               </div>
-            ` : ''}
+            ` : '').join('')}
             <div class="forty-set-drop-insert">
               <button type="button" data-action="add-drop-to-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="أضف Drop Set تحت الجولة ${setIndex + 1}">+ Drop للجولة ${setIndex + 1}</button>
+              ${tracker?.superset ? `<button type="button" class="forty-set-add-super" data-action="add-superset-to-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="أضف Super Set تحت الجولة ${setIndex + 1}">+ SS للجولة ${setIndex + 1}</button>` : ''}
             </div>
         `).join('')}
       </div>
       <div class="forty-tracker-actions">
         <button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button>
         ${tracker?.dropSets?.length ? `<button type="button" class="forty-add-drop-btn" data-action="add-drop-round" data-index="${exerciseIndex}">+ Drop لآخر جولة منجزة</button>` : ''}
+        ${tracker?.superset ? `<button type="button" class="forty-add-super-btn" data-action="add-superset-round" data-index="${exerciseIndex}">+ Super Set لآخر جولة منجزة</button>` : ''}
         <button type="button" class="forty-manage-btn" data-action="manage" data-index="${exerciseIndex}" aria-label="إدارة التمرين">⚙ Manage Exercise</button>
       </div>
     </article>
@@ -355,7 +364,7 @@ function renderManageExerciseSheet(dayKey, exerciseIndex) {
         <div class="manage-option-icon icon-superset">⇆</div>
         <div class="manage-option-content">
           <div class="manage-option-title-row"><strong>سوبر سيت</strong><span class="manage-option-badge badge-superset">Super Set</span></div>
-          <p>${tracker?.superset ? `مرتبط مع: ${escapeHtml(tracker.superset.title)} · اضغط لتغييره من المكتبة.` : 'اختر تمرينًا من المكتبة ثم أدخل وزن وعدّات كل جولة سوبر سيت بجانب التمرين الأساسي.'}</p>
+          <p>${tracker?.superset ? `مرتبط مع: ${escapeHtml(tracker.superset.title)} · اضغط لتغييره من المكتبة.` : 'اختر التمرين الثاني من المكتبة، ثم أضف Super Set لأي جولة واسحبه لمكانه المطلوب.'}</p>
         </div>
       </button>
       ${tracker?.superset ? `<button type="button" class="forty-linked-remove" data-manage-action="remove-superset" data-index="${exerciseIndex}">إزالة ربط السوبر سيت</button>` : ''}
