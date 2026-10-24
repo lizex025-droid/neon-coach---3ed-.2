@@ -1,6 +1,7 @@
 import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 import { notificationService } from '../services/notificationService.js';
 import { store } from '../state/store.js';
+import { scrollWorkoutToTop } from '../utils/workoutScroll.js';
 import { generatePersonalizedTrainingDraft } from '../domain/personalizedTrainingPlan.js';
 import { showTrainingPlanPreview } from './questionnaireView.js';
 import {
@@ -1082,6 +1083,19 @@ export function bindFortyDayWorkoutEvents() {
   const manageModal = document.getElementById('forty-manage-modal');
   const manageSheet = document.getElementById('forty-manage-sheet');
 
+  // The Top shortcut belongs only to Training. Keep its click handler
+  // attached to the button itself and remove both on route cleanup.
+  // Never attach a global/capture listener that outlives this tab.
+  const topButton = document.getElementById('workout-top-pill');
+  const onTopClick = event => {
+    event.preventDefault();
+    scrollWorkoutToTop();
+  };
+  if (topButton) {
+    document.body.appendChild(topButton);
+    topButton.addEventListener('click', onTopClick);
+  }
+
   let activePlan = fortyDayWorkoutService.getActivePlan();
   let days = fortyDayWorkoutService.getDays(activePlan);
   let activeDay = fortyDayWorkoutService.getSnapshot().activeDay;
@@ -1691,8 +1705,9 @@ export function bindFortyDayWorkoutEvents() {
   return () => {
     clearInterval(timerInterval);
     stopLinkedDrag();
-    // The shortcut is portaled to body, so remove it when leaving Training.
-    document.querySelector('body > #workout-top-pill')?.remove();
+    topButton?.removeEventListener('click', onTopClick);
+    topButton?.remove();
+    document.getElementById('personalized-plan-creator-modal')?.remove();
     imageRequestId += 1;
     imagePreloadObserver?.disconnect();
     document.removeEventListener('keydown', onKeyDown);
