@@ -56,7 +56,7 @@ test('Manage Super Set binds an actual library exercise, and each round is saved
   assert.equal(service.getTracker(day, 0).superset.sets[0].done, false);
 }));
 
-test('Drop Set adds a separate saved round after final base set and both count in summary', () => isolate(() => {
+test('Drop Set saves a separate round after its chosen base set and both count in summary', () => isolate(() => {
   service.setActivePlan('ulf');
   service.enableDropSet('ulfUpper', 0);
   const tracker = service.getTracker('ulfUpper', 0);
@@ -68,7 +68,7 @@ test('Drop Set adds a separate saved round after final base set and both count i
   const history = service.getSharedHistory('ulfUpper', 0);
   assert.equal(history.length, 1);
   assert.equal(history[0].sets, 2);
-  assert.equal(history[0].dropRounds[0].afterSet, 3);
+  assert.equal(history[0].dropRounds[0].afterSet, 1);
   assert.equal(history[0].volume, 472);
   service.addDropRound('ulfUpper', 0);
   assert.equal(service.getTracker('ulfUpper', 0).dropSets.length, 2);
