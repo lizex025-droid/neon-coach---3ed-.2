@@ -1,4 +1,5 @@
 import { FBW_DAYS, FBW_PROGRAM, getFbwDay } from '../data/fbwWorkout.js';
+import { ULF_DAYS, ULF_PROGRAM, getUlfDay } from '../data/ulfWorkout.js';
 import { FORTY_DAY_DAYS, FORTY_DAY_PROGRAM, getFortyDay, fortyDayExerciseId } from '../data/fortyDayWorkout.js';
 import { HASM_GROUPS, HASM_PROGRAM, getHasmGroup, hasmExerciseId } from '../data/hasmWorkout.js';
 import { ANAS_DAYS, ANAS_PROGRAM, getAnasDay, anasExerciseId } from '../data/anasWorkout.js';
@@ -324,17 +325,19 @@ class FortyDayWorkoutService {
 
   getActivePlan() {
     const profilePlan = store.getState()?.userProfile?.workoutPlan;
-    if (profilePlan === 'fbw' || profilePlan === 'hasm' || profilePlan === 'ppl' || profilePlan === 'fortyDay' || profilePlan === 'anas' || profilePlan === 'personalized') {
+    if (profilePlan === 'ulf' || profilePlan === 'fbw' || profilePlan === 'hasm' || profilePlan === 'ppl' || profilePlan === 'fortyDay' || profilePlan === 'anas' || profilePlan === 'personalized') {
       return (profilePlan === 'ppl' || profilePlan === 'fortyDay') ? 'ppl' : profilePlan;
     }
     return this.load().activePlan || 'hasm';
   }
 
   setActivePlan(planKey) {
-    const normalized = planKey === 'fbw' ? 'fbw' : (planKey === 'ppl' || planKey === 'fortyDay') ? 'ppl' : (planKey === 'anas' ? 'anas' : (planKey === 'personalized' ? 'personalized' : 'hasm'));
+    const normalized = planKey === 'ulf' ? 'ulf' : (planKey === 'fbw' ? 'fbw' : (planKey === 'ppl' || planKey === 'fortyDay') ? 'ppl' : (planKey === 'anas' ? 'anas' : (planKey === 'personalized' ? 'personalized' : 'hasm')));
     const state = this.load();
     state.activePlan = normalized;
-    if (normalized === 'fbw') {
+    if (normalized === 'ulf') {
+      state.activeDay = 'ulfUpper';
+    } else if (normalized === 'fbw') {
       state.activeDay = 'fbwA';
     } else if (normalized === 'anas') {
       state.activeDay = 'saturdayPush';
@@ -354,6 +357,7 @@ class FortyDayWorkoutService {
   }
 
   getProgram(planKey = this.getActivePlan()) {
+    if (planKey === 'ulf') return ULF_PROGRAM;
     if (planKey === 'fbw') return FBW_PROGRAM;
     if (planKey === 'anas') return ANAS_PROGRAM;
     if (planKey === 'ppl' || planKey === 'fortyDay') return FORTY_DAY_PROGRAM;
@@ -411,6 +415,7 @@ class FortyDayWorkoutService {
   }
 
   getDays(planKey = this.getActivePlan()) {
+    if (planKey === 'ulf') return ULF_DAYS;
     if (planKey === 'fbw') return FBW_DAYS;
     if (planKey === 'anas') return ANAS_DAYS;
     if (planKey === 'ppl' || planKey === 'fortyDay') return FORTY_DAY_DAYS;
@@ -454,7 +459,9 @@ class FortyDayWorkoutService {
     }
 
     let baseDay = null;
-    if (FBW_DAYS.some(day => day.key === dayKey)) {
+    if (ULF_DAYS.some(day => day.key === dayKey)) {
+      baseDay = getUlfDay(dayKey);
+    } else if (FBW_DAYS.some(day => day.key === dayKey)) {
       baseDay = getFbwDay(dayKey);
     } else if (ANAS_DAYS.some(day => day.key === dayKey)) {
       baseDay = getAnasDay(dayKey);
@@ -462,6 +469,8 @@ class FortyDayWorkoutService {
       baseDay = getHasmGroup(dayKey);
     } else if (FORTY_DAY_DAYS.some(day => day.key === dayKey)) {
       baseDay = getFortyDay(dayKey);
+    } else if (planKey === 'ulf') {
+      baseDay = getUlfDay(dayKey);
     } else if (planKey === 'fbw') {
       baseDay = getFbwDay(dayKey);
     } else if (planKey === 'anas') {
@@ -653,7 +662,7 @@ class FortyDayWorkoutService {
   }
 
   setActiveDay(dayKey) {
-    const allDays = [...FBW_DAYS, ...ANAS_DAYS, ...HASM_GROUPS, ...FORTY_DAY_DAYS, ...this.getDays('personalized')];
+    const allDays = [...ULF_DAYS, ...FBW_DAYS, ...ANAS_DAYS, ...HASM_GROUPS, ...FORTY_DAY_DAYS, ...this.getDays('personalized')];
     if (!allDays.some(day => day.key === dayKey)) return;
     this.load().activeDay = dayKey;
     this.save();
@@ -880,7 +889,7 @@ class FortyDayWorkoutService {
       });
     }
     const day = this.getDay(session.dayKey);
-    const planPrefix = session.dayKey.startsWith('fbw') ? 'fbw' : session.dayKey.startsWith('saturday') || session.dayKey.startsWith('sunday') || session.dayKey.startsWith('monday') || session.dayKey.startsWith('wednesday') || session.dayKey.startsWith('thursday')
+    const planPrefix = session.dayKey.startsWith('ulf') ? 'ulf' : session.dayKey.startsWith('fbw') ? 'fbw' : session.dayKey.startsWith('saturday') || session.dayKey.startsWith('sunday') || session.dayKey.startsWith('monday') || session.dayKey.startsWith('wednesday') || session.dayKey.startsWith('thursday')
       ? 'anas'
       : (session.dayKey.startsWith('push') || session.dayKey.startsWith('pull') || session.dayKey.startsWith('legs') ? 'fortyDay' : 'hasm');
     const summary = {
