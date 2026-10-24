@@ -245,6 +245,8 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
           ${exercise.reason ? `<p><span>سبب الاختيار:</span> ${escapeHtml(exercise.reason)}</p>` : ''}
           ${exercise.restSeconds != null ? `<p><span>الجرعة المقترحة:</span> ${exercise.sets} مجموعات · ${escapeHtml(exercise.reps)} · راحة ${escapeHtml(exercise.restLabel || `${exercise.restSeconds}ث`)} · RIR ${exercise.rir}</p>` : ''}
           ${exercise.dropSet ? `<p class="badge">+ Drop Set بعد آخر مجموعة</p>` : ''}
+          ${tracker?.superset ? `<p class="forty-linked-status">↔ SUPER SET · ${escapeHtml(tracker.superset.title)}</p>` : ''}
+          ${tracker?.dropSets?.length ? `<p class="forty-linked-status is-drop">↓ DROP SET · ${tracker.dropSets.length} ${tracker.dropSets.length === 1 ? 'جولة' : 'جولات'}</p>` : ''}
           ${exercise.imageNote ? `<p>${escapeHtml(exercise.imageNote)}</p>` : ''}
           ${exercise.coachingNote ? `<p style="color:#55F7A5;font-size:0.8rem;margin-top:4px;"><span>💡 التدرج والتكنيك:</span> ${escapeHtml(exercise.coachingNote)}</p>` : ''}
         </div>
@@ -260,10 +262,35 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
             <label><input aria-label="Repetitions" type="number" min="0" max="1000" step="1" value="${set.reps}" placeholder="reps" data-field="reps" data-index="${exerciseIndex}" data-set="${setIndex}" ${set.done ? 'disabled' : ''}><small>reps</small></label>
             <button type="button" class="forty-done-btn ${set.done ? 'is-done' : ''}" data-action="toggle-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="${set.done ? 'إلغاء إكمال الجولة' : 'إكمال الجولة'}">✓</button>
           </div>
+            ${tracker?.superset ? `
+              <div class="forty-linked-set-row is-superset ${tracker.superset.sets[setIndex].done ? 'is-done' : ''}">
+                <span class="forty-linked-set-tag">SS ${setIndex + 1}</span>
+                <div class="forty-linked-set-fields">
+                  <label><input type="number" min="0" max="1000" step="0.5" placeholder="kg" value="${tracker.superset.sets[setIndex].kg}" aria-label="Superset weight" data-linked-field="kg" data-linked-kind="superset" data-index="${exerciseIndex}" data-set="${setIndex}" ${tracker.superset.sets[setIndex].done ? 'disabled' : ''}><small>kg</small></label>
+                  <span>×</span>
+                  <label><input type="number" min="0" max="1000" step="1" placeholder="reps" value="${tracker.superset.sets[setIndex].reps}" aria-label="Superset repetitions" data-linked-field="reps" data-linked-kind="superset" data-index="${exerciseIndex}" data-set="${setIndex}" ${tracker.superset.sets[setIndex].done ? 'disabled' : ''}><small>reps</small></label>
+                  <button type="button" class="forty-done-btn ${tracker.superset.sets[setIndex].done ? 'is-done' : ''}" data-action="toggle-linked" data-kind="superset" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="حفظ الجولة">✓</button>
+                </div>
+                <small class="forty-linked-set-name">SUPER SET · ${escapeHtml(tracker.superset.title)}</small>
+              </div>
+            ` : ''}
+            ${(tracker?.dropSets || []).map((drop, dropIndex) => drop.parentSetIndex === setIndex ? `
+              <div class="forty-linked-set-row is-drop ${drop.done ? 'is-done' : ''}">
+                <span class="forty-linked-set-tag">DROP ${dropIndex + 1}</span>
+                <div class="forty-linked-set-fields">
+                  <label><input type="number" min="0" max="1000" step="0.5" placeholder="kg" value="${drop.kg}" aria-label="Drop weight" data-linked-field="kg" data-linked-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" ${drop.done ? 'disabled' : ''}><small>kg</small></label>
+                  <span>×</span>
+                  <label><input type="number" min="0" max="1000" step="1" placeholder="reps" value="${drop.reps}" aria-label="Drop repetitions" data-linked-field="reps" data-linked-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" ${drop.done ? 'disabled' : ''}><small>reps</small></label>
+                  <button type="button" class="forty-done-btn ${drop.done ? 'is-done' : ''}" data-action="toggle-linked" data-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" aria-label="حفظ الجولة">✓</button>
+                </div>
+                <small class="forty-linked-set-name">DROP SET · بعد Set ${setIndex + 1}</small>
+              </div>
+            ` : '').join('')}
         `).join('')}
       </div>
       <div class="forty-tracker-actions">
         <button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button>
+        ${tracker?.dropSets?.length ? `<button type="button" class="forty-add-drop-btn" data-action="add-drop-round" data-index="${exerciseIndex}">+ Drop Round</button>` : ''}
         <button type="button" class="forty-manage-btn" data-action="manage" data-index="${exerciseIndex}" aria-label="إدارة التمرين">⚙ Manage Exercise</button>
       </div>
     </article>
@@ -274,6 +301,7 @@ function renderManageExerciseSheet(dayKey, exerciseIndex) {
   const day = fortyDayWorkoutService.getDay(dayKey);
   const exercise = day?.exercises?.[exerciseIndex];
   if (!exercise) return '';
+  const tracker = fortyDayWorkoutService.getTracker(dayKey, exerciseIndex);
 
   return `
     <div class="manage-sheet-head">
@@ -309,7 +337,23 @@ function renderManageExerciseSheet(dayKey, exerciseIndex) {
         </div>
       </button>
 
-      <!-- 3. Delete Exercise -->
+      <button type="button" class="manage-option-card" data-manage-action="superset" data-index="${exerciseIndex}">
+        <div class="manage-option-icon icon-superset">⇆</div>
+        <div class="manage-option-content">
+          <div class="manage-option-title-row"><strong>سوبر سيت</strong><span class="manage-option-badge badge-superset">Super Set</span></div>
+          <p>${tracker?.superset ? `مرتبط مع: ${escapeHtml(tracker.superset.title)} · اضغط لتغييره من المكتبة.` : 'اختر تمرينًا من المكتبة ثم أدخل وزن وعدّات كل جولة سوبر سيت بجانب التمرين الأساسي.'}</p>
+        </div>
+      </button>
+      ${tracker?.superset ? `<button type="button" class="forty-linked-remove" data-manage-action="remove-superset" data-index="${exerciseIndex}">إزالة ربط السوبر سيت</button>` : ''}
+      <button type="button" class="manage-option-card" data-manage-action="drop-set" data-index="${exerciseIndex}">
+        <div class="manage-option-icon icon-drop">↓</div>
+        <div class="manage-option-content">
+          <div class="manage-option-title-row"><strong>دروب سيت</strong><span class="manage-option-badge badge-drop">Drop Set</span></div>
+          <p>${tracker?.dropSets?.length ? `مفعّل · ${tracker.dropSets.length} جولة إضافية. اضغط لإضافة جولة أخرى.` : 'أضف جولة بوزن أقل بعد آخر Set، مع خانة الوزن والعدّات وعلامة حفظ مستقلة.'}</p>
+        </div>
+      </button>
+      ${tracker?.dropSets?.length ? `<button type="button" class="forty-linked-remove" data-manage-action="remove-drop" data-index="${exerciseIndex}">إزالة جولات الدروب سيت</button>` : ''}
+      <!-- 5. Delete Exercise -->
       <button type="button" class="manage-option-card is-danger" data-manage-action="delete" data-index="${exerciseIndex}">
         <div class="manage-option-icon icon-delete">🗑</div>
         <div class="manage-option-content">
