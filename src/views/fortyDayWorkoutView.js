@@ -781,6 +781,9 @@ function renderSummary(summary) {
 }
 
 function initDragAndReorder(container, onReorder) {
+  const controller = new AbortController();
+  let destroyed = false;
+  let settleTimer = null;
   let pressTimer = null;
   let isDragging = false;
   let draggedCard = null;
@@ -802,6 +805,10 @@ function initDragAndReorder(container, onReorder) {
   };
 
   const cleanup = () => {
+    if (settleTimer) {
+      clearTimeout(settleTimer);
+      settleTimer = null;
+    }
     if (pressTimer) {
       clearTimeout(pressTimer);
       pressTimer = null;
@@ -817,6 +824,7 @@ function initDragAndReorder(container, onReorder) {
   };
 
   const startDrag = (card, clientX, clientY) => {
+    if (destroyed || !card.isConnected) return;
     allCards = Array.from(container.querySelectorAll('.forty-exercise-card'));
     if (allCards.length <= 1) return;
 
@@ -911,7 +919,9 @@ function initDragAndReorder(container, onReorder) {
       draggedCard.style.transition = 'transform 0.22s cubic-bezier(0.2, 0, 0, 1)';
       draggedCard.style.transform = `translateY(${finalDeltaY}px) scale(1)`;
 
-      setTimeout(() => {
+      settleTimer = setTimeout(() => {
+        settleTimer = null;
+        if (destroyed) return;
         cleanup();
         onReorder(fromIdx, toIdx);
       }, 230);
@@ -920,17 +930,20 @@ function initDragAndReorder(container, onReorder) {
         draggedCard.style.transition = 'transform 0.2s ease';
         draggedCard.style.transform = 'translateY(0px) scale(1)';
       }
-      setTimeout(() => {
-        cleanup();
+      settleTimer = setTimeout(() => {
+        settleTimer = null;
+        if (!destroyed) cleanup();
       }, 210);
     }
   };
 
   // Touch Events (Mobile)
   container.addEventListener('touchstart', (e) => {
-    const card = e.target.closest('.forty-exercise-card');
-    if (!card) return;
-    if (e.target.closest('input, button, a, label, .forty-sets, .forty-card-actions, .forty-tracker-actions')) return;
+    // Only the dedicated grip may trigger drag. Long-pressing ordinary
+    // cards must never disable iOS scrolling while reading exercises.
+    const grip = e.target.closest('.forty-drag-handle');
+    const card = grip?.closest('.forty-exercise-card');
+    if (!card || e.touches.length !== 1) return;
 
     const touch = e.touches[0];
     startX = touch.clientX;
@@ -939,7 +952,7 @@ function initDragAndReorder(container, onReorder) {
     pressTimer = setTimeout(() => {
       startDrag(card, touch.clientX, touch.clientY);
     }, 280);
-  }, { passive: true });
+  }, { passive: true, signal: controller.signal });
 
   container.addEventListener('touchmove', (e) => {
     const touch = e.touches[0];
@@ -957,17 +970,16 @@ function initDragAndReorder(container, onReorder) {
 
     if (e.cancelable) e.preventDefault();
     updateDragPosition(touch.clientY);
-  }, { passive: false });
+  }, { passive: false, signal: controller.signal });
 
-  container.addEventListener('touchend', endDrag);
-  container.addEventListener('touchcancel', cleanup);
+  container.addEventListener('touchend', endDrag, { signal: controller.signal });
+  container.addEventListener('touchcancel', cleanup, { signal: controller.signal });
 
   // Mouse / Pointer Events (Desktop)
   container.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    const card = e.target.closest('.forty-exercise-card');
+    const card = e.target.closest('.forty-drag-handle')?.closest('.forty-exercise-card');
     if (!card) return;
-    if (e.target.closest('input, button, a, label, .forty-sets, .forty-card-actions, .forty-tracker-actions')) return;
 
     startX = e.clientX;
     startY = e.clientY;
@@ -998,9 +1010,14 @@ function initDragAndReorder(container, onReorder) {
       endDrag();
     };
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  });
+    window.addEventListener('mousemove', onMouseMove, { signal: controller.signal });
+    window.addEventListener('mouseup', onMouseUp, { signal: controller.signal });
+  }, { signal: controller.signal });
+  return () => {
+    destroyed = true;
+    controller.abort();
+    cleanup();
+  };
 }
 
 // Drag a Drop Set or Super Set to any working set without affecting the
@@ -1276,13 +1293,11 @@ export function bindFortyDayWorkoutEvents() {
       notificationService.showToast(`تم نقل ${kind === 'superset' ? 'Super Set' : 'Drop Set'} تحت الجولة ${parentSetIndex + 1} ✓`, 'success');
     }
   }) : () => {};
-  if (dayContent) {
-    initDragAndReorder(dayContent, (fromIndex, toIndex) => {
-      fortyDayWorkoutService.reorderDayExercises(activeDay, fromIndex, toIndex);
-      renderActiveDay();
-      notificationService.showToast('تم تغيير ترتيب التمرين بنجاح ✓', 'success');
-    });
-  }
+  const stopExerciseDrag = dayContent ? initDragAndReorder(dayContent, (fromIndex, toIndex) => {
+    fortyDayWorkoutService.reorderDayExercises(activeDay, fromIndex, toIndex);
+    renderActiveDay();
+    notificationService.showToast('تم تغيير ترتيب التمرين بنجاح ✓', 'success');
+  }) : () => {};
 
   renderActiveDay();
   updateTimers();
@@ -1705,6 +1720,7 @@ export function bindFortyDayWorkoutEvents() {
   return () => {
     clearInterval(timerInterval);
     stopLinkedDrag();
+    stopExerciseDrag();
     topButton?.removeEventListener('click', onTopClick);
     topButton?.remove();
     document.getElementById('personalized-plan-creator-modal')?.remove();
