@@ -36,6 +36,8 @@ import { SUPPLEMENT_DB, searchSupplementsDb } from '../data/supplementsDb.js';
 import { nutritionPlanService } from '../services/nutritionPlanService.js';
 import { DEFAULT_PLAN_PREFERENCES } from '../domain/nutritionPlanPolicy.js';
 import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
+import { renderBodyFatStep, getBodyFatRange } from '../components/bodyFatPicker.js';
+import '../styles/bodyFatPicker.css';
 
 const QUICK_SUPPLEMENT_NAMES = [
   'Creatine monohydrate',
@@ -52,6 +54,7 @@ let approvedTrainingDraft = null;
 
 export const STEP_KEYS = {
   MEASUREMENTS: 'measurements',
+  BODY_FAT: 'body_fat',
   GOAL: 'goal',
   WEEKLY_LOSS_RATE: 'weekly_loss_rate',
   WEEKLY_GAIN_RATE: 'weekly_gain_rate',
@@ -68,6 +71,7 @@ export function getActiveSteps() {
   if (formData.goal === 'fat_loss') {
     return [
       STEP_KEYS.MEASUREMENTS,
+      STEP_KEYS.BODY_FAT,
       STEP_KEYS.GOAL,
       STEP_KEYS.WEEKLY_LOSS_RATE,
       STEP_KEYS.NUTRITION,
@@ -82,6 +86,7 @@ export function getActiveSteps() {
   if (formData.goal === 'muscle_gain') {
     return [
       STEP_KEYS.MEASUREMENTS,
+      STEP_KEYS.BODY_FAT,
       STEP_KEYS.GOAL,
       STEP_KEYS.WEEKLY_GAIN_RATE,
       STEP_KEYS.NUTRITION,
@@ -95,6 +100,7 @@ export function getActiveSteps() {
   }
   return [
     STEP_KEYS.MEASUREMENTS,
+    STEP_KEYS.BODY_FAT,
     STEP_KEYS.GOAL,
     STEP_KEYS.NUTRITION,
     STEP_KEYS.PLAN_PREFERENCES,
@@ -114,6 +120,8 @@ let formData = {
   gender: 'male',
   height: 175, // 175 سم افتراضياً كما طلب المستخدم
   weight: 70, // 70 كغ افتراضياً كما طلب المستخدم
+  bodyFatRange: '',
+  bodyFatPercent: null, // visual estimate, not measured body composition
   unitSystem: 'metric', // metric or imperial
   goal: 'fat_loss',
   targetWeight: 65,
@@ -530,6 +538,10 @@ export function renderQuestionnaireView() {
   } else {
     formData.weight = 70;
   }
+  if (getBodyFatRange(profile?.bodyFatRange)) {
+    formData.bodyFatRange = profile.bodyFatRange;
+    formData.bodyFatPercent = getBodyFatRange(profile.bodyFatRange).estimate;
+  }
   if (profile?.targetWeight && Number(profile.targetWeight) > 0) {
     formData.targetWeight = Number(profile.targetWeight);
   }
@@ -631,6 +643,8 @@ function renderHorizontalPickerHTML(id, min, max, step, currentVal, unit) {
 
 function renderStepContent(step) {
   switch (step) {
+    case STEP_KEYS.BODY_FAT:
+      return renderBodyFatStep(formData.bodyFatRange, formData.gender);
     case STEP_KEYS.MEASUREMENTS:
     case 1:
       // الخطوة 1: قياسات الجسم بنمط iOS المرجعي مع سكرول أفقي
@@ -1561,6 +1575,11 @@ function renderStepContent(step) {
             <span style="font-weight: 800; color: #FFFFFF;">${formData.name} (${formData.age} سنة)</span>
           </div>
 
+          ${formData.bodyFatRange ? `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
+            <span style="color: #B8C0BC;">نسبة الدهون (تقدير بصري)</span>
+            <span style="font-weight: 800; color: #55F7A5;" dir="ltr">${formData.bodyFatRange}</span>
+          </div>` : ''}
+
           <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
             <span style="color: #B8C0BC;">الهدف الأساسي</span>
             <span style="font-weight: 800; color: #55F7A5;">${goalText}</span>
@@ -1796,6 +1815,8 @@ export function bindQuestionnaireEvents() {
   // تهيئة الأحداث المناسبة بحسب مفتاح الخطوة النشطة
   if (currentStepKey === STEP_KEYS.MEASUREMENTS) {
     initStep1HorizontalPickers();
+  } else if (currentStepKey === STEP_KEYS.BODY_FAT) {
+    initBodyFatStepEvents();
   } else if (currentStepKey === STEP_KEYS.GOAL) {
     initGoalStepEvents();
   } else if (currentStepKey === STEP_KEYS.WEEKLY_LOSS_RATE) {
@@ -1823,6 +1844,11 @@ export function bindQuestionnaireEvents() {
       const stepsNow = getActiveSteps();
       const totalNow = stepsNow.length;
       const stepKeyNow = stepsNow[currentStep - 1] || stepsNow[0];
+
+      if (stepKeyNow === STEP_KEYS.BODY_FAT && !getBodyFatRange(formData.bodyFatRange)) {
+        notificationService.showToast('اختَر نسبة الدهون التقريبية من الصور قبل المتابعة', 'warning');
+        return;
+      }
 
       // التحقق عند الخطوة 2 لهدف خسارة الدهون: الوزن المستهدف يجب أن يكون أقل
       if (stepKeyNow === STEP_KEYS.GOAL && formData.goal === 'fat_loss') {
@@ -3474,6 +3500,23 @@ export function bindQuestionnaireEvents() {
     });
   }
 
+  function initBodyFatStepEvents() {
+    const choices = Array.from(document.querySelectorAll('[data-body-fat-range]'));
+    choices.forEach(choice => choice.addEventListener('click', () => {
+      const selected = getBodyFatRange(choice.dataset.bodyFatRange);
+      if (!selected) return;
+      formData.bodyFatRange = selected.label;
+      formData.bodyFatPercent = selected.estimate;
+      choices.forEach(other => {
+        const chosen = other === choice;
+        other.classList.toggle('is-selected', chosen);
+        other.setAttribute('aria-checked', String(chosen));
+        const chip = other.querySelector('.body-fat-chip');
+        if (chip) chip.innerHTML = (chosen ? '<span class="body-fat-check" aria-hidden="true">✓</span>' : '') + other.dataset.bodyFatRange;
+      });
+    }));
+  }
+
   function saveCurrentStepInputs() {
     const activeSteps = getActiveSteps();
     const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
@@ -3489,6 +3532,13 @@ export function bindQuestionnaireEvents() {
       if (gender) formData.gender = gender;
       if (height > 0) formData.height = height;
       if (weight > 0) formData.weight = weight;
+    } else if (currentStepKey === STEP_KEYS.BODY_FAT) {
+      const selected = document.querySelector('[data-body-fat-range][aria-checked="true"]');
+      const option = getBodyFatRange(selected?.dataset.bodyFatRange);
+      if (option) {
+        formData.bodyFatRange = option.label;
+        formData.bodyFatPercent = option.estimate;
+      }
     } else if (currentStepKey === STEP_KEYS.GOAL) {
       const targetWeight = Number(document.getElementById('q-target-weight')?.value);
       const activity = document.getElementById('q-activity')?.value;
