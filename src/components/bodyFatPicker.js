@@ -84,7 +84,7 @@ export function renderBodyFatStep(selectedRange = '', gender = 'male') {
         <span class="body-fat-chip">${selectedRange === item.label ? '<span class="body-fat-check" aria-hidden="true">✓</span>' : ''}${item.label}</span>
       </button>`).join('')}
     </div>
-    <p class="body-fat-disclaimer" dir="rtl">الأشكال للمقارنة فقط، وليست قياسًا طبيًا. يمكنك تحديث اختيارك لاحقًا.</p>
+    <p class="body-fat-disclaimer" dir="rtl">الأشكال للمقارنة فقط، وليست قياسًا طبيًا. يمكنك الرجوع وتعديل اختيارك قبل إكمال التسجيل.</p>
     <button type="button" id="q-next-step-btn" class="body-fat-next">التالي <span dir="ltr">Next</span></button>
   </section>`;
 }
