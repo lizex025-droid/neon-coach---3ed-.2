@@ -32,7 +32,11 @@ const renderExerciseTitle = (title, englishFirst = false) => {
   const englishPart = `<em>${escapeHtml(english)}</em>`;
   return englishFirst ? `${englishPart}<span class="forty-title-slash">/</span>${arabicPart}` : `${arabicPart}<span class="forty-title-slash">/</span>${englishPart}`;
 };
-const hasCompletedSet = snapshot => (snapshot.session?.touchedExerciseIds || []).some(id => snapshot.trackers?.[id]?.sets?.some(set => set.done && (set.kg !== '' || set.reps !== '')));
+const hasCompletedSet = snapshot => (snapshot.session?.touchedExerciseIds || []).some(id => {
+  const tracker = snapshot.trackers?.[id];
+  return [...(tracker?.sets || []), ...(tracker?.superset?.sets || []), ...(tracker?.dropSets || [])]
+    .some(set => set.done && Number(set.reps) > 0);
+});
 const exerciseImageCache = new Map();
 const MAX_WARM_EXERCISE_IMAGES = 12;
 
