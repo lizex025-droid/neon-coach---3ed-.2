@@ -60,7 +60,7 @@ test('Drop Set adds a separate saved round after final base set and both count i
   service.setActivePlan('ulf');
   service.enableDropSet('ulfUpper', 0);
   const tracker = service.getTracker('ulfUpper', 0);
-  assert.equal(tracker.dropSets[0].parentSetIndex, tracker.sets.length - 1);
+  assert.equal(tracker.dropSets[0].parentSetIndex, 0, 'new Drop Set follows the first pending working set');
   service.updateSet('ulfUpper', 0, 2, 'kg', 34);
   service.updateSet('ulfUpper', 0, 2, 'reps', 8);
   service.toggleSet('ulfUpper', 0, 2);
@@ -135,4 +135,65 @@ test('Adding or tuning working sets keeps Super Set rounds aligned', () => isola
   });
   assert.equal(service.getTracker('ulfUpper', 0).superset.sets.length, 5);
   assert.equal(service.getTracker('ulfUpper', 0).superset.sets[3].done, true);
+}));
+
+
+test('Drop Set may be assigned to any working set, with immediate history relocation and no data loss', () => isolate(() => {
+  service.setActivePlan('ulf');
+  const day = 'ulfUpper';
+  // Place a Drop Set explicitly after set 1 (index 0).
+  assert.equal(service.enableDropSet(day, 0, 0), true);
+  logLinked(day, 0, 'drop', 0, 18, 13);
+  let tracker = service.getTracker(day, 0);
+  assert.equal(tracker.dropSets[0].parentSetIndex, 0);
+  assert.equal(service.getSharedHistory(day, 0)[0].dropRounds[0].afterSet, 1);
+  // User drags this logged round to set 3.
+  assert.equal(service.moveDropRound(day, 0, 0, 2), true);
+  tracker = service.getTracker(day, 0);
+  assert.deepEqual(
+    { kg: tracker.dropSets[0].kg, reps: tracker.dropSets[0].reps, done: tracker.dropSets[0].done },
+    { kg: 18, reps: 13, done: true }
+  );
+  let timeline = service.getSharedHistory(day, 0);
+  assert.equal(timeline.length, 1, 'relink must revise current record rather than create a new session');
+  assert.equal(timeline[0].dropRounds[0].afterSet, 3);
+  assert.equal(timeline[0].volume, 234);
+  assert.equal(service.moveDropRound(day, 0, 0, 1), true);
+  timeline = service.getSharedHistory(day, 0);
+  assert.equal(timeline[0].dropRounds[0].afterSet, 2);
+  assert.equal(service.moveDropRound(day, 0, 0, 1), false);
+  assert.equal(service.moveDropRound(day, 0, 0, 3), false, 'cannot attach outside actual sets');
+  const summary = service.finishWorkout();
+  assert.equal(summary.totalSets, 1);
+  assert.equal(summary.totalVolume, 234);
+  assert.equal(summary.exercises[0].dropRounds[0].afterSet, 2);
+  assert.equal(service.getSharedHistory(day, 0).length, 1);
+}));
+
+test('Add Drop to any chosen set and keep its position when a new Drop Round is added', () => isolate(() => {
+  service.setActivePlan('ulf');
+  assert.equal(service.addDropRound('ulfUpper', 0, 2), true);
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[0].parentSetIndex, 2);
+  assert.equal(service.addDropRound('ulfUpper', 0, 0), true);
+  assert.deepEqual(service.getTracker('ulfUpper', 0).dropSets.map(x => x.parentSetIndex), [2, 0]);
+  assert.equal(service.addDropRound('ulfUpper', 0, 1), true);
+  assert.deepEqual(service.getTracker('ulfUpper', 0).dropSets.map(x => x.parentSetIndex), [2, 0, 1]);
+  service.updateLinkedSet('ulfUpper', 0, 'drop', 1, 'kg', 16);
+  service.updateLinkedSet('ulfUpper', 0, 'drop', 1, 'reps', 10);
+  service.toggleLinkedSet('ulfUpper', 0, 'drop', 1);
+  assert.equal(service.getSharedHistory('ulfUpper', 0)[0].dropRounds[0].afterSet, 1);
+  assert.deepEqual(service.getTracker('ulfUpper', 0).dropSets.map(x => x.parentSetIndex), [2, 0, 1]);
+}));
+
+test('Default Drop Set attaches to first unfinished set rather than jumping to last set', () => isolate(() => {
+  service.setActivePlan('ulf');
+  service.updateSet('ulfUpper', 0, 0, 'kg', 30);
+  service.updateSet('ulfUpper', 0, 0, 'reps', 10);
+  service.toggleSet('ulfUpper', 0, 0);
+  assert.equal(service.enableDropSet('ulfUpper', 0), true);
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[0].parentSetIndex, 1,
+    'the next pending round is set 2');
+  assert.equal(service.addDropRound('ulfUpper', 0, 0), true);
+  assert.equal(service.getTracker('ulfUpper', 0).dropSets[1].parentSetIndex, 0,
+    'per-set action can still attach to already completed set 1');
 }));
