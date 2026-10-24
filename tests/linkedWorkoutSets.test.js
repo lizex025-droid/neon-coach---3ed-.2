@@ -33,7 +33,8 @@ test('Manage Super Set binds an actual library exercise, and each round is saved
   const day = 'ulfUpper';
   const row = chooseRow();
   assert.equal(service.configureSuperset(day, 0, row), true);
-  assert.equal(service.getTracker(day, 0).superset.sets.length, 3);
+  assert.equal(service.getTracker(day, 0).superset.sets.length, 1);
+  assert.equal(service.getTracker(day, 0).superset.sets[0].parentSetIndex, 0);
   assert.equal(service.getTracker(day, 0).superset.exerciseId, row.id);
   assert.equal(service.toggleLinkedSet(day, 0, 'superset', 0), null, 'empty rounds are not saved');
   logLinked(day, 0, 'superset', 0, 42, 11);
@@ -41,7 +42,7 @@ test('Manage Super Set binds an actual library exercise, and each round is saved
   assert.equal(history.length, 1);
   assert.equal(history[0].live, true);
   assert.deepEqual(history[0].superRounds[0], {
-    round: 1, kg: 42, reps: 11, exerciseId: row.id, exerciseTitle: row.title
+    round: 1, pairRound: 1, kg: 42, reps: 11, exerciseId: row.id, exerciseTitle: row.title
   });
   assert.equal(history[0].rounds.length, 0);
   assert.equal(history[0].volume, 462);
@@ -122,21 +123,24 @@ test('Changing a live checked Superset cannot silently drop checked rounds', () 
   assert.equal(service.getSharedHistory('ulfUpper', 0)[0].superRounds.length, 1);
 }));
 
-test('Adding or tuning working sets keeps Super Set rounds aligned', () => isolate(() => {
+test('Adding or tuning working sets preserves Super Set placements and saved rounds', () => isolate(() => {
   service.setActivePlan('ulf');
   service.configureSuperset('ulfUpper', 0, chooseRow());
   service.addSet('ulfUpper', 0);
-  assert.equal(service.getTracker('ulfUpper', 0).superset.sets.length, 4);
-  logLinked('ulfUpper', 0, 'superset', 3, 50, 8);
+  assert.equal(service.getTracker('ulfUpper', 0).sets.length, 4);
+  assert.equal(service.getTracker('ulfUpper', 0).superset.sets.length, 1,
+    'extra primary sets do not create unwanted companion rounds');
+  assert.equal(service.addSupersetRound('ulfUpper', 0, 3), true);
+  logLinked('ulfUpper', 0, 'superset', 1, 50, 8);
   assert.equal(service.getSharedHistory('ulfUpper', 0)[0].superRounds[0].round, 4);
   const tr = service.getTracker('ulfUpper', 0);
   service.tuneExercise('ulfUpper', 0, {
     targetSets: 5, targetReps: '8-12', weight: tr.weight, rest: tr.rest
   });
-  assert.equal(service.getTracker('ulfUpper', 0).superset.sets.length, 5);
-  assert.equal(service.getTracker('ulfUpper', 0).superset.sets[3].done, true);
+  assert.equal(service.getTracker('ulfUpper', 0).superset.sets.length, 2);
+  assert.equal(service.getTracker('ulfUpper', 0).superset.sets[1].done, true);
+  assert.equal(service.getTracker('ulfUpper', 0).superset.sets[1].parentSetIndex, 3);
 }));
-
 
 test('Drop Set may be assigned to any working set, with immediate history relocation and no data loss', () => isolate(() => {
   service.setActivePlan('ulf');
@@ -212,4 +216,66 @@ test('Default Drop Set follows the round just played (Set 1), not the next pendi
   assert.equal(service.addDropRound('ulfUpper', 0, 0), true,
     'explicit per-round selection also remains supported');
   assert.equal(service.getTracker('ulfUpper', 0).dropSets[3].parentSetIndex, 0);
+}));
+
+test('Super Set can be attached to Set 1, dragged to Set 3 and retain the logged round', () => isolate(() => {
+  service.setActivePlan('ulf');
+  const day = 'ulfUpper';
+  const row = chooseRow();
+  assert.equal(service.configureSuperset(day, 0, row), true);
+  // Starts at Set 1 before any regular set has been checked.
+  assert.deepEqual(service.getTracker(day, 0).superset.sets.map(set => set.parentSetIndex), [0]);
+  logLinked(day, 0, 'superset', 0, 45, 10);
+  assert.equal(service.getSharedHistory(day, 0)[0].superRounds[0].round, 1);
+  assert.equal(service.moveSupersetRound(day, 0, 0, 2), true);
+  const pair = service.getTracker(day, 0).superset.sets[0];
+  assert.deepEqual({kg:pair.kg,reps:pair.reps,done:pair.done,parent:pair.parentSetIndex},
+    {kg:45,reps:10,done:true,parent:2});
+  const updatedHistory = service.getSharedHistory(day, 0);
+  assert.equal(updatedHistory.length, 1);
+  assert.equal(updatedHistory[0].superRounds[0].round, 3);
+  assert.equal(updatedHistory[0].superRounds[0].pairRound, 1);
+  assert.equal(updatedHistory[0].volume, 450);
+  assert.equal(service.moveSupersetRound(day, 0, 0, 3), false);
+  assert.equal(service.moveSupersetRound(day, 0, 0, -1), false);
+  assert.equal(service.moveSupersetRound(day, 0, 0, 2), false);
+  const summary = service.finishWorkout();
+  assert.equal(summary.totalSets, 1);
+  assert.equal(summary.exercises[0].superRounds[0].round, 3);
+  assert.equal(service.getTracker(day, 0).superset.sets[0].parentSetIndex, 2);
+  assert.equal(service.getTracker(day, 0).superset.sets[0].done, false);
+}));
+
+test('Super Set can add multiple rounds under explicitly chosen sets without creating blank extras', () => isolate(() => {
+  service.setActivePlan('ulf');
+  const day = 'ulfUpper';
+  service.configureSuperset(day, 0, chooseRow());
+  assert.equal(service.addSupersetRound(day, 0, 2), true);
+  assert.equal(service.addSupersetRound(day, 0, 0), true);
+  assert.deepEqual(service.getTracker(day, 0).superset.sets.map(set => set.parentSetIndex), [0, 2, 0]);
+  logLinked(day, 0, 'superset', 1, 40, 10);
+  assert.deepEqual(service.getSharedHistory(day, 0)[0].superRounds.map(r => [r.pairRound,r.round]), [[2,3]]);
+  assert.equal(service.moveSupersetRound(day, 0, 1, 1), true);
+  assert.deepEqual(service.getSharedHistory(day, 0)[0].superRounds.map(r => [r.pairRound,r.round]), [[2,2]]);
+  const summary = service.finishWorkout();
+  assert.equal(summary.totalSets, 1);
+  assert.equal(summary.totalVolume, 400);
+}));
+
+test('Super Set legacy 3-set arrangement is preserved and given a position per set', () => isolate(() => {
+  service.setActivePlan('ulf');
+  const day = 'ulfUpper';
+  service.configureSuperset(day, 0, chooseRow());
+  const exerciseId = service.getExerciseId(day, 0);
+  service.load().trackers[exerciseId].superset.sets = [
+    { kg:25,reps:9,done:true },
+    { kg:23,reps:9,done:false },
+    { kg:21,reps:8,done:false }
+  ];
+  const restored = service.getTracker(day, 0);
+  assert.deepEqual(restored.superset.sets.map(x => x.parentSetIndex), [0,1,2]);
+  assert.equal(restored.superset.sets[0].kg,25);
+  assert.equal(restored.superset.sets[0].done,true);
+  assert.equal(service.moveSupersetRound(day, 0, 0, 1),true);
+  assert.equal(service.getTracker(day, 0).superset.sets[0].parentSetIndex,1);
 }));
