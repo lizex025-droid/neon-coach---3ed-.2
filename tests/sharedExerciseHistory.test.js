@@ -102,3 +102,26 @@ test('Explicit reset clears current sets but retains shared workout history with
   assert.equal(service.getTracker('ulfUpper', 0).sets[0].kg, '');
   assert.equal(service.getSharedHistory('ulfUpper', 0).length, 1);
 }));
+
+test('Hasm 45-degree incline is visible in Upper and retains its old sets', () => withIsolatedWorkout(() => {
+  service.setActivePlan('hasm');
+  const oldExercise = service.getDay('chestBiceps').exercises[1];
+  const newExercise = service.getDay('ulfUpper', 'ulf').exercises[2];
+  const machineExercise = service.getDay('ulfFull', 'ulf').exercises[0];
+  assert.match(oldExercise.title, /Incline Bench Press/);
+  assert.match(newExercise.title, /45°/);
+  assert.equal(exerciseHistoryKey(oldExercise), exerciseHistoryKey(newExercise));
+  assert.notEqual(exerciseHistoryKey(oldExercise), exerciseHistoryKey(machineExercise));
+  service.updateSet('chestBiceps', 1, 0, 'kg', 28);
+  service.updateSet('chestBiceps', 1, 0, 'reps', 9);
+  service.toggleSet('chestBiceps', 1, 0);
+  service.finishWorkout();
+  service.setActivePlan('ulf');
+  const tracker = service.getTracker('ulfUpper', 2);
+  assert.deepEqual(tracker.sets[0], { kg: 28, reps: 9, done: false });
+  const history = service.getSharedHistory('ulfUpper', 2);
+  assert.equal(history.length, 1);
+  assert.deepEqual(history[0].rounds[0], { round: 1, kg: 28, reps: 9 });
+  assert.equal(service.getSharedHistory('ulfFull', 0).length, 0);
+  assert.equal(service.getTracker('chestBiceps', 1).history.length, 1);
+}));
