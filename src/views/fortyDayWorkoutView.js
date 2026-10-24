@@ -606,11 +606,33 @@ function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
   });
   const totalVolume = history.reduce((sum, row) => sum + Number(row.volume || (Number(row.weight || 0) * Number(row.reps || 0) * Number(row.sets || 0))), 0);
   const bestWeight = Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0)));
-  const roundCount = history.reduce((sum, row) => sum + (Array.isArray(row.rounds) ? row.rounds.length : Number(row.sets || 0)), 0);
-  const loggedSets = (tracker?.sets || []).filter(set => set.done && Number(set.reps) > 0).length;
-  const tableRows = history.slice().reverse().flatMap(row => Array.isArray(row.rounds) && row.rounds.length
-    ? row.rounds.map(round => ({ date: row.date, round: round.round, reps: round.reps, weight: round.kg }))
-    : [{ date: row.date, round: row.sets || '-', reps: row.bestReps || row.reps || '-', weight: row.bestKg || row.weight || '-' }]);
+  const roundCount = history.reduce((sum, row) => sum +
+    (Array.isArray(row.rounds) ? row.rounds.length : Number(row.sets || 0)) +
+    (row.superRounds?.length || 0) + (row.dropRounds?.length || 0), 0);
+  const loggedSets = [
+    ...(tracker?.sets || []),
+    ...(tracker?.superset?.sets || []),
+    ...(tracker?.dropSets || [])
+  ].filter(set => set.done && Number(set.reps) > 0).length;
+  const tableRows = history.slice().reverse().flatMap(row => {
+    const original = (row.rounds || []).map(round => ({
+      date: row.date, round: `Set ${round.round}`, reps: round.reps, weight: round.kg
+    }));
+    const paired = (row.superRounds || []).map(round => ({
+      date: row.date,
+      round: `SS ${round.round} · ${(round.exerciseTitle || 'Super Set').split('|').at(-1).trim()}`,
+      reps: round.reps, weight: round.kg
+    }));
+    const drops = (row.dropRounds || []).map(round => ({
+      date: row.date, round: `DROP ${round.round} (Set ${round.afterSet})`,
+      reps: round.reps, weight: round.kg
+    }));
+    const result = [...original, ...paired, ...drops];
+    if (result.length) return result;
+    return !Array.isArray(row.rounds)
+      ? [{ date: row.date, round: row.sets || '-', reps: row.bestReps || row.reps || '-', weight: row.bestKg || row.weight || '-' }]
+      : [];
+  });
   return `
     <button type="button" class="forty-modal-close" data-close-modal aria-label="إغلاق">×</button>
     <span class="forty-modal-kicker">HISTORY</span><h2 class="forty-modal-title">${renderExerciseTitle(exercise.title)}</h2>
@@ -693,12 +715,26 @@ function renderTuneModal(dayKey, exerciseIndex) {
 
 function renderSummary(summary) {
   const formatBestSet = exercise => exercise.bestKg > 0 ? `${exercise.bestKg} kg × ${exercise.bestReps || '-'}` : `${exercise.bestReps || exercise.reps || '-'} reps`;
-  const rows = summary.exercises.length ? summary.exercises.map(exercise => `
-    <div class="summary-exercise-row">
-      <b>${exercise.sets} × ${escapeHtml(exercise.title)}${exercise.isPersonalRecord ? ' ★' : ''}</b>
-      <span>${formatBestSet(exercise)}</span>
-    </div>
-  `).join('') : '<div class="summary-empty">لم يتم إدخال جولات في هذه الجلسة.</div>';
+  const rows = summary.exercises.length ? summary.exercises.map(exercise => {
+    const paired = exercise.superRounds || [];
+    const drops = exercise.dropRounds || [];
+    const pairBest = paired.reduce((best, set) => set.kg > (best?.kg || 0) ? set : best, paired[0]);
+    const dropBest = drops.reduce((best, set) => set.kg > (best?.kg || 0) ? set : best, drops[0]);
+    return `
+      ${(exercise.rounds || []).length ? `<div class="summary-exercise-row">
+        <b>${exercise.rounds.length} × ${escapeHtml(exercise.title)}${exercise.isPersonalRecord ? ' ★' : ''}</b>
+        <span>${formatBestSet(exercise)}</span>
+      </div>` : ''}
+      ${paired.length ? `<div class="summary-exercise-row">
+        <b>SS · ${paired.length} × ${escapeHtml(exercise.supersetTitle || paired[0]?.exerciseTitle || 'Super Set')}</b>
+        <span>${pairBest?.kg || 0} kg × ${pairBest?.reps || 0}</span>
+      </div>` : ''}
+      ${drops.length ? `<div class="summary-exercise-row">
+        <b>DROP · ${drops.length} × ${escapeHtml(exercise.title)}</b>
+        <span>${dropBest?.kg || 0} kg × ${dropBest?.reps || 0}</span>
+      </div>` : ''}
+    `;
+  }).join('') : '<div class="summary-empty">لم يتم إدخال جولات في هذه الجلسة.</div>';
   return `
     <div class="summary-stars">★ ★ ★</div>
     <header class="summary-hero">
