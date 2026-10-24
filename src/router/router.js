@@ -23,6 +23,7 @@ import { store } from '../state/store.js';
 import { authService } from '../services/authService.js';
 import { syncService } from '../services/syncService.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
+import { clearWorkoutPageEffects } from '../utils/workoutPageEffects.js';
 
 export const ROUTES = {
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
@@ -214,12 +215,8 @@ export class Router {
     // Route boundaries must never inherit an old training modal/drag scroll
     // lock. An invisible fixed overlay or body overflow:hidden blocks all
     // scrolling in unrelated tabs, especially on iOS standalone PWAs.
-    document.querySelectorAll(
-      'body > .ai-modal-overlay, body > #personalized-plan-creator-modal, body > #workout-top-pill'
-    ).forEach(el => el.remove());
-    if (document.body.style.overflow === 'hidden') document.body.style.overflow = '';
-    if (document.body.style.touchAction === 'none') document.body.style.touchAction = '';
-    if (document.body.style.userSelect === 'none') document.body.style.userSelect = '';
+    document.querySelectorAll('body > .ai-modal-overlay').forEach(el => el.remove());
+    clearWorkoutPageEffects();
 
     let html = '';
 
