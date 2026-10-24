@@ -550,7 +550,7 @@ const filterHistory = (history, range) => {
 function renderHistoryModal(dayKey, exerciseIndex, range = 'ALL') {
   const exercise = fortyDayWorkoutService.getDay(dayKey).exercises[exerciseIndex];
   const tracker = fortyDayWorkoutService.getTracker(dayKey, exerciseIndex);
-  const history = filterHistory(tracker?.history || [], range);
+  const history = filterHistory(fortyDayWorkoutService.getSharedHistory(dayKey, exerciseIndex), range);
   const maxWeight = Math.min(500, Math.max(25, Math.ceil(Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0))) / 25) * 25));
   const points = history.map((row, index) => {
     const x = ((index + 1) / history.length) * 100;
@@ -601,7 +601,7 @@ function bindHistoryHover(sheet, dayKey, exerciseIndex, range) {
   const chart = sheet?.querySelector('.forty-history-plot svg');
   const line = chart?.querySelector('.forty-history-hover-line');
   const tip = sheet?.querySelector('.forty-history-hover-tip');
-  const history = filterHistory(fortyDayWorkoutService.getTracker(dayKey, exerciseIndex)?.history || [], range);
+  const history = filterHistory(fortyDayWorkoutService.getSharedHistory(dayKey, exerciseIndex), range);
   const maxWeight = Math.min(500, Math.max(25, Math.ceil(Math.max(0, ...history.map(row => Number(row.bestKg || row.weight || 0))) / 25) * 25));
   const points = history.map((row, index) => ({
     x: ((index + 1) / history.length) * 100,
