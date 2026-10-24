@@ -31,14 +31,6 @@ export function renderHeader() {
 }
 
 export function bindHeaderEvents() {
-  // Keep this small shortcut at the viewport's bottom-right on iOS too.
-  // A sticky, backdrop-filtered header can become the containing block of
-  // fixed descendants; portal the button to <body> to prevent that.
-  document.querySelectorAll('body > #workout-top-pill').forEach(button => button.remove());
-  const workoutTop = document.getElementById('workout-top-pill');
-  if (workoutTop) {
-    document.body.appendChild(workoutTop);
-  }
   const roleBtn = document.getElementById('role-toggle-btn');
   if (roleBtn) {
     roleBtn.addEventListener('click', () => {
