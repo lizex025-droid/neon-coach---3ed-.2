@@ -1691,6 +1691,8 @@ export function bindFortyDayWorkoutEvents() {
   return () => {
     clearInterval(timerInterval);
     stopLinkedDrag();
+    // The shortcut is portaled to body, so remove it when leaving Training.
+    document.querySelector('body > #workout-top-pill')?.remove();
     imageRequestId += 1;
     imagePreloadObserver?.disconnect();
     document.removeEventListener('keydown', onKeyDown);
