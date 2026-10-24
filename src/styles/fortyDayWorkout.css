@@ -108,7 +108,58 @@
 .forty-finish-wrap { display: grid; gap: 7px; text-align: center; }
 .forty-finish-wrap .btn { width: 100%; border-radius: 17px; }
 .forty-finish-wrap small { color: rgba(255,255,255,.4); }
-.forty-scroll-top { position: fixed; left: 18px; bottom: 102px; z-index: 40; width: 43px; height: 43px; border: 1px solid var(--forty-line); border-radius: 50%; color: var(--forty-mint); background: rgba(2,16,10,.9); opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s; }
+/* Compact back-to-top pill on the right, matching the requested mobile reference. */
+.forty-scroll-top {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 78px);
+  right: max(12px, env(safe-area-inset-right, 0px));
+  left: auto;
+  bottom: auto;
+  z-index: 48;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: auto;
+  min-width: 83px;
+  min-height: 42px;
+  padding: 5px 13px;
+  border: 1px solid rgba(110,231,183,.40);
+  border-radius: 999px;
+  background: rgba(2,19,13,.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--forty-mint);
+  font: 700 .92rem/1 'Cairo', sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 5px 24px rgba(0,0,0,.25);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-9px);
+  transition: opacity .2s ease, transform .2s ease, border-color .2s ease, background .2s ease;
+  cursor: pointer;
+}
+.forty-scroll-top.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.forty-scroll-top:hover, .forty-scroll-top:focus-visible {
+  border-color: var(--forty-mint);
+  background: rgba(12,51,34,.98);
+}
+.forty-scroll-top:focus-visible { outline: 2px solid var(--forty-mint); outline-offset: 3px; }
+.forty-scroll-top .forty-scroll-top-arrow { font-family: inherit; font-size: 1.17rem; font-weight: 800; line-height: 1; }
+@media (max-width: 480px) {
+  .forty-scroll-top {
+    top: calc(env(safe-area-inset-top, 0px) + 74px);
+    right: max(9px, env(safe-area-inset-right, 0px));
+    min-height: 39px;
+    min-width: 78px;
+    padding: 5px 11px;
+    font-size: .89rem;
+  }
+}
 .forty-modal { position: fixed; inset: 0; z-index: 1200; display: none; place-items: center; padding: 16px; background: rgba(0,7,4,.9); opacity: 0; pointer-events: none; transition: opacity .2s; direction: ltr; text-align: left; }
 .forty-modal.is-open { display: grid; opacity: 1; pointer-events: auto; }
 .forty-modal-sheet { position: relative; width: min(100%,680px); max-height: min(92vh,850px); overflow: auto; padding: 29px; border: 1px solid rgba(110,231,183,.32); border-radius: 24px; background: #010905; box-shadow: 0 30px 100px rgba(0,0,0,.7); }
