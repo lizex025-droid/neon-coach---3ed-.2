@@ -33,6 +33,7 @@ export function scrollWorkoutToTop(win = window, doc = document) {
     }
     try { win.scrollTo(0, 0); } catch (_) { /* unsupported */ }
     try { win.scroll?.(0, 0); } catch (_) { /* unsupported */ }
+    try { win.scrollTop = 0; } catch (_) { /* read-only window */ }
   };
 
   forceTop();
