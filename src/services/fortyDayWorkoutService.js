@@ -712,7 +712,8 @@ class FortyDayWorkoutService {
       const tracker = state.trackers[entry.id] || readJson(`exercise_tracker_${entry.id}`, null);
       if (!Array.isArray(tracker?.history)) continue;
       const primary = entry.key === key;
-      const companion = tracker.superset?.title && exerciseHistoryKey({ title: tracker.superset.title }) === key;
+      const companion = tracker.history.some(record => Array.isArray(record.superRounds) &&
+        record.superRounds.some(round => exerciseHistoryKey({ title: round.exerciseTitle }) === key));
       if (!primary && !companion) continue;
       for (const record of tracker.history) {
         if (!record || typeof record !== 'object' || record.cancelled) continue;
@@ -720,7 +721,7 @@ class FortyDayWorkoutService {
         // rewriting the parent tracker/plan ID.
         if (companion && Array.isArray(record.superRounds)) {
           const companionRounds = record.superRounds.filter(round =>
-            round.exerciseId === tracker.superset.exerciseId);
+            exerciseHistoryKey({ title: round.exerciseTitle }) === key);
           if (companionRounds.length) {
             const identity = `${entry.id}:superset|${record.sessionId || record.isoDate}|${JSON.stringify(companionRounds)}`;
             if (!seen.has(identity)) {
@@ -838,6 +839,9 @@ class FortyDayWorkoutService {
     if (!tracker || !libraryExercise?.id || !exercise) return false;
     if (exerciseHistoryKey(exercise) === exerciseHistoryKey(libraryExercise)) return false;
     const current = tracker.superset;
+    // Never silently discard already recorded companion rounds mid-session.
+    if (current && current.exerciseId !== libraryExercise.id &&
+        current.sets.some(set => set.done)) return false;
     tracker.superset = {
       exerciseId: libraryExercise.id,
       title: libraryExercise.title || `${libraryExercise.nameAr} | ${libraryExercise.nameEn}`,
