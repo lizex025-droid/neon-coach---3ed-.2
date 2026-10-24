@@ -1,5 +1,5 @@
 // NEON COACH - Service Worker (Offline-First Cache for App Shell & Lightning Fast Images)
-const CACHE_NAME = 'neon-coach-v1.3.0';
+const CACHE_NAME = 'neon-coach-v1.3.1-scrollfix';
 const IMAGES_CACHE_NAME = 'neon-coach-images-v2';
 const NAVIGATION_FALLBACK = './index.html';
 
