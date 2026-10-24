@@ -9,9 +9,13 @@ import { neonIcon } from '../utils/neonIcons.js';
 export function renderHeader() {
   const state = store.getState();
   const isCoach = state.currentRole === 'coach';
+  const isWorkout = window.location.hash.replace(/^#\/?/, '').split(/[/?]/)[0] === 'workout';
 
   return `
     <header class="app-header">
+      ${isWorkout ? `<button type="button" id="workout-top-pill" class="header-workout-top" aria-label="العودة إلى أعلى صفحة التدريب" title="العودة لأعلى">
+        <span dir="ltr">Top ↑</span>
+      </button>` : ''}
       <div class="header-brand">
         <img src="./icons/neon-cat-coach.svg" alt="NEON COACH" style="width: 34px; height: 34px;">
         <span class="header-logo-text">NEON COACH</span>
@@ -27,6 +31,17 @@ export function renderHeader() {
 }
 
 export function bindHeaderEvents() {
+  // The header is sticky on every workout screen. Unlike a floating button
+  // inside the training view, this is always mounted and visible on mobile.
+  const workoutTop = document.getElementById('workout-top-pill');
+  if (workoutTop) {
+    workoutTop.addEventListener('click', () => {
+      const scrollOptions = { top: 0, behavior: 'smooth' };
+      window.scrollTo(scrollOptions);
+      document.getElementById('view-container')?.scrollTo?.(scrollOptions);
+      document.scrollingElement?.scrollTo?.(scrollOptions);
+    });
+  }
   const roleBtn = document.getElementById('role-toggle-btn');
   if (roleBtn) {
     roleBtn.addEventListener('click', () => {
