@@ -1006,14 +1006,14 @@ function initDragAndReorder(container, onReorder) {
   });
 }
 
-// Drag a Drop Set by its grip onto any working set within the same exercise.
-// This is independent from the existing drag-to-reorder exercise cards.
-function bindDropRoundDrag(container, onMove) {
+// Drag a Drop Set or Super Set to any working set without affecting the
+// separate existing long-press exercise-reorder controls.
+function bindLinkedRoundDrag(container, onMove) {
   let active = null;
   const cleanup = () => {
     if (!active) return;
-    active.row.classList.remove('is-dragging-drop');
-    active.targets.forEach(target => target.classList.remove('is-drop-target'));
+    active.row.classList.remove('is-dragging-drop', 'is-dragging-super');
+    active.targets.forEach(target => target.classList.remove('is-drop-target', 'is-super-target'));
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', onPointerUp);
     window.removeEventListener('pointercancel', onPointerCancel);
@@ -1034,22 +1034,23 @@ function bindDropRoundDrag(container, onMove) {
       if (d < min) { nearest = row; min = d; }
     }
     active.nextParent = Number(nearest.dataset.workingSet);
-    targets.forEach(row => row.classList.toggle('is-drop-target', row === nearest));
-    active.row.classList.add('is-dragging-drop');
+    targets.forEach(row => row.classList.toggle(active.kind === 'superset' ? 'is-super-target' : 'is-drop-target', row === nearest));
+    active.row.classList.add(active.kind === 'superset' ? 'is-dragging-super' : 'is-dragging-drop');
   };
   const onPointerUp = event => {
     if (!active || event.pointerId !== active.pointerId) return;
-    const { dragged, nextParent, originalParent, exerciseIndex, dropIndex } = active;
+    const { dragged, nextParent, originalParent, exerciseIndex, linkedIndex, kind } = active;
     cleanup();
-    if (dragged && nextParent !== originalParent) onMove(exerciseIndex, dropIndex, nextParent);
+    if (dragged && nextParent !== originalParent) onMove(kind, exerciseIndex, linkedIndex, nextParent);
   };
   const onPointerCancel = event => {
     if (active && event.pointerId === active.pointerId) cleanup();
   };
   const onPointerDown = event => {
-    const handle = event.target.closest?.('.forty-drop-drag-handle');
+    const handle = event.target.closest?.('.forty-drop-drag-handle,.forty-super-drag-handle');
     if (!handle || (event.pointerType === 'mouse' && event.button !== 0)) return;
-    const row = handle.closest('.forty-linked-set-row.is-drop');
+    const kind = handle.classList.contains('forty-super-drag-handle') ? 'superset' : 'drop';
+    const row = handle.closest('.forty-linked-set-row');
     const card = handle.closest('.forty-exercise-card');
     if (!row || !card) return;
     const targets = Array.from(card.querySelectorAll('.forty-set-row[data-working-set]'));
@@ -1059,7 +1060,8 @@ function bindDropRoundDrag(container, onMove) {
       pointerId: event.pointerId, row, targets,
       startX: event.clientX, startY: event.clientY, dragged: false,
       exerciseIndex: Number(row.dataset.exerciseIndex),
-      dropIndex: Number(row.dataset.dropIndex),
+      kind,
+      linkedIndex: Number(kind === 'superset' ? row.dataset.superIndex : row.dataset.dropIndex),
       originalParent: Number(row.dataset.parentSet),
       nextParent: Number(row.dataset.parentSet)
     };
@@ -1255,10 +1257,13 @@ export function bindFortyDayWorkoutEvents() {
     prepareVisibleExerciseImages();
   };
 
-  const stopDropDrag = dayContent ? bindDropRoundDrag(dayContent, (exerciseIndex, dropIndex, parentSetIndex) => {
-    if (fortyDayWorkoutService.moveDropRound(activeDay, exerciseIndex, dropIndex, parentSetIndex)) {
+  const stopLinkedDrag = dayContent ? bindLinkedRoundDrag(dayContent, (kind, exerciseIndex, roundIndex, parentSetIndex) => {
+    const moved = kind === 'superset'
+      ? fortyDayWorkoutService.moveSupersetRound(activeDay, exerciseIndex, roundIndex, parentSetIndex)
+      : fortyDayWorkoutService.moveDropRound(activeDay, exerciseIndex, roundIndex, parentSetIndex);
+    if (moved) {
       renderActiveDay();
-      notificationService.showToast(`تم نقل Drop Set تحت الجولة ${parentSetIndex + 1} ✓`, 'success');
+      notificationService.showToast(`تم نقل ${kind === 'superset' ? 'Super Set' : 'Drop Set'} تحت الجولة ${parentSetIndex + 1} ✓`, 'success');
     }
   }) : () => {};
   if (dayContent) {
@@ -1557,6 +1562,22 @@ export function bindFortyDayWorkoutEvents() {
       notificationService.showToast(result ? `تم حفظ جولة ${kind === 'drop' ? 'Drop Set' : 'Super Set'} في History ✓` : 'تم إلغاء تسجيل الجولة.', 'success');
       return;
     }
+    if (button.dataset.action === 'add-superset-to-set' || button.dataset.action === 'add-superset-round') {
+      const parent = button.dataset.action === 'add-superset-to-set'
+        ? Number(button.dataset.set) : null;
+      const added = fortyDayWorkoutService.addSupersetRound(activeDay, index, parent);
+      if (!added) notificationService.showToast('اختَر تمرين Super Set أولًا، أو وصلت إلى 12 جولة.', 'warning');
+      else renderActiveDay();
+      return;
+    }
+    if (button.dataset.action === 'move-superset') {
+      const tracker = fortyDayWorkoutService.getTracker(activeDay, index);
+      const superIndex = Number(button.dataset.set);
+      const current = tracker?.superset?.sets?.[superIndex]?.parentSetIndex;
+      if (current != null && fortyDayWorkoutService.moveSupersetRound(
+        activeDay, index, superIndex, current + Number(button.dataset.delta))) renderActiveDay();
+      return;
+    }
     if (button.dataset.action === 'add-drop-to-set') {
       const added = fortyDayWorkoutService.addDropRound(activeDay, index, Number(button.dataset.set));
       if (!added) {
@@ -1691,7 +1712,7 @@ export function bindFortyDayWorkoutEvents() {
   window.addEventListener('scroll', onScroll, { passive: true });
   return () => {
     clearInterval(timerInterval);
-    stopDropDrag();
+    stopLinkedDrag();
     imageRequestId += 1;
     imagePreloadObserver?.disconnect();
     document.removeEventListener('keydown', onKeyDown);
