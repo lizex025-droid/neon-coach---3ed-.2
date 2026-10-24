@@ -1124,7 +1124,7 @@ class FortyDayWorkoutService {
       const previousBest = Math.max(0, ...this.getSharedExerciseHistory(exercise)
         .filter(row => row.sessionId !== currentSessionId)
         .map(row => Number(row.bestKg || row.weight || 0)));
-      const isPersonalRecord = Boolean(Number(best.kg || 0) && previousBest > 0 && Number(best.kg || 0) > previousBest);
+      const isPersonalRecord = Boolean(Number(best?.kg || 0) && previousBest > 0 && Number(best?.kg || 0) > previousBest);
       if (isPersonalRecord) personalRecords += 1;
       totalSets += allPlayed.length;
       totalReps += allPlayed.reduce((sum, set) => sum + Number(set.reps || 0), 0);
