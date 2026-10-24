@@ -196,10 +196,10 @@ export class Router {
       if (appRoot) appRoot.scrollTop = 0;
     };
 
+    // Only correct the next paint; delayed forced scrolling on each route
+    // could pull a user's first swipe back to the top on other tabs.
     performScroll();
     requestAnimationFrame(performScroll);
-    setTimeout(performScroll, 10);
-    setTimeout(performScroll, 60);
   }
 
   renderRoute(route, routeKey) {
