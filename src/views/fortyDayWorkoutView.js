@@ -159,7 +159,7 @@ export function renderFortyDayWorkoutView() {
         <small>أكمل جولة واحدة على الأقل لتفعيل إنهاء الجلسة</small>
       </div>
 
-      <button type="button" class="forty-scroll-top" id="forty-scroll-top" aria-label="العودة إلى أعلى">↑</button>
+      <button type="button" class="forty-scroll-top" id="forty-scroll-top" aria-label="العودة إلى أعلى الصفحة" title="العودة إلى أعلى الصفحة"><span>Top</span><span class="forty-scroll-top-arrow" aria-hidden="true">↑</span></button>
 
       <div class="forty-modal" id="forty-image-modal" aria-hidden="true">
         <div class="forty-modal-sheet image-sheet">
@@ -1690,9 +1690,10 @@ export function bindFortyDayWorkoutEvents() {
 
   root.querySelectorAll('.forty-modal,.workout-summary-modal').forEach(modal => modal.addEventListener('click', event => { if (event.target === modal) closeModals(); }));
   const onKeyDown = event => { if (event.key === 'Escape') closeModals(); };
-  const onScroll = () => document.getElementById('forty-scroll-top')?.classList.toggle('is-visible', window.scrollY > 500);
+  const onScroll = () => root.querySelector('#forty-scroll-top')?.classList.toggle('is-visible', window.scrollY > 350);
   document.addEventListener('keydown', onKeyDown);
   window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); // Also show immediately if the route opens while already scrolled.
   return () => {
     clearInterval(timerInterval);
     stopLinkedDrag();
