@@ -93,10 +93,10 @@ export function renderFortyDayWorkoutView() {
           <h1>${program.title}</h1>
           <p>${program.description}</p>
           <div class="forty-progress-meta">
-            <strong>${activePlan === 'fbw' || activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم النشط: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
-            <span>${activePlan === 'fbw' ? '3 أيام / أسبوع' : `${progress}% مكتمل`}</span>
+            <strong>${(activePlan === 'ulf' || activePlan === 'fbw' || activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized') ? `اليوم النشط: ${activeDayObj?.short || ''}` : `اليوم ${workoutNumber} من ${program.durationDays}`}</strong>
+            <span>${(activePlan === 'ulf' || activePlan === 'fbw') ? '3 أيام / أسبوع' : `${progress}% مكتمل`}</span>
           </div>
-          ${activePlan === 'fbw' ? `<p>${escapeHtml(program.schedule)}</p><p>${escapeHtml(program.dropSetNote)}</p>` : `<div class="forty-progress-track"><span style="width:${progress}%"></span></div>`}
+          ${(activePlan === 'ulf' || activePlan === 'fbw') ? `<p>${escapeHtml(program.schedule)}</p><p>${escapeHtml(program.dropSetNote)}</p>` : `<div class="forty-progress-track"><span style="width:${progress}%"></span></div>`}
         </div>
       </section>
 
@@ -125,15 +125,15 @@ export function renderFortyDayWorkoutView() {
       <section class="forty-days-section">
         <div class="forty-section-heading">
           <div>
-            <span>${activePlan === 'fbw' ? 'خطة FBW — Full Body' : activePlan === 'anas' ? 'خطة نظام أنس' : (activePlan === 'hasm' ? 'خطة نظام الحسم' : (activePlan === 'personalized' ? 'الخطة المقترحة من التطبيق' : 'خطة الأسبوع'))}</span>
+            <span>${activePlan === 'ulf' ? 'خطة Upper / Lower / Full Body' : activePlan === 'fbw' ? 'خطة FBW — Full Body' : activePlan === 'anas' ? 'خطة نظام أنس' : (activePlan === 'hasm' ? 'خطة نظام الحسم' : (activePlan === 'personalized' ? 'الخطة المقترحة من التطبيق' : 'خطة الأسبوع'))}</span>
             <h2>${activePlan === 'anas' ? 'اختر نوع التمرين' : (activePlan === 'hasm' ? 'اختر مجموعة العضلات لعرض تمارينها فقط' : (activePlan === 'personalized' ? 'اختر يوم التمرين المقترح' : 'اختر يوم التمرين'))}</h2>
           </div>
-          <p>${activePlan === 'fbw' ? '3 أيام · السبت A / الأحد B / الثلاثاء C' : activePlan === 'anas' ? '5 أيام تدريبية: Push / Pull / Legs / Upper / كتف' : (activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : (activePlan === 'personalized' ? `${days.length} أيام تدريبية مخصصة ومعدلة حسب أهدافك وإصاباتك` : '6 أيام Push / Pull / Legs ثم يوم راحة'))}</p>
+          <p>${activePlan === 'ulf' ? '3 أيام · السبت Upper / الأحد Lower / الثلاثاء Full Body' : activePlan === 'fbw' ? '3 أيام · السبت A / الأحد B / الثلاثاء C' : activePlan === 'anas' ? '5 أيام تدريبية: Push / Pull / Legs / Upper / كتف' : (activePlan === 'hasm' ? '6 مجموعات عضلية مركزة لتضخيم وقوة مثالية' : (activePlan === 'personalized' ? `${days.length} أيام تدريبية مخصصة ومعدلة حسب أهدافك وإصاباتك` : '6 أيام Push / Pull / Legs ثم يوم راحة'))}</p>
         </div>
         <div class="forty-day-tabs ${activePlan === 'hasm' ? 'hasm-tabs' : (activePlan === 'anas' ? 'anas-tabs' : (activePlan === 'personalized' ? 'personalized-tabs' : ''))}" id="forty-day-tabs" role="tablist" aria-label="أيام التمرين">
           ${days.map((day, idx) => `
             <button type="button" role="tab" aria-selected="${day.key === activeDay ? 'true' : 'false'}" class="forty-day-tab tone-${day.tone} ${day.key === activeDay ? 'is-active' : ''}" data-day="${day.key}">
-              <span class="forty-tab-day">${activePlan === 'fbw' || activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized' ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
+              <span class="forty-tab-day">${(activePlan === 'ulf' || activePlan === 'fbw' || activePlan === 'hasm' || activePlan === 'anas' || activePlan === 'personalized') ? `اليوم ${idx + 1}` : (day.key === 'rest' ? 'استشفاء' : `اليوم ${idx + 1}`)}</span>
               <span class="forty-tab-title">${escapeHtml(day.short || day.label)}</span>
             </button>
           `).join('')}
