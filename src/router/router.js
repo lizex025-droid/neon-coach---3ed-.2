@@ -23,6 +23,7 @@ import { store } from '../state/store.js';
 import { authService } from '../services/authService.js';
 import { syncService } from '../services/syncService.js';
 import { initCrossTabActionToastListener } from '../services/actionToastService.js';
+import { scrollWorkoutToTop } from '../utils/workoutScroll.js';
 
 export const ROUTES = {
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
@@ -51,6 +52,17 @@ export class Router {
     window.addEventListener('hashchange', () => this.handleRoute());
     
     // معالج عام لإغلاق أي نافذة منبثقة عند الضغط على زر الإغلاق ✕ أو النقر خارج النافذة
+    // Capture Top ↑ clicks at the permanent router level. On the workout
+    // route the pill is moved into <body> and can outlive/redraw the header,
+    // so a click handler bound only to that header may stop working.
+    document.addEventListener('click', (event) => {
+      const topButton = event.target?.closest?.('#workout-top-pill');
+      if (!topButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+      scrollWorkoutToTop();
+    }, true);
+
     document.addEventListener('click', (e) => {
       const modalClose = e.target.closest('[data-action="close"], [aria-label="إغلاق"], [id^="close-"], .close-custom-food-modal-btn, .close-btn, .btn-close');
       if (modalClose) {
