@@ -259,13 +259,32 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
       <div class="forty-card-actions"><button type="button" data-action="history" data-index="${exerciseIndex}">history</button><button type="button" data-action="tune" data-index="${exerciseIndex}">tune</button></div>
       <div class="forty-sets" role="table" aria-label="جولات ${escapeHtml(exercise.title)}">
         ${(tracker?.sets || []).map((set, setIndex) => `
-          <div class="forty-set-row ${set.done ? 'is-done' : ''}" role="row">
+          <div class="forty-set-row ${set.done ? 'is-done' : ''}" role="row" data-working-set="${setIndex}">
             <span class="forty-set-number">${setIndex + 1}</span>
             <label><input aria-label="Weight in kilograms" type="number" min="0" max="1000" step="0.5" value="${set.kg}" placeholder="kg" data-field="kg" data-index="${exerciseIndex}" data-set="${setIndex}" ${set.done ? 'disabled' : ''}><small>kg</small></label>
             <span class="forty-set-multiply">×</span>
             <label><input aria-label="Repetitions" type="number" min="0" max="1000" step="1" value="${set.reps}" placeholder="reps" data-field="reps" data-index="${exerciseIndex}" data-set="${setIndex}" ${set.done ? 'disabled' : ''}><small>reps</small></label>
             <button type="button" class="forty-done-btn ${set.done ? 'is-done' : ''}" data-action="toggle-set" data-index="${exerciseIndex}" data-set="${setIndex}" aria-label="${set.done ? 'إلغاء إكمال الجولة' : 'إكمال الجولة'}">✓</button>
           </div>
+            ${(tracker?.dropSets || []).map((drop, dropIndex) => drop.parentSetIndex === setIndex ? `
+              <div class="forty-linked-set-row is-drop ${drop.done ? 'is-done' : ''}" data-drop-index="${dropIndex}" data-parent-set="${setIndex}" data-exercise-index="${exerciseIndex}">
+                <div class="forty-drop-drag-header">
+                   <span class="forty-linked-set-tag">DROP ${dropIndex + 1} · Set ${setIndex + 1}</span>
+                   <div class="forty-drop-reorder">
+                     <button type="button" class="forty-drop-move-btn" data-action="move-drop" data-delta="-1" data-index="${exerciseIndex}" data-set="${dropIndex}" aria-label="نقل الدروب للجولة السابقة" ${setIndex === 0 ? 'disabled' : ''}>↑</button>
+                     <button type="button" class="forty-drop-drag-handle" aria-label="اسحب الدروب سيت إلى أي جولة" title="اسحب إلى الجولة المطلوبة">⠿ <span>سحب</span></button>
+                     <button type="button" class="forty-drop-move-btn" data-action="move-drop" data-delta="1" data-index="${exerciseIndex}" data-set="${dropIndex}" aria-label="نقل الدروب للجولة التالية" ${setIndex === tracker.sets.length - 1 ? 'disabled' : ''}>↓</button>
+                   </div>
+                 </div>
+                <div class="forty-linked-set-fields">
+                  <label><input type="number" min="0" max="1000" step="0.5" placeholder="kg" value="${drop.kg}" aria-label="Drop weight" data-linked-field="kg" data-linked-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" ${drop.done ? 'disabled' : ''}><small>kg</small></label>
+                  <span>×</span>
+                  <label><input type="number" min="0" max="1000" step="1" placeholder="reps" value="${drop.reps}" aria-label="Drop repetitions" data-linked-field="reps" data-linked-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" ${drop.done ? 'disabled' : ''}><small>reps</small></label>
+                  <button type="button" class="forty-done-btn ${drop.done ? 'is-done' : ''}" data-action="toggle-linked" data-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" aria-label="حفظ الجولة">✓</button>
+                </div>
+                <small class="forty-linked-set-name">DROP SET · مرتبط بالجولة ${setIndex + 1} · اسحب لتغيير الجولة</small>
+              </div>
+            ` : '').join('')}
             ${tracker?.superset ? `
               <div class="forty-linked-set-row is-superset ${tracker.superset.sets[setIndex].done ? 'is-done' : ''}">
                 <span class="forty-linked-set-tag">SS ${setIndex + 1}</span>
@@ -278,23 +297,16 @@ function renderExerciseCard(day, exercise, exerciseIndex, tracker, totalCount = 
                 <small class="forty-linked-set-name">SUPER SET · ${escapeHtml(tracker.superset.title)}</small>
               </div>
             ` : ''}
-            ${(tracker?.dropSets || []).map((drop, dropIndex) => drop.parentSetIndex === setIndex ? `
-              <div class="forty-linked-set-row is-drop ${drop.done ? 'is-done' : ''}">
-                <span class="forty-linked-set-tag">DROP ${dropIndex + 1}</span>
-                <div class="forty-linked-set-fields">
-                  <label><input type="number" min="0" max="1000" step="0.5" placeholder="kg" value="${drop.kg}" aria-label="Drop weight" data-linked-field="kg" data-linked-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" ${drop.done ? 'disabled' : ''}><small>kg</small></label>
-                  <span>×</span>
-                  <label><input type="number" min="0" max="1000" step="1" placeholder="reps" value="${drop.reps}" aria-label="Drop repetitions" data-linked-field="reps" data-linked-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" ${drop.done ? 'disabled' : ''}><small>reps</small></label>
-                  <button type="button" class="forty-done-btn ${drop.done ? 'is-done' : ''}" data-action="toggle-linked" data-kind="drop" data-index="${exerciseIndex}" data-set="${dropIndex}" aria-label="حفظ الجولة">✓</button>
-                </div>
-                <small class="forty-linked-set-name">DROP SET · بعد Set ${setIndex + 1}</small>
+            ${tracker?.dropSets?.length ? `
+              <div class="forty-set-drop-insert">
+                <button type="button" data-action="add-drop-to-set" data-index="${exerciseIndex}" data-set="${setIndex}">+ Drop للجولة ${setIndex + 1}</button>
               </div>
-            ` : '').join('')}
+            ` : ''}
         `).join('')}
       </div>
       <div class="forty-tracker-actions">
         <button type="button" data-action="add-set" data-index="${exerciseIndex}">+ Add Set</button>
-        ${tracker?.dropSets?.length ? `<button type="button" class="forty-add-drop-btn" data-action="add-drop-round" data-index="${exerciseIndex}">+ Drop Round</button>` : ''}
+        ${tracker?.dropSets?.length ? `<button type="button" class="forty-add-drop-btn" data-action="add-drop-round" data-index="${exerciseIndex}">+ Drop للجولة التالية</button>` : ''}
         <button type="button" class="forty-manage-btn" data-action="manage" data-index="${exerciseIndex}" aria-label="إدارة التمرين">⚙ Manage Exercise</button>
       </div>
     </article>
@@ -1460,6 +1472,24 @@ export function bindFortyDayWorkoutEvents() {
       renderActiveDay();
       updateTimers();
       notificationService.showToast(result ? `تم حفظ جولة ${kind === 'drop' ? 'Drop Set' : 'Super Set'} في History ✓` : 'تم إلغاء تسجيل الجولة.', 'success');
+      return;
+    }
+    if (button.dataset.action === 'add-drop-to-set') {
+      const added = fortyDayWorkoutService.addDropRound(activeDay, index, Number(button.dataset.set));
+      if (!added) {
+        notificationService.showToast('الحد الأقصى 12 جولة Drop Set لكل تمرين.', 'warning');
+        return;
+      }
+      renderActiveDay();
+      return;
+    }
+    if (button.dataset.action === 'move-drop') {
+      const tracker = fortyDayWorkoutService.getTracker(activeDay, index);
+      const dropIndex = Number(button.dataset.set);
+      const target = (tracker?.dropSets?.[dropIndex]?.parentSetIndex ?? -1) + Number(button.dataset.delta);
+      if (fortyDayWorkoutService.moveDropRound(activeDay, index, dropIndex, target)) {
+        renderActiveDay();
+      }
       return;
     }
     if (button.dataset.action === 'add-drop-round') {
