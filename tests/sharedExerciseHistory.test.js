@@ -125,3 +125,83 @@ test('Hasm 45-degree incline is visible in Upper and retains its old sets', () =
   assert.equal(service.getSharedHistory('ulfFull', 0).length, 0);
   assert.equal(service.getTracker('chestBiceps', 1).history.length, 1);
 }));
+
+test('Checking a set saves to History before Finish, aggregates rounds and does not duplicate on finish', () => withIsolatedWorkout(() => {
+  service.setActivePlan('hasm');
+  const day = 'chestBiceps';
+  service.updateSet(day, 0, 0, 'kg', 32);
+  service.updateSet(day, 0, 0, 'reps', 10);
+  assert.equal(service.getSharedHistory(day, 0).length, 0);
+  assert.equal(service.toggleSet(day, 0, 0), true);
+  let timeline = service.getSharedHistory(day, 0);
+  assert.equal(timeline.length, 1);
+  assert.equal(timeline[0].live, true);
+  assert.deepEqual(timeline[0].rounds, [{ round: 1, kg: 32, reps: 10 }]);
+  assert.equal(timeline[0].volume, 320);
+
+  service.updateSet(day, 0, 1, 'kg', 30);
+  service.updateSet(day, 0, 1, 'reps', 11);
+  assert.equal(service.toggleSet(day, 0, 1), true);
+  timeline = service.getSharedHistory(day, 0);
+  assert.equal(timeline.length, 1);
+  assert.deepEqual(timeline[0].rounds, [
+    { round: 1, kg: 32, reps: 10 },
+    { round: 2, kg: 30, reps: 11 }
+  ]);
+  assert.equal(timeline[0].volume, 650);
+
+  const summary = service.finishWorkout();
+  assert.equal(summary.totalSets, 2);
+  assert.equal(summary.totalReps, 21);
+  assert.equal(summary.totalVolume, 650);
+  timeline = service.getSharedHistory(day, 0);
+  assert.equal(timeline.length, 1, 'Finish must finalize rather than append again');
+  assert.equal(timeline[0].live, false);
+  assert.equal(timeline[0].sets, 2);
+  assert.equal(timeline[0].rounds.length, 2);
+}));
+
+test('Undo of a checked set immediately corrects History and cannot resurrect after remote merge', () => withIsolatedWorkout(() => {
+  service.setActivePlan('hasm');
+  const day = 'chestBiceps';
+  service.updateSet(day, 0, 0, 'kg', 32);
+  service.updateSet(day, 0, 0, 'reps', 10);
+  service.updateSet(day, 0, 1, 'kg', 28);
+  service.updateSet(day, 0, 1, 'reps', 12);
+  service.toggleSet(day, 0, 0);
+  service.toggleSet(day, 0, 1);
+  const id = service.getExerciseId(day, 0);
+  const remoteOld = structuredClone(service.load().trackers[id]);
+  assert.equal(service.toggleSet(day, 0, 0), false);
+  assert.deepEqual(service.getSharedHistory(day, 0)[0].rounds, [{ round: 2, kg: 28, reps: 12 }]);
+  assert.equal(service.toggleSet(day, 0, 1), false);
+  assert.equal(service.getSharedHistory(day, 0).length, 0);
+  assert.equal(service.getTracker(day, 0).history.length, 1);
+  assert.equal(service.getTracker(day, 0).history[0].cancelled, true);
+
+  service.loadRemoteState({ trackers: { [id]: remoteOld } });
+  assert.equal(service.getSharedHistory(day, 0).length, 0, 'Stale cloud state must not restore unchecked rounds');
+  assert.equal(service.toggleSet(day, 0, 1), true);
+  assert.deepEqual(service.getSharedHistory(day, 0)[0].rounds, [{ round: 2, kg: 28, reps: 12 }]);
+  service.finishWorkout();
+  assert.equal(service.getSharedHistory(day, 0).length, 1);
+}));
+
+test('Empty rounds must have repetitions; a completed set can have bodyweight (zero kg)', () => withIsolatedWorkout(() => {
+  service.setActivePlan('hasm');
+  assert.equal(service.toggleSet('chestBiceps', 0, 0), null);
+  assert.equal(service.load().session, null);
+  service.updateSet('chestBiceps', 0, 0, 'kg', 0);
+  service.updateSet('chestBiceps', 0, 0, 'reps', 15);
+  assert.equal(service.toggleSet('chestBiceps', 0, 0), true);
+  assert.deepEqual(service.getSharedHistory('chestBiceps', 0)[0].rounds, [{ round: 1, kg: 0, reps: 15 }]);
+}));
+
+test('A checked round is accessible immediately from other matching plans', () => withIsolatedWorkout(() => {
+  service.setActivePlan('hasm');
+  service.updateSet('chestBiceps', 1, 0, 'kg', 28);
+  service.updateSet('chestBiceps', 1, 0, 'reps', 9);
+  service.toggleSet('chestBiceps', 1, 0);
+  service.setActivePlan('ulf');
+  assert.deepEqual(service.getSharedHistory('ulfUpper', 2)[0].rounds[0], { round: 1, kg: 28, reps: 9 });
+}));
