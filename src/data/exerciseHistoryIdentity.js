@@ -12,6 +12,10 @@ const aliases = new Map(Object.entries({
   // Hasm explicitly offers DB Press at this same position. Legacy logs did
   // not distinguish the selected implement, so they are best-effort matches.
   'bench press dumbbell press': 'flat-dumbbell-bench-press',
+  // Hasm's 45-degree Incline Bench Press permits a dumbbell alternative;
+  // its legacy logs do not record which implement the user chose.
+  // Match it to Saturday's DB incline press as a best-effort legacy alias.
+  'incline bench press': 'incline-dumbbell-bench-press',
   'incline db press': 'incline-dumbbell-bench-press',
   'incline dumbbell bench press': 'incline-dumbbell-bench-press',
   'lat pulldown': 'lat-pulldown',
