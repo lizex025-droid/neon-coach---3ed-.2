@@ -83,7 +83,25 @@ function normalizeTracker(raw, exercise) {
     targetReps: raw?.targetReps || exercise.reps || '',
     rest: clampNumber(raw?.rest ?? exercise.restSeconds ?? 150, 0, 600, true) || 150,
     weight,
-    history: Array.isArray(raw?.history) ? raw.history.slice(-100) : []
+    history: Array.isArray(raw?.history) ? raw.history.slice(-100) : [],
+    sharedSeedRef: raw?.sharedSeedRef || null,
+    superset: raw?.superset?.exerciseId ? {
+      exerciseId: String(raw.superset.exerciseId),
+      title: String(raw.superset.title || ''),
+      image: String(raw.superset.image || ''),
+      groupKey: String(raw.superset.groupKey || ''),
+      sets: Array.from({ length: count }, (_, i) => {
+        const set = raw.superset.sets?.[i] || {};
+        return { kg: clampNumber(set.kg ?? '', 0, 1000),
+          reps: clampNumber(set.reps ?? '', 0, 1000, true), done: Boolean(set.done) };
+      })
+    } : null,
+    dropSets: Array.isArray(raw?.dropSets) ? raw.dropSets.slice(0, 12).map(item => ({
+      parentSetIndex: Math.min(count - 1, Math.max(0, Number(item.parentSetIndex) || 0)),
+      kg: clampNumber(item.kg ?? '', 0, 1000),
+      reps: clampNumber(item.reps ?? '', 0, 1000, true),
+      done: Boolean(item.done)
+    })) : []
   };
 }
 
@@ -790,6 +808,92 @@ class FortyDayWorkoutService {
     this.save();
   }
 
+  configureSuperset(dayKey, exerciseIndex, libraryExercise) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    const exercise = this.getDay(dayKey)?.exercises?.[exerciseIndex];
+    if (!tracker || !libraryExercise?.id || !exercise) return false;
+    if (exerciseHistoryKey(exercise) === exerciseHistoryKey(libraryExercise)) return false;
+    const current = tracker.superset;
+    tracker.superset = {
+      exerciseId: libraryExercise.id,
+      title: libraryExercise.title || `${libraryExercise.nameAr} | ${libraryExercise.nameEn}`,
+      image: libraryExercise.image || '',
+      groupKey: libraryExercise.groupKey || '',
+      sets: current?.exerciseId === libraryExercise.id
+        ? current.sets : tracker.sets.map(() => blankSet('', ''))
+    };
+    this.save();
+    return true;
+  }
+
+  removeSuperset(dayKey, exerciseIndex) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    if (!tracker?.superset) return;
+    if (this.load().session) {
+      tracker.superset.sets.forEach(set => { set.done = false; });
+      this._writeSessionExerciseHistory(tracker, this.load().session);
+    }
+    tracker.superset = null;
+    this.save();
+  }
+
+  enableDropSet(dayKey, exerciseIndex) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    if (!tracker) return;
+    if (!tracker.dropSets?.length) {
+      tracker.dropSets = [{ parentSetIndex: tracker.sets.length - 1, ...blankSet('', '') }];
+    }
+    this.save();
+  }
+
+  addDropRound(dayKey, exerciseIndex) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    if (!tracker || tracker.dropSets.length >= 12) return;
+    tracker.dropSets.push({
+      parentSetIndex: tracker.dropSets.at(-1)?.parentSetIndex ?? tracker.sets.length - 1,
+      ...blankSet('', '')
+    });
+    this.save();
+  }
+
+  removeDropSet(dayKey, exerciseIndex) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    if (!tracker?.dropSets?.length) return;
+    if (this.load().session) {
+      tracker.dropSets.forEach(set => { set.done = false; });
+      this._writeSessionExerciseHistory(tracker, this.load().session);
+    }
+    tracker.dropSets = [];
+    this.save();
+  }
+
+  _getLinkedSet(tracker, kind, roundIndex) {
+    return kind === 'superset' ? tracker?.superset?.sets?.[roundIndex] :
+      kind === 'drop' ? tracker?.dropSets?.[roundIndex] : null;
+  }
+
+  updateLinkedSet(dayKey, exerciseIndex, kind, roundIndex, field, value) {
+    if (!['kg', 'reps'].includes(field) || !['superset', 'drop'].includes(kind)) return;
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    const set = this._getLinkedSet(tracker, kind, roundIndex);
+    if (!set || set.done) return;
+    set[field] = clampNumber(value, 0, 1000, field === 'reps');
+    this.save();
+  }
+
+  toggleLinkedSet(dayKey, exerciseIndex, kind, roundIndex) {
+    if (!['superset', 'drop'].includes(kind)) return null;
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    const set = this._getLinkedSet(tracker, kind, roundIndex);
+    if (!set || (!set.done && !(Number(set.reps) > 0))) return null;
+    this.startWorkout(dayKey);
+    set.done = !set.done;
+    this.markTouched(dayKey, exerciseIndex);
+    this._writeSessionExerciseHistory(tracker, this.load().session);
+    this.save();
+    return set.done;
+  }
+
   // Persist each checked set immediately, even if Finish Workout is never
   // pressed. One record per exercise+session is updated as more sets are checked.
   // Undo writes a cancellation tombstone so cloud sync cannot resurrect a set.
@@ -804,7 +908,19 @@ class FortyDayWorkoutService {
         ? [{ round: roundIndex + 1, kg: Number(set.kg || 0), reps: Number(set.reps || 0) }]
         : []
     );
-    if (!rounds.length && !previous) return null;
+    const superRounds = (tracker.superset?.sets || []).flatMap((set, index) =>
+      set.done && Number(set.reps) > 0
+        ? [{ round: index + 1, kg: Number(set.kg || 0), reps: Number(set.reps || 0),
+          exerciseId: tracker.superset.exerciseId, exerciseTitle: tracker.superset.title }]
+        : []
+    );
+    const dropRounds = (tracker.dropSets || []).flatMap((set, index) =>
+      set.done && Number(set.reps) > 0
+        ? [{ round: index + 1, afterSet: set.parentSetIndex + 1,
+          kg: Number(set.kg || 0), reps: Number(set.reps || 0) }]
+        : []
+    );
+    if (!rounds.length && !superRounds.length && !dropRounds.length && !previous) return null;
     const best = rounds.reduce((winner, round) => round.kg > (winner?.kg || 0) ? round : winner, rounds[0]);
     const at = new Date();
     const record = {
@@ -815,14 +931,16 @@ class FortyDayWorkoutService {
       updatedAt: at.toISOString(),
       version: Number(previous?.version || 0) + 1,
       live: !finalize,
-      cancelled: rounds.length === 0,
-      sets: rounds.length,
+      cancelled: rounds.length + superRounds.length + dropRounds.length === 0,
+      sets: rounds.length + superRounds.length + dropRounds.length,
       reps: best?.reps || 0,
       weight: best?.kg || 0,
       bestKg: best?.kg || 0,
       bestReps: best?.reps || 0,
-      volume: rounds.reduce((sum, round) => sum + round.kg * round.reps, 0),
-      rounds
+      volume: [...rounds, ...superRounds, ...dropRounds].reduce((sum, round) => sum + round.kg * round.reps, 0),
+      rounds,
+      superRounds,
+      dropRounds
     };
     if (index >= 0) history[index] = record;
     else history.push(record);
@@ -885,6 +1003,7 @@ class FortyDayWorkoutService {
     const tracker = this.getTracker(dayKey, exerciseIndex);
     if (!tracker || tracker.sets.length >= 12) return;
     tracker.sets.push(blankSet('', ''));
+    tracker.superset?.sets.push(blankSet('', ''));
     tracker.targetSets = tracker.sets.length;
     this.save();
   }
@@ -898,9 +1017,15 @@ class FortyDayWorkoutService {
     // A reset during an unfinished workout also retracts its live rounds.
     if (state.session) {
       tracker.sets.forEach(set => { set.done = false; });
+      tracker.superset?.sets.forEach(set => { set.done = false; });
+      tracker.dropSets.forEach(set => { set.done = false; });
       this._writeSessionExerciseHistory(tracker, state.session);
     }
-    state.trackers[id] = normalizeTracker({ history: tracker?.history || [] }, exercise);
+    const linked = {
+      superset: tracker.superset ? { ...tracker.superset, sets: tracker.sets.map(() => blankSet('', '')) } : null,
+      dropSets: tracker.dropSets.map(set => ({ parentSetIndex: set.parentSetIndex, ...blankSet('', '') }))
+    };
+    state.trackers[id] = normalizeTracker({ history: tracker?.history || [], ...linked }, exercise);
     // An explicit reset must not be undone by shared-history auto-prefill.
     const latest = this.getSharedExerciseHistory(exercise).at(-1);
     if (latest) state.trackers[id].sharedSeedRef = `${latest.sourceExerciseId}|${latest.isoDate || latest.date}|${JSON.stringify(latest.rounds || [])}`;
@@ -928,6 +1053,9 @@ class FortyDayWorkoutService {
         done: existing?.done || false
       };
     });
+    if (tracker.superset) tracker.superset.sets = Array.from({ length: count },
+      (_, i) => tracker.superset.sets[i] || blankSet('', ''));
+    tracker.dropSets.forEach(item => { item.parentSetIndex = Math.min(item.parentSetIndex, count - 1); });
     this.save();
   }
 
