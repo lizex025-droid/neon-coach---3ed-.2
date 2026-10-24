@@ -1,48 +1,45 @@
 /**
- * Return from any exercise to the beginning of the training screen.
- * Both Safari/PWA document scroll and nested scroll containers are supported.
- * Keeping this DOM-only helper independent makes it easy to regression test.
+ * Scroll the training page to its top on Safari and standalone iOS PWAs.
+ * Uses immediate native scrolling to avoid conflicting smooth animations on
+ * document/html/body, and does not depend on a particular scrolling element.
  */
 export function scrollWorkoutToTop(win = window, doc = document) {
   const workout = doc.getElementById?.('forty-workout-root');
-  if (!workout) return false;
+  const view = doc.getElementById?.('view-container');
+  if (!workout && !view) return false;
 
-  const options = { top: 0, left: 0, behavior: 'smooth' };
-  const scroll = (target) => {
-    if (!target) return;
-    try {
-      if (typeof target.scrollTo === 'function') {
-        target.scrollTo(options);
-      } else if ('scrollTop' in target) {
-        target.scrollTop = 0;
-      }
-    } catch (_) {
-      // Some older WebKit elements do not accept options objects.
-      try { target.scrollTop = 0; } catch (_) { /* unsupported scroller */ }
-    }
-  };
-
-  // scrollIntoView selects the actual scrollable parent on iOS even when it
-  // is not window/document. Everything then scrolls to absolute page top.
-  try {
-    workout.scrollIntoView?.({ behavior: 'smooth', block: 'start', inline: 'nearest' });
-  } catch (_) {
-    try { workout.scrollIntoView?.(); } catch (_) { /* unsupported browser */ }
-  }
-
-  // Some iOS standalone PWAs scroll an inner view rather than window.
-  // Include every ancestor, as well as explicit app-shell scrollers.
-  const candidates = new Set([
-    doc.getElementById?.('view-container'),
+  const ancestors = new Set([
+    view,
     doc.getElementById?.('app'),
     doc.scrollingElement,
     doc.documentElement,
     doc.body
   ]);
-  for (let parent = workout.parentElement; parent; parent = parent.parentElement) {
-    candidates.add(parent);
+  for (let node = workout || view; node; node = node.parentElement) {
+    ancestors.add(node);
   }
-  for (const node of candidates) scroll(node);
-  scroll(win);
+
+  // A numerical scrollTo() works on old WebKit even if scrollTo(options)
+  // silently does nothing. Direct scrollTop also covers overflow containers.
+  const forceTop = () => {
+    try { (workout || view)?.scrollIntoView?.({ block: 'start', behavior: 'instant' }); }
+    catch (_) { /* scrollTop below is the universal fallback */ }
+
+    for (const element of ancestors) {
+      if (!element) continue;
+      try { element.scrollTop = 0; } catch (_) { /* read-only */ }
+      try { element.scrollLeft = 0; } catch (_) { /* read-only */ }
+      try { element.scrollTo?.(0, 0); } catch (_) { /* unsupported */ }
+    }
+    try { win.scrollTo(0, 0); } catch (_) { /* unsupported */ }
+    try { win.scroll?.(0, 0); } catch (_) { /* unsupported */ }
+  };
+
+  forceTop();
+  // iOS may apply the previous momentum position in the next frame.
+  // Run a second synchronous-to-paint correction, without a background task.
+  if (typeof win.requestAnimationFrame === 'function') {
+    win.requestAnimationFrame(forceTop);
+  }
   return true;
 }
