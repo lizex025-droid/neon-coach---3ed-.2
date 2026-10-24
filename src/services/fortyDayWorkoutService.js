@@ -865,23 +865,50 @@ class FortyDayWorkoutService {
     this.save();
   }
 
-  enableDropSet(dayKey, exerciseIndex) {
-    const tracker = this.getTracker(dayKey, exerciseIndex);
-    if (!tracker) return;
-    if (!tracker.dropSets?.length) {
-      tracker.dropSets = [{ parentSetIndex: tracker.sets.length - 1, ...blankSet('', '') }];
+  // A newly added Drop Set belongs to the first unfinished working set.
+  // Explicit selection (per-set +Drop action) overrides this safe default.
+  _dropParentIndex(tracker, parentSetIndex) {
+    const max = Math.max(0, (tracker?.sets?.length || 1) - 1);
+    if (parentSetIndex !== undefined && parentSetIndex !== null && parentSetIndex !== '') {
+      const value = Number(parentSetIndex);
+      return Number.isInteger(value) && value >= 0 && value <= max ? value : null;
     }
-    this.save();
+    const firstPending = tracker.sets.findIndex(set => !set.done);
+    return firstPending >= 0 ? firstPending : max;
   }
 
-  addDropRound(dayKey, exerciseIndex) {
+  enableDropSet(dayKey, exerciseIndex, parentSetIndex = null) {
     const tracker = this.getTracker(dayKey, exerciseIndex);
-    if (!tracker || tracker.dropSets.length >= 12) return;
-    tracker.dropSets.push({
-      parentSetIndex: tracker.dropSets.at(-1)?.parentSetIndex ?? tracker.sets.length - 1,
-      ...blankSet('', '')
-    });
+    if (!tracker) return false;
+    if (tracker.dropSets?.length) return false;
+    return this.addDropRound(dayKey, exerciseIndex, parentSetIndex);
+  }
+
+  addDropRound(dayKey, exerciseIndex, parentSetIndex = null) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    if (!tracker || tracker.dropSets.length >= 12) return false;
+    const parent = this._dropParentIndex(tracker, parentSetIndex);
+    if (parent == null) return false;
+    tracker.dropSets.push({ parentSetIndex: parent, ...blankSet('', '') });
     this.save();
+    return true;
+  }
+
+  // Move the Drop Set to another working set without changing its identity,
+  // weight, reps, or completion state. Live History updates immediately.
+  moveDropRound(dayKey, exerciseIndex, dropIndex, parentSetIndex) {
+    const tracker = this.getTracker(dayKey, exerciseIndex);
+    const drop = tracker?.dropSets?.[dropIndex];
+    if (!drop) return false;
+    const parent = this._dropParentIndex(tracker, parentSetIndex);
+    if (parent == null || parent === drop.parentSetIndex) return false;
+    drop.parentSetIndex = parent;
+    const state = this.load();
+    if (state.session) {
+      this._writeSessionExerciseHistory(tracker, state.session);
+    }
+    this.save();
+    return true;
   }
 
   removeDropSet(dayKey, exerciseIndex) {
