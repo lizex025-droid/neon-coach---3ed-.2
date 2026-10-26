@@ -39,6 +39,7 @@ import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 import { renderBodyFatStep, getBodyFatRange, getBodyFatRanges } from '../components/bodyFatPicker.js';
 import { startBodyFatImageLoader } from '../utils/bodyFatImageLoader.js';
 import '../styles/bodyFatPicker.css';
+import '../styles/planPreferencesStep.css';
 
 const QUICK_SUPPLEMENT_NAMES = [
   'Creatine monohydrate',
@@ -1223,41 +1224,42 @@ function renderStepContent(step) {
     case STEP_KEYS.PLAN_PREFERENCES: {
       const prefs = formData.nutritionPlanPreferences || DEFAULT_PLAN_PREFERENCES;
       return `
-        <div style="text-align: center; margin-bottom: 20px;">
+        <section class="q-plan-preferences-step" dir="rtl">
+        <div class="q-plan-preferences-intro">
           <h2 style="font-size: 1.6rem; color: #55F7A5; margin-bottom: 6px; font-weight: 800;">نظامك اليومي وشكل خطتك</h2>
           <p style="font-size: 0.95rem; color: #B8C0BC;">نخصص خطتك لتناسب وتيرة يومك وأسلوب حياتك</p>
         </div>
 
         <!-- 1. مستوى الالتزام المتوقع -->
-        <div class="form-group" style="margin-bottom: 20px;">
+        <div class="form-group q-plan-question q-plan-question-adherence" style="margin-bottom: 20px;">
           <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
             1. ما هو مستوى التزامك المتوقع بالخطة؟
           </label>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <div class="q-adherence-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
             <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'high' ? 'active' : ''}" data-val="high" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'high' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'high' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
-              <div style="font-size: 1.2rem; margin-bottom: 4px;">🎯</div>
-              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'high' ? '#55F7A5' : '#fff'};">عالي</div>
-              <div style="font-size: 0.7rem; color: #8C9992;">دقة قصوى</div>
+              <div class="q-adherence-icon" style="font-size: 1.2rem; margin-bottom: 4px;">🎯</div>
+              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'high' ? '#55F7A5' : '#fff'};" class="q-adherence-name">عالي</div>
+              <div class="q-adherence-desc" style="font-size: 0.7rem; color: #8C9992;">دقة قصوى</div>
             </button>
             <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'medium' ? 'active' : ''}" data-val="medium" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'medium' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'medium' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
-              <div style="font-size: 1.2rem; margin-bottom: 4px;">⚖️</div>
-              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'medium' ? '#55F7A5' : '#fff'};">متوسط</div>
-              <div style="font-size: 0.7rem; color: #8C9992;">توازن ومرونة</div>
+              <div class="q-adherence-icon" style="font-size: 1.2rem; margin-bottom: 4px;">⚖️</div>
+              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'medium' ? '#55F7A5' : '#fff'};" class="q-adherence-name">متوسط</div>
+              <div class="q-adherence-desc" style="font-size: 0.7rem; color: #8C9992;">توازن ومرونة</div>
             </button>
             <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'low' ? 'active' : ''}" data-val="low" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'low' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'low' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
-              <div style="font-size: 1.2rem; margin-bottom: 4px;">🌱</div>
-              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'low' ? '#55F7A5' : '#fff'};">بسيط</div>
-              <div style="font-size: 0.7rem; color: #8C9992;">سهولة تحضير</div>
+              <div class="q-adherence-icon" style="font-size: 1.2rem; margin-bottom: 4px;">🌱</div>
+              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'low' ? '#55F7A5' : '#fff'};" class="q-adherence-name">بسيط</div>
+              <div class="q-adherence-desc" style="font-size: 0.7rem; color: #8C9992;">سهولة تحضير</div>
             </button>
           </div>
         </div>
 
         <!-- 2. توزيع الوجبات الرئيسية -->
-        <div class="form-group" style="margin-bottom: 20px;">
+        <div class="form-group q-plan-question q-plan-question-meals" style="margin-bottom: 20px;">
           <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
             2. كيف تفضل توزيع وجباتك الرئيسية في اليوم؟
           </label>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="q-mealslots-list" style="display: flex; flex-direction: column; gap: 8px;">
             <button type="button" class="btn btn-secondary q-mealslots-btn ${prefs.mealSlots === 'breakfast_lunch_dinner' ? 'active' : ''}" data-val="breakfast_lunch_dinner" style="padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; text-align: right; border-color: ${prefs.mealSlots === 'breakfast_lunch_dinner' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.mealSlots === 'breakfast_lunch_dinner' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
               <div>
                 <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">3 وجبات رئيسية (فطور، غداء، عشاء)</div>
@@ -1283,8 +1285,8 @@ function renderStepContent(step) {
         </div>
 
         <!-- 3. عدد الوجبات المفتوحة بالأسبوع -->
-        <div class="form-group" style="margin-bottom: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div class="form-group q-plan-question q-plan-question-offplan" style="margin-bottom: 20px;">
+          <div class="q-free-meal-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin: 0;">
               3. كم وجبة مفتوحة (Free Meal) تريد في الأسبوع؟
             </label>
@@ -1292,7 +1294,7 @@ function renderStepContent(step) {
               ${prefs.offPlanMealsCount} ${prefs.offPlanMealsCount === 0 ? '(بدون وجبات مفتوحة)' : 'وجبة أسبوعياً'}
             </span>
           </div>
-          <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;">
+          <div class="q-offplan-grid" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;">
             ${[0, 1, 2, 3, 4, 5, 6, 7].map(num => `
               <button type="button" class="btn btn-secondary q-offplan-chip ${prefs.offPlanMealsCount === num ? 'active' : ''}" data-val="${num}" style="flex: 1; min-width: 36px; height: 42px; border-radius: 12px; font-weight: 800; font-family: monospace; font-size: 1rem; border-color: ${prefs.offPlanMealsCount === num ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.offPlanMealsCount === num ? 'rgba(85,247,165,0.2)' : 'rgba(255,255,255,0.02)'}; color: ${prefs.offPlanMealsCount === num ? '#55F7A5' : '#fff'};">
                 ${num}
@@ -1305,12 +1307,12 @@ function renderStepContent(step) {
         </div>
 
         <!-- 4. تناول الحلويات والسكريات -->
-        <div class="form-group" style="margin-bottom: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div class="form-group q-plan-question q-plan-question-sweets" style="margin-bottom: 20px;">
+          <div class="q-sweets-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin: 0;">
               4. هل تتناول حلويات أو سكريات وتريد إدراجها؟
             </label>
-            <div style="display: flex; gap: 6px;">
+            <div class="q-sweets-toggle" style="display: flex; gap: 6px;">
               <button type="button" id="q-sweets-toggle-no" class="btn btn-secondary ${!prefs.sweets.enabled ? 'active' : ''}" style="padding: 4px 14px; font-size: 0.8rem; border-radius: 10px; border-color: ${!prefs.sweets.enabled ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${!prefs.sweets.enabled ? 'rgba(85,247,165,0.15)' : 'transparent'}; color: #fff;">لا</button>
               <button type="button" id="q-sweets-toggle-yes" class="btn btn-secondary ${prefs.sweets.enabled ? 'active' : ''}" style="padding: 4px 14px; font-size: 0.8rem; border-radius: 10px; border-color: ${prefs.sweets.enabled ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.sweets.enabled ? 'rgba(85,247,165,0.15)' : 'transparent'}; color: #fff;">نعم 🍰</button>
             </div>
@@ -1356,6 +1358,7 @@ function renderStepContent(step) {
         <button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top: 24px; border-radius: 22px;">
           متابعة
         </button>
+        </section>
       `;
     }
 
