@@ -10,7 +10,7 @@ import { executeActionTools, shoppingItemsFor, localDate } from '../domain/actio
 import { rolloverDailyState } from '../domain/dailyCycle.js';
 import { getOrCreateGuestUserId } from '../utils/userId.js';
 
-import { estimateAdaptiveExpenditure, dayNumber, normalizeWeights, distributeWeeklyCalories } from '../domain/metabolicEngine.js';
+import { estimateAdaptiveExpenditure, dayNumber, normalizeWeights, distributeWeeklyCalories, allocateMacros } from '../domain/metabolicEngine.js';
 import { metabolicInputs } from '../domain/metabolicState.js';
 import { wtLoad } from '../domain/compositionEstimate.js';
 
@@ -45,7 +45,7 @@ class Store {
     const budget = this.state.metabolicData?.weeklyCalories;
     if (budget?.length === 7 && this.state.userProfile?.targetCalories > 0) {
       const index = (new Date(`${this.state.today.date}T12:00:00`).getDay() + 1) % 7;
-      const targets = calculateNutritionTargets({ ...this.state.userProfile, requestedTargetCalories: budget[index] });
+      const targets = { targetCalories: budget[index], ...allocateMacros(budget[index], this.state.userProfile) };
       Object.assign(this.state.today, { targetCalories: targets.targetCalories, targetProtein: targets.protein, targetCarbs: targets.carbs, targetFats: targets.fats });
     }
     this.saveState({ notify });
@@ -346,7 +346,7 @@ class Store {
       targetProtein: targets.protein, targetCarbs: targets.carbs, targetFats: targets.fats,
       targetWaterLiters: targets.waterMl / 1000 });
     if (this.state.today.targetCalories !== targets.targetCalories) {
-      const shifted = calculateNutritionTargets({ ...effective, requestedTargetCalories: this.state.today.targetCalories });
+      const shifted = allocateMacros(this.state.today.targetCalories, effective);
       Object.assign(this.state.today, { targetProtein: shifted.protein, targetCarbs: shifted.carbs, targetFats: shifted.fats });
     }
     this.state.nutritionPlan = null;

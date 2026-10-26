@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {METABOLIC_DEFAULTS,METABOLIC_STEP_KEYS,renderMetabolicOnboardingStep,collectMetabolicAnswers,validateMetabolicAnswers} from '../src/components/metabolicOnboarding.js';
-import {estimateInitialExpenditure,allocateMacros,estimateAdaptiveExpenditure} from '../src/domain/metabolicEngine.js';
+import {estimateInitialExpenditure,allocateMacros} from '../src/domain/metabolicEngine.js';
 import {calculateNutritionTargets} from '../src/domain/calculations.js';
 const today='2026-10-26';
 const base={...METABOLIC_DEFAULTS,weight:83,height:160,age:30,gender:'female',targetMode:'coached',activityLevel:'sedentary'};
@@ -64,4 +64,32 @@ test('radio, checkbox, numeric and zero-session answers are saved, not just disp
  const elements=[{name:'exerciseType',type:'radio',checked:true,value:'none'},{name:'exerciseSessionsPerWeek',type:'number',value:'6'},{name:'dailySteps',type:'number',value:'0'}];
  const root={dataset:{metaStep:'metabolic_activity'},querySelectorAll:()=>elements,querySelector:()=>null};
  const p=collectMetabolicAnswers(root,base,today);assert.equal(p.exerciseSessionsPerWeek,0);assert.equal(p.exerciseDurationMin,0);assert.equal(p.dailySteps,0);
+});
+
+// Daily budgets are already constrained. Do not recalculate the goal (maintenance
+// would otherwise erase a shifted day's budget while retaining its calorie label).
+test('daily shifted maintenance macros use the actual day budget after creation and rollover', () => {
+  const source = readFileSync(new URL('../src/state/store.js', import.meta.url), 'utf8');
+  assert.match(source, /allocateMacros\(budget\[index\], this.state.userProfile\)/);
+  assert.match(source, /allocateMacros\(this.state.today.targetCalories, effective\)/);
+  const profile = {weight:70,currentWeight:70,gender:'male',programTrainingType:'resistance',proteinPreference:'moderate',macroStyle:'balanced'};
+  const macros = allocateMacros(2288,profile);
+  assert.equal(macros.protein*4+macros.carbs*4+macros.fats*9,2288);
+});
+
+test('stored maintenance program conserves daily macro energy across shifted days and rollover', async () => {
+  const memory=new Map();
+  globalThis.localStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
+  const {store}=await import('../src/state/store.js');
+  store.resetState();
+  store.setUserProfile({...base,gender:'male',weight:70,currentWeight:70,age:18,height:175,goal:'maintenance',knownTdee:2400,calorieFloor:1500,macroStyle:'balanced',programTrainingType:'resistance',proteinPreference:'moderate',calorieShift:150,metabolicTrainingDays:[0,1,3]});
+  store.recalculateTargetsFromProfile();
+  const energy=()=>store.state.today.targetProtein*4+store.state.today.targetCarbs*4+store.state.today.targetFats*9;
+  assert.equal(energy(),store.state.today.targetCalories);
+  assert.equal(store.state.metabolicData.weeklyCalories.reduce((a,b)=>a+b,0),16800);
+  const next = new Date(store.state.today.date+'T12:00:00'); next.setDate(next.getDate()+1);
+  store.ensureCurrentDay({now:next});
+  assert.equal(energy(),store.state.today.targetCalories);
+  assert.equal(store.loadState().userProfile.programTrainingType,'resistance');
+  delete globalThis.localStorage;
 });
