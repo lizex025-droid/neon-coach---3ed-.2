@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   BODY_FAT_RANGES,
+  FEMALE_BODY_FAT_RANGES,
+  getBodyFatRanges,
   getBodyFatRange,
   renderBodyFatStep,
   renderBodyFatSilhouette
@@ -25,9 +27,37 @@ test('picker shows all cards, exactly one selected and a Next button', () => {
   assert.equal((html.match(/aria-checked="true"/g) || []).length, 1);
   assert.match(html, /id="q-next-step-btn"/);
   assert.match(html, /18–23%/);
-  assert.match(html, /تقدير بصري/);
+  assert.match(html, /تقديرية/);
+  assert.equal((html.match(/class="body-fat-photo"/g) || []).length, 9);
+  assert.match(html, /pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/);
   assert.notEqual(renderBodyFatSilhouette(0), renderBodyFatSilhouette(8));
   assert.notEqual(renderBodyFatSilhouette(4, 'male'), renderBodyFatSilhouette(4, 'female'));
+});
+
+test('women have their own nine accurate-range labels and distinct R2 images', () => {
+  assert.deepEqual(FEMALE_BODY_FAT_RANGES.map(range => range.label), [
+    '10–13%', '14–17%', '18–23%', '24–28%', '29–33%',
+    '34–37%', '38–42%', '43–49%', '50%+'
+  ]);
+  assert.equal(getBodyFatRanges('female'), FEMALE_BODY_FAT_RANGES);
+  assert.equal(getBodyFatRange('24–29%', 'female'), null);
+  assert.equal(getBodyFatRange('24–28%', 'male'), null);
+  assert.equal(getBodyFatRange('18–23%', 'female').estimate, 20.5);
+  const maleHtml = renderBodyFatStep('', 'male');
+  const femaleHtml = renderBodyFatStep('24–28%', 'female');
+  assert.equal((femaleHtml.match(/class="body-fat-photo"/g) || []).length, 9);
+  assert.equal((femaleHtml.match(/aria-checked="true"/g) || []).length, 1);
+  assert.match(femaleHtml, /10_21_42%20AM-1\.png/);
+  assert.match(femaleHtml, /10_21_58%20AM-9\.png/);
+  assert.match(maleHtml, /10_20_47%20AM-1\.png/);
+  assert.match(maleHtml, /10_21_02%20AM-9\.png/);
+  const allSources = [...BODY_FAT_RANGES, ...FEMALE_BODY_FAT_RANGES].map(row => row.image);
+  assert.equal(allSources.length, 18);
+  assert.equal(new Set(allSources).size, 18);
+  for (const url of allSources) {
+    assert.ok(url.startsWith('https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/'));
+    assert.match(url, /\.png$/);
+  }
 });
 
 test('body fat onboarding follows measurements for every goal', () => {
@@ -37,6 +67,8 @@ test('body fat onboarding follows measurements for every goal', () => {
   assert.match(source, /case STEP_KEYS\.BODY_FAT:\s*return renderBodyFatStep/);
   assert.match(source, /stepKeyNow === STEP_KEYS\.BODY_FAT/);
   assert.match(source, /formData\.bodyFatRange = selected\.label/);
+  assert.match(source, /getBodyFatRange\(formData\.bodyFatRange, formData\.gender\)/);
+  assert.match(source, /getBodyFatRange\(choice\.dataset\.bodyFatRange, formData\.gender\)/);
   assert.match(source, /bodyFatPercent: null/);
 });
 
