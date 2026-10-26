@@ -101,8 +101,8 @@ export function renderBodyFatStep(selectedRange = '', gender = 'male') {
     <div class="body-fat-grid" role="radiogroup" aria-label="نسبة الدهون التقريبية لل${isFemale ? 'نساء' : 'رجال'}">
       ${choices.map((item, i) => `<button type="button" class="body-fat-option ${validSelection === item.label ? 'is-selected' : ''}"
         role="radio" aria-checked="${validSelection === item.label}" data-body-fat-range="${item.label}" aria-label="${item.label}">
-        <span class="body-fat-illustration">
-          <img class="body-fat-photo" src="${item.image}" alt="نموذج ${isFemale ? 'امرأة' : 'رجل'} بنسبة دهون ${item.label}" loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async" referrerpolicy="no-referrer">
+        <span class="body-fat-illustration is-loading">
+          <img class="body-fat-photo" data-src="${item.image}" data-priority="${i === 0 ? 'high' : 'auto'}" alt="نموذج ${isFemale ? 'امرأة' : 'رجل'} بنسبة دهون ${item.label}" loading="lazy" decoding="async" width="320" height="400" referrerpolicy="no-referrer">
           <span class="body-fat-image-fallback" hidden>${renderBodyFatSilhouette(i, gender)}</span>
         </span>
         <!-- R2 photos already contain their percentage labels; do not duplicate them. -->
