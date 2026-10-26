@@ -105,7 +105,10 @@ export function renderBodyFatStep(selectedRange = '', gender = 'male') {
           <img class="body-fat-photo" src="${item.image}" alt="نموذج ${isFemale ? 'امرأة' : 'رجل'} بنسبة دهون ${item.label}" loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async" referrerpolicy="no-referrer">
           <span class="body-fat-image-fallback" hidden>${renderBodyFatSilhouette(i, gender)}</span>
         </span>
-        <span class="body-fat-chip">${validSelection === item.label ? '<span class="body-fat-check" aria-hidden="true">✓</span>' : ''}${item.label}</span>
+        <!-- R2 photos already contain their percentage labels; do not duplicate them. -->
+        <span class="body-fat-selection-check" aria-hidden="true">✓</span>
+        <!-- A label is only displayed if the photo fails and the SVG fallback appears. -->
+        <span class="body-fat-fallback-label" hidden>${item.label}</span>
       </button>`).join('')}
     </div>
     <p class="body-fat-disclaimer">هذه الصور للتمثيل البصري فقط؛ لا يمكن تحديد نسبة الدهون بدقة من صورة الجسم وحدها.</p>
