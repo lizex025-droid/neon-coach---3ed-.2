@@ -29,6 +29,11 @@ test('picker shows all cards, exactly one selected and a Next button', () => {
   assert.match(html, /18–23%/);
   assert.match(html, /تقديرية/);
   assert.equal((html.match(/class="body-fat-photo"/g) || []).length, 9);
+  assert.equal((html.match(/class="body-fat-selection-check"/g) || []).length, 9);
+  assert.equal((html.match(/class="body-fat-fallback-label"/g) || []).length, 9);
+  assert.equal((html.match(/class="body-fat-chip"/g) || []).length, 0);
+  // The percentage already appears inside the R2 image, do not overlay it.
+  assert.ok(!html.includes('<span class="body-fat-chip">'));
   assert.match(html, /pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/);
   assert.notEqual(renderBodyFatSilhouette(0), renderBodyFatSilhouette(8));
   assert.notEqual(renderBodyFatSilhouette(4, 'male'), renderBodyFatSilhouette(4, 'female'));
@@ -46,6 +51,8 @@ test('women have their own nine accurate-range labels and distinct R2 images', (
   const maleHtml = renderBodyFatStep('', 'male');
   const femaleHtml = renderBodyFatStep('24–28%', 'female');
   assert.equal((femaleHtml.match(/class="body-fat-photo"/g) || []).length, 9);
+  assert.equal((femaleHtml.match(/class="body-fat-selection-check"/g) || []).length, 9);
+  assert.ok(!femaleHtml.includes('body-fat-chip'));
   assert.equal((femaleHtml.match(/aria-checked="true"/g) || []).length, 1);
   assert.match(femaleHtml, /10_21_42%20AM-1\.png/);
   assert.match(femaleHtml, /10_21_58%20AM-9\.png/);
@@ -58,6 +65,18 @@ test('women have their own nine accurate-range labels and distinct R2 images', (
     assert.ok(url.startsWith('https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/'));
     assert.match(url, /\.png$/);
   }
+});
+
+test('iPhone body-fat layout has safe scrolling after the Next CTA', () => {
+  const styles = readFileSync(new URL('../src/styles/bodyFatPicker.css', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/views/questionnaireView.js', import.meta.url), 'utf8');
+  assert.match(styles, /\.questionnaire-container\.body-fat-questionnaire/);
+  assert.match(styles, /padding-bottom: calc\(145px \+ env\(safe-area-inset-bottom/);
+  assert.match(styles, /\.body-fat-next[\s\S]*?position: sticky/);
+  assert.match(source, /currentStepKey === STEP_KEYS\.BODY_FAT \? ' body-fat-questionnaire'/);
+  assert.match(source, /classList\.contains\('body-fat-image-fallback'\)/);
+  assert.match(source, /querySelector\('\.body-fat-fallback-label'\)/);
+  assert.ok(!source.includes("querySelector('.body-fat-chip')"));
 });
 
 test('body fat onboarding follows measurements for every goal', () => {
