@@ -516,6 +516,7 @@ function renderWeeklyPlanSection(state) {
             ` : ''}
             <span class="badge" style="background: rgba(85,247,165,0.12); color: #55F7A5; font-family: monospace; font-size: 0.78rem; padding: 4px 8px; border-radius: 8px;">
               بروتين: ${activeDay.plannedProtein || 0}غ
+              ${activeDay.macroFitWarning ? '<br><small style="color:#ffce85">الوجبات المقترحة لا تطابق كل أهداف الماكروز؛ راجع الفوارق قبل اعتمادها.</small>' : ''}
             </span>
           </div>
         </div>

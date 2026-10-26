@@ -334,6 +334,47 @@ export function scaleMealToTarget(mealTemplate, targetCals, targetProtein) {
   };
 }
 
+/** Fit real ingredient quantities to P/C/F and calories; never invent nutrient totals. */
+export function fitMealMacros(template, targets) {
+  const fields = ['protein', 'carbs', 'fats', 'calories'];
+  if (template.fixedRecipe) {
+    const result = scaleMealToTarget(template, targets.calories, targets.protein);
+    result.fitError = fields.reduce((sum, key) => sum + ((result[key] - targets[key]) / Math.max(targets[key], key === 'calories' ? 100 : 10)) ** 2, 0);
+    return result;
+  }
+  const ingredients = template.ingredients || [];
+  const norms = fields.map(k => Math.max(targets[k], k === 'calories' ? 100 : 5));
+  const goal = fields.map((k, j) => targets[k] / norms[j]);
+  const vectors = ingredients.map(ing => fields.map((k, j) => (Number(ing[k]) || 0) / Math.max(1, ing.grams) / norms[j]));
+  const max = ingredients.map(ing => /زيت|زبدة/.test(ing.name) ? 60 : Math.max(300, Math.min(800, ing.grams * 4)));
+  const grams = ingredients.map((ing, i) => Math.min(max[i], ing.grams * targets.calories / Math.max(1, template.calories)));
+  const current = goal.map((_, j) => grams.reduce((sum, g, i) => sum + g * vectors[i][j], 0));
+  for (let iteration = 0; iteration < 100; iteration++) {
+    for (let i = 0; i < ingredients.length; i++) {
+      const v = vectors[i], norm = v.reduce((sum, x) => sum + x * x, 0);
+      if (!norm) continue;
+      const update = v.reduce((sum, x, j) => sum + x * (goal[j] - current[j]), 0) / norm;
+      const next = Math.max(0, Math.min(max[i], grams[i] + update));
+      v.forEach((x, j) => { current[j] += x * (next - grams[i]); });
+      grams[i] = next;
+    }
+  }
+  const round = x => Math.round(x * 10) / 10;
+  const items = ingredients.map((ing, i) => {
+    let g = Math.round(grams[i]);
+    const count = ing.isCountBased && ing.pieceWeight ? Math.round(g / ing.pieceWeight) : undefined;
+    if (count !== undefined) g = count * ing.pieceWeight;
+    const ratio = g / Math.max(1, ing.grams);
+    return { ...ing, grams: g, count, amount: count !== undefined ? `${count} ${ing.unit || 'عدد'}` : `${g}${ing.unit || 'غم'}`,
+      ...Object.fromEntries(fields.map(k => [k, round((ing[k] || 0) * ratio)])) };
+  }).filter(ing => ing.grams > 0);
+  const result = { id: template.id || generateId(), titleAr: template.titleAr, ingredients: items,
+    ...Object.fromEntries(fields.map(k => [k, round(items.reduce((sum, ing) => sum + ing[k], 0))])) };
+  result.calories = Math.round(result.calories);
+  result.fitError = fields.reduce((sum, key, j) => sum + ((result[key] - targets[key]) / norms[j]) ** 2, 0);
+  return result;
+}
+
 /**
  * جمع وتصفية كل القوالب الصالحة لوجبة معينة مع فحص الحساسيات والأطعمة المستبعدة
  */
@@ -350,6 +391,7 @@ function getEligibleTemplates(slotKey, allergens = [], dislikedFoods = [], liked
     id: r.id,
     titleAr: r.titleAr,
     category: r.category,
+    fixedRecipe: true,
     calories: r.calories,
     protein: r.protein,
     carbs: r.carbs,
@@ -466,20 +508,17 @@ export function generateNutritionPlan(userProfile, userPreferences = {}) {
       // الحصول على القوالب الصالحة
       const templates = getEligibleTemplates(slotKey, allergens, dislikedFoods, likedFoods);
 
-      // اختيار القالب الرئيسي حسب نمط الدايت (صارم = يكرر الأول دائماً، مرن = يدوّر حسب رقم اليوم)
-      const primaryIndex = isStrict ? 0 : (dayIndex % templates.length);
-      const primaryTemplate = templates[primaryIndex] || templates[0];
-      const scaledPrimary = scaleMealToTarget(primaryTemplate, targetCals, targetProtein);
-
-      // تجهيز الخيارات (إذا كانت الخطة خيارات متعددة 2-3 خيارات، أو خيار واحد فقط إذا كانت ثابتة)
-      const options = [scaledPrimary];
-
-      if (preferences.planFormat === 'multiple_options' && templates.length > 1) {
-        const secondIndex = (primaryIndex + 1) % templates.length;
-        options.push(scaleMealToTarget(templates[secondIndex], targetCals, targetProtein));
-        if (templates.length > 2) {
-          const thirdIndex = (primaryIndex + 2) % templates.length;
-          options.push(scaleMealToTarget(templates[thirdIndex], targetCals, targetProtein));
+      const slotTargets = { calories: targetCals, protein: targetProtein, carbs: dailyTargets.carbs * slotRatio, fats: dailyTargets.fats * slotRatio };
+      const verifiedTemplates = templates.filter(t => !t.fixedRecipe);
+      const fitted = (verifiedTemplates.length ? verifiedTemplates : templates).map(t => fitMealMacros(t, slotTargets)).sort((a, b) => a.fitError - b.fitError);
+      const best = fitted[0].fitError;
+      const eligible = fitted.filter(t => t.fitError <= best + 0.025);
+      const primaryIndex = isStrict ? 0 : dayIndex % Math.min(3, eligible.length);
+      const options = [eligible[primaryIndex]];
+      if (preferences.planFormat === 'multiple_options') {
+        for (const candidate of fitted) {
+          if (options.length >= 3) break;
+          if (candidate !== options[0]) options.push(candidate);
         }
       }
 
@@ -510,8 +549,11 @@ export function generateNutritionPlan(userProfile, userPreferences = {}) {
       shortNameAr: dayMeta.shortNameAr,
       hasOffPlanMeal: dayMeals.some(m => m.isOffPlan),
       targetCalories: dailyTargets.targetCalories,
-      plannedCalories: dayTotalCalories,
-      plannedProtein: dayTotalProtein,
+      plannedCalories: Math.round(dayTotalCalories),
+      plannedProtein: Math.round(dayTotalProtein * 10) / 10,
+      plannedCarbs: dayMeals.reduce((s, m) => s + (m.options[m.activeOptionIndex]?.carbs || 0), 0),
+      plannedFats: dayMeals.reduce((s, m) => s + (m.options[m.activeOptionIndex]?.fats || 0), 0),
+      macroFitWarning: dayMeals.some(m => (m.options[m.activeOptionIndex]?.fitError || 0) > 0.04),
       sweetServingData: dailyTargets.sweetServingData,
       meals: dayMeals
     };

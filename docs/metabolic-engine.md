@@ -37,6 +37,7 @@ The component activity estimate takes the maximum of step-based and occupational
 - Generated integer macro targets conserve 4/4/9 energy. Actual food-label calories remain independent (fiber, polyols, specific Atwater factors and rounding).
 - Weekly budget rounding conserves the exact integer weekly sum and recommendation floor. The profile stores average targets; daily shifted targets are applied on day rollover and consumed by the meal planner.
 - Infeasible macro budgets are flagged; they must not be described as meeting the desired protein target.
+- Meal quantities are fitted to protein, carbohydrate, fat and energy together using bounded non-negative coordinate descent. Independent ingredient changes use explicit ingredient nutrient data; fixed recipes are not decomposed into invented ingredient macro ratios for optimization. Countable foods remain whole pieces. Resulting food values are approximate and visibly flagged when the fit is poor.
 - Weight/strength cannot measure fat or muscle kilograms. The old heuristic was removed.
 - New settings, day confirmations, imports and calibration history are persisted in browser app state and included in existing full JSON backup exports. No new database columns are assumed; these records are not claimed to be cross-device synced.
 

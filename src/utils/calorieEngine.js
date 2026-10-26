@@ -408,7 +408,7 @@ export function calculateWeightLossOption({
   const maintenance = Number(maintenanceCalories) || 2400;
   const rate = Number(weeklyRate) || 0.0075;
 
-  const weeklyLossKg = weight * rate;
+  const weeklyLossKg = Number(targetWeightKg) > 0 && Number(targetWeightKg) >= weight ? 0 : weight * rate;
   const weeklyDeficit = weeklyLossKg * KCAL_PER_KG;
   const dailyDeficit = weeklyDeficit / 7;
   const requestedTargetCalories = maintenance - dailyDeficit;
@@ -605,7 +605,7 @@ export function calculateWeightGainOption({
   const maintenance = Number(maintenanceCalories) || 2400;
   const rate = Number(weeklyRate) || 0.0050;
 
-  const weeklyGainKg = weight * rate;
+  const weeklyGainKg = Number(targetWeightKg) > 0 && Number(targetWeightKg) <= weight ? 0 : weight * rate;
   const weeklySurplus = weeklyGainKg * KCAL_PER_KG;
   const dailySurplus = weeklySurplus / 7;
   const requestedTargetCalories = maintenance + dailySurplus;

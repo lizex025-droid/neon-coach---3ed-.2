@@ -123,3 +123,20 @@ test('store confirms food, invalidates edited meals, preserves raw data and surv
   assert.equal(saved.loggedMeals.length,1);assert.equal(saved.metabolicData.nutritionDays[today].status,'partial');
   delete globalThis.localStorage;
 });
+
+test('weekly menu fits actual ingredient macros instead of changing only its target label', async()=>{
+  const {generateNutritionPlan}=await import('../src/domain/nutritionPlanEngine.js');
+  const plan=generateNutritionPlan({targetCalories:1926,targetProtein:140,targetCarbs:229,targetFats:50,weight:70});
+  for(const day of plan.days) {
+    assert.ok(Math.abs(day.plannedProtein-140)<10);
+    assert.ok(Math.abs(day.plannedCarbs-229)<15);
+    assert.ok(Math.abs(day.plannedFats-50)<5);
+    assert.ok(Math.abs(day.plannedCalories-1926)<60);
+    for(const meal of day.meals) assert.ok(Number.isInteger(meal.options[0].calories));
+  }
+});
+test('a reached loss/gain goal has no continuing initial deficit/surplus', async()=>{
+  const {calculateWeightLossOption,calculateWeightGainOption}=await import('../src/utils/calorieEngine.js');
+  assert.equal(calculateWeightLossOption({currentWeightKg:83,targetWeightKg:83,maintenanceCalories:1913,weeklyRate:.005}).targetCaloriesRounded,1913);
+  assert.equal(calculateWeightGainOption({currentWeightKg:83,targetWeightKg:83,maintenanceCalories:1913,weeklyRate:.005}).targetCaloriesRounded,1913);
+});
