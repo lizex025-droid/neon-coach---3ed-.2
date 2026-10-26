@@ -57,15 +57,29 @@ export function estimateInitialExpenditure(profile = {}) {
   // Legacy PAL already includes training. Only the component mode adds incremental exercise.
   if (profile.activityModel === 'components') {
     const steps = Math.max(0, Number(profile.dailySteps) || 0);
-    const stepPal = steps < 3000 ? 1.2 : steps < 6000 ? 1.3 : steps < 9000 ? 1.4 : steps < 12000 ? 1.5 : 1.6;
+    const reportedPal = { sedentary:1.2, moderate:1.4, very_active:1.65, unknown:1.2 }[profile.dailyMovement] || 1.2;
+    const stepPal = finite(profile.dailySteps) ? (steps < 3000 ? 1.2 : steps < 6000 ? 1.3 : steps < 9000 ? 1.4 : steps < 12000 ? 1.5 : 1.6) : reportedPal;
     const jobPal = { seated: 1.2, standing: 1.3, moving: 1.5, physical: 1.7 }[profile.jobActivity] || 1.2;
-    const met = { resistance: 3.5, cardio: 6, mixed: 4.5 }[profile.exerciseType] || 3.5;
-    const sessions = clamp(Number(profile.workoutDaysCount) || 0, 0, 7);
-    const minutes = clamp(Number(profile.sessionDurationMin) || 0, 0, 180);
+    const met = { none: 1, resistance: 3.5, cardio: 6, mixed: 4.5, unknown: 1 }[profile.exerciseType] || 3.5;
+    const sessions = clamp(Number(profile.exerciseSessionsPerWeek ?? profile.workoutDaysCount) || 0, 0, 14);
+    const minutes = clamp(Number(profile.exerciseDurationMin ?? profile.sessionDurationMin) || 0, 0, 180);
     const incrementalExercise = (met - 1) * Number(profile.currentWeight || profile.weight) * (minutes / 60) * sessions / 7;
     pal = clamp(Math.max(stepPal, jobPal) + incrementalExercise / resting.rmr, 1.2, 2.4);
   }
-  return { ...resting, pal, tdee: resting.rmr * pal, source: 'activity_estimate' };
+  const activityTdee = resting.rmr * pal;
+  const end = dayNumber(profile.historyEndDate), start = dayNumber(profile.recentWeightStartDate);
+  const weight = Number(profile.currentWeight || profile.weight);
+  const priorWeight = Number(profile.recentWeightStartKg);
+  const recent = end !== null && start !== null && end - start >= 21 && end - start <= 56;
+  const noTransition = !profile.recentTransitionType || profile.recentTransitionType === 'none';
+  // Optional aggregate history is a transparent initial estimate, never synthetic daily records.
+  if (recent && noTransition && profile.recentIntakeComplete === true && priorWeight >= 20 && priorWeight <= 500 && Number(profile.recentAverageCalories) >= 500 && Number(profile.recentAverageCalories) <= 10000 && (!profile.historyEndWeight || Math.abs(weight - profile.historyEndWeight) < 0.1)) {
+    const slope = (weight - priorWeight) / (end - start);
+    const tdee = Number(profile.recentAverageCalories) - slope * tissueEnergyDensity(profile, weight).kcalPerKg;
+    if (Math.abs(slope * 7) / weight <= 0.025 && tdee >= 500 && tdee <= 10000) return { ...resting, pal, tdee, activityTdee, source:'reported_history_estimate', needsCalibration:true };
+  }
+  return { ...resting, pal, tdee: activityTdee, source: 'activity_estimate', needsCalibration:true,
+    context: { weightHistoryHigher:profile.weightHistoryHigher || 'unknown', recentWeightTrend:profile.recentWeightTrend || 'unknown', athleticStatus:profile.athleticStatus || 'unknown' } };
 }
 
 function robustLine(points) {
@@ -138,7 +152,8 @@ export function estimateAdaptiveExpenditure({ profile = {}, weights = [], nutrit
   base.quality.weighIns = obs.length;
   if (obs.length < 6 || obs[0].day > start + 2 || obs.at(-1).day < end - 3 || obs.at(-1).day - obs[0].day < 18) return hold('INSUFFICIENT_WEIGHT_COVERAGE');
   if (obs.some((p, i) => i > 0 && p.day - obs[i - 1].day > 7)) return hold('WEIGHT_GAP');
-  if (events.some(e => dayNumber(e.date) !== null && dayNumber(e.date) <= end && dayNumber(e.date) >= end - 14)) return hold('RECENT_WATER_TRANSITION');
+  const transitionEvents = [...events, ...(['carb_change','creatine','fluid_change'].includes(profile.recentTransitionType) ? [{ date:profile.recentTransitionDate, type:profile.recentTransitionType }] : [])];
+  if (transitionEvents.some(e => dayNumber(e.date) !== null && dayNumber(e.date) <= end && dayNumber(e.date) >= end - 14)) return hold('RECENT_WATER_TRANSITION');
   if (obs.some((p, i) => i > 0 && p.day >= end - 14 && p.day - obs[i - 1].day <= 3 && Math.abs(p.weight / obs[i - 1].weight - 1) > 0.02)) return hold('ABRUPT_WEIGHT_CHANGE');
   if (Math.abs(trend.weeklyChangeKg) / trend.trendWeight > 0.025) return hold('RAPID_WEIGHT_CHANGE');
   // Align food interval exactly with the days bounded by the weight observations.
@@ -169,8 +184,11 @@ export function allocateMacros(calories, profile = {}) {
   const diet = profile.macroStyle || 'standard';
   const bf = Number(profile.bodyFatPercent), ffm = Number(profile.fatFreeMassKg);
   const lean = profile.ffmReliable && ffm > 0 && ffm < weight ? ffm : bf > 3 && bf < 65 ? weight * (1 - bf / 100) : null;
-  const factor = { low: 1.6, moderate: 2, high: 2.2 }[preference] || 2;
-  const leanFactor = { low: 2, moderate: 2.3, high: 2.7 }[preference] || 2.3;
+  const type = profile.programTrainingType;
+  const proteinRanges = type === 'none' ? [1,1.2,1.6] : type === 'cardio' ? [1.2,1.6,1.8] : [1.6,2,2.2];
+  const leanRanges = type === 'none' ? [1.4,1.6,2] : type === 'cardio' ? [1.6,2,2.3] : [2,2.3,2.7];
+  const index = {low:0,moderate:1,high:2}[preference] ?? 1;
+  const factor = proteinRanges[index], leanFactor = leanRanges[index];
   const idealProtein = Math.round(positive(profile.proteinGrams) ? Number(profile.proteinGrams) : lean && (profile.ffmReliable || bf >= 35) ? lean * leanFactor : weight * factor);
   let protein = idealProtein;
   let remaining = target - protein * 4;

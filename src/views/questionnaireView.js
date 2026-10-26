@@ -1,3 +1,7 @@
+import { METABOLIC_STEP_KEYS, METABOLIC_DEFAULTS, renderMetabolicOnboardingStep, collectMetabolicAnswers, updateMetabolicVisibility, validateMetabolicAnswers } from '../components/metabolicOnboarding.js';
+import { estimateInitialExpenditure } from '../domain/metabolicEngine.js';
+import { localDate } from '../domain/actionAgent.js';
+import '../styles/metabolicOnboarding.css';
 /**
  * NEON COACH - استبيان التخصيص الكامل (7 خطوات قابلة للاستئناف)
  * يطابق الصورتين المرجعيتين 0E211335 و A9EED71B مع رسمة القط على الميزان وحساب العمر والماكروز تلقائياً
@@ -57,6 +61,10 @@ let approvedTrainingDraft = null;
 export const STEP_KEYS = {
   MEASUREMENTS: 'measurements',
   BODY_FAT: 'body_fat',
+  METABOLIC_HISTORY: 'metabolic_history',
+  METABOLIC_ACTIVITY: 'metabolic_activity',
+  METABOLIC_MEASUREMENT: 'metabolic_measurement',
+  METABOLIC_STRATEGY: 'metabolic_strategy',
   GOAL: 'goal',
   WEEKLY_LOSS_RATE: 'weekly_loss_rate',
   WEEKLY_GAIN_RATE: 'weekly_gain_rate',
@@ -74,6 +82,9 @@ export function getActiveSteps() {
     return [
       STEP_KEYS.MEASUREMENTS,
       STEP_KEYS.BODY_FAT,
+      STEP_KEYS.METABOLIC_HISTORY,
+      STEP_KEYS.METABOLIC_ACTIVITY,
+      STEP_KEYS.METABOLIC_MEASUREMENT,
       STEP_KEYS.GOAL,
       STEP_KEYS.WEEKLY_LOSS_RATE,
       STEP_KEYS.NUTRITION,
@@ -81,6 +92,7 @@ export function getActiveSteps() {
       STEP_KEYS.PLAN_PREFERENCES_2,
       STEP_KEYS.HEALTH,
       STEP_KEYS.TRAINING,
+      STEP_KEYS.METABOLIC_STRATEGY,
       STEP_KEYS.SUPPLEMENTS,
       STEP_KEYS.REVIEW
     ];
@@ -89,6 +101,9 @@ export function getActiveSteps() {
     return [
       STEP_KEYS.MEASUREMENTS,
       STEP_KEYS.BODY_FAT,
+      STEP_KEYS.METABOLIC_HISTORY,
+      STEP_KEYS.METABOLIC_ACTIVITY,
+      STEP_KEYS.METABOLIC_MEASUREMENT,
       STEP_KEYS.GOAL,
       STEP_KEYS.WEEKLY_GAIN_RATE,
       STEP_KEYS.NUTRITION,
@@ -96,6 +111,7 @@ export function getActiveSteps() {
       STEP_KEYS.PLAN_PREFERENCES_2,
       STEP_KEYS.HEALTH,
       STEP_KEYS.TRAINING,
+      STEP_KEYS.METABOLIC_STRATEGY,
       STEP_KEYS.SUPPLEMENTS,
       STEP_KEYS.REVIEW
     ];
@@ -103,12 +119,16 @@ export function getActiveSteps() {
   return [
     STEP_KEYS.MEASUREMENTS,
     STEP_KEYS.BODY_FAT,
+    STEP_KEYS.METABOLIC_HISTORY,
+    STEP_KEYS.METABOLIC_ACTIVITY,
+    STEP_KEYS.METABOLIC_MEASUREMENT,
     STEP_KEYS.GOAL,
     STEP_KEYS.NUTRITION,
     STEP_KEYS.PLAN_PREFERENCES,
     STEP_KEYS.PLAN_PREFERENCES_2,
     STEP_KEYS.HEALTH,
     STEP_KEYS.TRAINING,
+    STEP_KEYS.METABOLIC_STRATEGY,
     STEP_KEYS.SUPPLEMENTS,
     STEP_KEYS.REVIEW
   ];
@@ -117,6 +137,7 @@ export function getActiveSteps() {
 
 // بيانات الاستبيان الجاري تعبئتها
 let formData = {
+  ...METABOLIC_DEFAULTS,
   targetMode: 'coached',
   name: '',
   age: 18, // 18 سنة افتراضياً كما طلب المستخدم
@@ -187,6 +208,13 @@ let formData = {
   deadliftRecord: '',
   supplementsBudget: 'medium'
 };
+
+function metabolismForForm(overrides = {}) {
+  const data = { ...formData, ...overrides, currentWeight: overrides.weight ?? formData.weight };
+  const initial = estimateInitialExpenditure(data);
+  return { rawBmr: initial.rmr ?? calculateBMR(data.weight, data.height, data.age, data.gender),
+    rawTdee: initial.tdee ?? calculateMaintenanceCalories(calculateBMR(data.weight, data.height, data.age, data.gender), data.activityLevel) };
+}
 
 /**
  * قائمة الأطعمة المقترحة والمحبوبة في العالم العربي (بروتينات، نشويات، خضار، فواكه، وسناكات صحية)
@@ -262,8 +290,7 @@ function renderFatLossSummaryHTML(data) {
   const gender = data.gender || 'male';
   const activity = data.activityLevel || 'moderate';
 
-  const rawBmr = calculateBMR({ sex: gender, age, weightKg: weight, heightCm: height });
-  const rawTdee = calculateMaintenanceCalories(rawBmr, activity);
+  const { rawBmr, rawTdee } = metabolismForForm({ gender, age, weight, height, activityLevel: activity });
 
   const option = calculateWeightLossOption({
     currentWeightKg: weight,
@@ -350,8 +377,7 @@ function renderWeightGainSummaryHTML(data) {
   const gender = data.gender || 'male';
   const activity = data.activityLevel || 'moderate';
 
-  const rawBmr = calculateBMR({ sex: gender, age, weightKg: weight, heightCm: height });
-  const rawTdee = calculateMaintenanceCalories(rawBmr, activity);
+  const { rawBmr, rawTdee } = metabolismForForm({ gender, age, weight, height, activityLevel: activity });
 
   const option = calculateWeightGainOption({
     currentWeightKg: weight,
@@ -522,6 +548,9 @@ function renderStepWorkflowHTML(step, totalSteps, stepKey) {
 
 export function renderQuestionnaireView() {
   const profile = store.getState()?.userProfile;
+  if (profile) {
+    for (const key of Object.keys(METABOLIC_DEFAULTS)) if (profile[key] !== undefined) formData[key] = profile[key];
+  }
   // تحميل البيانات من الملف الشخصي الحقيقي إذا توفرت
   if (profile?.name && profile.name.trim()) {
     formData.name = profile.name;
@@ -530,17 +559,17 @@ export function renderQuestionnaireView() {
   if (profile?.gender === 'female' || profile?.gender === 'male') {
     formData.gender = profile.gender;
   }
-  if (profile?.age && Number(profile.age) > 0 && Number(profile.age) !== 25 && Number(profile.age) !== 10 && Number(profile.age) !== 17) {
+  if (profile?.age && Number(profile.age) > 0) {
     formData.age = Number(profile.age);
   } else {
     formData.age = 18;
   }
-  if (profile?.height && Number(profile.height) > 0 && Number(profile.height) !== 170 && Number(profile.height) !== 128 && Number(profile.height) !== 194) {
+  if (profile?.height && Number(profile.height) > 0) {
     formData.height = Number(profile.height);
   } else {
     formData.height = 175;
   }
-  if (profile?.currentWeight && Number(profile.currentWeight) > 0 && Number(profile.currentWeight) !== 75 && Number(profile.currentWeight) !== 35) {
+  if (profile?.currentWeight && Number(profile.currentWeight) > 0) {
     formData.weight = Number(profile.currentWeight);
   } else {
     formData.weight = 70;
@@ -649,6 +678,7 @@ function renderHorizontalPickerHTML(id, min, max, step, currentVal, unit) {
 
 
 function renderStepContent(step) {
+  if (METABOLIC_STEP_KEYS.includes(step)) return renderMetabolicOnboardingStep(step, formData, localDate());
   switch (step) {
     case STEP_KEYS.BODY_FAT:
       return renderBodyFatStep(formData.bodyFatRange, formData.gender);
@@ -792,7 +822,7 @@ function renderStepContent(step) {
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 14px;">
-          <div class="neon-card" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+          <div class="neon-card" style="padding: 14px 18px; display: ${formData.activityModel === 'components' ? 'none' : 'flex'}; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
             <div>
               <div style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem;">مستوى نشاطك اليومي</div>
               <div style="font-size: 0.8rem; color: #B8C0BC;">حدد نمط حركتك لحساب سعرات الثبات بدقة</div>
@@ -829,8 +859,7 @@ function renderStepContent(step) {
       const currentGender = formData.gender || 'male';
       const currentActivity = formData.activityLevel || 'moderate';
 
-      const rawBmr = calculateBMR({ sex: currentGender, age: currentAge, weightKg: currentWeight, heightCm: currentHeight });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, currentActivity);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: currentGender, age: currentAge, weight: currentWeight, height: currentHeight, activityLevel: currentActivity });
 
       const options = calculateAllWeightLossOptions({
         currentWeightKg: currentWeight,
@@ -967,8 +996,7 @@ function renderStepContent(step) {
       const currentGender = formData.gender || 'male';
       const currentActivity = formData.activityLevel || 'moderate';
 
-      const rawBmr = calculateBMR({ sex: currentGender, age: currentAge, weightKg: currentWeight, heightCm: currentHeight });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, currentActivity);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: currentGender, age: currentAge, weight: currentWeight, height: currentHeight, activityLevel: currentActivity });
 
       const options = calculateAllWeightGainOptions({
         currentWeightKg: currentWeight,
@@ -1585,6 +1613,11 @@ function renderStepContent(step) {
           </div>
 
           ${targets.floorApplied ? '<p style="color:#ffce85;margin-bottom:12px">تم تطبيق الحد الأدنى للسعرات؛ معدل النزول المختار يبقى هدفًا مطلوبًا وليس نتيجة مضمونة بهذه الميزانية.</p>' : ''}
+          <div style="display:grid;gap:8px;margin-bottom:16px;color:#B8C0BC">
+            <span>مصدر RMR: ${targets.rmrMethod} · TDEE أولي: ${targets.tdee} سعرة/يوم</span>
+            <span>النظام: ${formData.macroStyle || 'standard'} · تدريب التغذية: ${formData.programTrainingType || 'غير محدد'} · البروتين: ${formData.proteinPreference || 'متوسط'}</span>
+            <span>توزيع الأسبوع: ${formData.calorieDistribution === 'shift' ? 'أعلى بأيام التدريب' : 'متساوٍ'} · الميزانية: ${targets.targetCalories * 7} سعرة</span>
+          </div>
           ${formData.bodyFatRange ? `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
             <span style="color: #B8C0BC;">نسبة الدهون (تقدير بصري)</span>
             <span style="font-weight: 800; color: #55F7A5;" dir="ltr">${formData.bodyFatRange}</span>
@@ -1822,6 +1855,16 @@ export function bindQuestionnaireEvents() {
   const totalSteps = activeSteps.length;
   const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
 
+  if (METABOLIC_STEP_KEYS.includes(currentStepKey)) {
+    const root = document.getElementById('metabolic-onboarding');
+    const save = () => {
+      Object.assign(formData, collectMetabolicAnswers(root, formData, localDate()));
+      updateMetabolicVisibility(root, formData);
+    };
+    root?.addEventListener('change', save);
+    root?.addEventListener('input', save);
+    if (root) updateMetabolicVisibility(root, formData);
+  }
   const nextBtn = document.getElementById('q-next-step-btn');
   const backBtn = document.getElementById('q-back-step-btn');
   const createPlanBtn = document.getElementById('create-my-plan-btn');
@@ -1872,6 +1915,12 @@ export function bindQuestionnaireEvents() {
       if (stepKeyNow === STEP_KEYS.BODY_FAT && !getBodyFatRange(formData.bodyFatRange, formData.gender)) {
         notificationService.showToast('اختَر نسبة الدهون التقريبية من الصور قبل المتابعة', 'warning');
         return;
+      }
+
+      if (METABOLIC_STEP_KEYS.includes(stepKeyNow)) {
+        saveCurrentStepInputs();
+        const error = validateMetabolicAnswers(stepKeyNow, formData, localDate());
+        if (error) { notificationService.showToast(error, 'warning'); return; }
       }
 
       // التحقق عند الخطوة 2 لهدف خسارة الدهون: الوزن المستهدف يجب أن يكون أقل
@@ -2066,8 +2115,8 @@ export function bindQuestionnaireEvents() {
       ...formData,
       currentWeight: formData.weight,
       startWeight: formData.weight,
-      bmr: formData.bmr || targets.bmr,
-      maintenanceCalories: formData.maintenanceCalories || targets.tdee,
+      bmr: targets.bmr,
+      maintenanceCalories: targets.tdee,
       selectedWeeklyLossRate: formData.selectedWeeklyLossRate || formData.weeklyLossPercent,
       selectedWeeklyLossPercent: formData.selectedWeeklyLossPercent || formData.weeklyLossPercent,
       selectedWeeklyLossKg: formData.selectedWeeklyLossKg || formData.weeklyLossKg,
@@ -2075,13 +2124,15 @@ export function bindQuestionnaireEvents() {
       weeklyLossKg: formData.weeklyLossKg,
       weeklyCalorieDeficit: formData.weeklyCalorieDeficit,
       dailyCalorieDeficit: formData.dailyCalorieDeficit,
-      requestedTargetCalories: formData.requestedTargetCalories || targets.requestedTargetCalories || targets.targetCalories,
-      requestedCalories: formData.requestedCalories || targets.targetCalories,
+      requestedTargetCalories: targets.targetCalories,
+      requestedCalories: targets.targetCalories,
       estimatedGoalWeeks: formData.estimatedGoalWeeks,
       weightLossRiskLevel: formData.weightLossRiskLevel,
       calorieSafetyLevel: formData.calorieSafetyLevel,
       calorieWarningCodes: formData.calorieWarningCodes || [],
-      calculationFormula: 'mifflin_st_jeor',
+      calculationFormula: targets.rmrMethod,
+      rmrMethodUsed: targets.rmrMethod,
+      rmr: targets.rmr,
       targetMode: formData.targetMode || 'coached',
       floorApplied: targets.floorApplied,
       macroWarnings: targets.macroWarnings,
@@ -2113,7 +2164,7 @@ export function bindQuestionnaireEvents() {
       fullProfile.activeTrainingPlanVersionId = activation.versionId;
       store.setUserProfile(fullProfile);
       store.setDailyStackItems(selectedStackItems);
-      nutritionPlanService.generateAndSavePlan(fullProfile, formData.nutritionPlanPreferences);
+
 
       const state = store.getState();
       state.onboardingAuthPending = !hasAuthenticatedAccount;
@@ -2132,6 +2183,8 @@ export function bindQuestionnaireEvents() {
         waterGlasses: 0,
         waterMl: 0
       });
+      store.recalculateTargetsFromProfile();
+      nutritionPlanService.generateAndSavePlan(store.getState().userProfile, formData.nutritionPlanPreferences);
       store.saveState();
 
       const userId = authService.getEffectiveUserId();
@@ -2478,8 +2531,7 @@ export function bindQuestionnaireEvents() {
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
 
-      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
 
       document.querySelectorAll('.rate-card').forEach(rc => {
         const rateVal = parseFloat(rc.dataset.rate);
@@ -2510,8 +2562,7 @@ export function bindQuestionnaireEvents() {
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
 
-      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
       const plan = calculateWeightLossOption({
         currentWeightKg: w,
         maintenanceCalories: rawTdee,
@@ -2574,8 +2625,7 @@ export function bindQuestionnaireEvents() {
         const age = Number(formData.age) || 18;
         const g = formData.gender || 'male';
         const act = formData.activityLevel || 'moderate';
-        const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-        const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+        const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
         const opt = calculateWeightLossOption({
           currentWeightKg: w,
           maintenanceCalories: rawTdee,
@@ -2656,8 +2706,7 @@ export function bindQuestionnaireEvents() {
       const age = Number(formData.age) || 18;
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
-      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
       const opt = calculateWeightLossOption({
         currentWeightKg: w,
         maintenanceCalories: rawTdee,
@@ -2711,8 +2760,7 @@ export function bindQuestionnaireEvents() {
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
 
-      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
 
       document.querySelectorAll('.weekly-gain-rates-grid .rate-card').forEach(rc => {
         const rateVal = parseFloat(rc.dataset.rate);
@@ -2743,8 +2791,7 @@ export function bindQuestionnaireEvents() {
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
 
-      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
       const plan = calculateWeightGainOption({
         currentWeightKg: w,
         maintenanceCalories: rawTdee,
@@ -2806,8 +2853,7 @@ export function bindQuestionnaireEvents() {
         const age = Number(formData.age) || 18;
         const g = formData.gender || 'male';
         const act = formData.activityLevel || 'moderate';
-        const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-        const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+        const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
         const opt = calculateWeightGainOption({
           currentWeightKg: w,
           maintenanceCalories: rawTdee,
@@ -2890,8 +2936,7 @@ export function bindQuestionnaireEvents() {
       const age = Number(formData.age) || 18;
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
-      const rawBmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const rawTdee = calculateMaintenanceCalories(rawBmr, act);
+      const { rawBmr, rawTdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
       const opt = calculateWeightGainOption({
         currentWeightKg: w,
         maintenanceCalories: rawTdee,
@@ -3564,7 +3609,10 @@ export function bindQuestionnaireEvents() {
     const activeSteps = getActiveSteps();
     const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
 
-    if (currentStepKey === STEP_KEYS.MEASUREMENTS) {
+    if (METABOLIC_STEP_KEYS.includes(currentStepKey)) {
+      const root = document.getElementById('metabolic-onboarding');
+      if (root) Object.assign(formData, collectMetabolicAnswers(root, formData, localDate()));
+    } else if (currentStepKey === STEP_KEYS.MEASUREMENTS) {
       const name = document.getElementById('q-name')?.value;
       const age = Number(document.getElementById('q-age')?.value) || formData.age;
       const gender = document.getElementById('q-gender')?.value || formData.gender;
@@ -3593,8 +3641,7 @@ export function bindQuestionnaireEvents() {
       const age = Number(formData.age) || 18;
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
-      const bmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const tdee = calculateMaintenanceCalories(bmr, act);
+      const { rawBmr: bmr, rawTdee: tdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
       const option = calculateWeightLossOption({
         currentWeightKg: w,
         maintenanceCalories: tdee,
@@ -3626,8 +3673,7 @@ export function bindQuestionnaireEvents() {
       const age = Number(formData.age) || 18;
       const g = formData.gender || 'male';
       const act = formData.activityLevel || 'moderate';
-      const bmr = calculateBMR({ sex: g, age, weightKg: w, heightCm: h });
-      const tdee = calculateMaintenanceCalories(bmr, act);
+      const { rawBmr: bmr, rawTdee: tdee } = metabolismForForm({ gender: g, age, weight: w, height: h, activityLevel: act });
       const option = calculateWeightGainOption({
         currentWeightKg: w,
         maintenanceCalories: tdee,

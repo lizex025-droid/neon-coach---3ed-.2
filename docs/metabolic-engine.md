@@ -44,3 +44,28 @@ The component activity estimate takes the maximum of step-based and occupational
 ## Validation scope
 
 Regression tests cover published equation examples, the 83 kg/1913 TDEE/0.5% goal example, zero vs missing intake, confirmed fasting, sparse and irregular weights, outliers, fluid-transition holds, same-week idempotency, goal direction, integer budgets, CSV validation, macro consistency, store persistence and bounded dynamic projections. Synthetic tests validate implementation and invariants, not clinical accuracy. Clinical accuracy requires independent reference expenditure data and prospective validation.
+
+## Onboarding v2: inputs connected to calculations
+
+Four questionnaire sections now precede final plan creation, with explicit unknown options and validation. They are also restored when revisiting onboarding.
+
+| Inputs | Actual use |
+| --- | --- |
+| Highest adult weight and recent direction | Context and consistency validation; no invented fixed metabolic suppression coefficient |
+| Prior dated weight plus explicitly complete mean intake over 21–56 days | Optional initial energy-balance estimate, labeled as requiring calibration; never fabricated daily records |
+| Movement outside exercise, actual steps and occupation | Component activity prior; overlapping step/job activity uses their maximum |
+| Current exercise type, actual sessions and duration | Incremental exercise energy; kept separate from the future workout calendar |
+| Lifting experience | Prefills the existing training level, which the user can review later |
+| Cardio experience and athletic status | Saved context; no unsupported RMR multiplier |
+| Measured RMR or reliable dated FFM | Selects indirect calorimetry input or Cunningham; Mifflin remains the default |
+| Planned nutrition-program training and protein preference | Protein range selection |
+| Balanced / low-fat / low-carb / keto | Remaining fat/carbohydrate allocation; keto uses total carbs |
+| Even / shifted calories, training weekdays and calorie floor | Exact weekly budget and daily meal-plan targets |
+| Recent carbohydrate, creatine or fluid transition | Holds adaptive expenditure updates during the transition window |
+
+Activity coefficients, exercise MET approximations and protein preference brackets are transparent initial product assumptions requiring empirical validation. Added questions do not make these population estimates individual measurements. Public MacroFactor documentation does not disclose its complete initial-expenditure coefficients.
+
+MacroFactor experience context: https://help.macrofactorapp.com/en/articles/59-change-your-cardio-experience
+MacroFactor initial estimate and historical data: https://help.macrofactorapp.com/en/articles/206-what-should-i-do-if-my-initial-expenditure-or-recommended-energy-intake-seems-too-high-or-too-low
+
+Questionnaire and metabolic settings are persisted in the app state on the current browser. The legacy Supabase profile table only syncs its supported columns; these additional settings are not yet guaranteed to transfer to another device.
