@@ -565,7 +565,7 @@ export function renderQuestionnaireView() {
   const currentStepKey = activeSteps[currentStep - 1] || activeSteps[0];
 
   return `
-    <div class="questionnaire-container" style="min-height: 100vh; padding: 20px 16px 80px; max-width: 500px; margin: 0 auto;">
+    <div class="questionnaire-container${currentStepKey === STEP_KEYS.BODY_FAT ? ' body-fat-questionnaire' : ''}" style="min-height: 100vh; padding: 20px 16px 80px; max-width: 500px; margin: 0 auto;">
       ${showWelcomeScreen ? renderWelcomeScreenHTML() : renderStepWorkflowHTML(currentStep, totalSteps, currentStepKey)}
     </div>
   `;
@@ -3527,6 +3527,8 @@ export function bindQuestionnaireEvents() {
         photo.hidden = true;
         const fallback = photo.nextElementSibling;
         if (fallback?.classList.contains('body-fat-image-fallback')) fallback.hidden = false;
+        const label = photo.closest('.body-fat-option')?.querySelector('.body-fat-fallback-label');
+        if (label) label.hidden = false;
       };
       photo.addEventListener('error', useFallback, { once: true });
       if (photo.complete && photo.naturalWidth === 0) useFallback();
@@ -3540,8 +3542,7 @@ export function bindQuestionnaireEvents() {
         const chosen = other === choice;
         other.classList.toggle('is-selected', chosen);
         other.setAttribute('aria-checked', String(chosen));
-        const chip = other.querySelector('.body-fat-chip');
-        if (chip) chip.innerHTML = (chosen ? '<span class="body-fat-check" aria-hidden="true">✓</span>' : '') + other.dataset.bodyFatRange;
+
       });
     }));
   }
