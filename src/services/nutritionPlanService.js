@@ -35,7 +35,7 @@ class NutritionPlanService {
    */
   getWeeklyPlan() {
     const state = store.getState();
-    if (state.nutritionPlan && state.nutritionPlan.days) {
+    if (state.nutritionPlan && state.nutritionPlan.days && state.nutritionPlan.version >= 2) {
       return state.nutritionPlan;
     }
 

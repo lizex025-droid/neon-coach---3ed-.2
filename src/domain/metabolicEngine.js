@@ -171,7 +171,7 @@ export function allocateMacros(calories, profile = {}) {
   const lean = profile.ffmReliable && ffm > 0 && ffm < weight ? ffm : bf > 3 && bf < 65 ? weight * (1 - bf / 100) : null;
   const factor = { low: 1.6, moderate: 2, high: 2.2 }[preference] || 2;
   const leanFactor = { low: 2, moderate: 2.3, high: 2.7 }[preference] || 2.3;
-  const idealProtein = Math.round(positive(profile.proteinGrams) ? Number(profile.proteinGrams) : lean && bf >= 35 ? lean * leanFactor : weight * factor);
+  const idealProtein = Math.round(positive(profile.proteinGrams) ? Number(profile.proteinGrams) : lean && (profile.ffmReliable || bf >= 35) ? lean * leanFactor : weight * factor);
   let protein = idealProtein;
   let remaining = target - protein * 4;
   const warnings = [];

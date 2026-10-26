@@ -16,6 +16,7 @@ test('published RMR equations and measured RMR provenance are distinct',()=>{
   assert.equal(estimateRestingMetabolism(profile).rmr,1519);
   const muscular={...profile,currentWeight:121,rmrMethod:'cunningham',fatFreeMassKg:92.3,ffmReliable:true,ffmSource:'bia',ffmMeasuredAt:'2026-10-17'};
   assert.equal(estimateRestingMetabolism(muscular).rmr,2530.6);
+  assert.equal(allocateMacros(2500,muscular).protein,212);
   assert.equal(estimateRestingMetabolism({...muscular,ffmSource:'visual'}).method,'mifflin_st_jeor');
   assert.equal(estimateRestingMetabolism({...profile,rmrMethod:'measured',measuredRmr:1700,rmrMeasuredAt:'2026-10-01'}).measured,true);
   assert.equal(estimateRestingMetabolism({...profile,age:0}).valid,false);
@@ -121,6 +122,9 @@ test('store confirms food, invalidates edited meals, preserves raw data and surv
   assert.equal(store.state.metabolicData.weeklyCalories.reduce((a,b)=>a+b,0),store.state.userProfile.targetCalories*7);
   const saved=store.loadState();assert.equal(saved.userProfile.macroStyle,'balanced');
   assert.equal(saved.loggedMeals.length,1);assert.equal(saved.metabolicData.nutritionDays[today].status,'partial');
+  store.state.progressReport.currentDay.weight = 118;
+  store.saveState();
+  assert.equal(store.loadState().progressReport.currentDay.weight, 118, 'a real 118kg measurement is not a demo marker');
   delete globalThis.localStorage;
 });
 

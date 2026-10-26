@@ -117,6 +117,7 @@ export function getActiveSteps() {
 
 // بيانات الاستبيان الجاري تعبئتها
 let formData = {
+  targetMode: 'coached',
   name: '',
   age: 18, // 18 سنة افتراضياً كما طلب المستخدم
   gender: 'male',
@@ -1564,9 +1565,9 @@ function renderStepContent(step) {
       // الخطوة 7: المراجعة النهائية وزر إنشاء الخطة
       const targets = calculateNutritionTargets(formData);
       const goalNames = {
-        fat_loss: `خسارة دهون (عجز ${formData.dailyCalorieDeficit || 500} سعرة)`,
+        fat_loss: `خسارة دهون (عجز ${Math.max(0, Math.round(targets.tdee - targets.targetCalories))} سعرة)`,
         maintenance: 'تثبيت الوزن (سعرات المحافظة)',
-        muscle_gain: `زيادة الكتلة العضلية (فائض ${formData.dailyCalorieSurplus || 389} سعرة)`
+        muscle_gain: `زيادة الكتلة العضلية (فائض ${Math.max(0, Math.round(targets.targetCalories - targets.tdee))} سعرة)`
       };
       const goalText = goalNames[formData.goal] || 'خسارة دهون';
       const eqText = formData.equipment === 'home' ? 'منزل بأوزان خفيفة' : 'صالة جيم';
@@ -1583,6 +1584,7 @@ function renderStepContent(step) {
             <span style="font-weight: 800; color: #FFFFFF;">${formData.name} (${formData.age} سنة)</span>
           </div>
 
+          ${targets.floorApplied ? '<p style="color:#ffce85;margin-bottom:12px">تم تطبيق الحد الأدنى للسعرات؛ معدل النزول المختار يبقى هدفًا مطلوبًا وليس نتيجة مضمونة بهذه الميزانية.</p>' : ''}
           ${formData.bodyFatRange ? `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
             <span style="color: #B8C0BC;">نسبة الدهون (تقدير بصري)</span>
             <span style="font-weight: 800; color: #55F7A5;" dir="ltr">${formData.bodyFatRange}</span>
@@ -1598,7 +1600,7 @@ function renderStepContent(step) {
               <span style="color: #B8C0BC;">معدل النزول الأسبوعي</span>
               <span style="font-weight: 800; color: #55F7A5;">${(formData.weeklyLossPercent * 100).toFixed(2)}% (~${formData.weeklyLossKg} كغ/أسبوع)</span>
             </div>
-            ${formData.estimatedGoalWeeks ? `
+            ${formData.estimatedGoalWeeks && !targets.floorApplied && !targets.goalReached ? `
               <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
                 <span style="color: #B8C0BC;">المدة التقديرية للهدف</span>
                 <span style="font-weight: 800; color: #FFFFFF;">حوالي ${formData.estimatedGoalWeeks} أسبوع</span>
@@ -1611,7 +1613,7 @@ function renderStepContent(step) {
               <span style="color: #B8C0BC;">معدل الزيادة الأسبوعية</span>
               <span style="font-weight: 800; color: #55F7A5;">${((formData.weeklyGainPercent || 0.0050) * 100).toFixed(2)}% (~${formData.weeklyGainKg || 0.35} كغ/أسبوع)</span>
             </div>
-            ${formData.estimatedGoalWeeks ? `
+            ${formData.estimatedGoalWeeks && !targets.floorApplied && !targets.goalReached ? `
               <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(85,247,165,0.2); padding-bottom: 10px; margin-bottom: 12px;">
                 <span style="color: #B8C0BC;">المدة التقديرية للهدف</span>
                 <span style="font-weight: 800; color: #FFFFFF;">حوالي ${formData.estimatedGoalWeeks} أسبوع</span>
@@ -2080,7 +2082,9 @@ export function bindQuestionnaireEvents() {
       calorieSafetyLevel: formData.calorieSafetyLevel,
       calorieWarningCodes: formData.calorieWarningCodes || [],
       calculationFormula: 'mifflin_st_jeor',
-      targetMode: 'coached',
+      targetMode: formData.targetMode || 'coached',
+      floorApplied: targets.floorApplied,
+      macroWarnings: targets.macroWarnings,
       targetCalories: targets.targetCalories,
       targetProtein: targets.protein,
       targetCarbs: targets.carbs,

@@ -561,7 +561,7 @@ export function generateNutritionPlan(userProfile, userPreferences = {}) {
 
   return {
     id: generateId(),
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     preferences,
     dailyTargets: baseDailyTargets,
