@@ -2,20 +2,38 @@
  * Visual-only body-fat ranges for onboarding. These are broad self-assessments,
  * never equivalent to a scan or clinical body-composition measurement.
  */
+const BODY_FAT_IMAGE_SOURCE = 'Cloudflare R2 · User-provided NEON physique images';
+
 export const BODY_FAT_RANGES = Object.freeze([
-  { label: '3–4%', estimate: 3.5 },
-  { label: '5–7%', estimate: 6 },
-  { label: '8–12%', estimate: 10 },
-  { label: '13–17%', estimate: 15 },
-  { label: '18–23%', estimate: 20.5 },
-  { label: '24–29%', estimate: 26.5 },
-  { label: '30–34%', estimate: 32 },
-  { label: '35–39%', estimate: 37 },
-  { label: '40%+', estimate: 40 }
+  { label: '3–4%', estimate: 3.5, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_20_47%20AM-1.png' },
+  { label: '5–7%', estimate: 6, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_20_51%20AM-2.png' },
+  { label: '8–12%', estimate: 10, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_20_53%20AM-3.png' },
+  { label: '13–17%', estimate: 15, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_20_54%20AM-4.png' },
+  { label: '18–23%', estimate: 20.5, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_20_56%20AM-5.png' },
+  { label: '24–29%', estimate: 26.5, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_20_58%20AM-6.png' },
+  { label: '30–34%', estimate: 32, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_00%20AM-7.png' },
+  { label: '35–39%', estimate: 37, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_01%20AM-8.png' },
+  { label: '40%+', estimate: 40, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_02%20AM-9.png' }
 ]);
 
-export function getBodyFatRange(label) {
-  return BODY_FAT_RANGES.find(item => item.label === label) || null;
+export const FEMALE_BODY_FAT_RANGES = Object.freeze([
+  { label: '10–13%', estimate: 11.5, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_42%20AM-1.png' },
+  { label: '14–17%', estimate: 15.5, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_44%20AM-2.png' },
+  { label: '18–23%', estimate: 20.5, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_46%20AM-3.png' },
+  { label: '24–28%', estimate: 26, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_47%20AM-4.png' },
+  { label: '29–33%', estimate: 31, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_50%20AM-5.png' },
+  { label: '34–37%', estimate: 35.5, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_53%20AM-6.png' },
+  { label: '38–42%', estimate: 40, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_55%20AM-7.png' },
+  { label: '43–49%', estimate: 46, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_57%20AM-8.png' },
+  { label: '50%+', estimate: 50, image: 'https://pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/ChatGPT%20Image%20Oct%2026%2C%202026%2C%2010_21_58%20AM-9.png' }
+]);
+
+export function getBodyFatRanges(gender = 'male') {
+  return gender === 'female' ? FEMALE_BODY_FAT_RANGES : BODY_FAT_RANGES;
+}
+
+export function getBodyFatRange(label, gender = 'male') {
+  return getBodyFatRanges(gender).find(item => item.label === label) || null;
 }
 
 // Nine individually varied, neutral-gray anatomy illustrations. The width,
@@ -71,20 +89,26 @@ export function renderBodyFatSilhouette(index, gender = 'male') {
 }
 
 export function renderBodyFatStep(selectedRange = '', gender = 'male') {
-  return `<section class="body-fat-step" dir="ltr" aria-labelledby="body-fat-heading">
-    <div class="body-fat-heading" dir="rtl">
-      <span class="body-fat-eyebrow">BASICS · BODY COMPOSITION</span>
+  const isFemale = gender === 'female';
+  const choices = getBodyFatRanges(gender);
+  const validSelection = getBodyFatRange(selectedRange, gender)?.label || '';
+  return `<section class="body-fat-step" dir="rtl" aria-labelledby="body-fat-heading">
+    <div class="body-fat-heading">
+      <span class="body-fat-eyebrow">NEON COACH · BODY COMPOSITION</span>
       <h2 id="body-fat-heading">ما هي نسبة الدهون في جسمك؟</h2>
-      <p>اختر الشكل الأقرب لجسمك. هذا تقدير بصري تقريبي، ومش ضروري تكون دقيق 100%.</p>
+      <p>اختر الصورة الأقرب لشكل جسمك. النسبة تقديرية، وبختلف المظهر حسب توزيع الدهون والكتلة العضلية.</p>
     </div>
-    <div class="body-fat-grid" role="radiogroup" aria-label="نسبة الدهون التقريبية">
-      ${BODY_FAT_RANGES.map((item, i) => `<button type="button" class="body-fat-option ${selectedRange === item.label ? 'is-selected' : ''}"
-        role="radio" aria-checked="${selectedRange === item.label}" data-body-fat-range="${item.label}" aria-label="${item.label}">
-        <span class="body-fat-illustration">${renderBodyFatSilhouette(i, gender)}</span>
-        <span class="body-fat-chip">${selectedRange === item.label ? '<span class="body-fat-check" aria-hidden="true">✓</span>' : ''}${item.label}</span>
+    <div class="body-fat-grid" role="radiogroup" aria-label="نسبة الدهون التقريبية لل${isFemale ? 'نساء' : 'رجال'}">
+      ${choices.map((item, i) => `<button type="button" class="body-fat-option ${validSelection === item.label ? 'is-selected' : ''}"
+        role="radio" aria-checked="${validSelection === item.label}" data-body-fat-range="${item.label}" aria-label="${item.label}">
+        <span class="body-fat-illustration">
+          <img class="body-fat-photo" src="${item.image}" alt="نموذج ${isFemale ? 'امرأة' : 'رجل'} بنسبة دهون ${item.label}" loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async" referrerpolicy="no-referrer">
+          <span class="body-fat-image-fallback" hidden>${renderBodyFatSilhouette(i, gender)}</span>
+        </span>
+        <span class="body-fat-chip">${validSelection === item.label ? '<span class="body-fat-check" aria-hidden="true">✓</span>' : ''}${item.label}</span>
       </button>`).join('')}
     </div>
-    <p class="body-fat-disclaimer" dir="rtl">الأشكال للمقارنة فقط، وليست قياسًا طبيًا. يمكنك الرجوع وتعديل اختيارك قبل إكمال التسجيل.</p>
+    <p class="body-fat-disclaimer">هذه الصور للتمثيل البصري فقط؛ لا يمكن تحديد نسبة الدهون بدقة من صورة الجسم وحدها.</p>
     <button type="button" id="q-next-step-btn" class="body-fat-next">التالي <span dir="ltr">Next</span></button>
   </section>`;
 }
