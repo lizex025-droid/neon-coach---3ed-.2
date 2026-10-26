@@ -73,6 +73,7 @@
 .body-fat-option:active { transform: scale(.976); }
 .body-fat-option:focus-visible { outline: 3px solid var(--bf-mint); outline-offset: 4px; }
 .body-fat-illustration {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
@@ -80,13 +81,29 @@
   background: #010907;
   overflow: hidden;
 }
+.body-fat-illustration.is-loading::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(112deg, rgba(15,49,31,.32) 15%, rgba(76,204,126,.16) 43%, rgba(15,49,31,.32) 75%);
+  background-size: 220% 100%;
+  animation: body-fat-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes body-fat-shimmer {
+  to { background-position-x: -220%; }
+}
 .body-fat-photo {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center 36%;
+  opacity: 0;
+  transition: opacity .24s ease-out;
 }
+.body-fat-photo.is-ready { opacity: 1; }
+.body-fat-photo[hidden] { display: none !important; }
 .body-fat-photo[hidden] { display: none !important; }
 .body-fat-image-fallback {
   display: flex;
@@ -179,7 +196,8 @@
   .body-fat-fallback-label { font-size: .7rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .body-fat-option { transition: none; }
+  .body-fat-option, .body-fat-photo { transition: none; }
+  .body-fat-illustration.is-loading::after { animation: none; }
 }
 
 /* The questionnaire is taller than Safari's dynamic bottom address bar.
