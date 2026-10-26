@@ -9,6 +9,7 @@ import {
   renderBodyFatStep,
   renderBodyFatSilhouette
 } from '../src/components/bodyFatPicker.js';
+import { startBodyFatImageLoader } from '../src/utils/bodyFatImageLoader.js';
 
 test('body fat picker has nine distinct broad visual ranges', () => {
   assert.deepEqual(BODY_FAT_RANGES.map(range => range.label), [
@@ -37,6 +38,57 @@ test('picker shows all cards, exactly one selected and a Next button', () => {
   assert.match(html, /pub-64c7fdc3eb7c4a228263029521b77ed1.r2.dev/);
   assert.notEqual(renderBodyFatSilhouette(0), renderBodyFatSilhouette(8));
   assert.notEqual(renderBodyFatSilhouette(4, 'male'), renderBodyFatSilhouette(4, 'female'));
+});
+
+test('initial HTML defers image network requests and keeps accessible labels', () => {
+  const html = renderBodyFatStep('', 'male');
+  assert.equal((html.match(/data-src="https:\/\/pub-/g) || []).length, 9);
+  assert.equal((html.match(/class="body-fat-illustration is-loading"/g) || []).length, 9);
+  assert.equal((html.match(/fetchpriority=/g) || []).length, 0);
+  assert.match(html, /width="320" height="400"/);
+});
+
+test('lazy loader only starts visible photos, limits concurrent fetches and cleans up', () => {
+  const started = [];
+  const photos = Array.from({ length: 9 }, (_, i) => {
+    const listeners = {};
+    const tile = {
+      classList: { add() {}, remove() {} },
+      querySelector() { return null; }
+    };
+    const photo = {
+      dataset: { src: `https://example.com/${i}.png`, priority: i === 0 ? 'high' : 'auto' },
+      isConnected: true,
+      parentElement: { classList: { remove() {} } },
+      nextElementSibling: { classList: { contains() { return true; } }, hidden: true },
+      classList: { add() {} },
+      closest() { return tile; },
+      addEventListener(event, callback) { listeners[event] = callback; },
+      get handlers() { return listeners; },
+      set src(value) { started.push(value); }
+    };
+    return photo;
+  });
+  let observer;
+  class FakeObserver {
+    constructor(callback) { this.callback = callback; observer = this; this.observed = []; }
+    observe(photo) { this.observed.push(photo); }
+    unobserve(photo) { this.observed = this.observed.filter(v => v !== photo); }
+    disconnect() { this.disconnected = true; }
+    trigger(...items) { this.callback(items.map(target => ({ target, isIntersecting: true }))); }
+  }
+  const stop = startBodyFatImageLoader({ querySelectorAll: () => photos }, { IntersectionObserver: FakeObserver, maxConcurrent: 2 });
+  assert.equal(started.length, 0, 'no eager downloading before intersection');
+  observer.trigger(...photos.slice(0, 5));
+  assert.deepEqual(started, ['https://example.com/0.png', 'https://example.com/1.png']);
+  photos[0].handlers.load();
+  assert.deepEqual(started, ['https://example.com/0.png', 'https://example.com/1.png', 'https://example.com/2.png']);
+  photos[1].handlers.error();
+  assert.deepEqual(started, ['https://example.com/0.png', 'https://example.com/1.png', 'https://example.com/2.png', 'https://example.com/3.png']);
+  stop();
+  photos[2].handlers.load();
+  assert.equal(started.length, 4, 'cleanup stops pending requests');
+  assert.equal(observer.disconnected, true);
 });
 
 test('women have their own nine accurate-range labels and distinct R2 images', () => {
@@ -74,8 +126,10 @@ test('iPhone body-fat layout has safe scrolling after the Next CTA', () => {
   assert.match(styles, /padding-bottom: calc\(145px \+ env\(safe-area-inset-bottom/);
   assert.match(styles, /\.body-fat-next[\s\S]*?position: sticky/);
   assert.match(source, /currentStepKey === STEP_KEYS\.BODY_FAT \? ' body-fat-questionnaire'/);
-  assert.match(source, /classList\.contains\('body-fat-image-fallback'\)/);
-  assert.match(source, /querySelector\('\.body-fat-fallback-label'\)/);
+  const loader = readFileSync(new URL('../src/utils/bodyFatImageLoader.js', import.meta.url), 'utf8');
+  assert.match(source, /startBodyFatImageLoader\(document\.querySelector\('\.body-fat-step'\)\)/);
+  assert.match(loader, /classList\.contains\('body-fat-image-fallback'\)/);
+  assert.match(loader, /querySelector\('\.body-fat-fallback-label'\)/);
   assert.ok(!source.includes("querySelector('.body-fat-chip')"));
 });
 
