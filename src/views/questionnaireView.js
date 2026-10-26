@@ -523,6 +523,10 @@ export function renderQuestionnaireView() {
   if (profile?.name && profile.name.trim()) {
     formData.name = profile.name;
   }
+  // Restore sex before reading a previously saved visual body-fat range.
+  if (profile?.gender === 'female' || profile?.gender === 'male') {
+    formData.gender = profile.gender;
+  }
   if (profile?.age && Number(profile.age) > 0 && Number(profile.age) !== 25 && Number(profile.age) !== 10 && Number(profile.age) !== 17) {
     formData.age = Number(profile.age);
   } else {
