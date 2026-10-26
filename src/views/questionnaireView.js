@@ -37,6 +37,7 @@ import { nutritionPlanService } from '../services/nutritionPlanService.js';
 import { DEFAULT_PLAN_PREFERENCES } from '../domain/nutritionPlanPolicy.js';
 import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
 import { renderBodyFatStep, getBodyFatRange } from '../components/bodyFatPicker.js';
+import { startBodyFatImageLoader } from '../utils/bodyFatImageLoader.js';
 import '../styles/bodyFatPicker.css';
 
 const QUICK_SUPPLEMENT_NAMES = [
@@ -1777,7 +1778,11 @@ export function showTrainingPlanPreview(draft, createPlanBtnOrOptions = {}) {
   });
 }
 
+let stopBodyFatPhotoLoading = () => {};
 export function bindQuestionnaireEvents() {
+  // Rebinding after a step change must not leave image observers alive.
+  stopBodyFatPhotoLoading();
+  stopBodyFatPhotoLoading = () => {};
   const welcomeStartBtn = document.getElementById('q-welcome-start-btn');
   if (welcomeStartBtn) {
     welcomeStartBtn.onclick = (e) => {
@@ -3520,19 +3525,9 @@ export function bindQuestionnaireEvents() {
 
   function initBodyFatStepEvents() {
     const choices = Array.from(document.querySelectorAll('[data-body-fat-range]'));
-    // R2 images are remote assets; show a lightweight local illustration if
-    // one fails to load instead of leaving an empty tile on a poor connection.
-    document.querySelectorAll('.body-fat-photo').forEach(photo => {
-      const useFallback = () => {
-        photo.hidden = true;
-        const fallback = photo.nextElementSibling;
-        if (fallback?.classList.contains('body-fat-image-fallback')) fallback.hidden = false;
-        const label = photo.closest('.body-fat-option')?.querySelector('.body-fat-fallback-label');
-        if (label) label.hidden = false;
-      };
-      photo.addEventListener('error', useFallback, { once: true });
-      if (photo.complete && photo.naturalWidth === 0) useFallback();
-    });
+    // Prioritize nearby photos on mobile and keep offscreen 1.8 MB images
+    // from competing for bandwidth until they are actually needed.
+    stopBodyFatPhotoLoading = startBodyFatImageLoader(document.querySelector('.body-fat-step'));
     choices.forEach(choice => choice.addEventListener('click', () => {
       const selected = getBodyFatRange(choice.dataset.bodyFatRange, formData.gender);
       if (!selected) return;
