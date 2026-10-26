@@ -1,3 +1,4 @@
+import { renderMetabolicSummary } from './metabolismView.js';
 /**
  * NEON COACH - شاشة خطة التغذية اليومية وسجل الوجبات
  * تفاعلية بالكامل: تعديل وحذف وتبديل الوجبات يعمل فوراً
@@ -50,6 +51,7 @@ export function renderNutritionView() {
         <div style="width: 38px;"></div>
       </div>
 
+      ${renderMetabolicSummary()}
       <!-- بطاقة الهدف اليومي الكلي -->
       <div class="neon-card" style="padding: 22px; ${isOverCalories ? 'border-color: rgba(255,85,85,0.4); box-shadow: 0 0 20px rgba(255,85,85,0.15);' : ''}">
         

@@ -117,7 +117,7 @@ test('smoothSvgPath generates smooth quadratic bezier SVG paths', () => {
   assert.ok(path.includes('T'));
 });
 
-test('calculateCompositionEstimate uses Lyle McDonald model for body recomposition', () => {
+test('weight alone never fabricates muscle/fat mass or strength observations', () => {
   // Weight loss with strength holding (fat loss)
   const entriesDeficit = [
     { dateKey: '2026-07-15', weight: 134.0 },
@@ -134,12 +134,9 @@ test('calculateCompositionEstimate uses Lyle McDonald model for body recompositi
   assert.equal(comp.visible, true);
   assert.equal(comp.actualDays, 30);
   assert.equal(comp.weightDelta, -5.0);
-  assert.equal(comp.headlineCls, 'good');
-  assert.match(comp.headline, /-5.0 kg - strength holding, fat dropping./);
-  assert.ok(comp.musclePct > 0);
-  assert.ok(comp.fatPct > 0);
-  assert.match(comp.footText, /muscle/);
-  assert.match(comp.footText, /fat/);
+  assert.equal(comp.estMuscle, null);
+  assert.equal(comp.estFat, null);
+  assert.match(comp.footText, /cannot separate fat, muscle and water/);
 });
 
 test('localPhotoStorage saves, retrieves, and deletes photos offline', async () => {

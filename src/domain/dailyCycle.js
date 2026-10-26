@@ -30,6 +30,7 @@ function snapshotDay(state, date) {
     consumedGlasses: number(today.consumedGlasses),
     targetGlasses: number(today.targetGlasses),
     mealCount: meals.length,
+    nutritionStatus: state.metabolicData?.nutritionDays?.[date]?.status || 'missing',
     supplementsTaken: takenSupplements,
     supplementsTotal: (state.supplementsSchedule || []).length,
     workoutCompleted: Boolean(today.isWorkoutCompleted || today.workoutStatus === 'completed'),

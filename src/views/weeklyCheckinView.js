@@ -1,3 +1,4 @@
+import { renderMetabolicSummary } from './metabolismView.js';
 /**
  * NEON COACH - شاشة المتابعة الأسبوعية (Weekly Check-in)
  * متطابقة تماماً وبدقة متناهية مع الصورة المرجعية 54696C39-0A9E-4390-B378-C0B9D1391305.PNG
@@ -29,6 +30,7 @@ export function renderWeeklyCheckinView() {
         </span>
       </div>
 
+      ${renderMetabolicSummary()}
       <!-- مؤشر الأسبوع والمهام المكتملة -->
       <div style="text-align: center; margin-bottom: 4px;">
         <div style="font-size: 1.5rem; font-weight: 900; color: #FFFFFF; margin-bottom: 4px;">

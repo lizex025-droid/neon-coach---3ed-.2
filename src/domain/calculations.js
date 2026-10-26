@@ -3,6 +3,8 @@
  * تم توثيق جميع المعادلات من مراجع الفسيولوجيا الرياضية المعتمدة (Mifflin-St Jeor, Epley)
  */
 
+import { estimateInitialExpenditure, allocateMacros } from './metabolicEngine.js';
+
 export const GOALS = {
   FAT_LOSS: 'fat_loss',
   MUSCLE_GAIN: 'muscle_gain',
@@ -93,7 +95,8 @@ export function calculateTDEE(bmr, activityLevel) {
  * السعرات = (البروتين × 4) + (الكربوهيدرات × 4) + (الدهون × 9)
  * واعتماد السعرات اليومية المختارة كـ Single Source of Truth
  */
-export function calculateNutritionTargets(userProfile) {
+export function calculateNutritionTargets(userProfile = {}) {
+  userProfile = { ...userProfile, weight: userProfile.currentWeight || userProfile.weight || 75 };
   const {
     weight = 75,
     height = 175,
@@ -113,8 +116,9 @@ export function calculateNutritionTargets(userProfile) {
 
   // استخدام العمر المُدخَل مباشرة أولاً، ثم حسابه من تاريخ الميلاد كحل بديل
   const age = (directAge && Number(directAge) > 0) ? Number(directAge) : (calculateAge(birthDate) || 25);
-  const rawBmr = engineCalculateBMR(weight, height, age, gender);
-  const rawTdee = calculateMaintenanceCalories(rawBmr, activityLevel);
+  const initial = estimateInitialExpenditure({ ...userProfile, weight, height, age, gender });
+  const rawBmr = initial.rmr || engineCalculateBMR(weight, height, age, gender);
+  const rawTdee = Number(userProfile.adaptiveTdee) > 0 ? Number(userProfile.adaptiveTdee) : initial.tdee || calculateMaintenanceCalories(rawBmr, activityLevel);
 
   // حساب السعرات المستهدفة بناء على الهدف
   let targetCalories = Math.round(rawTdee);
@@ -177,39 +181,15 @@ export function calculateNutritionTargets(userProfile) {
     targetCalories = Math.round(rawTdee);
   }
 
-  // ضبط وتوزيع الماكروز بحيث يكون مجموعها الرياضي مطابقاً تماماً لـ targetCalories دون أي تعديل أو تضخيم للسعرات
-  const target = Math.max(200, Math.round(targetCalories));
-
-  // الدهون: حوالي 25% من السعرات، مع اختيار غرامات دقيقة بحيث يكون المتبقي للبروتين والكارب قابلاً للقسمة على 4
-  const rawFat = Math.max(5, Math.round((target * 0.25) / 9));
-  let bestFat = rawFat;
-  let minDiff = Infinity;
-  for (let f = Math.max(5, rawFat - 4); f <= rawFat + 4; f++) {
-    if (target - (f * 9) >= 0 && (target - (f * 9)) % 4 === 0) {
-      if (Math.abs(f - rawFat) < minDiff) {
-        minDiff = Math.abs(f - rawFat);
-        bestFat = f;
-      }
-    }
-  }
-  const fatGrams = bestFat;
-  const totalCalsForPAndC = target - (fatGrams * 9);
-  const totalGramsPAndC = Math.floor(totalCalsForPAndC / 4);
-
-  // البروتين: 2.0 غرام لكل كغ لخسارة الدهون وبناء الكتلة العضلية، 1.8 غرام للأهداف الأخرى
-  const idealProtein = Math.round(weight * ((goal === GOALS.FAT_LOSS || goal === GOALS.MUSCLE_GAIN) ? 2.0 : 1.8));
-  let proteinGrams = 0;
-  let carbGrams = 0;
-
-  if (idealProtein <= totalGramsPAndC) {
-    proteinGrams = idealProtein;
-    carbGrams = totalGramsPAndC - idealProtein;
-  } else {
-    // في حالات العجز الشديد أو الأوزان العالية جداً، يتم تخصيص الميزانية القصوى الممكنة للبروتين مع ترك نسبة للكارب
-    proteinGrams = Math.min(idealProtein, Math.round(totalGramsPAndC * 0.85));
-    carbGrams = totalGramsPAndC - proteinGrams;
-  }
-
+  // Explicit goal direction: a reached goal becomes maintenance, not continued loss/gain.
+  const targetWeight = Number(userProfile.targetWeight);
+  const goalReached = targetWeight > 0 && ((goal === GOALS.FAT_LOSS && weight <= targetWeight) || (goal === GOALS.MUSCLE_GAIN && weight >= targetWeight));
+  if (goalReached && userProfile.targetMode === 'coached') targetCalories = Math.round(rawTdee);
+  const floor = Number(userProfile.calorieFloor) > 0 ? Number(userProfile.calorieFloor) : (gender === 'female' ? 1200 : 1500);
+  const rawRequested = Math.round(targetCalories);
+  const target = Math.max(userProfile.targetMode === 'coached' ? floor : 200, rawRequested);
+  const macros = allocateMacros(target, userProfile);
+  const { protein: proteinGrams, carbs: carbGrams, fats: fatGrams } = macros;
   // هدف الماء: 35 مل لكل كغ + 500 مل للنشاط الرياضي
   const targetWaterMl = Math.round(weight * 35 + 500);
 
@@ -226,7 +206,15 @@ export function calculateNutritionTargets(userProfile) {
     waterMl: targetWaterMl,
     waterGlasses: Math.round(targetWaterMl / 250), // كوب = 250 مل
     calculatedAt: new Date().toISOString(),
-    version: '2.0.0'
+    targetWaterMl,
+    rmr: Math.round(rawBmr),
+    rmrMethod: initial.method,
+    rmrMeasured: initial.measured || false,
+    initialTdee: initial.tdee,
+    goalReached,
+    floorApplied: target > rawRequested,
+    macroWarnings: macros.warnings,
+    version: '3.0.0'
   };
 }
 

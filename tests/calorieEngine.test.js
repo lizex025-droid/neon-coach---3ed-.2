@@ -65,10 +65,10 @@ const opt100 = calculateWeightLossOption({
   age: 25
 });
 assertCloseTo(opt100.weeklyLossKg, 0.70, 0.001, 'Weekly loss for 1% of 70kg = 0.70 kg');
-assertCloseTo(opt100.dailyDeficit, 777.7777, 0.01, 'Daily deficit for 0.70 kg/week ≈ 777.78 kcal');
-assert(opt100.dailyDeficitRounded === 778, 'Daily deficit rounded = 778 kcal');
-assertCloseTo(opt100.requestedTargetCalories, 1674.2659, 0.01, 'Daily calorie target = 1674.27 kcal');
-assert(opt100.targetCaloriesRounded === 1674, 'Daily calorie target rounded = 1674 kcal');
+assertCloseTo(opt100.dailyDeficit, 770, 0.01, 'Daily deficit for 0.70 kg/week ≈ 770 kcal');
+assert(opt100.dailyDeficitRounded === 770, 'Daily deficit rounded = 770 kcal');
+assertCloseTo(opt100.requestedTargetCalories, 1682.04375, 0.01, 'Daily calorie target = 1682.04 kcal');
+assert(opt100.targetCaloriesRounded === 1682, 'Daily calorie target rounded = 1682 kcal');
 
 // 2. 70kg weekly loss rates for all 6 options
 console.log('\n--- Test 2: 70kg Loss Rates Across All 6 Options ---');
@@ -101,10 +101,10 @@ const opt075_1932 = calculateWeightLossOption({
   age: 25
 });
 assertCloseTo(opt075_1932.weeklyLossKg, 0.525, 0.001, 'Weekly loss = 0.525 kg');
-assertCloseTo(opt075_1932.dailyDeficit, 583.333, 0.01, 'Daily deficit ≈ 583.33 kcal');
-assert(opt075_1932.dailyDeficitRounded === 583, 'Daily deficit rounded = 583 kcal');
-assertCloseTo(opt075_1932.requestedTargetCalories, 1348.667, 0.01, 'Target calories ≈ 1348.67 kcal');
-assert(opt075_1932.targetCaloriesRounded === 1349, 'Target calories rounded = 1349 kcal');
+assertCloseTo(opt075_1932.dailyDeficit, 577.5, 0.01, 'Daily deficit ≈ 583.33 kcal');
+assert(opt075_1932.dailyDeficitRounded === 578, 'Daily deficit rounded = 583 kcal');
+assertCloseTo(opt075_1932.requestedTargetCalories, 1354.5, 0.01, 'Target calories ≈ 1348.67 kcal');
+assert(opt075_1932.targetCaloriesRounded === 1355, 'Target calories rounded = 1349 kcal');
 // Check below minimum warning for male (< 1500)
 assert(opt075_1932.safety.isBelowMinimum === true, '1349 is below 1500 male minimum -> warning flagged');
 assert(opt075_1932.safety.warningCodes.includes('BELOW_GUIDANCE_MINIMUM'), 'Includes BELOW_GUIDANCE_MINIMUM code');
@@ -193,10 +193,10 @@ const gain050 = calculateWeightGainOption({
   targetWeightKg: 80
 });
 assertCloseTo(gain050.weeklyGainKg, 0.35, 0.001, 'Weekly gain for 0.5% of 70kg = 0.35 kg');
-assertCloseTo(gain050.dailySurplus, 388.8888, 0.01, 'Daily surplus for 0.35 kg/week ≈ 388.89 kcal');
-assert(gain050.dailySurplusRounded === 389, 'Daily surplus rounded = 389 kcal');
-assertCloseTo(gain050.requestedTargetCalories, 2840.9326, 0.01, 'Daily gain target = 2840.93 kcal');
-assert(gain050.targetCaloriesRounded === 2841, 'Daily gain target rounded = 2841 kcal');
+assertCloseTo(gain050.dailySurplus, 385, 0.01, 'Daily surplus for 0.35 kg/week ≈ 388.89 kcal');
+assert(gain050.dailySurplusRounded === 385, 'Daily surplus rounded = 389 kcal');
+assertCloseTo(gain050.requestedTargetCalories, 2837.04375, 0.01, 'Daily gain target = 2840.93 kcal');
+assert(gain050.targetCaloriesRounded === 2837, 'Daily gain target rounded = 2841 kcal');
 assertCloseTo(gain050.estimatedWeeks, 28.6, 0.1, 'Estimated weeks 70kg -> 80kg at 0.35kg/wk ≈ 28.6 wks');
 
 // 11. 70kg Gain Rates Across All 6 Options
@@ -252,7 +252,7 @@ const muscleGainTargets = calculateNutritionTargets({
   weeklyGainPercent: 0.0050
 });
 assert(muscleGainTargets.protein === 140, 'Muscle gain protein = 70 * 2.0 = 140g');
-assert(muscleGainTargets.targetCalories === 2841, `Target calories = 2841, got ${muscleGainTargets.targetCalories}`);
+assert(muscleGainTargets.targetCalories === 2837, `Target calories = 2841, got ${muscleGainTargets.targetCalories}`);
 const muscleSum = (muscleGainTargets.protein * 4) + (muscleGainTargets.carbs * 4) + (muscleGainTargets.fats * 9);
 assert(muscleSum === muscleGainTargets.targetCalories, `Muscle gain macro sum (${muscleSum}) strictly equals targetCalories (${muscleGainTargets.targetCalories})`);
 

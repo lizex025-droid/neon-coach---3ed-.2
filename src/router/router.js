@@ -19,6 +19,8 @@ import { renderRecipesView, bindRecipesEvents } from '../views/recipesView.js';
 import { renderCoachDashboardView, bindCoachDashboardEvents } from '../views/coachDashboardView.js';
 import { renderProfileView, bindProfileEvents } from '../views/profileView.js';
 
+import { renderMetabolismView, bindMetabolismEvents } from '../views/metabolismView.js';
+
 import { store } from '../state/store.js';
 import { authService } from '../services/authService.js';
 import { syncService } from '../services/syncService.js';
@@ -26,6 +28,7 @@ import { initCrossTabActionToastListener } from '../services/actionToastService.
 import { clearWorkoutPageEffects } from '../utils/workoutPageEffects.js';
 
 export const ROUTES = {
+  metabolism: { render: renderMetabolismView, bind: bindMetabolismEvents, showNav: true, showHeader: true },
   questionnaire: { render: renderQuestionnaireView, bind: bindQuestionnaireEvents, showNav: false, showHeader: false },
   today: { render: renderTodayView, bind: bindTodayViewEvents, showNav: true, showHeader: true },
   workout: { render: renderFortyDayWorkoutView, bind: bindFortyDayWorkoutEvents, showNav: true, showHeader: true },

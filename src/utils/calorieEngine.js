@@ -3,8 +3,8 @@
  * Pure biological and mathematical calculations based on Mifflin-St Jeor & Standard Activity Multipliers.
  */
 
-// Constant energy equivalent of 1 kg body mass (3500 kcal / 0.45 kg ≈ 7777.777777777778 kcal/kg)
-export const KCAL_PER_KG = 3500 / 0.45;
+// Short-term goal-setting approximation only; never a long-term weight projection.
+export const KCAL_PER_KG = 7700;
 
 /**
  * Standard Physical Activity Multipliers

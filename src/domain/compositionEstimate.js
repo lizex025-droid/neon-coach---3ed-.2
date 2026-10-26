@@ -201,79 +201,16 @@ export function calculateCompositionEstimate({
     ? (strengthRatios.reduce((s, r) => s + r, 0) / strengthRatios.length) - 1
     : 0;
 
-  const sessionsPerWeek = (workoutDays.size / actualDays) * 7;
-  const frequencyFactor = Math.max(0.4, Math.min(1.2, sessionsPerWeek / 4));
-
-  // معدل بناء العضلات الأقصى في الأسبوع بحسب نموذج Lyle McDonald
-  let maxMuscleKgPerWeek;
-  if (yearsTraining <= 1) maxMuscleKgPerWeek = 0.45;
-  else if (yearsTraining === 2) maxMuscleKgPerWeek = 0.23;
-  else maxMuscleKgPerWeek = 0.11;
-
-  const unitConv = (units === 'lb') ? 2.20462 : 1;
-  const maxMusclePerWeek = maxMuscleKgPerWeek * unitConv;
-
-  const strengthBoost = Math.max(0.5, Math.min(1.5, 1 + strengthDelta * 4));
-  let estMuscle = maxMusclePerWeek * weeks * strengthBoost * frequencyFactor;
-  let estFat = 0;
-  let headlineCls = '';
-  let headline = '';
-
-  if (weightDelta > 0) {
-    estMuscle = Math.min(estMuscle, weightDelta);
-    estFat = Math.max(0, weightDelta - estMuscle);
-    const musclePct = estMuscle / weightDelta;
-    if (musclePct >= 0.6 && strengthDelta > 0) {
-      headlineCls = 'good';
-      headline = `+${weightDelta.toFixed(1)} ${units} - mostly muscle, strength up.`;
-    } else if (musclePct >= 0.35) {
-      headlineCls = 'warn';
-      headline = `+${weightDelta.toFixed(1)} ${units} - mixed. Tighten kcal or push lifts harder.`;
-    } else {
-      headlineCls = 'bad';
-      headline = `+${weightDelta.toFixed(1)} ${units} - mostly fat. Strength flat. Cut kcal.`;
-    }
-  } else {
-    const wDown = Math.abs(weightDelta);
-    if (strengthDelta >= 0) {
-      estMuscle = Math.min(maxMusclePerWeek * weeks * 0.3, 0.5);
-      estFat = wDown + estMuscle;
-      headlineCls = 'good';
-      headline = `-${wDown.toFixed(1)} ${units} - strength holding, fat dropping.`;
-    } else {
-      const lossPct = Math.min(0.4, Math.abs(strengthDelta) * 2);
-      estMuscle = -wDown * lossPct;
-      estFat = -(wDown + estMuscle);
-      headlineCls = 'warn';
-      headline = `-${wDown.toFixed(1)} ${units} - strength slipping. You may be losing muscle.`;
-    }
-  }
-
-  const totalAbs = Math.abs(estMuscle) + Math.abs(estFat) || 1;
-  const musclePct = Math.min(100, Math.max(0, (Math.abs(estMuscle) / totalAbs) * 100));
-  const fatPct = Math.min(100, Math.max(0, (Math.abs(estFat) / totalAbs) * 100));
-
-  const sd = strengthDelta * 100;
-  const sdStr = (sd >= 0 ? '+' : '') + sd.toFixed(1) + '%';
-  const muscleSign = estMuscle >= 0 ? '+' : '';
-  const fatSign = estFat >= 0 ? '+' : '';
-  const freqStr = `${sessionsPerWeek.toFixed(1)} sessions/wk`;
-  const liftStr = strengthRatios.length ? '' : ' (no lift data)';
-
-  const footText = `~${muscleSign}${estMuscle.toFixed(1)} ${units} muscle · ~${fatSign}${estFat.toFixed(1)} ${units} fat · strength ${sdStr} · ${freqStr}${liftStr}`;
-
+  // Scale weight and strength cannot identify fat/lean tissue mass. Do not fabricate kilograms.
+  const hasStrengthData = strengthRatios.length > 0;
   return {
-    visible: true,
-    actualDays,
-    weightDelta,
-    estMuscle,
-    estFat,
-    strengthDelta,
-    sessionsPerWeek,
-    headline,
-    headlineCls,
-    musclePct,
-    fatPct,
-    footText
+    visible: true, actualDays, weightDelta, strengthDelta,
+    estMuscle: null, estFat: null, musclePct: 0, fatPct: 0,
+    sessionsPerWeek: (workoutDays.size / actualDays) * 7,
+    headlineCls: 'warn',
+    headline: `${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)} ${units} · weight change`,
+    footText: hasStrengthData
+      ? `Strength ${strengthDelta >= 0 ? '+' : ''}${(strengthDelta * 100).toFixed(1)}%. Weight and strength do not measure fat or muscle change.`
+      : 'Insufficient body composition data. Weight alone cannot separate fat, muscle and water.'
   };
 }

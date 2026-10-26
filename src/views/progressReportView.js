@@ -1,3 +1,5 @@
+import { calculateWeightTrend, dayNumber } from '../domain/metabolicEngine.js';
+import { metabolicInputs } from '../domain/metabolicState.js';
 /**
  * NEON COACH - شاشة تقرير التقدم والتحول البدني (NEON Body Report)
  * تتضمن:
@@ -1097,7 +1099,7 @@ function initPhotosUI(units, getWtEntries) {
 
 function initWeightTrackerAndPhotos(state, report, user) {
   const currentWeight = Number(user.currentWeight) || Number(report.currentDay?.weight) || 0;
-  let wtEntries = wtLoad(currentWeight > 0 ? currentWeight : null);
+  let wtEntries = metabolicInputs(state, wtLoad()).weights.map(e => ({ dateKey: e.date, weight: e.weight }));
   const units = user.units || 'kg';
 
   function renderWt() {
@@ -1156,19 +1158,17 @@ function initWeightTrackerAndPhotos(state, report, user) {
       const xLeft = 8, xRight = 312, yTop = 20, yBot = 110;
       const xRange = xRight - xLeft;
       const yRange = yBot - yTop;
-      const xFor = (i) => recent.length === 1 ? xRight : xLeft + (i / (recent.length - 1)) * xRange;
+      const firstDay = dayNumber(recent[0].dateKey);
+      const daySpan = Math.max(1, dayNumber(recent.at(-1).dateKey) - firstDay);
+      const xFor = (i) => xLeft + ((dayNumber(recent[i].dateKey) - firstDay) / daySpan) * xRange;
       const yFor = (w) => yBot - ((w - yMin) / (yMax - yMin)) * yRange;
 
       const points = recent.map((e, i) => ({ x: xFor(i), y: yFor(e.weight) }));
       const linePath = smoothSvgPath(points);
       const areaPath = linePath + ' L ' + points[points.length - 1].x.toFixed(2) + ' ' + yBot + ' L ' + points[0].x.toFixed(2) + ' ' + yBot + ' Z';
 
-      const avgPoints = recent.map((_, i) => {
-        const start = Math.max(0, i - 6);
-        const win = recent.slice(start, i + 1);
-        const avg = win.reduce((s, p) => s + p.weight, 0) / win.length;
-        return { x: xFor(i), y: yFor(avg) };
-      });
+      const smoothed = calculateWeightTrend(recent, { windowDays: 365 }).points;
+      const avgPoints = smoothed.map(p => ({ x: xLeft + ((p.day - firstDay) / daySpan) * xRange, y: yFor(p.trend) }));
       const avgPath = smoothSvgPath(avgPoints);
 
       let chartSvgHtml = '<path class="wt-avg-line" d="' + avgPath + '"></path>'

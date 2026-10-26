@@ -2080,6 +2080,7 @@ export function bindQuestionnaireEvents() {
       calorieSafetyLevel: formData.calorieSafetyLevel,
       calorieWarningCodes: formData.calorieWarningCodes || [],
       calculationFormula: 'mifflin_st_jeor',
+      targetMode: 'coached',
       targetCalories: targets.targetCalories,
       targetProtein: targets.protein,
       targetCarbs: targets.carbs,

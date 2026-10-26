@@ -78,8 +78,8 @@ export const DEFAULT_PLAN_PREFERENCES = {
 export function calculateAdjustedDailyTargets(userTargets, preferences = DEFAULT_PLAN_PREFERENCES) {
   const baseCalories = Number(userTargets.targetCalories) || 2000;
   const baseProtein = Number(userTargets.protein ?? userTargets.targetProtein) || 140;
-  const baseCarbs = Number(userTargets.carbs ?? userTargets.targetCarbs) || 220;
-  const baseFats = Number(userTargets.fats ?? userTargets.targetFats) || 60;
+  const baseCarbs = Number(userTargets.carbs ?? userTargets.targetCarbs ?? 220);
+  const baseFats = Number(userTargets.fats ?? userTargets.targetFats ?? 60);
 
   let dailySweetCalories = 0;
   let sweetServingData = null;
@@ -110,12 +110,14 @@ export function calculateAdjustedDailyTargets(userTargets, preferences = DEFAULT
     };
   }
 
-  // خصم سعرات الحلويات من الكارب والدهون اليومية للحفاظ على هدف البروتين كاملاً
-  const foodCalories = Math.max(1100, baseCalories - dailySweetCalories);
-  const remainingCalsForCarbsFats = Math.max(200, foodCalories - (baseProtein * 4));
-  // توزيع المتبقي 65% كارب و 35% دهون
-  const adjustedCarbs = Math.round((remainingCalsForCarbsFats * 0.65) / 4);
-  const adjustedFats = Math.round((remainingCalsForCarbsFats * 0.35) / 9);
+  // Preserve the canonical macro targets. Reserve sweets proportionally from non-protein energy.
+  // When a sweet has unknown macros, this reservation is explicitly approximate.
+  dailySweetCalories = Math.min(dailySweetCalories, Math.max(0, baseCalories - baseProtein * 4));
+  const foodCalories = Math.max(0, baseCalories - dailySweetCalories);
+  const nonProteinEnergy = baseCarbs * 4 + baseFats * 9;
+  const ratio = nonProteinEnergy > 0 ? Math.max(0, (nonProteinEnergy - dailySweetCalories) / nonProteinEnergy) : 1;
+  const adjustedCarbs = dailySweetCalories ? Math.round(baseCarbs * ratio) : baseCarbs;
+  const adjustedFats = dailySweetCalories ? Math.round(baseFats * ratio) : baseFats;
 
   return {
     targetCalories: baseCalories,

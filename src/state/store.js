@@ -10,6 +10,10 @@ import { executeActionTools, shoppingItemsFor, localDate } from '../domain/actio
 import { rolloverDailyState } from '../domain/dailyCycle.js';
 import { getOrCreateGuestUserId } from '../utils/userId.js';
 
+import { estimateAdaptiveExpenditure, dayNumber, normalizeWeights, distributeWeeklyCalories } from '../domain/metabolicEngine.js';
+import { metabolicInputs } from '../domain/metabolicState.js';
+import { wtLoad } from '../domain/compositionEstimate.js';
+
 const STORAGE_KEY = 'neon_coach_app_state_v1';
 
 function generateUUID() {
@@ -38,6 +42,12 @@ class Store {
     const result = rolloverDailyState(this.state, now);
     if (!result.changed) return false;
     this.state = result.state;
+    const budget = this.state.metabolicData?.weeklyCalories;
+    if (budget?.length === 7 && this.state.userProfile?.targetCalories > 0) {
+      const index = (new Date(`${this.state.today.date}T12:00:00`).getDay() + 1) % 7;
+      const targets = calculateNutritionTargets({ ...this.state.userProfile, requestedTargetCalories: budget[index] });
+      Object.assign(this.state.today, { targetCalories: targets.targetCalories, targetProtein: targets.protein, targetCarbs: targets.carbs, targetFats: targets.fats });
+    }
     this.saveState({ notify });
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('neon:day-rollover', {
@@ -157,6 +167,11 @@ class Store {
   setState(partialState, { notify = true } = {}) {
     if (!partialState || typeof partialState !== 'object') return;
     this.ensureCurrentDay({ notify: false });
+    if (Array.isArray(partialState.loggedMeals)) {
+      const dates = new Set([...this.state.loggedMeals || [], ...partialState.loggedMeals].map(m => m.date));
+      const signature = (meals, date) => JSON.stringify(meals.filter(m => m.date === date).map(m => [m.id, Number(m.calories), Number(m.protein), Number(m.carbs), Number(m.fats)]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))));
+      for (const date of dates) if (signature(this.state.loggedMeals || [], date) !== signature(partialState.loggedMeals, date)) this.invalidateNutritionDay(date);
+    }
     this.state = {
       ...this.state,
       ...partialState
@@ -260,27 +275,89 @@ class Store {
     this.notify();
   }
 
-  recalculateTargetsFromProfile() {
-    const p = this.state.userProfile || {};
-    const targets = calculateNutritionTargets({
-      weight: p.currentWeight || 70,
-      height: p.height || 170,
-      birthDate: p.birthDate,
-      age: p.age,
-      gender: p.gender || 'male',
-      activityLevel: p.activityLevel || 'light',
-      goal: p.goal || 'fat_loss',
-      requestedTargetCalories: p.targetCalories || p.requestedTargetCalories,
-      selectedWeeklyLossRate: p.selectedWeeklyLossRate,
-      weeklyLossPercent: p.weeklyLossPercent,
-      dailyCalorieDeficit: p.dailyCalorieDeficit
-    });
+  getMetabolicSnapshot(now = new Date()) {
+    const inputs = metabolicInputs(this.state, wtLoad());
+    return estimateAdaptiveExpenditure({ ...inputs, profile: this.state.userProfile || {}, endDate: localDate(now) });
+  }
 
-    this.state.today.targetCalories = targets.targetCalories;
-    this.state.today.targetProtein = targets.protein;
-    this.state.today.targetCarbs = targets.carbs;
-    this.state.today.targetFats = targets.fats;
-    this.state.today.targetWaterLiters = Math.round((targets.targetWaterMl / 1000) * 10) / 10;
+  setNutritionDayStatus(date, status, calories = null) {
+    if (dayNumber(date) === null || date > localDate() || !['complete','estimated','partial','missing','fasting'].includes(status)) throw new Error('بيانات اليوم غير صالحة');
+    this.state.metabolicData ||= {};
+    this.state.metabolicData.nutritionDays ||= {};
+    const known = metabolicInputs(this.state).nutrition.find(r => r.date === date)?.calories;
+    const value = calories === null ? known : Number(calories);
+    if (status === 'fasting' && Number(known) > 0 && calories === null) throw new Error('يوجد طعام مسجل؛ لا يمكن اعتبار اليوم صيامًا بصفر سعرة');
+    if (['complete','estimated'].includes(status) && !(value > 0 && value <= 15000)) throw new Error('أدخل مجموع سعرات اليوم أولًا');
+    if (calories !== null && (!Number.isFinite(value) || value < 0 || value > 15000)) throw new Error('السعرات غير صالحة');
+    this.state.metabolicData.nutritionDays[date] = { status, confirmedAt: new Date().toISOString(), ...(calories !== null || status === 'fasting' ? { calories: status === 'fasting' ? 0 : value } : {}) };
+    this.saveState();
+  }
+
+  invalidateNutritionDay(date) {
+    const days = this.state.metabolicData?.nutritionDays;
+    if (days?.[date]) days[date] = { status: 'partial' };
+  }
+
+  saveMetabolicSettings(settings) {
+    this.state.userProfile = { ...this.state.userProfile, ...settings };
+    // A changed activity/RMR baseline resets calibration, never reuses an unrelated prior.
+    this.state.metabolicData ||= {};
+    delete this.state.metabolicData.estimate;
+    this.recalculateTargetsFromProfile();
+  }
+
+  importMetabolicHistory(rows) {
+    if (!Array.isArray(rows) || rows.some(r => dayNumber(r.date) === null || r.date > localDate())) throw new Error('توجد تواريخ مستقبلية أو غير صالحة');
+    this.state.metabolicData ||= {};
+    this.state.metabolicData.nutritionDays ||= {};
+    const weights = [...(this.state.metabolicData.weights || [])];
+    for (const row of rows) {
+      if (row.weight) weights.push({ date: row.date, weight: row.weight });
+      if (row.calories !== undefined) this.state.metabolicData.nutritionDays[row.date] = { calories: row.calories, status: row.status, source: 'csv_import' };
+    }
+    this.state.metabolicData.weights = normalizeWeights(weights);
+    this.saveState();
+  }
+
+  addMetabolicEvent(type) {
+    if (!['carb_change','creatine','illness','fluid_change'].includes(type)) throw new Error('حدث غير صالح');
+    this.state.metabolicData ||= {};
+    this.state.metabolicData.events = [...(this.state.metabolicData.events || []), { type, date: localDate() }].slice(-100);
+    this.saveState();
+  }
+
+  recalculateTargetsFromProfile({ weeklyAdjustment = false } = {}) {
+    const p = this.state.userProfile || {};
+    const mode = p.targetMode || 'manual'; // Preserve legacy/manual targets until coached mode is selected.
+    const effective = { ...p, weight: p.currentWeight || p.weight || 70, targetMode: mode };
+    if (mode === 'coached') {
+      delete effective.requestedTargetCalories;
+      delete effective.dailyCalorieDeficit;
+      delete effective.dailyCalorieSurplus;
+      effective.adaptiveTdee = this.state.metabolicData?.estimate?.tdee;
+    } else effective.requestedTargetCalories = p.targetCalories || p.requestedTargetCalories;
+    let targets = calculateNutritionTargets(effective);
+    if (weeklyAdjustment && p.targetCalories > 0) {
+      const limited = Math.max(p.targetCalories - 150, Math.min(p.targetCalories + 150, targets.targetCalories));
+      targets = calculateNutritionTargets({ ...effective, requestedTargetCalories: limited });
+    }
+    Object.assign(p, { targetCalories: targets.targetCalories, requestedTargetCalories: targets.targetCalories,
+      targetProtein: targets.protein, targetCarbs: targets.carbs, targetFats: targets.fats,
+      bmr: targets.bmr, rmr: targets.rmr, rmrMethodUsed: targets.rmrMethod, maintenanceCalories: targets.tdee,
+      targetWaterLiters: targets.waterMl / 1000, targetGlasses: targets.waterGlasses, macroWarnings: targets.macroWarnings, floorApplied: targets.floorApplied, goalReached: targets.goalReached });
+    this.state.userProfile = p;
+    const trainingDays = (p.metabolicTrainingDays || []).map(Number);
+    const budget = distributeWeeklyCalories(targets.targetCalories, { trainingDays, shift: p.calorieShift || 0, floor: mode === 'coached' ? (p.calorieFloor || (p.gender === 'female' ? 1200 : 1500)) : 0 });
+    this.state.metabolicData ||= {};
+    this.state.metabolicData.weeklyCalories = budget;
+    Object.assign(this.state.today, { targetCalories: budget[(new Date().getDay() + 1) % 7],
+      targetProtein: targets.protein, targetCarbs: targets.carbs, targetFats: targets.fats,
+      targetWaterLiters: targets.waterMl / 1000 });
+    if (this.state.today.targetCalories !== targets.targetCalories) {
+      const shifted = calculateNutritionTargets({ ...effective, requestedTargetCalories: this.state.today.targetCalories });
+      Object.assign(this.state.today, { targetProtein: shifted.protein, targetCarbs: shifted.carbs, targetFats: shifted.fats });
+    }
+    this.state.nutritionPlan = null;
     this.saveState();
     return targets;
   }
@@ -491,6 +568,8 @@ class Store {
 
   // --- تعديل هدف السعرات والماكروز يدوياً ---
   setTargetCalories(newCalories, customMacros = null) {
+    if (this.state.userProfile) this.state.userProfile.targetMode = 'manual';
+    if (this.state.metabolicData) delete this.state.metabolicData.weeklyCalories;
     const target = Math.max(200, Math.round(Number(newCalories) || 2000));
     this.state.today.targetCalories = target;
     if (this.state.today.dailyTargetCalories !== undefined) {
@@ -506,6 +585,8 @@ class Store {
       const userWeight = this.state.userProfile?.currentWeight || 75;
       const userGoal = this.state.userProfile?.goal || 'fat_loss';
       const targets = calculateNutritionTargets({
+        ...this.state.userProfile,
+        currentWeight: userWeight,
         weight: userWeight,
         goal: userGoal,
         requestedTargetCalories: target
@@ -777,6 +858,7 @@ class Store {
     };
 
     this.state.loggedMeals.push(newLog);
+    this.invalidateNutritionDay(newLog.date);
     this.recalculateDailyNutrition();
     this.saveState();
 
@@ -800,7 +882,9 @@ class Store {
   async updateLoggedMeal(logId, updatedData) {
     const index = (this.state.loggedMeals || []).findIndex(m => m.id === logId);
     if (index !== -1) {
+      this.invalidateNutritionDay(this.state.loggedMeals[index].date);
       this.state.loggedMeals[index] = { ...this.state.loggedMeals[index], ...updatedData };
+      this.invalidateNutritionDay(this.state.loggedMeals[index].date);
       this.recalculateDailyNutrition();
       this.saveState();
     }
@@ -815,6 +899,7 @@ class Store {
   }
 
   async deleteLoggedMeal(logId) {
+    this.invalidateNutritionDay((this.state.loggedMeals || []).find(m => m.id === logId)?.date);
     this.state.loggedMeals = (this.state.loggedMeals || []).filter(m => m.id !== logId);
     this.recalculateDailyNutrition();
     this.saveState();
@@ -943,6 +1028,10 @@ class Store {
 
   // --- المتابعة الأسبوعية ---
   submitWeeklyCheckin(checkinData) {
+    const estimate = this.getMetabolicSnapshot();
+    this.state.metabolicData ||= {};
+    this.state.metabolicData.estimate = estimate;
+    if (this.state.userProfile?.targetMode === 'coached' && estimate.calibrated && estimate.status !== 'holding' && !estimate.reasons.includes('NEXT_WEEKLY_UPDATE_PENDING')) this.recalculateTargetsFromProfile({ weeklyAdjustment: true });
     this.state.weeklyCheckin = {
       ...this.state.weeklyCheckin,
       ...checkinData,
@@ -961,6 +1050,8 @@ class Store {
     const rep = this.state.progressReport;
     if (weight !== undefined && weight !== '' && !isNaN(Number(weight))) {
       const w = Number(weight);
+      this.state.metabolicData ||= {};
+      this.state.metabolicData.weights = normalizeWeights([...(this.state.metabolicData.weights || []), { date: localDate(), weight: w }]);
       rep.currentDay.weight = w;
       if (this.state.userProfile) {
         this.state.userProfile.currentWeight = w;

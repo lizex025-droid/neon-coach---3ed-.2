@@ -1,3 +1,4 @@
+import { allocateMacros, distributeWeeklyCalories } from './metabolicEngine.js';
 /**
  * NEON COACH - محرك توليد خطط التغذية الأسبوعية الذكي (Nutrition Plan Engine)
  * خوارزمية ذكية محلية بالكامل Offline-First:
@@ -415,7 +416,7 @@ function getEligibleTemplates(slotKey, allergens = [], dislikedFoods = [], liked
  */
 export function generateNutritionPlan(userProfile, userPreferences = {}) {
   const preferences = { ...DEFAULT_PLAN_PREFERENCES, ...userPreferences };
-  const dailyTargets = calculateAdjustedDailyTargets(userProfile, preferences);
+  const baseDailyTargets = calculateAdjustedDailyTargets(userProfile, preferences);
   const slotConfig = MEAL_SLOT_CONFIGS[preferences.mealSlots] || MEAL_SLOT_CONFIGS.breakfast_lunch_dinner;
   const offPlanSlots = determineOffPlanSlots(preferences.offPlanMealsCount, slotConfig);
 
@@ -423,7 +424,10 @@ export function generateNutritionPlan(userProfile, userPreferences = {}) {
   const dislikedFoods = userProfile.dislikedFoods || [];
   const likedFoods = userProfile.likedFoods || [];
 
+  const weeklyCalories = distributeWeeklyCalories(baseDailyTargets.targetCalories, { trainingDays: userProfile.metabolicTrainingDays || [], shift: userProfile.calorieShift || 0, floor: userProfile.targetMode === 'coached' ? (userProfile.calorieFloor || (userProfile.gender === 'female' ? 1200 : 1500)) : 0 });
   const days = DAYS_OF_WEEK.map((dayMeta, dayIndex) => {
+    const dayMacros = weeklyCalories[dayIndex] === baseDailyTargets.targetCalories ? { protein: userProfile.protein ?? userProfile.targetProtein ?? baseDailyTargets.protein, carbs: userProfile.carbs ?? userProfile.targetCarbs ?? baseDailyTargets.carbs, fats: userProfile.fats ?? userProfile.targetFats ?? baseDailyTargets.fats } : allocateMacros(weeklyCalories[dayIndex], userProfile);
+    const dailyTargets = calculateAdjustedDailyTargets({ ...userProfile, targetCalories: weeklyCalories[dayIndex], ...dayMacros }, preferences);
     const isStrict = preferences.dietStyle === 'strict';
     const dayMeals = slotConfig.slots.map(slotKey => {
       const slotRatio = slotConfig.ratios[slotKey] || (1 / slotConfig.slots.length);
@@ -518,7 +522,7 @@ export function generateNutritionPlan(userProfile, userPreferences = {}) {
     version: 1,
     generatedAt: new Date().toISOString(),
     preferences,
-    dailyTargets,
+    dailyTargets: baseDailyTargets,
     days
   };
 }
