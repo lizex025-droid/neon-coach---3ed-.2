@@ -538,9 +538,9 @@ export function renderQuestionnaireView() {
   } else {
     formData.weight = 70;
   }
-  if (getBodyFatRange(profile?.bodyFatRange)) {
+  if (getBodyFatRange(profile?.bodyFatRange, formData.gender)) {
     formData.bodyFatRange = profile.bodyFatRange;
-    formData.bodyFatPercent = getBodyFatRange(profile.bodyFatRange).estimate;
+    formData.bodyFatPercent = getBodyFatRange(profile.bodyFatRange, formData.gender).estimate;
   }
   if (profile?.targetWeight && Number(profile.targetWeight) > 0) {
     formData.targetWeight = Number(profile.targetWeight);
@@ -1845,7 +1845,7 @@ export function bindQuestionnaireEvents() {
       const totalNow = stepsNow.length;
       const stepKeyNow = stepsNow[currentStep - 1] || stepsNow[0];
 
-      if (stepKeyNow === STEP_KEYS.BODY_FAT && !getBodyFatRange(formData.bodyFatRange)) {
+      if (stepKeyNow === STEP_KEYS.BODY_FAT && !getBodyFatRange(formData.bodyFatRange, formData.gender)) {
         notificationService.showToast('اختَر نسبة الدهون التقريبية من الصور قبل المتابعة', 'warning');
         return;
       }
@@ -2341,6 +2341,11 @@ export function bindQuestionnaireEvents() {
         e.stopPropagation();
         const g = btn.dataset.gender;
         formData.gender = g;
+        // If the user changes sex after returning from body-fat selection,
+        // clear a range that does not exist in the new set of nine images.
+        const retained = getBodyFatRange(formData.bodyFatRange, g);
+        formData.bodyFatRange = retained?.label || '';
+        formData.bodyFatPercent = retained?.estimate ?? null;
         document.querySelectorAll('.gender-pill-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const gInput = document.getElementById('q-gender');
@@ -3511,8 +3516,19 @@ export function bindQuestionnaireEvents() {
 
   function initBodyFatStepEvents() {
     const choices = Array.from(document.querySelectorAll('[data-body-fat-range]'));
+    // R2 images are remote assets; show a lightweight local illustration if
+    // one fails to load instead of leaving an empty tile on a poor connection.
+    document.querySelectorAll('.body-fat-photo').forEach(photo => {
+      const useFallback = () => {
+        photo.hidden = true;
+        const fallback = photo.nextElementSibling;
+        if (fallback?.classList.contains('body-fat-image-fallback')) fallback.hidden = false;
+      };
+      photo.addEventListener('error', useFallback, { once: true });
+      if (photo.complete && photo.naturalWidth === 0) useFallback();
+    });
     choices.forEach(choice => choice.addEventListener('click', () => {
-      const selected = getBodyFatRange(choice.dataset.bodyFatRange);
+      const selected = getBodyFatRange(choice.dataset.bodyFatRange, formData.gender);
       if (!selected) return;
       formData.bodyFatRange = selected.label;
       formData.bodyFatPercent = selected.estimate;
@@ -3543,7 +3559,7 @@ export function bindQuestionnaireEvents() {
       if (weight > 0) formData.weight = weight;
     } else if (currentStepKey === STEP_KEYS.BODY_FAT) {
       const selected = document.querySelector('[data-body-fat-range][aria-checked="true"]');
-      const option = getBodyFatRange(selected?.dataset.bodyFatRange);
+      const option = getBodyFatRange(selected?.dataset.bodyFatRange, formData.gender);
       if (option) {
         formData.bodyFatRange = option.label;
         formData.bodyFatPercent = option.estimate;
