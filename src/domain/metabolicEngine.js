@@ -152,7 +152,7 @@ export function estimateAdaptiveExpenditure({ profile = {}, weights = [], nutrit
   base.quality.weighIns = obs.length;
   if (obs.length < 6 || obs[0].day > start + 2 || obs.at(-1).day < end - 3 || obs.at(-1).day - obs[0].day < 18) return hold('INSUFFICIENT_WEIGHT_COVERAGE');
   if (obs.some((p, i) => i > 0 && p.day - obs[i - 1].day > 7)) return hold('WEIGHT_GAP');
-  const transitionEvents = [...events, ...(['carb_change','creatine','fluid_change'].includes(profile.recentTransitionType) ? [{ date:profile.recentTransitionDate, type:profile.recentTransitionType }] : [])];
+  const transitionEvents = [...events, ...(['carb_change','creatine','fluid_change'].includes(profile.recentTransitionType) ? [{ date:profile.recentTransitionReportedAt || profile.recentTransitionDate, type:profile.recentTransitionType }] : [])];
   if (transitionEvents.some(e => dayNumber(e.date) !== null && dayNumber(e.date) <= end && dayNumber(e.date) >= end - 14)) return hold('RECENT_WATER_TRANSITION');
   if (obs.some((p, i) => i > 0 && p.day >= end - 14 && p.day - obs[i - 1].day <= 3 && Math.abs(p.weight / obs[i - 1].weight - 1) > 0.02)) return hold('ABRUPT_WEIGHT_CHANGE');
   if (Math.abs(trend.weeklyChangeKg) / trend.trendWeight > 0.025) return hold('RAPID_WEIGHT_CHANGE');

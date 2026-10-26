@@ -74,6 +74,8 @@ test('explicit fasting is valid but a zero-calorie complete day is not',()=>{
 test('water-transition events, abrupt changes and sparse weights pause updates',()=>{
   const data=synthetic();
   assert.ok(estimateAdaptiveExpenditure({...data,events:[{date:dateFromDay(start+25),type:'creatine'}]}).reasons.includes('RECENT_WATER_TRANSITION'));
+  assert.ok(estimateAdaptiveExpenditure({...data,profile:{...profile,recentTransitionType:'creatine',recentTransitionReportedAt:dateFromDay(start+25)}}).reasons.includes('RECENT_WATER_TRANSITION'));
+  assert.ok(!estimateAdaptiveExpenditure({...data,profile:{...profile,recentTransitionType:'creatine',recentTransitionReportedAt:dateFromDay(start)}}).reasons.includes('RECENT_WATER_TRANSITION'));
   assert.equal(estimateAdaptiveExpenditure({...data,weights:[data.weights[0],data.weights.at(-1)]}).calibrated,false);
   const shifted={...data,weights:data.weights.map((r,i)=>({...r,weight:i>=25?r.weight+4:r.weight}))};
   assert.equal(estimateAdaptiveExpenditure(shifted).calibrated,false);

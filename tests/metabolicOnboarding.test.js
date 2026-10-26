@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {METABOLIC_DEFAULTS,METABOLIC_STEP_KEYS,renderMetabolicOnboardingStep,collectMetabolicAnswers,validateMetabolicAnswers} from '../src/components/metabolicOnboarding.js';
+import {questionnaireMilestones,renderQuestionnaireMilestones,METABOLIC_DEFAULTS,METABOLIC_STEP_KEYS,renderMetabolicOnboardingStep,collectMetabolicAnswers,validateMetabolicAnswers} from '../src/components/metabolicOnboarding.js';
 import {estimateInitialExpenditure,allocateMacros} from '../src/domain/metabolicEngine.js';
 import {calculateNutritionTargets} from '../src/domain/calculations.js';
 const today='2026-10-26';
@@ -92,4 +92,31 @@ test('stored maintenance program conserves daily macro energy across shifted day
   assert.equal(energy(),store.state.today.targetCalories);
   assert.equal(store.loadState().userProfile.programTrainingType,'resistance');
   delete globalThis.localStorage;
+});
+
+test('safe numeric choices use exact presets, preserve custom values, and never leak numeric strings',()=>{
+ const elements=[{name:'exerciseSessionsPerWeek',type:'number',value:'11'},{name:'exerciseSessionsPerWeekChoice',type:'radio',checked:true,value:'3'},{name:'exerciseDurationMin',type:'number',value:'47'},{name:'exerciseDurationMinChoice',type:'radio',checked:true,value:'custom'}];
+ const root={dataset:{metaStep:'metabolic_activity'},querySelectorAll:selector=>selector.includes(':checked')?elements.filter(e=>e.checked):elements,querySelector:()=>null};
+ const p=collectMetabolicAnswers(root,{...base,exerciseType:'resistance'},today);
+ assert.equal(p.exerciseSessionsPerWeek,3);assert.equal(p.exerciseDurationMin,47);assert.ok(Number.isInteger(p.exerciseSessionsPerWeek));
+ const html=renderMetabolicOnboardingStep('metabolic_activity',p,today);
+ assert.ok(!html.includes('<select'));assert.match(html,/name="exerciseDurationMinChoice" value="custom" checked/);assert.match(html,/value="47"/);
+});
+test('recent transition needs no onset date, records report time once, and clears a removed transition',()=>{
+ const root={dataset:{metaStep:'metabolic_history'},querySelectorAll:()=>[],querySelector:()=>null};
+ const p=collectMetabolicAnswers(root,{...base,weightHistoryHigher:'no',recentWeightTrend:'unknown',recentTransitionType:'creatine'},today);
+ assert.equal(validateMetabolicAnswers('metabolic_history',p,today),null);
+ assert.equal(p.recentTransitionReportedAt,today);
+ assert.equal(collectMetabolicAnswers(root,p,'2026-10-27').recentTransitionReportedAt,today);
+ assert.equal(collectMetabolicAnswers(root,{...p,recentTransitionType:'none'},today).recentTransitionReportedAt,'');
+ const html=renderMetabolicOnboardingStep('metabolic_history',p,today);assert.ok(!html.includes('name="recentTransitionDate"'));
+});
+test('milestones complete stage one on page five, update both directions, and support every goal length',()=>{
+ for(const total of [14,15]){
+ assert.deepEqual(questionnaireMilestones(4,total).map(m=>m.status),['active','pending','pending']);
+ assert.deepEqual(questionnaireMilestones(5,total).map(m=>m.status),['complete','active','pending']);
+ assert.deepEqual(questionnaireMilestones(10,total).map(m=>m.status),['complete','complete','active']);
+ assert.deepEqual(questionnaireMilestones(total,total).map(m=>m.status),['complete','complete','complete']);
+ assert.match(renderQuestionnaireMilestones(5,total),/المرحلة 1 مكتملة/);
+ }
 });

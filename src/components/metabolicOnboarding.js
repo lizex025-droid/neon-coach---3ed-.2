@@ -11,12 +11,17 @@ export const METABOLIC_DEFAULTS = {
   ffmSource:'', ffmMeasuredAt:'', ffmReliable:false, knownTdee:null,
   macroStyle:null, programTrainingType:null, proteinPreference:null, ketoCarbs:30,
   calorieDistribution:null, calorieShift:0, metabolicTrainingDays:[], calorieFloor:null,
-  recentTransitionType:null, recentTransitionDate:'', metabolicOnboardingVersion:2
+  recentTransitionType:null, recentTransitionDate:'', recentTransitionReportedAt:'', metabolicOnboardingVersion:2
 };
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const choices=(name,title,value,options)=>`<fieldset class="metabolic-question"><legend>${title}</legend><div class="metabolic-choice-list">${options.map(([id,label,description])=>`<label class="metabolic-choice"><input type="radio" name="${name}" value="${id}" ${value===id?'checked':''}><span><b>${label}</b>${description?`<small>${description}</small>`:''}</span></label>`).join('')}</div></fieldset>`;
 const input=(name,label,value,type='number',extra='')=>`<label class="metabolic-field">${label}<input name="${name}" value="${esc(value)}" type="${type}" ${extra}></label>`;
-const select=(name,label,value,options)=>`<label class="metabolic-field">${label}<select name="${name}">${options.map(([id,text])=>`<option value="${id}" ${value===id?'selected':''}>${text}</option>`).join('')}</select></label>`;
+const select=(name,label,value,options)=>choices(name,label,value,options.filter(([id])=>id!==''));
+// Presets are exact choices, never hidden midpoint estimates. Custom retains the original precision.
+const numberChoices=(name,title,value,presets,unit,extra='',optional=false)=>{
+  const ids=presets.map(String), selected=value===null||value===undefined?'':ids.includes(String(value))?String(value):'custom';
+  return `<div class="metabolic-number-choice" data-number-field="${name}">${choices(name+'Choice',title,selected,[...presets.map(n=>[String(n),`${n} ${unit}`]),['custom','قيمة ثانية — أدخل الرقم'],...(optional?[['','مش عارف / تخطي']]:[])])}<div data-meta-visible="${name}Choice:custom">${input(name,'القيمة الدقيقة',value,'number',extra)}</div></div>`;
+};
 export function renderMetabolicOnboardingStep(key,p,today) {
   const header=(title,copy)=>`<h2 style="color:#55F7A5;font-size:1.5rem;margin-bottom:8px">${title}</h2><p style="color:#B8C0BC;margin-bottom:20px">${copy}</p>`;
   let body='';
@@ -26,13 +31,13 @@ export function renderMetabolicOnboardingStep(key,p,today) {
     choices('recentWeightTrend','كيف تغيّر وزنك خلال الأسابيع الماضية؟',p.recentWeightTrend,[['losing','بنزل'],['gaining','بزيد'],['stable','تقريبًا ثابت'],['unknown','مش عارف']])+
     `<details><summary>عندي أرقام سابقة أو متوسط سعرات موثوق (اختياري)</summary><div class="metabolic-fields">${input('recentWeightStartKg','وزنك السابق بالكيلوغرام',p.recentWeightStartKg,'number','min="20" max="500" step="0.1"')}${input('recentWeightStartDate','تاريخ الوزن السابق',p.recentWeightStartDate,'date',`max="${today}"`)}${input('recentAverageCalories','متوسط الأكل الفعلي يوميًا خلال نفس الفترة',p.recentAverageCalories,'number','min="500" max="10000"')}<label><input type="checkbox" name="recentIntakeComplete" ${p.recentIntakeComplete?'checked':''}> المتوسط يشمل كل أيام الفترة وكل الطعام، وليس هدف الحمية فقط</label><small>لن ننشئ أيام طعام أو أوزانًا وهمية من هذا المتوسط. استيراد السجل اليومي متاح من صفحة الحرق لاحقًا.</small></div></details>`+
     choices('recentTransitionType','هل صار تغيّر واضح خلال آخر أسبوعين؟',p.recentTransitionType,[['none','لا'],['carb_change','تغيّر كبير بالكارب / بدء كيتو'],['creatine','بدء كرياتين'],['fluid_change','تغيّر سوائل أو احتباس ماء'],['unknown','مش متأكد']])+
-    `<div data-meta-visible="recentTransitionType:carb_change,creatine,fluid_change">${input('recentTransitionDate','متى بدأ التغيّر؟',p.recentTransitionDate,'date',`max="${today}"`)}</div>`;
+    '<small>عند وجود تغيّر حديث، نؤجّل تعديل الحرق لفترة قصيرة حتى يستقر اتجاه الوزن.</small>';
   if(key==='metabolic_activity') body=header('حركتك خارج النادي وتمرينك الحالي','نفصل الحركة اليومية عن التمرين، حتى ما نحسب النشاط مرتين. هذه إجابات عن الأسابيع الماضية؛ جدولك القادم له إعداداته لاحقًا.')+
     choices('dailyMovement','كم تتحرك خارج التمرين؟',p.dailyMovement,[['sedentary','قليل الحركة','عادة أقل من 5000 خطوة'],['moderate','متوسط الحركة','عادة 5000–15000 خطوة'],['very_active','كثير الحركة','عادة أكثر من 15000 خطوة'],['unknown','مش عارف']])+
-    input('dailySteps','إذا عندك متوسط خطوات فعلي أدخله (اختياري)',p.dailySteps,'number','min="0" max="60000" step="100"')+
+    `<details><summary>عندي متوسط خطوات دقيق من الساعة أو الهاتف (اختياري)</summary>${input('dailySteps','متوسط الخطوات الفعلي',p.dailySteps,'number','min="0" max="60000" step="1"')}</details>`+
     choices('jobActivity','طبيعة شغلك أو يومك المعتاد؟',p.jobActivity,[['seated','جلوس غالبًا'],['standing','وقوف غالبًا'],['moving','مشي وحركة مستمرة'],['physical','عمل بدني'],['unknown','مش عارف']])+
     choices('exerciseType','شو التمرين اللي بتعمله حاليًا؟',p.exerciseType,[['none','ما بتمرن حاليًا'],['resistance','مقاومة / حديد'],['cardio','كارديو / رياضة تحمّل'],['mixed','كارديو ومقاومة'],['unknown','مش متأكد']])+
-    `<div class="metabolic-fields" data-meta-visible="exerciseType:resistance,cardio,mixed">${input('exerciseSessionsPerWeek','عدد الحصص الفعلي بالأسبوع',p.exerciseSessionsPerWeek,'number','min="1" max="14" step="1"')}${input('exerciseDurationMin','متوسط دقائق الحصة',p.exerciseDurationMin,'number','min="5" max="180" step="5"')}</div>`+
+    `<div class="metabolic-fields" data-meta-visible="exerciseType:resistance,cardio,mixed">${numberChoices('exerciseSessionsPerWeek','عدد الحصص الفعلي بالأسبوع',p.exerciseSessionsPerWeek,[1,2,3,4,5,6,7,8,10,12,14],'حصص','min="1" max="14" step="1"')}${numberChoices('exerciseDurationMin','متوسط مدة الحصة',p.exerciseDurationMin,[15,30,45,60,75,90,120],'دقيقة','min="5" max="180" step="1"')}</div>`+
     select('liftingExperience','خبرتك بالمقاومة',p.liftingExperience,[['','اختر'],['none','لا أتمرن مقاومة حاليًا'],['beginner','سنة أو أقل'],['intermediate','أكثر من سنة وأقل من 4 سنوات'],['advanced','4 سنوات أو أكثر'],['unknown','مش عارف']])+
     select('cardioExperience','خبرتك بالكارديو',p.cardioExperience,[['','اختر'],['none','لا أتمرن كارديو حاليًا'],['beginner','سنة أو أقل'],['intermediate','أكثر من سنة وأقل من 4 سنوات'],['advanced','4 سنوات أو أكثر'],['unknown','مش عارف']])+
     choices('athleticStatus','أي وصف أقرب إلك؟',p.athleticStatus,[['recreational','بتمرن للصحة أو كهواية'],['athlete','رياضي منتظم بتدريب مكثف'],['professional','رياضي محترف وبنافس'],['unknown','مش متأكد']]);
@@ -43,12 +48,12 @@ export function renderMetabolicOnboardingStep(key,p,today) {
     input('knownTdee','عندي TDEE معروف من متابعة سابقة (اختياري، ليس BMR من Tanita)',p.knownTdee,'number','min="500" max="10000"');
   if(key==='metabolic_strategy') body=header('توزيع السعرات والماكروز','هذه الخيارات تدخل بالحساب النهائي والخطة الأسبوعية مباشرة.')+
     choices('macroStyle','شو نظام التغذية المفضل؟',p.macroStyle,[['balanced','Balanced','تقسيم المتبقي بعد البروتين بالتساوي بين طاقة الدهون والكارب'],['low_fat','Low-fat','دهون أقل وكارب أعلى'],['low_carb','Low-carb','كارب أقل ودهون أعلى'],['keto','Keto','تحديد سقف إجمالي الكارب']])+
-    `<div data-meta-visible="macroStyle:keto">${input('ketoCarbs','هدف إجمالي الكارب اليومي بالغرام (ليس صافي الكارب)',p.ketoCarbs,'number','min="10" max="50"')}</div>`+
+    `<div data-meta-visible="macroStyle:keto">${numberChoices('ketoCarbs','هدف إجمالي الكارب (ليس صافي الكارب)',p.ketoCarbs,[10,20,30,40,50],'غ','min="10" max="50"')}</div>`+
     choices('programTrainingType','أي تدريب ناوي تعمل خلال خطة التغذية؟',p.programTrainingType,[['none','لا شيء أو نشاط خفيف'],['resistance','مقاومة / حديد'],['cardio','كارديو'],['mixed','كارديو ومقاومة']])+
     choices('proteinPreference','كمية البروتين المفضلة ضمن النطاق؟',p.proteinPreference,[['low','أقل'],['moderate','متوسط'],['high','مرتفع']])+
     choices('calorieDistribution','كيف نوزع ميزانية الأسبوع؟',p.calorieDistribution,[['even','نفس السعرات كل يوم'],['shift','أعلى بأيام التدريب وأقل بالراحة']])+
-    `<div class="metabolic-fields" data-meta-visible="calorieDistribution:shift">${input('calorieShift','زيادة أيام التدريب (سعرة/يوم)',p.calorieShift || 150,'number','min="50" max="500" step="25"')}<div style="display:flex;gap:12px;flex-wrap:wrap">${['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'].map((d,i)=>`<label><input type="checkbox" name="metabolicTrainingDays" value="${i}" ${(p.metabolicTrainingDays||[]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div></div>`+
-    input('calorieFloor','الحد الأدنى للتوصية بالسعرات',p.calorieFloor || (p.gender==='female'?1200:1500),'number',`min="${p.gender==='female'?1200:1500}" max="4000" step="50"`)+
+    `<div class="metabolic-fields" data-meta-visible="calorieDistribution:shift">${numberChoices('calorieShift','زيادة أيام التدريب',p.calorieShift || 150,[50,100,150,200,250,300,400,500],'سعرة','min="50" max="500" step="1"')}<div style="display:flex;gap:12px;flex-wrap:wrap">${['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'].map((d,i)=>`<label class="metabolic-day-choice"><input type="checkbox" name="metabolicTrainingDays" value="${i}" ${(p.metabolicTrainingDays||[]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div></div>`+
+    numberChoices('calorieFloor','الحد الأدنى للتوصية بالسعرات',p.calorieFloor || (p.gender==='female'?1200:1500),(p.gender==='female'?[1200,1300,1400,1500,1600,1800,2000]:[1500,1600,1700,1800,2000,2200]),'سعرة',`min="${p.gender==='female'?1200:1500}" max="4000" step="1"`)+
     '<small>الحد قيد للتوصية، وليس ضمانًا للملاءمة الفردية. إذا تعارض مع معدل النزول نوضح الفرق.</small>';
   return `<div id="metabolic-onboarding" data-meta-step="${key}" class="metabolic-onboarding">${body}<button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top:20px">متابعة</button></div>`;
 }
@@ -61,6 +66,11 @@ export function collectMetabolicAnswers(root,p,today) {
     else if(el.type==='checkbox')updates[el.name]=el.checked;
     else updates[el.name]=el.type==='number'?(el.value===''?null:Number(el.value)):el.value;
   }
+  for(const el of root.querySelectorAll('input[type=radio]:checked')) {
+    if(!el.name?.endsWith('Choice'))continue;
+    const field=el.name.slice(0,-6);
+    if(el.value!=='custom')updates[field]=el.value===''?null:Number(el.value);
+  }
   if(root.querySelector('[name="metabolicTrainingDays"]')) updates.metabolicTrainingDays=[...root.querySelectorAll('[name="metabolicTrainingDays"]:checked')].map(el=>Number(el.value));
   if(updates.weightHistoryHigher!=='yes' && updates.weightHistoryHigher)updates.highestAdultWeight=null;
   if(updates.rmrMethod==='mifflin_st_jeor')updates.measuredRmr=null;
@@ -69,12 +79,20 @@ export function collectMetabolicAnswers(root,p,today) {
   if(['beginner','intermediate','advanced'].includes(updates.liftingExperience))updates.trainingLevel=updates.liftingExperience;
   if(updates.liftingExperience==='none')updates.trainingLevel='beginner';
   if(updates.calorieDistribution==='even')updates.calorieShift=0;
-  if(root.dataset?.metaStep==='metabolic_history'){updates.historyEndDate=today;updates.historyEndWeight=Number(p.weight);}
+  if(root.dataset?.metaStep==='metabolic_history'){
+    updates.historyEndDate=today;updates.historyEndWeight=Number(p.weight);
+    const transition=updates.recentTransitionType ?? p.recentTransitionType;
+    if(['carb_change','creatine','fluid_change'].includes(transition)) {
+      updates.recentTransitionReportedAt=transition===p.recentTransitionType&&p.recentTransitionReportedAt?p.recentTransitionReportedAt:today;
+    } else updates.recentTransitionReportedAt='';
+  }
   return {...p,...updates};
 }
 export function updateMetabolicVisibility(root,p) {
   for(const el of root.querySelectorAll('[data-meta-visible]')){
-    const [key,options]=el.dataset.metaVisible.split(':');el.hidden=!options.split(',').includes(p[key]);
+    const [key,options]=el.dataset.metaVisible.split(':');
+    const checked=root.querySelector(`input[name="${key}"]:checked`);
+    el.hidden=!options.split(',').includes(String(checked?.value ?? p[key]));
   }
   if(p.rmrMethod==='cunningham')root.querySelector('details')?.setAttribute('open','');
 }
@@ -83,7 +101,6 @@ export function validateMetabolicAnswers(key,p,today) {
   if(key==='metabolic_history') {
     if(!need(p.weightHistoryHigher,['yes','no','unknown'])||!need(p.recentWeightTrend,['losing','gaining','stable','unknown'])||!need(p.recentTransitionType,['none','carb_change','creatine','fluid_change','unknown']))return 'جاوب أسئلة تاريخ الوزن والتغيّر، أو اختر مش متأكد.';
     if(p.highestAdultWeight!==null && (p.highestAdultWeight<Number(p.weight)||p.highestAdultWeight>500))return 'أعلى وزن سابق لا يكون أقل من وزنك الحالي.';
-    if(['carb_change','creatine','fluid_change'].includes(p.recentTransitionType)&&!(dayNumber(p.recentTransitionDate)!==null&&p.recentTransitionDate<=today))return 'حدد تاريخ التغيّر.';
     const anyHistory=p.recentWeightStartKg!==null||p.recentWeightStartDate||p.recentAverageCalories!==null||p.recentIntakeComplete;
     if(anyHistory && !(p.recentWeightStartKg>=20&&p.recentWeightStartKg<=500&&dayNumber(p.recentWeightStartDate)!==null&&p.recentWeightStartDate<today))return 'أكمل الوزن السابق وتاريخه أو اترك الأرقام السابقة فارغة.';
     if(p.recentAverageCalories!==null&&!(p.recentAverageCalories>=500&&p.recentAverageCalories<=10000))return 'متوسط السعرات غير صالح.';
@@ -107,4 +124,12 @@ export function validateMetabolicAnswers(key,p,today) {
     if(p.calorieDistribution==='shift'&&!(p.calorieShift>=50&&p.calorieShift<=500&&p.metabolicTrainingDays?.length>0&&p.metabolicTrainingDays.length<7))return 'للتوزيع المتغيّر اختر أيام تدريب وراحة ومقدار الزيادة.';
   }
   return null;
+}
+
+export function questionnaireMilestones(step,totalSteps) {
+  return [{label:'أساسياتك',start:1,end:5},{label:'هدفك وتغذيتك',start:5,end:10},{label:'تجهيز خطتك',start:10,end:totalSteps}]
+    .map((m,i)=>({...m,number:i+1,status:step>=m.end?'complete':step>=m.start?'active':'pending'}));
+}
+export function renderQuestionnaireMilestones(step,totalSteps) {
+  return `<ol class="q-milestones" aria-label="مراحل إعداد خطتك">${questionnaireMilestones(step,totalSteps).map(m=>`<li class="q-milestone ${m.status}" ${m.status==='active'?'aria-current="step"':''}><span class="q-milestone-number" aria-hidden="true">${m.status==='complete'?'✓':m.number}</span><span><b>${m.label}</b><small>${m.status==='complete'?`المرحلة ${m.number} مكتملة`:m.status==='active'?'عم نجهزها':'لاحقًا'}</small></span></li>`).join('')}</ol>`;
 }

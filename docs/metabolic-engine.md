@@ -69,3 +69,11 @@ MacroFactor experience context: https://help.macrofactorapp.com/en/articles/59-c
 MacroFactor initial estimate and historical data: https://help.macrofactorapp.com/en/articles/206-what-should-i-do-if-my-initial-expenditure-or-recommended-energy-intake-seems-too-high-or-too-low
 
 Questionnaire and metabolic settings are persisted in the app state on the current browser. The legacy Supabase profile table only syncs its supported columns; these additional settings are not yet guaranteed to transfer to another device.
+
+## Choice-based questionnaire and milestones
+
+Experience and measurement-source dropdowns are now radio cards. Exact session counts, duration, keto carbs, calorie shift and recommendation floors have preset cards plus a precise custom option; selected presets are stored as numbers. Measurements and optional recorded historical data retain exact numeric/date entry. Step categories remain categories rather than invented step-count midpoints.
+
+The questionnaire no longer asks the onset date of a recent water/carbohydrate/creatine transition. It records when the user reports the recent event, separately from onset, and holds adaptive updates for 14 days from that report. Returning to the same answer does not restart the hold; changing the reported event does. Legacy dated events remain supported.
+
+Three progress milestones mark phase 1 complete on reaching page 5, phase 2 on page 10, and phase 3 on reaching final review. This is questionnaire progress, not a health or estimation confidence score. Back navigation restores the corresponding progress state.

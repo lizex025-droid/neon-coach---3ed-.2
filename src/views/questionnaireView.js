@@ -1,4 +1,4 @@
-import { METABOLIC_STEP_KEYS, METABOLIC_DEFAULTS, renderMetabolicOnboardingStep, collectMetabolicAnswers, updateMetabolicVisibility, validateMetabolicAnswers } from '../components/metabolicOnboarding.js';
+import { METABOLIC_STEP_KEYS, METABOLIC_DEFAULTS, renderQuestionnaireMilestones, renderMetabolicOnboardingStep, collectMetabolicAnswers, updateMetabolicVisibility, validateMetabolicAnswers } from '../components/metabolicOnboarding.js';
 import { estimateInitialExpenditure } from '../domain/metabolicEngine.js';
 import { localDate } from '../domain/actionAgent.js';
 import '../styles/metabolicOnboarding.css';
@@ -509,7 +509,7 @@ function renderWelcomeScreenHTML() {
         </button>
 
         <p style="font-size: 0.78rem; color: #8C9992; margin: 4px 0 0; text-align: center;">
-           يستغرق الاستبيان دقيقتين فقط • يمكنك تعديل أي إجابة لاحقاً
+           خطوات بسيطة لتخصيص خطتك • يمكنك تعديل أي إجابة لاحقاً
         </p>
       </div>
     </div>
@@ -531,6 +531,8 @@ function renderStepWorkflowHTML(step, totalSteps, stepKey) {
       </span>
       <div style="width: 38px;"></div>
     </div>
+
+    <div id="q-milestones-container">${renderQuestionnaireMilestones(step, totalSteps)}</div>
 
     <!-- مؤشرات الخطوات -->
     <div id="q-steps-bar" style="display: flex; gap: 6px; margin-bottom: 24px;">
@@ -3792,6 +3794,9 @@ export function bindQuestionnaireEvents() {
     if (headerStep) {
       headerStep.textContent = `الخطوة ${currentStep} من ${totalSteps}`;
     }
+
+    const milestones = document.getElementById('q-milestones-container');
+    if (milestones) milestones.innerHTML = renderQuestionnaireMilestones(currentStep, totalSteps);
 
     // 2. تحديث مؤشرات شريط التقدم
     const stepsBar = document.getElementById('q-steps-bar');
