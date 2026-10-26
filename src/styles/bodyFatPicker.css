@@ -87,6 +87,7 @@
   object-fit: cover;
   object-position: center 36%;
 }
+.body-fat-photo[hidden] { display: none !important; }
 .body-fat-image-fallback {
   display: flex;
   height: 100%;
