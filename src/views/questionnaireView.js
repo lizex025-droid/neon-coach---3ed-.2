@@ -36,7 +36,7 @@ import { SUPPLEMENT_DB, searchSupplementsDb } from '../data/supplementsDb.js';
 import { nutritionPlanService } from '../services/nutritionPlanService.js';
 import { DEFAULT_PLAN_PREFERENCES } from '../domain/nutritionPlanPolicy.js';
 import { fortyDayWorkoutService } from '../services/fortyDayWorkoutService.js';
-import { renderBodyFatStep, getBodyFatRange } from '../components/bodyFatPicker.js';
+import { renderBodyFatStep, getBodyFatRange, getBodyFatRanges } from '../components/bodyFatPicker.js';
 import { startBodyFatImageLoader } from '../utils/bodyFatImageLoader.js';
 import '../styles/bodyFatPicker.css';
 
@@ -1823,6 +1823,16 @@ export function bindQuestionnaireEvents() {
 
   // تهيئة الأحداث المناسبة بحسب مفتاح الخطوة النشطة
   if (currentStepKey === STEP_KEYS.MEASUREMENTS) {
+    // Resolve the R2 origin while users enter their measurements, so the
+    // first image does not pay DNS/TLS setup time after they tap Next.
+    if (!document.querySelector('link[data-neon-body-fat-preconnect]')) {
+      const hint = document.createElement('link');
+      hint.rel = 'preconnect';
+      hint.crossOrigin = 'anonymous';
+      hint.href = new URL(getBodyFatRanges(formData.gender)[0].image).origin;
+      hint.dataset.neonBodyFatPreconnect = '';
+      document.head.appendChild(hint);
+    }
     initStep1HorizontalPickers();
   } else if (currentStepKey === STEP_KEYS.BODY_FAT) {
     initBodyFatStepEvents();
