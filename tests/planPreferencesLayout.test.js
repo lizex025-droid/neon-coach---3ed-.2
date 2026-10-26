@@ -13,18 +13,14 @@ test('nutrition preference layout is scoped to its own questionnaire step', () =
   assert.match(view, /import '\.\.\/styles\/planPreferencesStep\.css'/);
   assert.match(markup, /<section class="q-plan-preferences-step" dir="rtl">/);
   assert.match(markup, /<\/section>/);
-  assert.equal((markup.match(/class="form-group q-plan-question/g) || []).length, 4);
+  assert.equal((markup.match(/class="form-group q-plan-question/g) || []).length, 3);
   assert.ok(!view.slice(end).includes('class="q-plan-preferences-step"'));
 });
 
-test('three selectable adherence cards wrap within the three-column grid', () => {
-  assert.match(markup, /class="q-adherence-grid"/);
-  for (const value of ['high', 'medium', 'low']) {
-    assert.ok(markup.includes('data-val="' + value + '"'));
-  }
-  assert.equal((markup.match(/class="q-adherence-name"/g) || []).length, 3);
-  assert.match(styles, /\.q-adherence-grid[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(styles, /\.q-adherence-btn[\s\S]*?white-space: normal !important/);
+test('unused adherence question is removed while meaningful preferences remain', () => {
+  assert.ok(!markup.includes('q-adherence-grid'));
+  assert.ok(!markup.includes('ما هو مستوى التزامك المتوقع'));
+  for(const control of ['q-mealslots-list','q-offplan-grid','q-sweets-toggle'])assert.ok(markup.includes(control));
 });
 
 test('meal distribution remains selectable and never forces one-line labels', () => {

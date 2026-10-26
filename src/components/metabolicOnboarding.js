@@ -25,10 +25,7 @@ const numberChoices=(name,title,value,presets,unit,extra='',optional=false)=>{
 export function renderMetabolicOnboardingStep(key,p,today) {
   const header=(title,copy)=>`<h2 style="color:#55F7A5;font-size:1.5rem;margin-bottom:8px">${title}</h2><p style="color:#B8C0BC;margin-bottom:20px">${copy}</p>`;
   let body='';
-  if(key==='metabolic_history') body=header('تاريخ الوزن والتغذية','نستخدم الأرقام المسجلة لتحسين البداية. إجابة نعم أو لا وحدها لا تقيس مقدار التكيّف الأيضي.')+
-    choices('weightHistoryHigher',`هل سبق وكان وزنك أعلى من ${Math.ceil(Number(p.weight)*1.1)} كغ تقريبًا؟`,p.weightHistoryHigher,[['yes','نعم'],['no','لا'],['unknown','مش متأكد']])+
-    `<div data-meta-visible="weightHistoryHigher:yes">${input('highestAdultWeight','أعلى وزن بالغ تتذكره بالكيلوغرام (اختياري)',p.highestAdultWeight,'number','min="20" max="500" step="0.1"')}</div>`+
-    choices('recentWeightTrend','كيف تغيّر وزنك خلال الأسابيع الماضية؟',p.recentWeightTrend,[['losing','بنزل'],['gaining','بزيد'],['stable','تقريبًا ثابت'],['unknown','مش عارف']])+
+  if(key==='metabolic_history') body=header('بيانات سابقة وتغيّرات حديثة','الأرقام السابقة اختيارية لتحسين تقدير البداية، والتغيّرات الحديثة تساعدنا على التعامل مع تقلّبات الماء.')+
     `<details><summary>عندي أرقام سابقة أو متوسط سعرات موثوق (اختياري)</summary><div class="metabolic-fields">${input('recentWeightStartKg','وزنك السابق بالكيلوغرام',p.recentWeightStartKg,'number','min="20" max="500" step="0.1"')}${input('recentWeightStartDate','تاريخ الوزن السابق',p.recentWeightStartDate,'date',`max="${today}"`)}${input('recentAverageCalories','متوسط الأكل الفعلي يوميًا خلال نفس الفترة',p.recentAverageCalories,'number','min="500" max="10000"')}<label><input type="checkbox" name="recentIntakeComplete" ${p.recentIntakeComplete?'checked':''}> المتوسط يشمل كل أيام الفترة وكل الطعام، وليس هدف الحمية فقط</label><small>لن ننشئ أيام طعام أو أوزانًا وهمية من هذا المتوسط. استيراد السجل اليومي متاح من صفحة الحرق لاحقًا.</small></div></details>`+
     choices('recentTransitionType','هل صار تغيّر واضح خلال آخر أسبوعين؟',p.recentTransitionType,[['none','لا'],['carb_change','تغيّر كبير بالكارب / بدء كيتو'],['creatine','بدء كرياتين'],['fluid_change','تغيّر سوائل أو احتباس ماء'],['unknown','مش متأكد']])+
     '<small>عند وجود تغيّر حديث، نؤجّل تعديل الحرق لفترة قصيرة حتى يستقر اتجاه الوزن.</small>';
@@ -37,10 +34,7 @@ export function renderMetabolicOnboardingStep(key,p,today) {
     `<details><summary>عندي متوسط خطوات دقيق من الساعة أو الهاتف (اختياري)</summary>${input('dailySteps','متوسط الخطوات الفعلي',p.dailySteps,'number','min="0" max="60000" step="1"')}</details>`+
     choices('jobActivity','طبيعة شغلك أو يومك المعتاد؟',p.jobActivity,[['seated','جلوس غالبًا'],['standing','وقوف غالبًا'],['moving','مشي وحركة مستمرة'],['physical','عمل بدني'],['unknown','مش عارف']])+
     choices('exerciseType','شو التمرين اللي بتعمله حاليًا؟',p.exerciseType,[['none','ما بتمرن حاليًا'],['resistance','مقاومة / حديد'],['cardio','كارديو / رياضة تحمّل'],['mixed','كارديو ومقاومة'],['unknown','مش متأكد']])+
-    `<div class="metabolic-fields" data-meta-visible="exerciseType:resistance,cardio,mixed">${numberChoices('exerciseSessionsPerWeek','عدد الحصص الفعلي بالأسبوع',p.exerciseSessionsPerWeek,[1,2,3,4,5,6,7,8,10,12,14],'حصص','min="1" max="14" step="1"')}${numberChoices('exerciseDurationMin','متوسط مدة الحصة',p.exerciseDurationMin,[15,30,45,60,75,90,120],'دقيقة','min="5" max="180" step="1"')}</div>`+
-    select('liftingExperience','خبرتك بالمقاومة',p.liftingExperience,[['','اختر'],['none','لا أتمرن مقاومة حاليًا'],['beginner','سنة أو أقل'],['intermediate','أكثر من سنة وأقل من 4 سنوات'],['advanced','4 سنوات أو أكثر'],['unknown','مش عارف']])+
-    select('cardioExperience','خبرتك بالكارديو',p.cardioExperience,[['','اختر'],['none','لا أتمرن كارديو حاليًا'],['beginner','سنة أو أقل'],['intermediate','أكثر من سنة وأقل من 4 سنوات'],['advanced','4 سنوات أو أكثر'],['unknown','مش عارف']])+
-    choices('athleticStatus','أي وصف أقرب إلك؟',p.athleticStatus,[['recreational','بتمرن للصحة أو كهواية'],['athlete','رياضي منتظم بتدريب مكثف'],['professional','رياضي محترف وبنافس'],['unknown','مش متأكد']]);
+    `<div class="metabolic-fields" data-meta-visible="exerciseType:resistance,cardio,mixed">${numberChoices('exerciseSessionsPerWeek','عدد الحصص الفعلي بالأسبوع',p.exerciseSessionsPerWeek,[1,2,3,4,5,6,7,8,10,12,14],'حصص','min="1" max="14" step="1"')}${numberChoices('exerciseDurationMin','متوسط مدة الحصة',p.exerciseDurationMin,[15,30,45,60,75,90,120],'دقيقة','min="5" max="180" step="1"')}</div>`;
   if(key==='metabolic_measurement') body=header('هل عندك قياس للأيض أو تركيب الجسم؟','تقدير الدهون من الصور يبقى تقديريًا. اختر القياس فقط إذا عندك نتيجة فحص، ويمكنك المتابعة بالمعادلة الافتراضية.')+
     choices('rmrMethod','كيف نبدأ تقدير الطاقة في الراحة RMR؟',p.rmrMethod,[['mifflin_st_jeor','معادلة Mifflin–St Jeor','تحتاج العمر والجنس والطول والوزن'],['cunningham','معادلة Cunningham','تحتاج FFM من قياس مناسب'],['measured','عندي فحص Indirect Calorimetry','أُدخل RMR المقاس فعليًا']])+
     `<div class="metabolic-fields" data-meta-visible="rmrMethod:measured">${input('measuredRmr','RMR المقاس (سعرة/يوم)',p.measuredRmr,'number','min="500" max="6000"')}${input('rmrMeasuredAt','تاريخ فحص RMR',p.rmrMeasuredAt,'date',`max="${today}"`)}</div>`+
@@ -72,12 +66,10 @@ export function collectMetabolicAnswers(root,p,today) {
     if(el.value!=='custom')updates[field]=el.value===''?null:Number(el.value);
   }
   if(root.querySelector('[name="metabolicTrainingDays"]')) updates.metabolicTrainingDays=[...root.querySelectorAll('[name="metabolicTrainingDays"]:checked')].map(el=>Number(el.value));
-  if(updates.weightHistoryHigher!=='yes' && updates.weightHistoryHigher)updates.highestAdultWeight=null;
   if(updates.rmrMethod==='mifflin_st_jeor')updates.measuredRmr=null;
+  if(root.dataset?.metaStep==='metabolic_activity')updates.activityModel='components';
   if(updates.exerciseType==='unknown') {updates.exerciseSessionsPerWeek=null;updates.exerciseDurationMin=null;}
   if(updates.exerciseType==='none') {updates.exerciseSessionsPerWeek=0;updates.exerciseDurationMin=0;}
-  if(['beginner','intermediate','advanced'].includes(updates.liftingExperience))updates.trainingLevel=updates.liftingExperience;
-  if(updates.liftingExperience==='none')updates.trainingLevel='beginner';
   if(updates.calorieDistribution==='even')updates.calorieShift=0;
   if(root.dataset?.metaStep==='metabolic_history'){
     updates.historyEndDate=today;updates.historyEndWeight=Number(p.weight);
@@ -99,16 +91,13 @@ export function updateMetabolicVisibility(root,p) {
 export function validateMetabolicAnswers(key,p,today) {
   const need=(value,options)=>options.includes(value);
   if(key==='metabolic_history') {
-    if(!need(p.weightHistoryHigher,['yes','no','unknown'])||!need(p.recentWeightTrend,['losing','gaining','stable','unknown'])||!need(p.recentTransitionType,['none','carb_change','creatine','fluid_change','unknown']))return 'جاوب أسئلة تاريخ الوزن والتغيّر، أو اختر مش متأكد.';
-    if(p.highestAdultWeight!==null && (p.highestAdultWeight<Number(p.weight)||p.highestAdultWeight>500))return 'أعلى وزن سابق لا يكون أقل من وزنك الحالي.';
+    if(!need(p.recentTransitionType,['none','carb_change','creatine','fluid_change','unknown']))return 'حدد وجود تغيّر حديث، أو اختر مش متأكد.';
     const anyHistory=p.recentWeightStartKg!==null||p.recentWeightStartDate||p.recentAverageCalories!==null||p.recentIntakeComplete;
     if(anyHistory && !(p.recentWeightStartKg>=20&&p.recentWeightStartKg<=500&&dayNumber(p.recentWeightStartDate)!==null&&p.recentWeightStartDate<today))return 'أكمل الوزن السابق وتاريخه أو اترك الأرقام السابقة فارغة.';
     if(p.recentAverageCalories!==null&&!(p.recentAverageCalories>=500&&p.recentAverageCalories<=10000))return 'متوسط السعرات غير صالح.';
-    const delta=Number(p.weight)-Number(p.recentWeightStartKg);
-    if(anyHistory&&((p.recentWeightTrend==='losing'&&delta>0)||(p.recentWeightTrend==='gaining'&&delta<0)))return 'اتجاه الوزن لا يتفق مع الأرقام السابقة؛ راجع الإجابة.';
   }
   if(key==='metabolic_activity') {
-    if(!need(p.dailyMovement,['sedentary','moderate','very_active','unknown'])||!need(p.jobActivity,['seated','standing','moving','physical','unknown'])||!need(p.exerciseType,['none','resistance','cardio','mixed','unknown'])||!need(p.athleticStatus,['recreational','athlete','professional','unknown'])||!p.liftingExperience||!p.cardioExperience)return 'أكمل أسئلة النشاط والخبرة، أو اختر مش عارف.';
+    if(!need(p.dailyMovement,['sedentary','moderate','very_active','unknown'])||!need(p.jobActivity,['seated','standing','moving','physical','unknown'])||!need(p.exerciseType,['none','resistance','cardio','mixed','unknown']))return 'أكمل أسئلة النشاط، أو اختر مش عارف.';
     if(p.dailySteps!==null&&!(p.dailySteps>=0&&p.dailySteps<=60000))return 'متوسط الخطوات غير صالح.';
     if(['resistance','cardio','mixed'].includes(p.exerciseType)&&!(Number.isInteger(p.exerciseSessionsPerWeek)&&p.exerciseSessionsPerWeek>=1&&p.exerciseSessionsPerWeek<=14&&p.exerciseDurationMin>=5&&p.exerciseDurationMin<=180))return 'حدد عدد الحصص الحالي ومدة الحصة.';
   }

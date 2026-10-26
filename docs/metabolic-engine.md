@@ -77,3 +77,11 @@ Experience and measurement-source dropdowns are now radio cards. Exact session c
 The questionnaire no longer asks the onset date of a recent water/carbohydrate/creatine transition. It records when the user reports the recent event, separately from onset, and holds adaptive updates for 14 days from that report. Returning to the same answer does not restart the hold; changing the reported event does. Legacy dated events remain supported.
 
 Three progress milestones mark phase 1 complete on reaching page 5, phase 2 on page 10, and phase 3 on reaching final review. This is questionnaire progress, not a health or estimation confidence score. Back navigation restores the corresponding progress state.
+
+## Questionnaire pruning
+
+Removed questions with no computational consumer: highest adult weight (including the yes/no threshold), subjective recent weight direction, cardio experience, athletic identity, expected adherence, sleep and months of training experience. Removed the duplicate lifting-experience question; training level remains the single source for exercise dosage. The historical dated weight/intake optional inputs remain because they affect the energy-balance prior. The recent transition question remains because it controls adaptive holds. Existing stored values are retained for compatibility and are no longer required or validated by onboarding. Detailed activity answers explicitly activate the component model on revisiting a legacy profile.
+
+The future training type is retained for protein allocation, current exercise frequency/duration for the activity prior, injury constraints for exercise selection, break duration for return-to-training guidance, and food preferences/meal structure for the actual menu. These are distinct output consumers.
+
+Removed the redundant training location selector: the explicit available-equipment list remains authoritative; the legacy gym/home category is derived from that list for compatibility. Meal variety wording now distinguishes it from macro diet style.

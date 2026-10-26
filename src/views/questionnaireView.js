@@ -824,21 +824,6 @@ function renderStepContent(step) {
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 14px;">
-          <div class="neon-card" style="padding: 14px 18px; display: ${formData.activityModel === 'components' ? 'none' : 'flex'}; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-            <div>
-              <div style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem;">مستوى نشاطك اليومي</div>
-              <div style="font-size: 0.8rem; color: #B8C0BC;">حدد نمط حركتك لحساب سعرات الثبات بدقة</div>
-            </div>
-            <select id="q-activity" style="min-width: 175px; padding: 8px 12px; border-radius: 10px; background: #0D1512; color: #55F7A5; border: 1px solid rgba(85,247,165,0.35); font-weight: 700; font-size: 0.85rem;">
-              <option value="sedentary" ${formData.activityLevel === 'sedentary' ? 'selected' : ''}>مكتبي / قليل الحركة (1.200)</option>
-              <option value="light" ${formData.activityLevel === 'light' ? 'selected' : ''}>نشاط خفيف 1-3 أيام (1.375)</option>
-              <option value="moderate" ${formData.activityLevel === 'moderate' || !formData.activityLevel ? 'selected' : ''}>نشاط متوسط 4-5 أيام (1.465)</option>
-              <option value="active" ${formData.activityLevel === 'active' ? 'selected' : ''}>نشاط عالي يومي (1.550)</option>
-              <option value="veryActive" ${formData.activityLevel === 'veryActive' ? 'selected' : ''}>نشاط مكثف جداً 6-7 أيام (1.725)</option>
-              <option value="extraActive" ${formData.activityLevel === 'extraActive' ? 'selected' : ''}>نشاط استثنائي / محترف (1.900)</option>
-            </select>
-          </div>
-
           <div class="neon-card" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
             <span style="color: #B8C0BC; font-weight: 600;">الوزن المستهدف</span>
             <div style="display: flex; align-items: center; gap: 6px;">
@@ -1261,34 +1246,10 @@ function renderStepContent(step) {
           <p style="font-size: 0.95rem; color: #B8C0BC;">نخصص خطتك لتناسب وتيرة يومك وأسلوب حياتك</p>
         </div>
 
-        <!-- 1. مستوى الالتزام المتوقع -->
-        <div class="form-group q-plan-question q-plan-question-adherence" style="margin-bottom: 20px;">
-          <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
-            1. ما هو مستوى التزامك المتوقع بالخطة؟
-          </label>
-          <div class="q-adherence-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-            <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'high' ? 'active' : ''}" data-val="high" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'high' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'high' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
-              <div class="q-adherence-icon" style="font-size: 1.2rem; margin-bottom: 4px;">🎯</div>
-              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'high' ? '#55F7A5' : '#fff'};" class="q-adherence-name">عالي</div>
-              <div class="q-adherence-desc" style="font-size: 0.7rem; color: #8C9992;">دقة قصوى</div>
-            </button>
-            <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'medium' ? 'active' : ''}" data-val="medium" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'medium' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'medium' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
-              <div class="q-adherence-icon" style="font-size: 1.2rem; margin-bottom: 4px;">⚖️</div>
-              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'medium' ? '#55F7A5' : '#fff'};" class="q-adherence-name">متوسط</div>
-              <div class="q-adherence-desc" style="font-size: 0.7rem; color: #8C9992;">توازن ومرونة</div>
-            </button>
-            <button type="button" class="btn btn-secondary q-adherence-btn ${prefs.adherence === 'low' ? 'active' : ''}" data-val="low" style="padding: 12px 6px; border-radius: 14px; text-align: center; border-color: ${prefs.adherence === 'low' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.adherence === 'low' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; color: #fff;">
-              <div class="q-adherence-icon" style="font-size: 1.2rem; margin-bottom: 4px;">🌱</div>
-              <div style="font-weight: 800; font-size: 0.88rem; color: ${prefs.adherence === 'low' ? '#55F7A5' : '#fff'};" class="q-adherence-name">بسيط</div>
-              <div class="q-adherence-desc" style="font-size: 0.7rem; color: #8C9992;">سهولة تحضير</div>
-            </button>
-          </div>
-        </div>
-
         <!-- 2. توزيع الوجبات الرئيسية -->
         <div class="form-group q-plan-question q-plan-question-meals" style="margin-bottom: 20px;">
           <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 8px; display: block;">
-            2. كيف تفضل توزيع وجباتك الرئيسية في اليوم؟
+            1. كيف تفضل توزيع وجباتك الرئيسية في اليوم؟
           </label>
           <div class="q-mealslots-list" style="display: flex; flex-direction: column; gap: 8px;">
             <button type="button" class="btn btn-secondary q-mealslots-btn ${prefs.mealSlots === 'breakfast_lunch_dinner' ? 'active' : ''}" data-val="breakfast_lunch_dinner" style="padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; text-align: right; border-color: ${prefs.mealSlots === 'breakfast_lunch_dinner' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.mealSlots === 'breakfast_lunch_dinner' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'};">
@@ -1319,7 +1280,7 @@ function renderStepContent(step) {
         <div class="form-group q-plan-question q-plan-question-offplan" style="margin-bottom: 20px;">
           <div class="q-free-meal-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin: 0;">
-              3. كم وجبة مفتوحة (Free Meal) تريد في الأسبوع؟
+              2. كم وجبة مفتوحة (Free Meal) تريد في الأسبوع؟
             </label>
             <span id="offplan-count-badge" style="font-size: 0.88rem; font-weight: 900; color: #55F7A5; font-family: monospace;">
               ${prefs.offPlanMealsCount} ${prefs.offPlanMealsCount === 0 ? '(بدون وجبات مفتوحة)' : 'وجبة أسبوعياً'}
@@ -1341,7 +1302,7 @@ function renderStepContent(step) {
         <div class="form-group q-plan-question q-plan-question-sweets" style="margin-bottom: 20px;">
           <div class="q-sweets-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin: 0;">
-              4. هل تتناول حلويات أو سكريات وتريد إدراجها؟
+              3. هل تتناول حلويات أو سكريات وتريد إدراجها؟
             </label>
             <div class="q-sweets-toggle" style="display: flex; gap: 6px;">
               <button type="button" id="q-sweets-toggle-no" class="btn btn-secondary ${!prefs.sweets.enabled ? 'active' : ''}" style="padding: 4px 14px; font-size: 0.8rem; border-radius: 10px; border-color: ${!prefs.sweets.enabled ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${!prefs.sweets.enabled ? 'rgba(85,247,165,0.15)' : 'transparent'}; color: #fff;">لا</button>
@@ -1404,19 +1365,19 @@ function renderStepContent(step) {
         <!-- 5. نمط الدايت -->
         <div class="form-group" style="margin-bottom: 28px;">
           <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 12px; display: block;">
-            5. ما هو أسلوب الدايت المفضل لديك؟
+            4. كيف تفضل تنوّع الوجبات؟
           </label>
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
             <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'flexible' ? 'active' : ''}" data-val="flexible"
               style="flex: 1; min-width: 140px; padding: 20px 14px; border-radius: 18px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; border-color: ${prefs.dietStyle === 'flexible' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'flexible' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; overflow: hidden; word-break: break-word; min-width: 0;">
               <div style="font-size: 2rem; line-height: 1;">🥗</div>
-              <div style="font-weight: 800; font-size: 1rem; color: ${prefs.dietStyle === 'flexible' ? '#55F7A5' : '#fff'}; white-space: nowrap;">دايت مرن</div>
+              <div style="font-weight: 800; font-size: 1rem; color: ${prefs.dietStyle === 'flexible' ? '#55F7A5' : '#fff'}; white-space: nowrap;">وجبات متنوّعة</div>
               <div style="font-size: 0.78rem; color: #8C9992; line-height: 1.4; text-align: center; overflow-wrap: break-word; white-space: normal;">تنوع يومي واسع في الوجبات لمنع الملل</div>
             </button>
             <button type="button" class="btn btn-secondary q-dietstyle-btn ${prefs.dietStyle === 'strict' ? 'active' : ''}" data-val="strict"
               style="flex: 1; min-width: 140px; padding: 20px 14px; border-radius: 18px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; border-color: ${prefs.dietStyle === 'strict' ? '#55F7A5' : 'rgba(85,247,165,0.2)'}; background: ${prefs.dietStyle === 'strict' ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)'}; overflow: hidden; word-break: break-word; min-width: 0;">
               <div style="font-size: 2rem; line-height: 1;">⚡</div>
-              <div style="font-weight: 800; font-size: 1rem; color: ${prefs.dietStyle === 'strict' ? '#55F7A5' : '#fff'}; white-space: nowrap;">دايت صارم</div>
+              <div style="font-weight: 800; font-size: 1rem; color: ${prefs.dietStyle === 'strict' ? '#55F7A5' : '#fff'}; white-space: nowrap;">وجبات متكررة</div>
               <div style="font-size: 0.78rem; color: #8C9992; line-height: 1.4; text-align: center; overflow-wrap: break-word; white-space: normal;">وجبات ثابتة لتسهيل التحضير والانضباط</div>
             </button>
           </div>
@@ -1425,7 +1386,7 @@ function renderStepContent(step) {
         <!-- 6. شكل الخطة -->
         <div class="form-group" style="margin-bottom: 28px;">
           <label class="form-label" style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem; margin-bottom: 12px; display: block;">
-            6. كيف تريد شكل وتنسيق وجباتك اليومية؟
+            5. كيف تريد شكل وتنسيق وجباتك اليومية؟
           </label>
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
             <button type="button" class="btn btn-secondary q-planformat-btn ${prefs.planFormat === 'multiple_options' ? 'active' : ''}" data-val="multiple_options"
@@ -1454,16 +1415,8 @@ function renderStepContent(step) {
       // الصحة ونمط الحياة والنوم
       return `
         <div style="text-align: center; margin-bottom: 20px;">
-          <h2 style="font-size: 1.6rem; color: #55F7A5; margin-bottom: 6px; font-weight: 800;">الصحة ونمط الحياة</h2>
-          <p style="font-size: 0.95rem; color: #B8C0BC;">الاستشفاء والنوم هما سر النتيجة المستدامة</p>
-        </div>
-
-        <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
-          <span style="color: #FFFFFF; font-weight: 600;">متوسط ساعات النوم اليومية</span>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <input type="number" id="q-sleep" value="${formData.sleepHours}" min="4" max="12" style="width: 70px; text-align: center; border-radius: 10px;">
-            <span style="color: #55F7A5;">ساعات</span>
-          </div>
+          <h2 style="font-size: 1.6rem; color: #55F7A5; margin-bottom: 6px; font-weight: 800;">الإصابات وقيود التدريب</h2>
+          <p style="font-size: 0.95rem; color: #B8C0BC;">نعدّل التمارين حسب الإصابات والحركات التي تسبب الألم</p>
         </div>
 
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px;">
@@ -1500,7 +1453,6 @@ function renderStepContent(step) {
             ${[['beginner','مبتدئ','تعلّم الحركة وحجم محافظ'],['intermediate','متوسط','خبرة منتظمة وتدرّج'],['advanced','متقدم','خبرة قوية وتحكم بالحمل']].map(([value,label,note]) => `<label style="border:1px solid ${formData.trainingLevel === value ? '#55F7A5' : 'rgba(85,247,165,.18)'};background:${formData.trainingLevel === value ? 'rgba(85,247,165,.12)' : 'rgba(255,255,255,.02)'};padding:12px 8px;border-radius:14px;text-align:center;cursor:pointer;"><input type="radio" name="q-training-level" value="${value}" ${formData.trainingLevel === value ? 'checked' : ''} style="width:auto;"><strong style="display:block;color:#fff;margin-top:5px;">${label}</strong><small style="color:#8C9992;">${note}</small></label>`).join('')}
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
-            <label style="color:#B8C0BC;font-size:.82rem;">أشهر الخبرة<input id="q-training-experience" type="number" min="0" max="600" value="${formData.trainingExperienceMonths}" style="margin-top:5px;"></label>
             <label style="color:#B8C0BC;font-size:.82rem;">أشهر الانقطاع<input id="q-training-break" type="number" min="0" max="120" value="${formData.trainingBreakMonths}" style="margin-top:5px;"></label>
           </div>
           <p style="color:#8C9992;font-size:.78rem;margin:10px 0 0;">نحفظ المستوى الذي اخترته كما هو، وقد نقترح بداية محافظة منفصلة عند العودة بعد انقطاع.</p>
@@ -1528,14 +1480,6 @@ function renderStepContent(step) {
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             ${[['chest','صدر'],['back','ظهر'],['legs','أرجل'],['shoulders','أكتاف'],['biceps','بايسبس'],['triceps','ترايسبس'],['abs','بطن']].map(([value,label]) => `<label class="badge badge-neon" style="cursor:pointer;padding:8px 12px;"><input type="checkbox" name="q-focus-areas" value="${value}" ${formData.focusAreas.includes(value) ? 'checked' : ''} style="width:auto;margin-inline-end:5px;">${label}</label>`).join('')}
           </div>
-        </div>
-
-        <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-weight: 700; color: #FFFFFF;">مكان التمرين</span>
-          <select id="q-equipment" style="width: 140px; padding: 8px; border-radius: 10px;">
-            <option value="gym" ${formData.equipment === 'gym' ? 'selected' : ''}>صالة رياضية (جيم)</option>
-            <option value="home" ${formData.equipment === 'home' ? 'selected' : ''}>منزل بأوزان خفيفة</option>
-          </select>
         </div>
 
         <div class="neon-card" style="padding: 16px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
@@ -2470,7 +2414,6 @@ export function bindQuestionnaireEvents() {
 
   function initGoalStepEvents() {
     const targetWeightInput = document.getElementById('q-target-weight');
-    const activitySelect = document.getElementById('q-activity');
 
     targetWeightInput?.addEventListener('input', (e) => {
       const val = Number(e.target.value);
@@ -2479,9 +2422,6 @@ export function bindQuestionnaireEvents() {
       }
     });
 
-    activitySelect?.addEventListener('change', (e) => {
-      formData.activityLevel = e.target.value;
-    });
 
     document.querySelectorAll('.goal-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -3357,23 +3297,6 @@ export function bindQuestionnaireEvents() {
   }
 
   function initPlanPreferencesStepEvents() {
-    // 1. Adherence buttons
-    document.querySelectorAll('.q-adherence-btn').forEach(btn => {
-      btn.onclick = (e) => {
-        e.preventDefault();
-        const val = btn.dataset.val;
-        formData.nutritionPlanPreferences.adherence = val;
-        document.querySelectorAll('.q-adherence-btn').forEach(b => {
-          const isAct = b.dataset.val === val;
-          b.classList.toggle('active', isAct);
-          b.style.borderColor = isAct ? '#55F7A5' : 'rgba(85,247,165,0.2)';
-          b.style.background = isAct ? 'rgba(85,247,165,0.15)' : 'rgba(255,255,255,0.02)';
-          const label = b.querySelector('div:nth-child(2)');
-          if (label) label.style.color = isAct ? '#55F7A5' : '#fff';
-        });
-      };
-    });
-
     // 2. Meal slots buttons
     document.querySelectorAll('.q-mealslots-btn').forEach(btn => {
       btn.onclick = (e) => {
@@ -3634,9 +3557,7 @@ export function bindQuestionnaireEvents() {
       }
     } else if (currentStepKey === STEP_KEYS.GOAL) {
       const targetWeight = Number(document.getElementById('q-target-weight')?.value);
-      const activity = document.getElementById('q-activity')?.value;
       if (targetWeight > 0) formData.targetWeight = targetWeight;
-      if (activity) formData.activityLevel = activity;
     } else if (currentStepKey === STEP_KEYS.WEEKLY_LOSS_RATE) {
       const w = Number(formData.weight) || 70;
       const h = Number(formData.height) || 175;
@@ -3729,22 +3650,18 @@ export function bindQuestionnaireEvents() {
         formData.nutritionPlanPreferences.sweets.servingsPerWeek = Number(freqSelect.value);
       }
     } else if (currentStepKey === STEP_KEYS.HEALTH) {
-      const sleep = Number(document.getElementById('q-sleep')?.value);
-      if (sleep > 0) formData.sleepHours = sleep;
       collectInjuryDetailsFromDom();
       const checkedInjuries = Array.from(document.querySelectorAll('input[name="q-injuries"]:checked')).map(el => el.value).filter(value => value !== 'none');
       formData.injuries = checkedInjuries;
     } else if (currentStepKey === STEP_KEYS.TRAINING) {
       const days = Number(document.getElementById('q-workout-days')?.value);
-      const eq = document.getElementById('q-equipment')?.value;
       const dur = Number(document.getElementById('q-session-duration')?.value);
       if (days > 0) formData.workoutDaysCount = days;
-      if (eq) formData.equipment = eq;
       if (dur > 0) formData.sessionDurationMin = dur;
       formData.trainingLevel = document.querySelector('input[name="q-training-level"]:checked')?.value || formData.trainingLevel;
-      formData.trainingExperienceMonths = Math.max(0, Number(document.getElementById('q-training-experience')?.value) || 0);
       formData.trainingBreakMonths = Math.max(0, Number(document.getElementById('q-training-break')?.value) || 0);
       formData.availableEquipment = Array.from(document.querySelectorAll('input[name="q-available-equipment"]:checked')).map(el => el.value);
+      if (formData.availableEquipment.length) formData.equipment = formData.availableEquipment.some(kind => ['machines','barbell','cables'].includes(kind)) ? 'gym' : 'home';
       formData.focusAreas = Array.from(document.querySelectorAll('input[name="q-focus-areas"]:checked')).map(el => el.value);
     }
   }

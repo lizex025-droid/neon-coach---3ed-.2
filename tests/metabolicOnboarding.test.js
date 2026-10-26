@@ -9,7 +9,7 @@ const base={...METABOLIC_DEFAULTS,weight:83,height:160,age:30,gender:'female',ta
 
 test('all four onboarding sections render meaningful questions with a working next control',()=>{
  for(const key of METABOLIC_STEP_KEYS){const html=renderMetabolicOnboardingStep(key,base,today);assert.match(html,/q-next-step-btn/);assert.match(html,/name="/);assert.ok(!html.includes('undefined'));}
- const html=renderMetabolicOnboardingStep('metabolic_history',base,today);assert.match(html,/92 كغ/);assert.match(html,/مش متأكد/);
+ const html=renderMetabolicOnboardingStep('metabolic_history',base,today);assert.ok(!html.includes('name="weightHistoryHigher"'));assert.match(html,/مش متأكد/);
 });
 test('new questions are actually in the questionnaire and every displayed expenditure uses the shared engine',()=>{
  const src=readFileSync(new URL('../src/views/questionnaireView.js',import.meta.url),'utf8');
@@ -119,4 +119,18 @@ test('milestones complete stage one on page five, update both directions, and su
  assert.deepEqual(questionnaireMilestones(total,total).map(m=>m.status),['complete','complete','complete']);
  assert.match(renderQuestionnaireMilestones(5,total),/المرحلة 1 مكتملة/);
  }
+});
+
+test('questionnaire excludes unused context and repeated training experience without requiring stale answers',()=>{
+ const history=renderMetabolicOnboardingStep('metabolic_history',base,today);
+ const activity=renderMetabolicOnboardingStep('metabolic_activity',base,today);
+ for(const field of ['weightHistoryHigher','highestAdultWeight','recentWeightTrend','liftingExperience','cardioExperience','athleticStatus'])assert.ok(!(history+activity).includes(`name="${field}"`),field);
+ assert.equal(validateMetabolicAnswers('metabolic_history',{...base,recentTransitionType:'none',highestAdultWeight:1,recentWeightTrend:'losing'},today),null);
+ assert.equal(validateMetabolicAnswers('metabolic_activity',{...base,dailyMovement:'sedentary',jobActivity:'seated',exerciseType:'none'},today),null);
+ const source=readFileSync(new URL('../src/views/questionnaireView.js',import.meta.url),'utf8');
+ for(const id of ['q-sleep','q-training-experience','q-activity'])assert.ok(!source.includes(`id="${id}"`),id);
+ assert.ok(!source.includes('ما هو مستوى التزامك المتوقع'));
+ assert.match(source,/name="q-training-level"/);assert.match(source,/id="q-training-break"/);assert.match(source,/name="q-injuries"/);
+ const root={dataset:{metaStep:'metabolic_activity'},querySelectorAll:()=>[],querySelector:()=>null};
+ assert.equal(collectMetabolicAnswers(root,{...base,activityModel:'legacy'},today).activityModel,'components');
 });
