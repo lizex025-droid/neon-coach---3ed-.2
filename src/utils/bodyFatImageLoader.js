@@ -19,7 +19,7 @@ export function startBodyFatImageLoader(root, options = {}) {
 
   function finish(photo, success) {
     const tile = photo.closest('.body-fat-option');
-    tile?.classList.remove('is-loading');
+    photo.parentElement?.classList.remove('is-loading');
     if (success) {
       photo.classList.add('is-ready');
     } else {
