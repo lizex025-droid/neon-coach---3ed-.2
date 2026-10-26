@@ -8,7 +8,7 @@ export function startBodyFatImageLoader(root, options = {}) {
   const photos = Array.from(root?.querySelectorAll?.('.body-fat-photo[data-src]') || []);
   if (!photos.length) return () => {};
 
-  const windowRef = options.windowRef || window;
+  const windowRef = options.windowRef || (typeof window === 'undefined' ? {} : window);
   const Observer = options.IntersectionObserver || windowRef.IntersectionObserver;
   const maxConcurrent = Math.max(1, Math.min(3, Number(options.maxConcurrent) || 3));
   const waiting = [];
