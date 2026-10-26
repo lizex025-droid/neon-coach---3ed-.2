@@ -1,10 +1,11 @@
-/* NEON COACH · Body-composition picker, matching the app's black/mint theme */
+/* NEON COACH · Body-composition picker, black/mint theme.
+   Photos already include the percentage: selected cards need a check, not a second label. */
 .body-fat-step {
   --bf-mint: #55f7a5;
   --bf-mint-soft: rgba(85, 247, 165, .42);
   width: 100%;
   min-width: 0;
-  padding: 24px 13px 20px;
+  padding: 21px 13px 26px;
   border: 1px solid rgba(85, 247, 165, .20);
   border-radius: 24px;
   background: linear-gradient(160deg, #031610 0%, #010a07 43%, #04100c 100%);
@@ -14,7 +15,7 @@
 }
 .body-fat-heading {
   text-align: right;
-  padding: 0 3px 22px;
+  padding: 0 3px 16px;
 }
 .body-fat-eyebrow {
   display: block;
@@ -42,8 +43,8 @@
 .body-fat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 26px 9px;
-  padding: 3px 0 19px;
+  gap: 13px 9px;
+  padding: 3px 0 8px;
   direction: ltr;
 }
 .body-fat-option {
@@ -99,46 +100,49 @@
   height: 100%;
   opacity: .82;
 }
-.body-fat-chip {
+.body-fat-selection-check {
   position: absolute;
-  left: 50%;
-  bottom: -13px;
-  transform: translateX(-50%);
-  display: inline-flex;
+  top: 7px;
+  right: 7px;
+  display: none;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #d3ffe5;
+  border-radius: 50%;
+  background: #55f7a5;
+  color: #03170e;
+  font: 900 16px/1 system-ui, sans-serif;
+  box-shadow: 0 0 12px rgba(85,247,165,.45);
+  pointer-events: none;
+}
+.body-fat-option.is-selected .body-fat-selection-check { display: inline-flex; }
+/* Shown only on failure, because the local silhouette has no printed label. */
+.body-fat-fallback-label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
   min-width: 60%;
-  min-height: 26px;
   padding: 3px 6px;
-  border: 1px solid rgba(85,247,165,.48);
   border-radius: 9px;
-  background: #06150f;
-  box-shadow: 0 3px 9px rgba(0,0,0,.45);
+  border: 1px solid rgba(85,247,165,.65);
+  background: rgba(3, 25, 13, .95);
   color: #eafff2;
-  font: 800 clamp(.7rem, 2.7vw, .95rem)/1.1 system-ui, sans-serif;
+  font: 800 clamp(.7rem, 2.7vw, .95rem)/1.2 system-ui, sans-serif;
+  text-align: center;
   direction: ltr;
   white-space: nowrap;
   pointer-events: none;
 }
-.body-fat-option.is-selected .body-fat-chip {
-  border-color: var(--bf-mint);
-  background: #3df59c;
-  color: #042015;
-}
-.body-fat-check {
-  display: inline-grid;
-  place-items: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: #03140b;
-  color: #6affb5;
-  font-size: 11px;
-  font-weight: 900;
+.body-fat-fallback-label[hidden] { display: none !important; }
+.body-fat-option.is-selected .body-fat-fallback-label {
+  border-color: #55f7a5;
+  color: #55f7a5;
 }
 .body-fat-disclaimer {
-  margin: 11px 3px 18px;
+  margin: 12px 3px 16px;
   color: #9bb6a6;
   font-size: .76rem;
   line-height: 1.7;
@@ -160,15 +164,28 @@
   font: 900 1rem/1.35 'Cairo', system-ui, sans-serif;
   cursor: pointer;
   touch-action: manipulation;
+  position: sticky;
+  bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  z-index: 5;
 }
 .body-fat-next:active { filter: brightness(.9); }
 @media (max-width: 390px) {
   .body-fat-step { padding: 21px 10px 17px; }
-  .body-fat-grid { gap: 24px 7px; }
+  .body-fat-grid { gap: 12px 7px; }
   .body-fat-option { border-radius: 12px; }
   .body-fat-illustration { border-radius: 10px; }
-  .body-fat-chip { min-height: 24px; padding: 2px 5px; font-size: .7rem; }
+  .body-fat-selection-check { width: 22px; height: 22px; top: 5px; right: 5px; }
+  .body-fat-fallback-label { font-size: .7rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .body-fat-option { transition: none; }
+}
+
+/* The questionnaire is taller than Safari's dynamic bottom address bar.
+   Extra scroll runway keeps the Next CTA entirely tappable on iPhone. */
+.questionnaire-container.body-fat-questionnaire {
+  padding-bottom: calc(145px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.questionnaire-container.body-fat-questionnaire #step-content-area {
+  overflow: visible;
 }
