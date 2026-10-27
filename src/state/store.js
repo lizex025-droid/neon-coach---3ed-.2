@@ -331,7 +331,7 @@ class Store {
     let targets = calculateNutritionTargets(effective);
     if (weeklyAdjustment && p.targetCalories > 0) {
       const limited = Math.max(p.targetCalories - 150, Math.min(p.targetCalories + 150, targets.targetCalories));
-      targets = calculateNutritionTargets({ ...effective, requestedTargetCalories: limited });
+      targets = calculateNutritionTargets({ ...effective, requestedTargetCalories: limited, calorieAdjustmentOverride: true });
     }
     Object.assign(p, { targetCalories: targets.targetCalories, requestedTargetCalories: targets.targetCalories,
       targetProtein: targets.protein, targetCarbs: targets.carbs, targetFats: targets.fats,
@@ -339,7 +339,10 @@ class Store {
       targetWaterLiters: targets.waterMl / 1000, targetGlasses: targets.waterGlasses, macroWarnings: targets.macroWarnings, floorApplied: targets.floorApplied, goalReached: targets.goalReached });
     this.state.userProfile = p;
     const trainingDays = (p.metabolicTrainingDays || []).map(Number);
-    const budget = distributeWeeklyCalories(targets.targetCalories, { trainingDays, shift: p.calorieShift || 0, floor: mode === 'coached' ? (p.calorieFloor || (p.gender === 'female' ? 1200 : 1500)) : 0 });
+    const budget = distributeWeeklyCalories(targets.targetCalories, {
+      trainingDays, shift: p.calorieShift || 0,
+      floor: mode === 'coached' ? (p.gender === 'female' ? 1200 : 1500) : 0
+    });
     this.state.metabolicData ||= {};
     this.state.metabolicData.weeklyCalories = budget;
     Object.assign(this.state.today, { targetCalories: budget[(new Date().getDay() + 1) % 7],
