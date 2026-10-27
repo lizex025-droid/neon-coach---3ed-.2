@@ -13,10 +13,28 @@ test('all four onboarding sections render meaningful questions with a working ne
 });
 test('new questions are actually in the questionnaire and every displayed expenditure uses the shared engine',()=>{
  const src=readFileSync(new URL('../src/views/questionnaireView.js',import.meta.url),'utf8');
- for(const key of ['METABOLIC_HISTORY','METABOLIC_ACTIVITY','METABOLIC_MEASUREMENT','METABOLIC_STRATEGY'])assert.ok(src.includes(`STEP_KEYS.${key}`));
+ for(const key of ['METABOLIC_ACTIVITY','METABOLIC_MEASUREMENT','METABOLIC_STRATEGY'])assert.ok(src.includes(`STEP_KEYS.${key}`));
+ assert.ok(!src.includes('STEP_KEYS.METABOLIC_HISTORY,'),'historical-change page must not appear in any active questionnaire path');
  assert.ok(src.includes('if (METABOLIC_STEP_KEYS.includes(step)) return renderMetabolicOnboardingStep'));
  assert.ok(src.includes('validateMetabolicAnswers(stepKeyNow'));
  assert.equal((src.match(/calculateMaintenanceCalories\(/g)||[]).length,1,'only the explicit fallback may use legacy PAL');
+});
+test('questionnaire removes previous data and recent change page from every goal and updates the progress count',()=>{
+ const source=readFileSync(new URL('../src/views/questionnaireView.js',import.meta.url),'utf8');
+ const start=source.indexOf('export function getActiveSteps() {');
+ const end=source.indexOf('// بيانات الاستبيان الجاري تعبئتها',start);
+ assert.ok(start >= 0 && end > start);
+ const paths=source.slice(start,end).match(/return \[([\s\S]*?)\];/g) || [];
+ assert.equal(paths.length,3);
+ const lengths=paths.map(value=>(value.match(/STEP_KEYS\.[A-Z_]+/g)||[]).length);
+ assert.deepEqual(lengths,[14,14,13]);
+ for(const path of paths){
+   assert.doesNotMatch(path,/STEP_KEYS\.METABOLIC_HISTORY/);
+   assert.match(path,/STEP_KEYS\.BODY_FAT,\s*STEP_KEYS\.METABOLIC_ACTIVITY/);
+   assert.match(path,/STEP_KEYS\.REVIEW/);
+ }
+ assert.match(source,/renderQuestionnaireMilestones\(step, totalSteps\)/);
+ assert.match(source,/الخطوة \$\{step\} من \$\{totalSteps\}/);
 });
 test('unknown is a valid explicit answer, and incomplete questions never silently choose an activity',()=>{
  assert.ok(validateMetabolicAnswers('metabolic_activity',base,today));
@@ -112,7 +130,7 @@ test('recent transition needs no onset date, records report time once, and clear
  const html=renderMetabolicOnboardingStep('metabolic_history',p,today);assert.ok(!html.includes('name="recentTransitionDate"'));
 });
 test('milestones complete stage one on page five, update both directions, and support every goal length',()=>{
- for(const total of [14,15]){
+ for(const total of [13,14]){
  assert.deepEqual(questionnaireMilestones(4,total).map(m=>m.status),['active','pending','pending']);
  assert.deepEqual(questionnaireMilestones(5,total).map(m=>m.status),['complete','active','pending']);
  assert.deepEqual(questionnaireMilestones(10,total).map(m=>m.status),['complete','complete','active']);
