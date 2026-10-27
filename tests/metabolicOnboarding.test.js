@@ -71,7 +71,35 @@ test('planned training type changes protein without pretending exercise experien
  assert.ok(n.protein<c.protein&&c.protein<r.protein);
  assert.equal(estimateInitialExpenditure({...base,liftingExperience:'advanced'}).rmr,estimateInitialExpenditure({...base,liftingExperience:'beginner'}).rmr);
 });
-test('strategy requires answers, respects floors, and validates shifted days',()=>{
+test('weekly loss rate controls coached calories without manual calorie-floor choice',()=>{
+  const html=renderMetabolicOnboardingStep('metabolic_strategy',{
+    ...base,macroStyle:'balanced',programTrainingType:'resistance',
+    proteinPreference:'moderate',calorieDistribution:'even'
+  },today);
+  assert.doesNotMatch(html,/calorieFloor|الحد الأدنى للتوصية بالسعرات|قيمة ثانية — أدخل الرقم[^<]*سعرة/);
+  assert.match(html,/كيف نوزع ميزانية الأسبوع/);
+  const p={...base,goal:'fat_loss',targetMode:'coached',knownTdee:3000,
+    macroStyle:'balanced',programTrainingType:'resistance',
+    proteinPreference:'moderate',calorieDistribution:'even',
+    selectedWeeklyLossRate:0.005,requestedTargetCalories:1500,
+    dailyCalorieDeficit:1500,calorieFloor:2600};
+  const low=calculateNutritionTargets(p);
+  const high=calculateNutritionTargets({...p,selectedWeeklyLossRate:0.015});
+  assert.ok(high.targetCalories < low.targetCalories, 'faster chosen rate must yield a higher deficit');
+  assert.notEqual(low.targetCalories,1500,'stale selected calories must not override chosen loss percentage');
+  assert.equal(low.floorApplied,false,'stale high calorie-floor selection cannot override the chosen rate');
+  const limited=calculateNutritionTargets({...p,calorieAdjustmentOverride:true,requestedTargetCalories:2200});
+  assert.equal(limited.targetCalories,2200,'adaptive smoothing may cap weekly changes');
+  const manual=calculateNutritionTargets({...p,targetMode:'manual',requestedTargetCalories:2200});
+  assert.equal(manual.targetCalories,2200,'manual calorie mode must still honor explicit targets');
+  const floor=calculateNutritionTargets({...p,knownTdee:1550,selectedWeeklyLossRate:0.02});
+  assert.equal(floor.targetCalories,1200,'automatic female coached floor stays in place');
+  assert.equal(floor.floorApplied,true);
+  const root={dataset:{metaStep:'metabolic_strategy'},querySelectorAll:()=>[],querySelector:()=>null};
+  assert.equal(collectMetabolicAnswers(root,{...p,calorieFloor:2500},today).calorieFloor,null);
+});
+
+test('strategy requires macro and distribution answers, not a user-entered calorie floor',()=>{
  assert.ok(validateMetabolicAnswers('metabolic_strategy',base,today));
  const p={...base,macroStyle:'balanced',programTrainingType:'resistance',proteinPreference:'moderate',calorieDistribution:'shift',calorieShift:150,metabolicTrainingDays:[0,1,3],calorieFloor:1200};
  assert.equal(validateMetabolicAnswers('metabolic_strategy',p,today),null);
