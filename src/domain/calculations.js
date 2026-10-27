@@ -123,7 +123,22 @@ export function calculateNutritionTargets(userProfile = {}) {
   // حساب السعرات المستهدفة بناء على الهدف
   let targetCalories = Math.round(rawTdee);
   if (goal === GOALS.FAT_LOSS) {
-    if (requestedTargetCalories && Number(requestedTargetCalories) > 0) {
+    // In coached plans the user's weekly loss rate is the single source
+    // of truth for the daily deficit. An outdated rate-card calorie snapshot
+    // must not override the chosen percentage when TDEE/weight changes.
+    // Adaptive weekly smoothing is the sole explicit override.
+    if (userProfile.targetMode === 'coached' &&
+        !userProfile.calorieAdjustmentOverride &&
+        Number(selectedWeeklyLossRate || weeklyLossPercent) > 0) {
+      const option = calculateWeightLossOption({
+        currentWeightKg: weight,
+        maintenanceCalories: rawTdee,
+        weeklyRate: Number(selectedWeeklyLossRate || weeklyLossPercent),
+        sex: gender,
+        age
+      });
+      targetCalories = option.targetCaloriesRounded;
+    } else if (requestedTargetCalories && Number(requestedTargetCalories) > 0) {
       targetCalories = Math.round(Number(requestedTargetCalories));
     } else if (dailyCalorieDeficit && Number(dailyCalorieDeficit) > 0) {
       targetCalories = Math.round(rawTdee - Number(dailyCalorieDeficit));
@@ -185,7 +200,11 @@ export function calculateNutritionTargets(userProfile = {}) {
   const targetWeight = Number(userProfile.targetWeight);
   const goalReached = targetWeight > 0 && ((goal === GOALS.FAT_LOSS && weight <= targetWeight) || (goal === GOALS.MUSCLE_GAIN && weight >= targetWeight));
   if (goalReached && userProfile.targetMode === 'coached') targetCalories = Math.round(rawTdee);
-  const floor = Number(userProfile.calorieFloor) > 0 ? Number(userProfile.calorieFloor) : (gender === 'female' ? 1200 : 1500);
+  // Coached safety guidance is automatic, never an onboarding calorie
+  // selector. Legacy/manual custom calorie settings remain untouched.
+  const floor = userProfile.targetMode === 'coached'
+    ? (gender === 'female' ? 1200 : 1500)
+    : (Number(userProfile.calorieFloor) > 0 ? Number(userProfile.calorieFloor) : (gender === 'female' ? 1200 : 1500));
   const rawRequested = Math.round(targetCalories);
   const target = Math.max(userProfile.targetMode === 'coached' ? floor : 200, rawRequested);
   const macros = allocateMacros(target, userProfile);
