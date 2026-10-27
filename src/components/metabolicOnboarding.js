@@ -47,8 +47,7 @@ export function renderMetabolicOnboardingStep(key,p,today) {
     choices('proteinPreference','كمية البروتين المفضلة ضمن النطاق؟',p.proteinPreference,[['low','أقل'],['moderate','متوسط'],['high','مرتفع']])+
     choices('calorieDistribution','كيف نوزع ميزانية الأسبوع؟',p.calorieDistribution,[['even','نفس السعرات كل يوم'],['shift','أعلى بأيام التدريب وأقل بالراحة']])+
     `<div class="metabolic-fields" data-meta-visible="calorieDistribution:shift">${numberChoices('calorieShift','زيادة أيام التدريب',p.calorieShift || 150,[50,100,150,200,250,300,400,500],'سعرة','min="50" max="500" step="1"')}<div style="display:flex;gap:12px;flex-wrap:wrap">${['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'].map((d,i)=>`<label class="metabolic-day-choice"><input type="checkbox" name="metabolicTrainingDays" value="${i}" ${(p.metabolicTrainingDays||[]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div></div>`+
-    numberChoices('calorieFloor','الحد الأدنى للتوصية بالسعرات',p.calorieFloor || (p.gender==='female'?1200:1500),(p.gender==='female'?[1200,1300,1400,1500,1600,1800,2000]:[1500,1600,1700,1800,2000,2200]),'سعرة',`min="${p.gender==='female'?1200:1500}" max="4000" step="1"`)+
-    '<small>الحد قيد للتوصية، وليس ضمانًا للملاءمة الفردية. إذا تعارض مع معدل النزول نوضح الفرق.</small>';
+    '<small>سعراتك تتحدد تلقائيًا حسب معدل النزول الذي اخترته والاحتياج المقدر، مع حد حماية تلقائي. هذا القسم يغيّر توزيع الأسبوع فقط.</small>';
   return `<div id="metabolic-onboarding" data-meta-step="${key}" class="metabolic-onboarding">${body}<button id="q-next-step-btn" class="btn btn-primary btn-lg btn-block" style="margin-top:20px">متابعة</button></div>`;
 }
 
@@ -71,6 +70,8 @@ export function collectMetabolicAnswers(root,p,today) {
   if(updates.exerciseType==='unknown') {updates.exerciseSessionsPerWeek=null;updates.exerciseDurationMin=null;}
   if(updates.exerciseType==='none') {updates.exerciseSessionsPerWeek=0;updates.exerciseDurationMin=0;}
   if(updates.calorieDistribution==='even')updates.calorieShift=0;
+  // The calorie guidance floor is calculated by the engine, not a user input.
+  if(root.dataset?.metaStep==='metabolic_strategy')updates.calorieFloor=null;
   if(root.dataset?.metaStep==='metabolic_history'){
     updates.historyEndDate=today;updates.historyEndWeight=Number(p.weight);
     const transition=updates.recentTransitionType ?? p.recentTransitionType;
@@ -109,7 +110,6 @@ export function validateMetabolicAnswers(key,p,today) {
   if(key==='metabolic_strategy') {
     if(!need(p.macroStyle,['balanced','low_fat','low_carb','keto'])||!need(p.programTrainingType,['none','resistance','cardio','mixed'])||!need(p.proteinPreference,['low','moderate','high'])||!need(p.calorieDistribution,['even','shift']))return 'اختر النظام ونوع التدريب والبروتين وتوزيع السعرات.';
     if(p.macroStyle==='keto'&&!(p.ketoCarbs>=10&&p.ketoCarbs<=50))return 'سقف كارب الكيتو بين 10 و50 غرام إجمالي كارب.';
-    if(!(p.calorieFloor>=(p.gender==='female'?1200:1500)&&p.calorieFloor<=4000))return 'حدد الحد الأدنى للتوصية.';
     if(p.calorieDistribution==='shift'&&!(p.calorieShift>=50&&p.calorieShift<=500&&p.metabolicTrainingDays?.length>0&&p.metabolicTrainingDays.length<7))return 'للتوزيع المتغيّر اختر أيام تدريب وراحة ومقدار الزيادة.';
   }
   return null;
