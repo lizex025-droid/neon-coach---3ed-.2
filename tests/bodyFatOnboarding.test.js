@@ -135,7 +135,7 @@ test('iPhone body-fat layout has safe scrolling after the Next CTA', () => {
 
 test('body fat onboarding follows measurements for every goal', () => {
   const source = readFileSync(new URL('../src/views/questionnaireView.js', import.meta.url), 'utf8');
-  const order = /STEP_KEYS\.MEASUREMENTS,\s*STEP_KEYS\.BODY_FAT,\s*STEP_KEYS\.METABOLIC_HISTORY,\s*STEP_KEYS\.METABOLIC_ACTIVITY,\s*STEP_KEYS\.METABOLIC_MEASUREMENT,\s*STEP_KEYS\.GOAL,/g;
+  const order = /STEP_KEYS\.MEASUREMENTS,\s*STEP_KEYS\.BODY_FAT,\s*STEP_KEYS\.METABOLIC_ACTIVITY,\s*STEP_KEYS\.GOAL,/g;
   assert.equal((source.match(order) || []).length, 3);
   assert.match(source, /case STEP_KEYS\.BODY_FAT:\s*return renderBodyFatStep/);
   assert.match(source, /stepKeyNow === STEP_KEYS\.BODY_FAT/);
